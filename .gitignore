@@ -1,24 +1,54 @@
-# Compiled class file
-*.class
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
 
-# Log file
+# Virtual environments
+venv/
+env/
+.venv/
+ENV/
+
+# Django stuff
 *.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
 
-# BlueJ files
-*.ctxt
+# Media and static files (if collected locally)
+media/
+staticfiles/
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+# Environment variables
+.env
+.env.*
+!.env.example
 
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
+# VS Code
+.vscode/
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-replay_pid*
+# PyCharm
+.idea/
+
+# macOS
+.DS_Store
+
+# Linux
+*.swp
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Migrations (optional — see note below)
+# **/migrations/*.py
+# !**/migrations/__init__.py
+
+# Type checkers
+.mypy_cache/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
