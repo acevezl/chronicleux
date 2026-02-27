@@ -52,3 +52,6 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+
+# Personal Workspace
+*.code-workspace
