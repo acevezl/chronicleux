@@ -1,0 +1,62 @@
+{% load static %}
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign up · ChronicleUX</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  </head>
+
+  <body class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+    <div class="w-full max-w-sm bg-white border rounded-xl p-6 shadow-sm">
+      <h1 class="text-xl font-semibold">ChronicleUX</h1>
+      <p class="mt-1 text-sm text-gray-600">Create your account.</p>
+
+      <form method="post" class="mt-4 space-y-4">
+        {% csrf_token %}
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Username</label>
+          {{ form.username }}
+          {% if form.username.errors %}
+            <p class="text-sm text-red-600 mt-1">{{ form.username.errors|striptags }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Email (optional)</label>
+          {{ form.email }}
+          {% if form.email.errors %}
+            <p class="text-sm text-red-600 mt-1">{{ form.email.errors|striptags }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Password</label>
+          {{ form.password1 }}
+          {% if form.password1.errors %}
+            <p class="text-sm text-red-600 mt-1">{{ form.password1.errors|striptags }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Confirm password</label>
+          {{ form.password2 }}
+          {% if form.password2.errors %}
+            <p class="text-sm text-red-600 mt-1">{{ form.password2.errors|striptags }}</p>
+          {% endif %}
+        </div>
+
+        <button class="w-full rounded-lg bg-black text-white py-2 font-medium" type="submit">
+          Create account
+        </button>
+
+        <p class="text-sm text-gray-600 text-center">
+          Already have an account?
+          <a class="underline" href="/accounts/login/">Sign in</a>
+        </p>
+      </form>
+    </div>
+  </body>
+</html>

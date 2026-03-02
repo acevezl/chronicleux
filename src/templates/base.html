@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}ChronicleUX{% endblock %}</title>
+    {% load static%}
+    <link href="{% static 'css/app.css' %}" rel="stylesheet">
+  </head>
+  <body class="min-h-screen bg-gray-50">
+    <div class="flex min-h-screen">
+      <!-- Sidebar -->
+      <aside class="w-64 bg-white border-r">
+        <div class="p-4 font-semibold text-lg">ChronicleUX</div>
+        <nav class="px-2 space-y-1 text-sm">
+          <a class="block px-3 py-2 rounded hover:bg-gray-100" href="/">Dashboard</a>
+          <a class="block px-3 py-2 rounded hover:bg-gray-100" href="/admin/">Admin</a>
+          <form method="post" action="/accounts/logout/" class="px-3 py-2">
+            {% csrf_token %}
+            <button class="text-left w-full text-red-600 hover:underline" type="submit">Logout</button>
+          </form>
+        </nav>
+      </aside>
+
+      <!-- Main -->
+      <main class="flex-1">
+        <header class="bg-white border-b p-4 flex items-center justify-between">
+          <div class="text-sm text-gray-600">Welcome, {{ request.user.username }}</div>
+        </header>
+
+        <div class="p-6">
+          {% block content %}{% endblock %}
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

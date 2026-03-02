@@ -1,0 +1,58 @@
+{% load static %}
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login · ChronicleUX</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  </head>
+
+  <body class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+    <div class="w-full max-w-sm bg-white border rounded-xl p-6 shadow-sm">
+      <h1 class="text-xl font-semibold">ChronicleUX</h1>
+      <p class="mt-1 text-sm text-gray-600">Sign in to continue.</p>
+
+      {% if form.errors %}
+        <div class="mt-4 text-sm text-red-700 bg-red-50 border border-red-200 rounded p-3">
+          Please check your username and password and try again.
+        </div>
+      {% endif %}
+
+      <form method="post" class="mt-4 space-y-4">
+        {% csrf_token %}
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Username</label>
+          <input
+            type="text"
+            name="{{ form.username.name }}"
+            value="{{ form.username.value|default:'' }}"
+            class="mt-1 w-full rounded-lg border px-3 py-2"
+            autofocus
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Password</label>
+          <input
+            type="password"
+            name="{{ form.password.name }}"
+            class="mt-1 w-full rounded-lg border px-3 py-2"
+          />
+        </div>
+
+        <button class="w-full rounded-lg bg-black text-white py-2 font-medium" type="submit">
+          Sign in
+        </button>
+
+        <p class="text-sm text-gray-600 text-center mt-4">
+          New here?
+          <a class="underline" href="/accounts/signup/">Create an account</a>
+        </p>
+
+        <input type="hidden" name="next" value="{{ next }}">
+      </form>
+    </div>
+  </body>
+</html>
