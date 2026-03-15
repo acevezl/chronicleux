@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1>{{ study.title }}</h1>
+  <p>{{ study.description }}</p>
+  <p>Status: {{ study.status }}</p>
+  <p>Owner: {{ study.owner }}</p>
+  <p>Start: {{ study.data_collection_start }}</p>
+  <p>End: {{ study.data_collection_end }}</p>
+{% endblock %}

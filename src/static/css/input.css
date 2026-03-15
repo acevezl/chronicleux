@@ -1,1 +1,19 @@
 @import "tailwindcss";
+
+@layer components {
+  .status-cell-PLANNING {
+    @apply bg-gray-50 text-gray-700;
+  }
+
+  .status-cell-COLLECTING {
+    @apply bg-blue-50 text-blue-800;
+  }
+
+  .status-cell-ANALYZING {
+    @apply bg-amber-50 text-amber-800;
+  }
+
+  .status-cell-COMPLETED {
+    @apply bg-green-50 text-green-800;
+  }
+}

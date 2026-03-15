@@ -4,6 +4,8 @@
   "description": "Chronicle UX",
   "main": "index.js",
   "scripts": {
+    "build:css": "npx @tailwindcss/cli -i ./src/static/css/input.css -o ./src/static/css/output.css",
+    "watch:css": "npx @tailwindcss/cli -i ./src/static/css/input.css -o ./src/static/css/output.css --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
