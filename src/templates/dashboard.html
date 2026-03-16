@@ -50,6 +50,15 @@
             class="bg-gray-800 text-white px-4 py-2 rounded-md text-sm hover:bg-gray-900">
             Filter
           </button>
+
+          {% if request.GET.q or request.GET.owner or request.GET.status %}
+          <a
+            href="{% url 'dashboard' %}"
+            class="border border-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm hover:bg-gray-50"
+          >
+            Clear Filter
+          </a>
+          {% endif %}
         </form>
       </div>
 
@@ -58,10 +67,47 @@
           <table class="w-full table-auto text-sm">
             <thead class="bg-gray-50 text-gray-600">
               <tr class="border-b">
-                <th class="text-left px-4 py-3 font-medium">Title</th>
-                <th class="text-left px-4 py-3 font-medium">Created</th>
-                <th class="text-left px-4 py-3 font-medium">Status</th>
-                <th class="text-left px-4 py-3 font-medium">Owner</th>
+
+                <th class="text-left px-4 py-3 font-medium">
+                  <a
+                    href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'title' %}-title{% else %}title{% endif %}"
+                    class="hover:underline"
+                  >
+                    Title
+                    {% if sort == "title" %}↑{% elif sort == "-title" %}↓{% endif %}
+                  </a>
+                </th>
+
+                <th class="text-left px-4 py-3 font-medium">
+                  <a
+                    href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'created_at' %}-created_at{% else %}created_at{% endif %}"
+                    class="hover:underline"
+                  >
+                    Created
+                    {% if sort == "created_at" %}↑{% elif sort == "-created_at" %}↓{% endif %}
+                  </a>
+                </th>
+
+                <th class="text-left px-4 py-3 font-medium">
+                  <a
+                    href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'status' %}-status{% else %}status{% endif %}"
+                    class="hover:underline"
+                  >
+                    Status
+                    {% if sort == "status" %}↑{% elif sort == "-status" %}↓{% endif %}
+                  </a>
+                </th>
+
+                <th class="text-left px-4 py-3 font-medium">
+                  <a
+                    href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'owner__username' %}-owner__username{% else %}owner__username{% endif %}"
+                    class="hover:underline"
+                  >
+                    Owner
+                    {% if sort == "owner__username" %}↑{% elif sort == "-owner__username" %}↓{% endif %}
+                  </a>
+                </th>
+
               </tr>
             </thead>
 
@@ -89,10 +135,40 @@
               {% endfor %}
             </tbody>
           </table>
+
+          <div class="flex items-center justify-between px-6 py-4 border-t">
+
+            <div class="text-sm text-gray-600">
+              Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </div>
+
+            <div class="flex gap-2">
+
+              {% if page_obj.has_previous %}
+                <a
+                  href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
+                  class="px-3 py-1 border rounded hover:bg-gray-100 text-sm"
+                >
+                  Previous
+                </a>
+              {% endif %}
+
+              {% if page_obj.has_next %}
+                <a
+                  href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
+                  class="px-3 py-1 border rounded hover:bg-gray-100 text-sm"
+                >
+                  Next
+                </a>
+              {% endif %}
+
+            </div>
+
+          </div>
         </div>
       {% else %}
         <div class="px-6 py-6">
-          <p class="text-gray-500 italic">You do not have any studies yet.</p>
+          <p class="text-gray-500 italic">No studies found.</p>
         </div>
       {% endif %}
 
