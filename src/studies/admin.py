@@ -1,4 +1,6 @@
 from django.contrib import admin
+from unfold.admin import ModelAdmin
+
 from .models import (
     Study,
     StudyMembership,
@@ -34,3 +36,4 @@ class DiaryEntryAdmin(admin.ModelAdmin):
 admin.site.register(Prompt)
 admin.site.register(StudyMembership)
 admin.site.register(PromptResponse)
+

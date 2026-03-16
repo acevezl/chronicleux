@@ -8,11 +8,27 @@
     <link href="{% static 'css/app.css' %}" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
   </head>
-  <body class="min-h-screen bg-gray-50">
+
+  <body class="min-h-screen bg-white">
     <div class="flex min-h-screen">
       <!-- Sidebar -->
-      <aside class="w-64 bg-white border-r">
-        <div class="p-4 font-semibold text-lg">ChronicleUX</div>
+      <aside class="w-72 border-r border-gray-200 bg-gray-50">
+        
+        <div class="flex border-b gap-3 items-center h-[65px] mb-6 p-4 border-gray-200">
+          <div class="bg-transparent flex font-semibold gap-3 grow min-w-0 h-[64px] items-center px-3">
+            <div class="flex flex-col grow justify-center min-w-0">
+              
+              <div class="text-important tracking-tight *:truncate xl:text-sm">
+                <span id="site-name" class="text-important font-semibold">ChronicleUX</span>
+              </div>
+              <div class="font-normal text-subtle text-xs truncate">
+                  A Diary Study Research Platform
+              </div>
+            </div>
+        
+          </div>
+        </div>
+
         <nav class="px-2 space-y-1 text-sm">
           <a class="block px-3 py-2 rounded hover:bg-gray-100" href="/">Dashboard</a>
           <a class="block px-3 py-2 rounded hover:bg-gray-100" href="/admin/">Admin</a>
@@ -21,18 +37,33 @@
             <button class="text-left w-full text-red-600 hover:underline" type="submit">Logout</button>
           </form>
         </nav>
+
+        <div class="align-bottom flex border-t gap-3 items-center h-[65px] mb-6 p-4 border-gray-200">
+          <div class="bg-transparent flex font-semibold gap-3 grow min-w-0 h-[64px] items-center px-3">
+            <div class="flex flex-col grow justify-center min-w-0">
+              
+              <div class="text-important tracking-tight *:truncate xl:text-sm">
+                <div id="site-name">
+                ChronicleUX
+                </div>
+              </div>
+              <div class="font-normal text-subtle text-xs truncate">
+                  A Diary Study Research Platform
+              </div>
+            </div>
+        
+          </div>
+        </div>
+
       </aside>
 
       <!-- Main -->
       <main class="flex-1">
-        <header class="bg-white border-b p-4 flex items-center justify-between">
-          <div class="text-sm text-gray-600">Welcome, {{ request.user.username }}</div>
-        </header>
-
         <div class="p-6">
           {% block content %}{% endblock %}
         </div>
       </main>
+
     </div>
   </body>
 </html>

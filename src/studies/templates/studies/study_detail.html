@@ -1,10 +1,179 @@
 {% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ study.title }} · ChronicleUX{% endblock %}
 
 {% block content %}
-  <h1>{{ study.title }}</h1>
-  <p>{{ study.description }}</p>
-  <p>Status: {{ study.status }}</p>
-  <p>Owner: {{ study.owner }}</p>
-  <p>Start: {{ study.data_collection_start }}</p>
-  <p>End: {{ study.data_collection_end }}</p>
+
+
+
+<div class="mt-6 grid grid-cols-1 gap-4">
+  <div class="bg-white border rounded-lg overflow-hidden">
+
+    <div class="border-b p-6">
+      <h1 class="text-2xl font-semibold">{{ study.title }}</h1>
+      <p class="mt-2 text-gray-600">Study protocol details.</p>
+
+      <div class="flex gap-3 pt-4">
+        <a
+          href="{% url 'edit_study' study.id %}"
+          class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          Edit Study
+        </a>
+
+        <a
+          href="{% url 'dashboard' %}"
+          class="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Back to Dashboard
+        </a>
+
+      </div>
+    </div>
+
+    <!-- STUDY DATA -->
+    <div class="p-6">
+      <div class="space-y-6">
+        <!-- GOAL -->
+        <div>
+          <label class="block text-lg font-medium text-gray-700">
+            Study Goal
+          </label>
+          <div class="mt-1 text-sm text-gray-900 whitespace-pre-line">
+            {{ study.goal|default:"—" }}
+          </div>
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div>
+          <label class="block text-lg font-medium text-gray-700">
+            Description
+          </label>
+          <div class="mt-1 text-sm text-gray-900 whitespace-pre-line">
+            {{ study.description|default:"—" }}
+          </div>
+        </div>
+
+        <!-- HYPOTHESES -->
+        <div>
+          <label class="block text-lg font-medium text-gray-700">
+            Hypotheses
+          </label>
+          <div class="mt-1 text-sm text-gray-900 whitespace-pre-line">
+            {{ study.hypotheses|default:"—" }}
+          </div>
+        </div>
+
+        <!-- PARTICIPANT INSTRUCTIONS -->
+        <div>
+          <label class="block text-lg font-medium text-gray-700">
+            Participant Instructions
+          </label>
+          <div class="mt-1 text-sm text-gray-900 whitespace-pre-line">
+            {{ study.participant_instructions|default:"—" }}
+          </div>
+        </div>
+
+        <!-- CONTEXT -->
+        <div>
+          <label class="block text-lg font-medium text-gray-700">
+            Entries Context
+          </label>
+          <div class="mt-1 text-sm text-gray-900 whitespace-pre-line">
+            {{ study.context|default:"—" }}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <!-- STATUS -->
+          <div>
+            <label class="block text-lg font-medium text-gray-700">
+              Status
+            </label>
+            <div class="mt-1 text-sm">
+              <span class="px-2 py-1 status-cell-{{ study.status }}">
+                {{ study.get_status_display }}
+              </span>
+            </div>
+          </div>
+
+          <!-- FREQUENCY -->
+          <div>
+            <label class="block text-lg font-medium text-gray-700">
+              Entry Frequency
+            </label>
+            <div class="mt-1 text-sm text-gray-900">
+              {{ study.get_entry_frequency_display|default:"—" }}
+            </div>
+          </div>
+
+        </div>
+
+        <!-- START AND END DATES -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-lg font-medium text-gray-700">
+              Data Collection Start
+            </label>
+            <div class="mt-1 text-sm text-gray-900">
+              {{ study.data_collection_start|date:"Y-m-d"|default:"—" }}
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-lg font-medium text-gray-700">
+              Data Collection End
+            </label>
+            <div class="mt-1 text-sm text-gray-900">
+              {{ study.data_collection_end|date:"Y-m-d"|default:"—" }}
+            </div>
+          </div>
+        </div>
+
+        <!-- TAGS -->
+        <div>
+          <label class="block text-lg font-medium text-gray-700">
+            Tags
+          </label>
+
+          {% if tags_list %}
+            <div class="mt-2 flex flex-wrap gap-2">
+              {% for tag in tags_list %}
+                <span class="inline-flex items-center bg-indigo-100 px-3 py-1 text-xs font-medium text-indigo-800">
+                  {{ tag }}
+                </span>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="mt-1 text-sm text-gray-500">—</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- META DATA -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 border-t">
+      <div>
+        <label class="block text-lg font-medium text-gray-700">
+          Owner
+        </label>
+        <div class="mt-1 text-sm text-gray-900">
+          {{ study.owner.username }}
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-lg font-medium text-gray-700">
+          Created
+        </label>
+        <div class="mt-1 text-sm text-gray-900">
+          {{ study.created_at|date:"Y-m-d H:i" }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

@@ -7,6 +7,7 @@ from .models import Study
 from .forms import StudyForm
 from .models import StudyMembership
 
+# CREATE STUDY
 @login_required
 def create_study(request):
     if request.method == "POST":
@@ -31,7 +32,32 @@ def create_study(request):
 
 from django.shortcuts import get_object_or_404
 
+# VIEW STUDY
 @login_required
 def study_detail(request, pk):
     study = get_object_or_404(Study, pk=pk)
-    return render(request, "studies/study_detail.html", {"study": study})
+    tags_list = [tag.strip() for tag in study.tags.split(",") if tag.strip()] if study.tags else []
+
+    return render(request, "studies/study_detail.html", {
+        "study": study,
+        "tags_list": tags_list,
+    })
+
+# EDIT STUDY
+@login_required
+def edit_study(request, pk):
+    study = get_object_or_404(Study, pk=pk)
+
+    if request.method == "POST":
+        form = StudyForm(request.POST, instance=study)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Study '{study.title}' was updated successfully.")
+            return redirect("study_detail", pk=study.pk)
+    else:
+        form = StudyForm(instance=study)
+
+    return render(request, "studies/edit_study.html", {
+        "study": study,
+        "form": form,
+    })

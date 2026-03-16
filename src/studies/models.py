@@ -31,6 +31,7 @@ class PromptType(models.TextChoices):
     SHORT_TEXT = "SHORT_TEXT", "Short text"
 
 class Study(models.Model):
+
     # participant-facing
     title = models.CharField(max_length=255) 
     description = models.TextField(blank=False) 
@@ -64,6 +65,8 @@ class Study(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        verbose_name = "Study"
+        verbose_name_plural = "Studies"
 
     def clean(self):
         # Validate collection window coherence when both are set.
@@ -100,6 +103,7 @@ class Study(models.Model):
 
 
 class StudyMembership(models.Model):
+
     study = models.ForeignKey(Study, on_delete=models.CASCADE, related_name="memberships")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="study_memberships")
     role = models.CharField(max_length=20, choices=MembershipRole.choices)
@@ -115,6 +119,8 @@ class StudyMembership(models.Model):
             models.Index(fields=["user", "role"]),
             models.Index(fields=["study", "role"]),
         ]
+        verbose_name = "Study Membership"
+        verbose_name_plural = "Study Memberships"
 
     def clean(self):
         # Owner must always be an evaluator in their study.
@@ -126,6 +132,7 @@ class StudyMembership(models.Model):
 
 
 class Prompt(models.Model):
+
     study = models.ForeignKey(Study, on_delete=models.CASCADE, related_name="prompts")
     text = models.CharField(max_length=300)
     prompt_type = models.CharField(max_length=20, choices=PromptType.choices)
@@ -162,6 +169,7 @@ class Prompt(models.Model):
 
 
 class DiaryEntry(models.Model):
+
     study = models.ForeignKey(Study, on_delete=models.CASCADE, related_name="entries")
     participant = models.ForeignKey(User, on_delete=models.CASCADE, related_name="diary_entries")
 
@@ -173,6 +181,8 @@ class DiaryEntry(models.Model):
         indexes = [
             models.Index(fields=["study", "participant", "created_at"]),
         ]
+        verbose_name = "Diary Entry"
+        verbose_name_plural = "Diary Entries"
 
     def clean(self):
         # Must be in collection window
@@ -239,6 +249,8 @@ class PromptResponse(models.Model):
         constraints = [
             models.UniqueConstraint(fields=["diary_entry", "prompt"], name="unique_prompt_per_entry"),
         ]
+        verbose_name = "Prompt Response"
+        verbose_name_plural = "Prompt Responses"
 
     def clean(self):
         if self.prompt.study.pk != self.diary_entry.study.pk:

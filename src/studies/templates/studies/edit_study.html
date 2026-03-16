@@ -1,16 +1,15 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Create Study · ChronicleUX{% endblock %}
+{% block title %}Edit Study · ChronicleUX{% endblock %}
 
 {% block content %}
 
-<h1 class="text-2xl font-semibold">Create New Diary Study</h1>
-<p class="mt-2 text-gray-600">Set up your study protocol using the fields below.</p>
+<h1 class="text-2xl font-semibold">Edit Diary Study</h1>
+<p class="mt-2 text-gray-600">Edit your study protocol using the fields below.</p>
 
 <div class="mt-6 grid grid-cols-1 gap-4">
-  <div class="bg-white border rounded-lg p-6">
-
+  <div class="bg-white border rounded-lg shadow-sm p-6">
     <form method="post" class="mt-6 space-y-6">
       {% csrf_token %}
 
@@ -195,19 +194,22 @@
       {% endif %}
 
       <div class="flex justify-end gap-3 pt-4">
+        
         <button
           type="submit"
           class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
         >
-          Create Study
+          Save Changes
         </button>
 
         <a
-          href="{% url 'dashboard' %}"
+          href="{% url 'study_detail' study.id %}"
+          onclick="return confirm('Discard your changes?');"
           class="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
-          Back to Dashboard
+          Discard changes
         </a>
+       
       </div>
 
     </form>

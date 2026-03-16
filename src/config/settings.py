@@ -32,6 +32,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    "unfold",
+
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -41,6 +43,27 @@ INSTALLED_APPS = [
 
     "studies"
 ]
+
+from django.templatetags.static import static
+from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
+
+UNFOLD = {
+    "SITE_TITLE": "ChronicleUX Admin",
+    "SITE_HEADER": "ChronicleUX",
+    "SITE_SUBHEADER": "Diary Study Research Platform",
+    "SITE_SYMBOL": "analytics",
+    "SHOW_HISTORY": True,
+    "SHOW_VIEW_ON_SITE": False,
+
+    "SITE_DROPDOWN": [
+        {
+            "icon": "home",
+            "title": _("Admin home"),
+            "link": reverse_lazy("admin:index"),
+        }
+    ],
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
