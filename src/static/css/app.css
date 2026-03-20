@@ -502,8 +502,4 @@
     }
   }
 }
-@layer components {
-  .ui-link {
-    @apply text-slate-600 hover:text-fuchsia-300 active:text-indigo-800;
-  }
-}
+

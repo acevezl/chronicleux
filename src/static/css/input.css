@@ -24,4 +24,24 @@
   .status-cell-COMPLETED {
     @apply bg-green-50 text-green-800;
   }
+
+  .status-cell-PLANNING-dark {
+    @apply bg-gray-50 text-gray-700;
+  }
+
+  .status-cell-COLLECTING-dark {
+    @apply bg-blue-50 text-blue-800;
+  }
+
+  .status-cell-ANALYZING-dark {
+    @apply bg-amber-50 text-amber-800;
+  }
+
+  .status-cell-COMPLETED-dark {
+    @apply bg-green-50 text-green-800;
+  }
+
+  .ui-link {
+    @apply text-slate-600 hover:text-fuchsia-300 active:text-indigo-800;
+  }
 }
