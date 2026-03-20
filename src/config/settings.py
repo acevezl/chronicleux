@@ -32,8 +32,13 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    "unfold",
+    # admin UI theme
+    "unfold", 
 
+    # heroicons
+    "heroicons",
+
+    # django admin
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -41,6 +46,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    # chronicleux apps
     "studies"
 ]
 
@@ -88,6 +94,9 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "ui.context.user_ui_context",
+            ],
+            "builtins": [
+                "heroicons.templatetags.heroicons"
             ],
         },
     },

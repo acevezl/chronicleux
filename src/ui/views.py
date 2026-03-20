@@ -9,7 +9,7 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 
 @login_required
-def dashboard(request):
+def evaluator_dashboard(request):
 
     studies = Study.objects.all()
 
@@ -52,7 +52,7 @@ def dashboard(request):
     page_params = request.GET.copy()
     page_params.pop("page", None)
 
-    return render(request, "dashboard.html", {
+    return render(request, "evaluator_dashboard.html", {
         "studies": page_obj,
         "page_obj": page_obj,
         "sort": sort,
@@ -62,14 +62,14 @@ def dashboard(request):
 
 def signup(request):
     if request.user.is_authenticated:
-        return redirect("dashboard")
+        return redirect("evaluator_dashboard")
 
     if request.method == "POST":
         form = SignUpForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect("dashboard")
+            return redirect("evaluator_dashboard")
     else:
         form = SignUpForm()
 
