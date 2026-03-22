@@ -7,16 +7,16 @@
 
   <div class="mt-2 md:flex md:items-center md:justify-between">
     <div class="min-w-0 flex-1">
-      <h2 class="text-2xl/7 font-bold text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight dark:text-white">
+      <h1 class="font-bold text-gray-900 sm:truncate text-3xl tracking-tight dark:text-white">
         Evaluator Dashboard
-      </h2>
+      </h1>
     </div>
   </div>
 
   <div class="mt-6 grid grid-cols-1 gap-4">
-    <div class="bg-white border border-gray-400 rounded-sm overflow-hidden dark:bg-gray-700">
+    <div class="bg-white border border-gray-200 rounded-sm overflow-hidden dark:bg-gray-700">
 
-      <div class="flex items-center justify-between px-6 py-4 border-b bg-gray-50 dark:bg-gray-600">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50 dark:bg-gray-600">
         <h2 class="text-lg font-semibold dark:text-gray-200">My Studies</h2>
 
         <a href="{% url 'create_study' %}"
@@ -25,14 +25,14 @@
         </a>
       </div>
 
-      <div class="px-6 py-4 border-b bg-white dark:bg-gray-700">
+      <div class="px-6 py-4 bg-white dark:bg-gray-700">
         <form method="get" class="flex flex-wrap gap-3">
           <input
             type="text"
             name="q"
             placeholder="Search title..."
             value="{{ request.GET.q }}"
-            class="border rounded-sm px-3 py-2 text-sm w-56 dark:text-gray-200"
+            class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-gray-200"
           >
 
           <input
@@ -40,10 +40,10 @@
             name="owner"
             placeholder="Owner"
             value="{{ request.GET.owner }}"
-            class="border rounded-sm px-3 py-2 text-sm w-40 dark:text-gray-200"
+            class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-40 dark:text-gray-200"
           >
 
-          <select name="status" class="border rounded-sm px-3 py-2 text-sm w-56 dark:text-gray-200">
+          <select name="status" class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-gray-200">
             <option value="">All Statuses</option>
             <option value="PLANNING">Not started (Planning)</option>
             <option value="COLLECTING">Collecting diary entries</option>
@@ -72,7 +72,7 @@
         <div class="overflow-x-auto">
           <table class="w-full table-auto text-sm">
             <thead class="bg-gray-50 dark:bg-gray-600 dark:text-gray-200 text-gray-600">
-              <tr class="border-b">
+              <tr class="border-b border-t border-gray-200">
 
                 <th class="text-left px-4 py-3 font-medium">
                   <a
@@ -142,7 +142,7 @@
             </tbody>
           </table>
 
-          <div class="flex items-center justify-between px-6 py-4 border-t">
+          <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200">
 
             <div class="text-sm text-gray-600 dark:text-gray-200">
               Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
