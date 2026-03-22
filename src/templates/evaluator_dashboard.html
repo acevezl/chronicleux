@@ -142,7 +142,7 @@
             </tbody>
           </table>
 
-          <div class="flex items-center justify-between px-6 py-4 bg-gray-100 border-t border-gray-200 dark:border-gray-600 dark:bg-gray-700">
+          <div class="flex items-center justify-between px-6 py-4 bg-gray-100 border-t border-gray-200 dark:border-gray-600 dark:bg-gray-800">
 
             <div class="text-sm text-gray-600 dark:text-gray-200">
               Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
@@ -153,7 +153,7 @@
               {% if page_obj.has_previous %}
                 <a
                   href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
-                  class="px-3 py-1 border rounded hover:bg-gray-100 text-sm"
+                  class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
                 >
                   Previous
                 </a>
@@ -162,7 +162,7 @@
               {% if page_obj.has_next %}
                 <a
                   href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
-                  class="px-3 py-1 border rounded hover:bg-gray-100 text-sm"
+                  class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
                 >
                   Next
                 </a>
