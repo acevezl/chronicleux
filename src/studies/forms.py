@@ -1,7 +1,6 @@
 from django import forms
 from .models import Study
 
-
 class StudyForm(forms.ModelForm):
     class Meta:
         model = Study
@@ -31,43 +30,43 @@ class StudyForm(forms.ModelForm):
 
         widgets = {
             "title": forms.TextInput(attrs={
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "goal": forms.TextInput(attrs={
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "description": forms.Textarea(attrs={
                 "rows": 4,
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "hypotheses": forms.Textarea(attrs={
                 "rows": 4,
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "status": forms.Select(attrs={
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "entry_frequency": forms.Select(attrs={
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "data_collection_start": forms.DateInput(attrs={
                 "type": "date",
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "data_collection_end": forms.DateInput(attrs={
                 "type": "date",
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "participant_instructions": forms.Textarea(attrs={
                 "rows": 4,
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "context": forms.Textarea(attrs={
                 "rows": 4,
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "tags": forms.TextInput(attrs={
-                "class": "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500",
+                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
                 "placeholder": "e.g. user experience, workflow analysis, engagement",
                 "data-role": "tags-input",
             })

@@ -60,6 +60,9 @@ fi
 
 PORT="${1:-8000}"
 
+# Kill processes using the 8000 (or selected) port
+kill -9 $(lsof -t -i :8000)
+
 echo "Using python: $(which python)"
 echo "Project root: $PROJECT_ROOT"
 echo "Django dir: $SCRIPT_DIR"

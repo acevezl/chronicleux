@@ -5,212 +5,229 @@
 
 {% block content %}
 
-<h1 class="text-2xl font-semibold">Create New Diary Study</h1>
-<p class="mt-2 text-gray-600">Set up your study protocol using the fields below.</p>
+<div class="mt-2 md:flex md:items-center md:justify-between">
+  <div class="min-w-0 flex-1">
+    <h1 class="text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight dark:text-white">
+      Create a Diary Study
+    </h1>
+  </div>
+</div>
 
 <div class="mt-6 grid grid-cols-1 gap-4">
-  <div class="bg-white border rounded-lg p-6">
-
-    <form method="post" class="mt-6 space-y-6">
-      {% csrf_token %}
-
-      <!-- TITLE -->
-      <div>
-        <label for="{{ form.title.id_for_label }}" class="block text-lg font-medium text-gray-700">
-          Title
-        </label>
-        {% if form.title.help_text %}
-            <p class="mt-1 text-sm text-gray-500">
-            {{ form.title.help_text }}
-            </p>
-        {% endif %}
-        {{ form.title }}
-        {% if form.title.errors %}
-          <p class="mt-1 text-sm text-red-600">{{ form.title.errors|join:", " }}</p>
-        {% endif %}
+  <div class="bg-white border border-gray-200 rounded-sm overflow-hidden">
+    <div class="border-b border-gray-200 bg-gray-50 p-6">
+      <span class="text-xl text-fuchsia-700 dark:text-gray-200">New Diary Study</span>
+      <div class="flex md:grid-cols-2 gap-6">
+        <span class="mt-1 text-sm text-gray-900">Use the fields below to create a protocol for your diary study.</span>
       </div>
-
-      <!-- GOAL -->
-      <div>
-        <label for="{{ form.goal.id_for_label }}" class="block text-lg font-medium text-gray-700">
-          Study Goal
-        </label>
-        {% if form.goal.help_text %}
-            <p class="mt-1 text-sm text-gray-500">
-            {{ form.goal.help_text }}
-            </p>
-        {% endif %}
-        {{ form.goal }}
-        {% if form.goal.errors %}
-          <p class="mt-1 text-sm text-red-600">{{ form.goal.errors|join:", " }}</p>
-        {% endif %}
-      </div>
-
-      <!-- DESCRIPTION -->
-      <div>
-        <label for="{{ form.description.id_for_label }}" class="block text-lg font-medium text-gray-700">
-          Description
-        </label>
-        {% if form.description.help_text %}
-            <p class="mt-1 text-sm text-gray-500">
-            {{ form.description.help_text }}
-            </p>
-        {% endif %}
-        {{ form.description }}
-        {% if form.description.errors %}
-          <p class="mt-1 text-sm text-red-600">{{ form.description.errors|join:", " }}</p>
-        {% endif %}
-      </div>
-
-      <!-- HYPOTHESES -->
-      <div>
-        <label for="{{ form.hypotheses.id_for_label }}" class="block text-lg font-medium text-gray-700">
-          Hypotheses
-        </label>
-        {% if form.hypotheses.help_text %}
-            <p class="mt-1 text-sm text-gray-500">
-            {{ form.hypotheses.help_text }}
-            </p>
-        {% endif %}
-        {{ form.hypotheses }}
-        {% if form.hypotheses.errors %}
-          <p class="mt-1 text-sm text-red-600">{{ form.hypotheses.errors|join:", " }}</p>
-        {% endif %}
-      </div>
-
-      <!-- PARTICIPANT INSTURCTIONS -->
-      <div>
-        <label for="{{ form.participant_instructions.id_for_label }}" class="block text-lg font-medium text-gray-700">
-          Participant Instructions
-        </label>
-        {% if form.participant_instructions.help_text %}
-            <p class="mt-1 text-sm text-gray-500">
-            {{ form.participant_instructions.help_text }}
-            </p>
-        {% endif %}
-        {{ form.participant_instructions }}
-        {% if form.participant_instructions.errors %}
-          <p class="mt-1 text-sm text-red-600">{{ form.participant_instructions.errors|join:", " }}</p>
-        {% endif %}
-      </div>
-
-      <!-- CONTEXT -->
-      <div>
-        <label for="{{ form.context.id_for_label }}" class="block text-lg font-medium text-gray-700">
-          Entries Context
-        </label>
-        {% if form.context.help_text %}
-            <p class="mt-1 text-sm text-gray-500">
-            {{ form.context.help_text }}
-            </p>
-        {% endif %}
-        {{ form.context }}
-        {% if form.context.errors %}
-          <p class="mt-1 text-sm text-red-600">{{ form.context.errors|join:", " }}</p>
-        {% endif %}
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        <!-- STATUS -->
-        <div>
-          <label for="{{ form.status.id_for_label }}" class="block text-lg font-medium text-gray-700">
-            Status
-          </label>
-          {{ form.status }}
-          {% if form.status.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.status.errors|join:", " }}</p>
-          {% endif %}
-        </div>
-
-        <!-- FREQUENCY -->
-        <div>
-          <label for="{{ form.entry_frequency.id_for_label }}" class="block text-lg font-medium text-gray-700">
-            Entry frequency
-          </label>
-          {{ form.entry_frequency }}
-          {% if form.entry_frequency.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.entry_frequency.errors|join:", " }}</p>
-          {% endif %}
-        </div>
-      
     </div>
 
-      <!-- START AND END DATES -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- STUDY DATA -->
+    <div class="p-6">
+
+      <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- TITLE -->
         <div>
-          <label for="{{ form.data_collection_start.id_for_label }}" class="block text-lg font-medium text-gray-700">
-            Data collection start
+          <label for="{{ form.title.id_for_label }}" class="block text-lg font-medium text-gray-700">
+            Title
           </label>
-          {{ form.data_collection_start }}
-          {% if form.data_collection_start.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.data_collection_start.errors|join:", " }}</p>
+          {% if form.title.help_text %}
+              <p class="mt-1 text-sm text-gray-500">
+              {{ form.title.help_text }}
+              </p>
+          {% endif %}
+          {{ form.title }}
+          {% if form.title.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.title.errors|join:", " }}</p>
           {% endif %}
         </div>
 
+        <!-- GOAL -->
         <div>
-          <label for="{{ form.data_collection_end.id_for_label }}" class="block text-lg font-medium text-gray-700">
-            Data collection end
+          <label for="{{ form.goal.id_for_label }}" class="block text-lg font-medium text-gray-700">
+            Study Goal
           </label>
-          {{ form.data_collection_end }}
-          {% if form.data_collection_end.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.data_collection_end.errors|join:", " }}</p>
+          {% if form.goal.help_text %}
+              <p class="mt-1 text-sm text-gray-500">
+              {{ form.goal.help_text }}
+              </p>
+          {% endif %}
+          {{ form.goal }}
+          {% if form.goal.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.goal.errors|join:", " }}</p>
           {% endif %}
         </div>
-      </div>
 
-      <!-- TAGS -->
-      <div>
-        <label for="tags-entry" class="block text-lg font-medium text-gray-700">
-            Tags
-        </label>
-
-        {% if form.tags.help_text %}
-            <p class="mt-1 text-sm text-gray-500">
-            {{ form.tags.help_text }}
-            </p>
-        {% endif %}
-
-        <input
-            id="tags-entry"
-            type="text"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-            placeholder="{{ form.tags.field.widget.attrs.placeholder }}"
-            data-role="tags-entry"
-        >
-
-        {{ form.tags.as_hidden }}
-
-        <div data-role="tags-container" class="flex flex-wrap gap-2 mt-2"></div>
-
-        {% if form.tags.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.tags.errors|join:", " }}</p>
-        {% endif %}
-      </div>
-
-      {% if form.non_field_errors %}
-        <div class="rounded-md bg-red-50 p-4 text-sm text-red-700">
-          {{ form.non_field_errors }}
+        <!-- DESCRIPTION -->
+        <div>
+          <label for="{{ form.description.id_for_label }}" class="block text-lg font-medium text-gray-700">
+            Description
+          </label>
+          {% if form.description.help_text %}
+              <p class="mt-1 text-sm text-gray-500">
+              {{ form.description.help_text }}
+              </p>
+          {% endif %}
+          {{ form.description }}
+          {% if form.description.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.description.errors|join:", " }}</p>
+          {% endif %}
         </div>
-      {% endif %}
 
-      <div class="flex justify-end gap-3 pt-4">
-        <button
-          type="submit"
-          class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-        >
-          Create Study
-        </button>
+        <!-- HYPOTHESES -->
+        <div>
+          <label for="{{ form.hypotheses.id_for_label }}" class="block text-lg font-medium text-gray-700">
+            Hypotheses
+          </label>
+          {% if form.hypotheses.help_text %}
+              <p class="mt-1 text-sm text-gray-500">
+              {{ form.hypotheses.help_text }}
+              </p>
+          {% endif %}
+          {{ form.hypotheses }}
+          {% if form.hypotheses.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.hypotheses.errors|join:", " }}</p>
+          {% endif %}
+        </div>
 
-        <a
-          href="{% url 'dashboard' %}"
-          class="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          Back to Dashboard
-        </a>
-      </div>
+        <!-- PARTICIPANT INSTURCTIONS -->
+        <div>
+          <label for="{{ form.participant_instructions.id_for_label }}" class="block text-lg font-medium text-gray-700">
+            Participant Instructions
+          </label>
+          {% if form.participant_instructions.help_text %}
+              <p class="mt-1 text-sm text-gray-500">
+              {{ form.participant_instructions.help_text }}
+              </p>
+          {% endif %}
+          {{ form.participant_instructions }}
+          {% if form.participant_instructions.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.participant_instructions.errors|join:", " }}</p>
+          {% endif %}
+        </div>
 
-    </form>
+        <!-- CONTEXT -->
+        <div>
+          <label for="{{ form.context.id_for_label }}" class="block text-lg font-medium text-gray-700">
+            Entries Context
+          </label>
+          {% if form.context.help_text %}
+              <p class="mt-1 text-sm text-gray-500">
+              {{ form.context.help_text }}
+              </p>
+          {% endif %}
+          {{ form.context }}
+          {% if form.context.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ form.context.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+            <!-- STATUS -->
+            <div>
+              <label for="{{ form.status.id_for_label }}" class="block text-lg font-medium text-gray-700">
+                Status
+              </label>
+              {{ form.status }}
+              {% if form.status.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.status.errors|join:", " }}</p>
+              {% endif %}
+            </div>
+
+            <!-- FREQUENCY -->
+            <div>
+              <label for="{{ form.entry_frequency.id_for_label }}" class="block text-lg font-medium text-gray-700">
+                Entry frequency
+              </label>
+              {{ form.entry_frequency }}
+              {% if form.entry_frequency.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.entry_frequency.errors|join:", " }}</p>
+              {% endif %}
+            </div>
+          
+        </div>
+
+        <!-- START AND END DATES -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="{{ form.data_collection_start.id_for_label }}" class="block text-lg font-medium text-gray-700">
+              Data collection start
+            </label>
+            {{ form.data_collection_start }}
+            {% if form.data_collection_start.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ form.data_collection_start.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+
+          <div>
+            <label for="{{ form.data_collection_end.id_for_label }}" class="block text-lg font-medium text-gray-700">
+              Data collection end
+            </label>
+            {{ form.data_collection_end }}
+            {% if form.data_collection_end.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ form.data_collection_end.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- TAGS -->
+        <div>
+          <label for="tags-entry" class="block text-lg font-medium text-gray-700">
+              Tags
+          </label>
+
+          {% if form.tags.help_text %}
+              <p class="mt-1 text-sm text-gray-500">
+              {{ form.tags.help_text }}
+              </p>
+          {% endif %}
+
+          <input
+              id="tags-entry"
+              type="text"
+              class="text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700"
+              placeholder="{{ form.tags.field.widget.attrs.placeholder }}"
+              data-role="tags-entry"
+          >
+
+          {{ form.tags.as_hidden }}
+
+          <div data-role="tags-container" class="flex flex-wrap gap-2 mt-2"></div>
+
+          {% if form.tags.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ form.tags.errors|join:", " }}</p>
+          {% endif %}
+        </div>
+
+        {% if form.non_field_errors %}
+          <div class="rounded-md bg-red-50 p-4 text-sm text-red-700">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <div class="flex justify-end gap-3 pt-4">
+          <button
+            type="submit"
+            class="inline-flex items-center rounded-md bg-fuchsia-800 px-4 py-2 text-sm font-medium text-white hover:bg-fuchsia-700 cursor-pointer"
+          >
+            Create Study
+          </button>
+
+          <a
+            href="{% url 'dashboard' %}"
+            class="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
+          >
+            Back to Dashboard
+          </a>
+        </div>
+
+      </form>
+
+    </div>
+
   </div>
 </div>
 
@@ -237,14 +254,14 @@
 
         tags.forEach((tag, index) => {
         const tagEl = document.createElement("span");
-        tagEl.className = "inline-flex items-center gap-2 rounded-full bg-indigo-100 px-3 py-1 text-xs font-medium text-indigo-800";
+        tagEl.className = "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs text-fuchsia-700 border border-fuchsia-700";
 
         const textEl = document.createElement("span");
         textEl.textContent = tag;
 
         const buttonEl = document.createElement("button");
         buttonEl.type = "button";
-        buttonEl.className = "text-indigo-600 hover:text-indigo-900 font-bold";
+        buttonEl.className = "text-fuchsia-700 font-bold cursor-pointer";
         buttonEl.setAttribute("aria-label", `Remove ${tag}`);
         buttonEl.textContent = "×";
         buttonEl.addEventListener("click", () => {
