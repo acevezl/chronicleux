@@ -14,21 +14,21 @@
 </div>
 
 <div class="mt-6 grid grid-cols-1 gap-4">
-  <div class="bg-white border border-gray-200 rounded-sm overflow-hidden">
-
-    <div class="border-b border-gray-200 bg-gray-50 p-6">
+  <div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden ">
+    
+    <div class="px-6 py-4 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
       <span class="text-xl text-fuchsia-700 dark:text-gray-200">{{ study.title }}</span>
       
       <!-- META DATA -->
       <div class="flex md:grid-cols-2 gap-6">
         <div>
-          <div class="mt-1 text-sm text-gray-900">
+          <div class="mt-1 text-sm text-gray-900 dark:text-gray-200">
             Owner: {{ study.owner.username }}
           </div>
         </div>
 
         <div>
-          <div class="mt-1 text-sm text-gray-900">
+          <div class="mt-1 text-sm text-gray-900 dark:text-gray-200">
             Created on: {{ study.created_at|date:"Y-m-d H:i" }}
           </div>
         </div>
@@ -44,7 +44,7 @@
 
         <a
           href="{% url 'dashboard' %}"
-          class="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
         >
           Back to Dashboard
         </a>
@@ -57,50 +57,50 @@
       <div class="space-y-4">
         <!-- GOAL -->
         <div>
-          <label class="block text-lg font-medium text-gray-700">
+          <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
             Study Goal
           </label>
-          <div class="mt-1 text-sm text-gray-900">
+          <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
             {{ study.goal|default:"—" }}
           </div>
         </div>
 
         <!-- DESCRIPTION -->
         <div>
-          <label class="block text-lg font-medium text-gray-700">
+          <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
             Description
           </label>
-          <div class="mt-1 text-sm text-gray-900">
+          <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
             {{ study.description|default:"—" }}
           </div>
         </div>
 
         <!-- HYPOTHESES -->
         <div>
-          <label class="block text-lg font-medium text-gray-700">
+          <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
             Hypotheses
           </label>
-          <div class="mt-1 text-sm text-gray-900">
+          <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
             {{ study.hypotheses|default:"—" }}
           </div>
         </div>
 
         <!-- PARTICIPANT INSTRUCTIONS -->
         <div>
-          <label class="block text-lg font-medium text-gray-700">
+          <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
             Participant Instructions
           </label>
-          <div class="mt-1 text-sm text-gray-900">
+          <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
             {{ study.participant_instructions|default:"—" }}
           </div>
         </div>
 
         <!-- CONTEXT -->
         <div>
-          <label class="block text-lg font-medium text-gray-700">
+          <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
             Entries Context
           </label>
-          <div class="mt-1 text-sm text-gray-900">
+          <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
             {{ study.context|default:"—" }}
           </div>
         </div>
@@ -109,11 +109,11 @@
 
           <!-- STATUS -->
           <div>
-            <label class="block text-lg font-medium text-gray-700">
+            <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
               Status
             </label>
             <div class="mt-1 text-sm">
-              <span class="px-2 py-1 status-cell-{{ study.status }}">
+              <span class="px-2 py-1 rounded-sm status-cell-{{ study.status }}">
                 {{ study.get_status_display }}
               </span>
             </div>
@@ -121,10 +121,10 @@
 
           <!-- FREQUENCY -->
           <div>
-            <label class="block text-lg font-medium text-gray-700">
+            <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
               Entry Frequency
             </label>
-            <div class="mt-1 text-sm text-gray-900">
+            <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
               {{ study.get_entry_frequency_display|default:"—" }}
             </div>
           </div>
@@ -134,19 +134,19 @@
         <!-- START AND END DATES -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label class="block text-lg font-medium text-gray-700">
+            <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
               Data Collection Start
             </label>
-            <div class="mt-1 text-sm text-gray-900">
+            <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
               {{ study.data_collection_start|date:"Y-m-d"|default:"—" }}
             </div>
           </div>
 
           <div>
-            <label class="block text-lg font-medium text-gray-700">
+            <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
               Data Collection End
             </label>
-            <div class="mt-1 text-sm text-gray-900">
+            <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
               {{ study.data_collection_end|date:"Y-m-d"|default:"—" }}
             </div>
           </div>
@@ -157,7 +157,7 @@
           {% if tags_list %}
             <div class="mt-2 flex flex-wrap gap-2">
               {% for tag in tags_list %}
-                <span class="border border-gray-100 rounded-full px-3 py-1 text-xs text-fuchsia-700">
+                <span class="border border-fuchsia-700 rounded-full px-3 py-1 text-xs text-fuchsia-700">
                   {{ tag }}
                 </span>
               {% endfor %}

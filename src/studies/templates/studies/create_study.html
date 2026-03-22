@@ -14,11 +14,12 @@
 </div>
 
 <div class="mt-6 grid grid-cols-1 gap-4">
-  <div class="bg-white border border-gray-200 rounded-sm overflow-hidden">
-    <div class="border-b border-gray-200 bg-gray-50 p-6">
+  <div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden ">
+    
+    <div class="px-6 py-4 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
       <span class="text-xl text-fuchsia-700 dark:text-gray-200">New Diary Study</span>
       <div class="flex md:grid-cols-2 gap-6">
-        <span class="mt-1 text-sm text-gray-900">Use the fields below to create a protocol for your diary study.</span>
+        <span class="mt-1 text-sm text-gray-900 dark:text-gray-400">Use the fields below to create a protocol for your diary study.</span>
       </div>
     </div>
 
@@ -30,11 +31,11 @@
 
         <!-- TITLE -->
         <div>
-          <label for="{{ form.title.id_for_label }}" class="block text-lg font-medium text-gray-700">
+          <label for="{{ form.title.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
             Title
           </label>
           {% if form.title.help_text %}
-              <p class="mt-1 text-sm text-gray-500">
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {{ form.title.help_text }}
               </p>
           {% endif %}
@@ -46,11 +47,11 @@
 
         <!-- GOAL -->
         <div>
-          <label for="{{ form.goal.id_for_label }}" class="block text-lg font-medium text-gray-700">
+          <label for="{{ form.goal.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
             Study Goal
           </label>
           {% if form.goal.help_text %}
-              <p class="mt-1 text-sm text-gray-500">
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {{ form.goal.help_text }}
               </p>
           {% endif %}
@@ -62,11 +63,11 @@
 
         <!-- DESCRIPTION -->
         <div>
-          <label for="{{ form.description.id_for_label }}" class="block text-lg font-medium text-gray-700">
+          <label for="{{ form.description.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
             Description
           </label>
           {% if form.description.help_text %}
-              <p class="mt-1 text-sm text-gray-500">
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {{ form.description.help_text }}
               </p>
           {% endif %}
@@ -78,11 +79,11 @@
 
         <!-- HYPOTHESES -->
         <div>
-          <label for="{{ form.hypotheses.id_for_label }}" class="block text-lg font-medium text-gray-700">
+          <label for="{{ form.hypotheses.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
             Hypotheses
           </label>
           {% if form.hypotheses.help_text %}
-              <p class="mt-1 text-sm text-gray-500">
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {{ form.hypotheses.help_text }}
               </p>
           {% endif %}
@@ -94,11 +95,11 @@
 
         <!-- PARTICIPANT INSTURCTIONS -->
         <div>
-          <label for="{{ form.participant_instructions.id_for_label }}" class="block text-lg font-medium text-gray-700">
+          <label for="{{ form.participant_instructions.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
             Participant Instructions
           </label>
           {% if form.participant_instructions.help_text %}
-              <p class="mt-1 text-sm text-gray-500">
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {{ form.participant_instructions.help_text }}
               </p>
           {% endif %}
@@ -110,11 +111,11 @@
 
         <!-- CONTEXT -->
         <div>
-          <label for="{{ form.context.id_for_label }}" class="block text-lg font-medium text-gray-700">
+          <label for="{{ form.context.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
             Entries Context
           </label>
           {% if form.context.help_text %}
-              <p class="mt-1 text-sm text-gray-500">
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {{ form.context.help_text }}
               </p>
           {% endif %}
@@ -128,7 +129,7 @@
           
             <!-- STATUS -->
             <div>
-              <label for="{{ form.status.id_for_label }}" class="block text-lg font-medium text-gray-700">
+              <label for="{{ form.status.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
                 Status
               </label>
               {{ form.status }}
@@ -139,7 +140,7 @@
 
             <!-- FREQUENCY -->
             <div>
-              <label for="{{ form.entry_frequency.id_for_label }}" class="block text-lg font-medium text-gray-700">
+              <label for="{{ form.entry_frequency.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
                 Entry frequency
               </label>
               {{ form.entry_frequency }}
@@ -153,7 +154,7 @@
         <!-- START AND END DATES -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label for="{{ form.data_collection_start.id_for_label }}" class="block text-lg font-medium text-gray-700">
+            <label for="{{ form.data_collection_start.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
               Data collection start
             </label>
             {{ form.data_collection_start }}
@@ -163,7 +164,7 @@
           </div>
 
           <div>
-            <label for="{{ form.data_collection_end.id_for_label }}" class="block text-lg font-medium text-gray-700">
+            <label for="{{ form.data_collection_end.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
               Data collection end
             </label>
             {{ form.data_collection_end }}
@@ -175,12 +176,12 @@
 
         <!-- TAGS -->
         <div>
-          <label for="tags-entry" class="block text-lg font-medium text-gray-700">
+          <label for="tags-entry" class="block text-lg font-medium text-gray-70 dark:text-gray-200">
               Tags
           </label>
 
           {% if form.tags.help_text %}
-              <p class="mt-1 text-sm text-gray-500">
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {{ form.tags.help_text }}
               </p>
           {% endif %}
@@ -188,7 +189,7 @@
           <input
               id="tags-entry"
               type="text"
-              class="text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700"
+              class="text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700 dark:text-gray-200"
               placeholder="{{ form.tags.field.widget.attrs.placeholder }}"
               data-role="tags-entry"
           >
@@ -218,7 +219,7 @@
 
           <a
             href="{% url 'dashboard' %}"
-            class="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
+            class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
           >
             Back to Dashboard
           </a>

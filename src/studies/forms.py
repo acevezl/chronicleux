@@ -31,43 +31,43 @@ class StudyForm(forms.ModelForm):
 
         widgets = {
             "title": forms.TextInput(attrs={
-                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "goal": forms.TextInput(attrs={
-                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "description": forms.Textarea(attrs={
                 "rows": 4,
-                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "hypotheses": forms.Textarea(attrs={
                 "rows": 4,
-                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "status": forms.Select(attrs={
-                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "entry_frequency": forms.Select(attrs={
-                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "data_collection_start": forms.DateInput(attrs={
                 "type": "date",
-                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "data_collection_end": forms.DateInput(attrs={
                 "type": "date",
-                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "participant_instructions": forms.Textarea(attrs={
                 "rows": 4,
-                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "context": forms.Textarea(attrs={
                 "rows": 4,
-                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
             }),
             "tags": forms.TextInput(attrs={
-                "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
                 "placeholder": "e.g. user experience, workflow analysis, engagement",
                 "data-role": "tags-input",
             })
@@ -90,7 +90,7 @@ class DiaryEntryForm(forms.ModelForm):
         widgets = {
             "sentiment_self_report": forms.Select(
                 attrs={
-                    "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                    "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
                 }
             ),
             "issue_encountered": forms.CheckboxInput(
@@ -101,7 +101,7 @@ class DiaryEntryForm(forms.ModelForm):
             "content": forms.Textarea(
                 attrs={
                     "rows": 10,
-                    "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                    "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
                     "placeholder": "Write about your experience...",
                 }
             ),

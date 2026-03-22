@@ -14,9 +14,9 @@
   </div>
 
   <div class="mt-6 grid grid-cols-1 gap-4">
-    <div class="bg-white border border-gray-200 rounded-sm overflow-hidden dark:bg-gray-700">
+    <div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden ">
 
-      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50 dark:bg-gray-600">
+      <div class="flex items-center justify-between px-6 py-4 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
         <h2 class="text-lg dark:text-gray-200">My Studies</h2>
 
         <a href="{% url 'create_study' %}"
@@ -25,14 +25,14 @@
         </a>
       </div>
 
-      <div class="px-6 py-4 bg-white dark:bg-gray-700">
+      <div class="px-6 py-4 bg-white dark:bg-gray-900">
         <form method="get" class="flex flex-wrap gap-3">
           <input
             type="text"
             name="q"
             placeholder="Search title..."
             value="{{ request.GET.q }}"
-            class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-gray-200"
+            class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
           >
 
           <input
@@ -40,10 +40,10 @@
             name="owner"
             placeholder="Owner"
             value="{{ request.GET.owner }}"
-            class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-40 dark:text-gray-200"
+            class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-40 dark:text-white dark:border-gray-500"
           >
 
-          <select name="status" class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-gray-200">
+          <select name="status" class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-gray-200 dark:border-gray-500">
             <option value="">All Statuses</option>
             <option value="PLANNING">Not started (Planning)</option>
             <option value="COLLECTING">Collecting diary entries</option>
@@ -53,14 +53,14 @@
 
           <button
             type="submit"
-            class="bg-gray-800 dark:bg-gray-900 text-white px-4 py-2 rounded-sm text-sm hover:bg-gray-900 dark:hover:bg-gray-800 cursor-pointer">
+            class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 text-sm border border-gray-800 hover:border-gray-700 cursor-pointer">
             Filter
           </button>
 
           {% if request.GET.q or request.GET.owner or request.GET.status %}
           <a
             href="{% url 'dashboard' %}"
-            class="border border-gray-300 text-gray-700 px-4 py-2 rounded-sm text-sm hover:bg-gray-50"
+            class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
           >
             Clear Filter
           </a>
@@ -71,8 +71,8 @@
       {% if studies %}
         <div class="overflow-x-auto">
           <table class="w-full table-auto text-sm">
-            <thead class="bg-gray-50 dark:bg-gray-600 dark:text-gray-200 text-gray-600">
-              <tr class="border-b border-t border-gray-200">
+            <thead class="bg-gray-100 dark:bg-gray-700 dark:text-gray-200 text-gray-600">
+              <tr class="border-b border-t border-gray-200 dark:border-gray-600">
 
                 <th class="text-left px-4 py-3 font-medium">
                   <a
@@ -117,9 +117,9 @@
               </tr>
             </thead>
 
-            <tbody class="divide-y divide-gray-200 text-gray-600 dark:text-gray-200">
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-600 text-gray-600 dark:text-gray-200">
               {% for study in studies %}
-                <tr class="hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors">
+                <tr class="hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 transition-colors">
                   <td class="px-4 py-3">
                     <a href="{% url 'study_detail' study.id %}" class="hover:text-fuchsia-950 dark:hover:text-gray-50 hover:underline">
                       {{ study.title }}
@@ -142,7 +142,7 @@
             </tbody>
           </table>
 
-          <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+          <div class="flex items-center justify-between px-6 py-4 bg-gray-100 border-t border-gray-200 dark:border-gray-600 dark:bg-gray-700">
 
             <div class="text-sm text-gray-600 dark:text-gray-200">
               Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
