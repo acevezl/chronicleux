@@ -61,3 +61,40 @@ def edit_study(request, pk):
         "study": study,
         "form": form,
     })
+
+# CREATE ENTRY
+@login_required
+def create_diary_entry(request, study_id):
+    study = get_object_or_404(Study, pk=study_id)
+
+    if request.method == "POST":
+        form = DiaryEntryForm(request.POST)
+        if form.is_valid():
+            entry = form.save(commit=False)
+            entry.study = study
+            entry.participant = request.user
+
+            try:
+                entry.full_clean()
+                entry.save()
+            except ValidationError as e:
+                if hasattr(e, "message_dict"):
+                    for field, errors in e.message_dict.items():
+                        for error in errors:
+                            if field in form.fields:
+                                form.add_error(field, error)
+                            else:
+                                form.add_error(None, error)
+                else:
+                    form.add_error(None, e)
+            else:
+                messages.success(request, "Your diary entry was submitted successfully.")
+                return redirect("study_detail", study_id=study.pk)
+    else:
+        form = DiaryEntryForm()
+
+    context = {
+        "study": study,
+        "form": form,
+    }
+    return render(request, "studies/create_diary_entry.html", context)

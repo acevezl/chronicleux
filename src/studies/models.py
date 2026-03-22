@@ -168,11 +168,26 @@ class Prompt(models.Model):
         return f"[{self.study.pk}] {self.order}. {self.text}"
 
 
-class DiaryEntry(models.Model):
+class DiaryEntrySentiment(models.TextChoices):
+    VERY_NEGATIVE = "VERY_NEGATIVE", "Very negative"
+    NEGATIVE = "NEGATIVE", "Negative"
+    NEUTRAL = "NEUTRAL", "Neutral"
+    POSITIVE = "POSITIVE", "Positive"
+    VERY_POSITIVE = "VERY_POSITIVE", "Very positive"
 
+
+class DiaryEntry(models.Model):
     study = models.ForeignKey(Study, on_delete=models.CASCADE, related_name="entries")
     participant = models.ForeignKey(User, on_delete=models.CASCADE, related_name="diary_entries")
 
+    sentiment_self_report = models.CharField(
+        max_length=20,
+        choices=DiaryEntrySentiment.choices,
+        help_text="How would you describe your overall experience sentiment for this entry?",
+    )
+    issue_encountered = models.BooleanField(
+        help_text="Did you encounter any issue or friction during this experience?",
+    )
     content = models.TextField()  # unstructured narrative
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -191,7 +206,9 @@ class DiaryEntry(models.Model):
 
         # Participant must be enrolled as PARTICIPANT
         is_participant = StudyMembership.objects.filter(
-            study=self.study, user=self.participant, role=MembershipRole.PARTICIPANT
+            study=self.study,
+            user=self.participant,
+            role=MembershipRole.PARTICIPANT,
         ).exists()
         if not is_participant:
             raise ValidationError("User is not an enrolled participant in this study.")
@@ -215,8 +232,6 @@ class DiaryEntry(models.Model):
 
         elif self.study.entry_frequency == EntryFrequency.WEEKLY:
             now_local = timezone.localtime(timezone.now())
-            iso_year, iso_week, _ = now_local.isocalendar()
-            # Get Monday 00:00 of ISO week
             monday = now_local - timedelta(days=now_local.weekday())
             week_start = monday.replace(hour=0, minute=0, second=0, microsecond=0)
             week_end = week_start + timedelta(days=7)
@@ -234,7 +249,10 @@ class DiaryEntry(models.Model):
         # EVENT_BASED and FREEFORM are unlimited.
 
     def __str__(self) -> str:
-        return f"Entry {self.pk} · {self.study.pk} · {self.participant.pk} · {self.created_at}"
+        return (
+            f"Entry {self.pk} · {self.study.pk} · {self.participant.pk} · "
+            f"{self.created_at}"
+        )
 
 
 class PromptResponse(models.Model):

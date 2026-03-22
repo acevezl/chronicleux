@@ -1,5 +1,6 @@
 from django import forms
 from .models import Study
+from .models import DiaryEntry
 
 class StudyForm(forms.ModelForm):
     class Meta:
@@ -81,3 +82,32 @@ class StudyForm(forms.ModelForm):
             raise forms.ValidationError("The start date cannot be after the end date.")
 
         return cleaned_data
+
+class DiaryEntryForm(forms.ModelForm):
+    class Meta:
+        model = DiaryEntry
+        fields = ["sentiment_self_report", "issue_encountered", "content"]
+        widgets = {
+            "sentiment_self_report": forms.Select(
+                attrs={
+                    "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                }
+            ),
+            "issue_encountered": forms.CheckboxInput(
+                attrs={
+                    "class": "mt-1 h-4 w-4 rounded border-gray-300 text-gray-700 focus:ring-gray-700",
+                }
+            ),
+            "content": forms.Textarea(
+                attrs={
+                    "rows": 10,
+                    "class": "text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                    "placeholder": "Write about your experience...",
+                }
+            ),
+        }
+        labels = {
+            "sentiment_self_report": "Overall sentiment",
+            "issue_encountered": "I encountered an issue",
+            "content": "Diary entry",
+        }

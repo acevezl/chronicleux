@@ -1,0 +1,125 @@
+<div class="mt-2 md:flex md:items-center md:justify-between">
+  <div class="min-w-0 flex-1">
+    <h1 class="text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight dark:text-white">
+      Diary Study Entries
+    </h1>
+  </div>
+</div>
+
+<div class="mt-6 grid grid-cols-1 gap-4">
+  <div class="bg-white border border-gray-200 rounded-sm overflow-hidden">
+    <div class="overflow-x-auto">
+    {% if entries %}
+        <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+            <th scope="col" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+                #
+            </th>
+            <th scope="col" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+                Participant
+            </th>
+            <th scope="col" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+                Title
+            </th>
+            <th scope="col" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+                Date
+            </th>
+            <th scope="col" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+                Sentiment
+            </th>
+            <th scope="col" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+                Preview
+            </th>
+            <th scope="col" class="relative px-4 py-3.5">
+                <span class="sr-only">Actions</span>
+            </th>
+            </tr>
+        </thead>
+
+        <tbody class="divide-y divide-gray-200 bg-white">
+            {% for entry in entries %}
+            <tr class="hover:bg-gray-50">
+                <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-500">
+                {{ forloop.counter }}
+                </td>
+
+                <td class="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900">
+                {% if entry.participant %}
+                    {{ entry.participant }}
+                {% else %}
+                    —
+                {% endif %}
+                </td>
+
+                <td class="px-4 py-4 text-sm text-gray-900">
+                {% if entry.title %}
+                    {{ entry.title }}
+                {% else %}
+                    <span class="text-gray-400">Untitled</span>
+                {% endif %}
+                </td>
+
+                <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-500">
+                {% if entry.submitted_at %}
+                    {{ entry.submitted_at|date:"M j, Y" }}<br>
+                    <span class="text-xs text-gray-400">{{ entry.submitted_at|date:"H:i" }}</span>
+                {% elif entry.created_at %}
+                    {{ entry.created_at|date:"M j, Y" }}<br>
+                    <span class="text-xs text-gray-400">{{ entry.created_at|date:"H:i" }}</span>
+                {% else %}
+                    —
+                {% endif %}
+                </td>
+
+                <td class="whitespace-nowrap px-4 py-4 text-sm">
+                {% if entry.sentiment_label == "positive" %}
+                    <span class="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                    Positive
+                    </span>
+                {% elif entry.sentiment_label == "neutral" %}
+                    <span class="inline-flex items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20">
+                    Neutral
+                    </span>
+                {% elif entry.sentiment_label == "negative" %}
+                    <span class="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
+                    Negative
+                    </span>
+                {% else %}
+                    <span class="text-gray-400">—</span>
+                {% endif %}
+                </td>
+
+                <td class="px-4 py-4 text-sm text-gray-500 max-w-md">
+                {% if entry.content %}
+                    <p class="truncate">
+                    {{ entry.content|truncatewords:20 }}
+                    </p>
+                {% else %}
+                    —
+                {% endif %}
+                </td>
+
+                <td class="whitespace-nowrap px-4 py-4 text-right text-sm font-medium">
+                <a
+                    href="{% url 'entry_detail' entry.id %}"
+                    class="text-indigo-600 hover:text-indigo-500"
+                >
+                    View
+                </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    {% else %}
+        <div class="p-8 text-center">
+        <h2 class="text-sm font-semibold text-gray-900">No diary entries yet</h2>
+        <p class="mt-2 text-sm text-gray-500">
+            Entries submitted for this diary study will appear here.
+        </p>
+        </div>
+    {% endif %}
+    </div>
+  </div>
+</div>
