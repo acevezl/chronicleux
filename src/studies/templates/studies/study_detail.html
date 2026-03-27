@@ -35,21 +35,22 @@
       </div>
 
       <div class="flex gap-3 pt-4">
+
+        <a
+          href="{% url 'edit_study' study.id %}"
+          class="rounded-sm px-4 py-2 text-sm font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
+        >
+          Edit Study
+        </a>
+
         {% if is_evaluator %}
         <a
           href="{% url 'import_entries' study.id %}"
-          class="bg-gray-800 text-white px-4 py-2 rounded-sm hover:bg-gray-700 text-sm border border-gray-800 hover:border-gray-700 cursor-pointer"
+          class="rounded-sm px-4 py-2 text-sm font-medium text-gray-200 dark:text-gray-500 hover:text-white bg-gray-950  hover:bg-gray-600 border border-gray-950 dark:border-gray-500 dark:hover:border-gray-200 cursor-pointer"
         >
           Import Entries
         </a>
         {% endif %}
-
-        <a
-          href="{% url 'edit_study' study.id %}"
-          class="inline-flex items-center rounded-sm bg-fuchsia-800 px-4 py-2 text-sm font-medium text-white hover:bg-fuchsia-700"
-        >
-          Edit Study
-        </a>
 
         <a
           href="{% url 'dashboard' %}"
