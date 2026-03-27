@@ -5,7 +5,7 @@ from django.contrib import messages
 
 from .models import Study
 from .forms import StudyForm
-from .models import StudyMembership
+from .models import StudyMembership, MembershipRole
 
 # CREATE STUDY
 @login_required
@@ -38,9 +38,16 @@ def study_detail(request, pk):
     study = get_object_or_404(Study, pk=pk)
     tags_list = [tag.strip() for tag in study.tags.split(",") if tag.strip()] if study.tags else []
 
+    is_evaluator = StudyMembership.objects.filter(
+        study=study,
+        user=request.user,
+        role=MembershipRole.EVALUATOR
+    ).exists()
+
     return render(request, "studies/study_detail.html", {
         "study": study,
         "tags_list": tags_list,
+        "is_evaluator": is_evaluator,
     })
 
 # EDIT STUDY
@@ -98,3 +105,22 @@ def create_diary_entry(request, study_id):
         "form": form,
     }
     return render(request, "studies/create_diary_entry.html", context)
+
+# IMPORT ENTRIES
+@login_required
+def import_entries(request, pk):
+    study = get_object_or_404(Study, pk=pk)
+
+    # Access is restricted to evaluators only
+    is_evaluator = StudyMembership.objects.filter(
+        study=study,
+        user=request.user,
+        role=MembershipRole.EVALUATOR
+    ).exists()
+
+    if not is_evaluator:
+        return HttpResponseForbidden()
+
+    return render(request, "studies/import_entries.html", {
+        "study": study,
+    })

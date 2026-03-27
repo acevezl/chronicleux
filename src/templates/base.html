@@ -26,17 +26,17 @@
             </div>
 
             <div class="relative flex grow flex-col gap-y-5 overflow-y-auto bg-white dark:border-r dark:border-gray-600 dark:bg-gray-900 dark:ring dark:ring-white/10 dark:before:pointer-events-none dark:before:absolute dark:before:inset-0 dark:before:bg-black/10">
-              <div class="flex flex-col border-b border-gray-200 bg-white px-6 py-4 dark:bg-gray-800 dark:border-gray-600">
+              <div class="flex flex-col border-b border-gray-200 bg-white p-6 dark:bg-gray-800 dark:border-gray-600">
                 <span class="text-3xl font-serif text-fuchsia-950 dark:text-gray-300" >ChronicleUX</span>
                 <span class="text-sm dark:text-gray-400">A Diary Study Research Platform</span>
               </div>
               <nav class="flex flex-1 flex-col">
                 <ul role="list" class="flex flex-1 flex-col gap-y-7">
                   <li>
-                    <ul role="list" class="-mx-2 space-y-1 px-6 py-4">
+                    <ul role="list" class=" space-y-1 p-4">
                       <li>
                         <!-- Current: "bg-gray-50 dark:bg-white/5 text-fuchsia-700 dark:text-white", Default: "text-gray-700 dark:text-gray-400 hover:text-fuchsia-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5" -->
-                        <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold bg-gray-100 text-fuchsia-700 dark:bg-gray-500 dark:text-white">
+                        <a href="/" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold bg-gray-100 text-fuchsia-700 dark:bg-gray-500 dark:text-white">
                           {% heroicon_outline "academic-cap" %}
                           Evaluator Dashboard
                         </a>
@@ -62,15 +62,15 @@
                     </ul>
                   </li>
                   <li class="mt-auto">
-                    <ul role="list" class="flex flex-1 flex-col relative bg-gray-50 border-t dark:bg-gray-800 dark:border-gray-600 border-gray-200 px-6 py-4">
+                    <ul role="list" class="flex flex-1 flex-col relative bg-gray-50 border-t dark:bg-gray-800 dark:border-gray-600 border-gray-200 p-4">
                       <li>
-                        <a href="#" class="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
+                        <a href="/admin" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
                           {% heroicon_outline "cog-6-tooth" %}
                           Admin
                         </a>
                       </li>
                       <li>
-                        <a href="#" class="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
+                        <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
                           <span class="inline-flex size-6 items-center justify-center rounded-full bg-gray-500 outline -outline-offset-1 outline-black/5 dark:bg-gray-400 dark:outline-white/10">
                             <span class="font-medium text-white dark:text-gray-900">{{user_initials}}</span>
                           </span>
@@ -78,10 +78,16 @@
                         </a>
                       </li>
                       <li>
-                        <a href="#" class="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
-                          {% heroicon_outline "power" %}
-                          Sign out
-                        </a>
+                        <form method="post" action="{% url 'logout' %}">
+                          {% csrf_token %}
+                          <button
+                            type="submit"
+                            class="w-full cursor-pointer group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
+                          >
+                            {% heroicon_outline "power" %}
+                            Sign out
+                          </button>
+                        </form>
                       </li>
                     </ul>
                   </li>
@@ -97,7 +103,7 @@
     <!-- Static sidebar for desktop -->
     <div class="hidden bg-gray-900 lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
       <!-- Sidebar component, swap this element with another sidebar if you like -->
-      <div class="flex flex-col border-r border-b border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-600 px-6 py-4">
+      <div class="flex flex-col border-r border-b border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-600 p-6">
         <span class="text-3xl font-serif text-fuchsia-950 dark:text-gray-300">ChronicleUX</span>
         <span class="text-sm text-gray-600 dark:text-gray-400">A Diary Study Research Platform</span>
       </div>
@@ -105,7 +111,7 @@
         <nav class="flex flex-1 flex-col">
           <ul role="list" class="flex flex-1 flex-col gap-y-7">
             <li>
-              <ul role="list" class="-mx-2 space-y-1 px-6 py-4">
+              <ul role="list" class=" space-y-1 p-4">
                 <li>
                   <!-- Current: "bg-gray-50 dark:bg-white/5 text-fuchsia-700 dark:text-white", Default: "text-gray-700 dark:text-gray-400 hover:text-fuchsia-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5" -->
                   <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold bg-gray-100 text-fuchsia-700 dark:bg-gray-500 dark:text-white">
@@ -134,15 +140,15 @@
               </ul>
             </li>
             <li class="mt-auto">
-              <ul role="list" class="flex flex-1 flex-col relative bg-gray-50 border-t dark:bg-gray-800 dark:border-gray-600 border-gray-200 px-6 py-4">
+              <ul role="list" class="flex flex-1 flex-col relative bg-gray-50 border-t dark:bg-gray-800 dark:border-gray-600 border-gray-200 p-4">
                 <li>
-                  <a href="#" class="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
+                  <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
                     {% heroicon_outline "cog-6-tooth" %}
                     Admin
                   </a>
                 </li>
                 <li>
-                  <a href="#" class="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
+                  <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
                     <span class="inline-flex size-6 items-center justify-center rounded-full bg-gray-500 outline -outline-offset-1 outline-black/5 dark:bg-gray-400 dark:outline-white/10">
                       <span class="font-medium text-white dark:text-gray-900">{{user_initials}}</span>
                     </span>
@@ -150,10 +156,16 @@
                   </a>
                 </li>
                 <li>
-                  <a href="#" class="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
-                    {% heroicon_outline "power" %}
-                    Sign out
-                  </a>
+                  <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button
+                      type="submit"
+                      class="w-full cursor-pointer group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
+                    >
+                      {% heroicon_outline "power" %}
+                      Sign out
+                    </button>
+                  </form>
                 </li>
               </ul>
             </li>
@@ -172,7 +184,7 @@
         <div aria-hidden="true" class="h-6 w-px bg-gray-200 lg:hidden dark:bg-white/10"></div>
         <div class="flex flex-col py-4 lg:hidden">
           <span class="text-2xl font-serif text-fuchsia-950 dark:text-gray-300">ChronicleUX</span>
-          <span class="text-xs dark:text-gray-400">A Diary Study Research Platform</span>
+          <span class="text-xs dark:text-gray-400">A Diary Study Research Platform EAT MY SHORTS</span>
         </div>
       </div>
 

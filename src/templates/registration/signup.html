@@ -6,57 +6,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Sign up · ChronicleUX</title>
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
   </head>
 
   <body class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-    <div class="w-full max-w-sm bg-white border rounded-xl p-6 shadow-sm">
-      <h1 class="text-xl font-semibold">ChronicleUX</h1>
-      <p class="mt-1 text-sm text-gray-600">Create your account.</p>
+    <div class="w-full max-w-sm bg-white border border-gray-200 dark:border-gray-600 rounded-md overflow-hidden">
+      <div class="flex flex-col border-b border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-600 p-6">
+        <h1 class="text-3xl font-serif text-fuchsia-700 dark:text-gray-300" >ChronicleUX</h1>
+        <span class="text-sm dark:text-gray-400">A Diary Study Research Platform</span>
+      </div>
+      <div class="px-6 pb-4">
+        <form method="post" class="mt-4 space-y-4">
+          {% csrf_token %}
 
-      <form method="post" class="mt-4 space-y-4">
-        {% csrf_token %}
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Username</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+              <p class="text-sm text-red-600 mt-1">{{ form.username.errors|striptags }}</p>
+            {% endif %}
+          </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Username</label>
-          {{ form.username }}
-          {% if form.username.errors %}
-            <p class="text-sm text-red-600 mt-1">{{ form.username.errors|striptags }}</p>
-          {% endif %}
-        </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Email (optional)</label>
+            {{ form.email }}
+            {% if form.email.errors %}
+              <p class="text-sm text-red-600 mt-1">{{ form.email.errors|striptags }}</p>
+            {% endif %}
+          </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Email (optional)</label>
-          {{ form.email }}
-          {% if form.email.errors %}
-            <p class="text-sm text-red-600 mt-1">{{ form.email.errors|striptags }}</p>
-          {% endif %}
-        </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Password</label>
+            {{ form.password1 }}
+            {% if form.password1.errors %}
+              <p class="text-sm text-red-600 mt-1">{{ form.password1.errors|striptags }}</p>
+            {% endif %}
+          </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Password</label>
-          {{ form.password1 }}
-          {% if form.password1.errors %}
-            <p class="text-sm text-red-600 mt-1">{{ form.password1.errors|striptags }}</p>
-          {% endif %}
-        </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Confirm password</label>
+            {{ form.password2 }}
+            {% if form.password2.errors %}
+              <p class="text-sm text-red-600 mt-1">{{ form.password2.errors|striptags }}</p>
+            {% endif %}
+          </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Confirm password</label>
-          {{ form.password2 }}
-          {% if form.password2.errors %}
-            <p class="text-sm text-red-600 mt-1">{{ form.password2.errors|striptags }}</p>
-          {% endif %}
-        </div>
+          <button class="w-full items-center rounded-md bg-fuchsia-800 px-4 py-2 text-white hover:bg-fuchsia-700 cursor-pointer" type="submit">
+            Create account
+          </button>
 
-        <button class="w-full rounded-lg bg-black text-white py-2 font-medium" type="submit">
-          Create account
-        </button>
-
-        <p class="text-sm text-gray-600 text-center">
-          Already have an account?
-          <a class="underline" href="/accounts/login/">Sign in</a>
-        </p>
-      </form>
+          <p class="text-sm text-gray-600 text-center">
+            Already have an account?
+            <a class="underline" href="/accounts/login/">Sign in</a>
+          </p>
+        </form>
+      </div>
     </div>
   </body>
 </html>
