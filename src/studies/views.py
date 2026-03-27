@@ -120,6 +120,13 @@ def import_entries(request, pk):
 
     if not is_evaluator:
         return HttpResponseForbidden()
+    
+    if request.method == "POST":
+        uploaded_file = request.FILES.get("file")
+        if not uploaded_file:
+            messages.error(request, "Please choose a file to import.")
+        else:
+            messages.success(request, f"Received file: {uploaded_file.name}")
 
     return render(request, "studies/import_entries.html", {
         "study": study,
