@@ -175,10 +175,38 @@ class DiaryEntrySentiment(models.TextChoices):
     POSITIVE = "POSITIVE", "Positive"
     VERY_POSITIVE = "VERY_POSITIVE", "Very positive"
 
+class DiaryEntrySource(models.TextChoices):
+    INTERNAL = "INTERNAL", "ChronicleUX submission"
+    EXTERNAL = "EXTERNAL", "External submission imported into ChronicleUX"
 
 class DiaryEntry(models.Model):
-    study = models.ForeignKey(Study, on_delete=models.CASCADE, related_name="entries")
-    participant = models.ForeignKey(User, on_delete=models.CASCADE, related_name="diary_entries")
+
+    # Entry SOURCE (Internal vs. External)
+    source = models.CharField(
+        max_length=20,
+        choices=DiaryEntrySource.choices,
+        default=DiaryEntrySource.INTERNAL,
+    )
+
+    # Entry Study
+    study = models.ForeignKey(
+        Study, 
+        on_delete=models.CASCADE, 
+        related_name="entries"
+    )
+
+    # Entry participant
+    participant = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, # Not CASCADE b/c evaluators need the ability to import external data that may not include system users
+        related_name="diary_entries",
+        null=True,
+        blank=True,
+    )
+
+    # These two attributes are needed for external entries imported into ChronicleUX
+    participant_external_id = models.CharField(max_length=255, blank=True)
+    participant_display_name = models.CharField(max_length=255, blank=True)
 
     sentiment_self_report = models.CharField(
         max_length=20,
@@ -189,69 +217,118 @@ class DiaryEntry(models.Model):
         help_text="Did you encounter any issue or friction during this experience?",
     )
     content = models.TextField()  # unstructured narrative
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["study", "participant", "created_at"]),
+            models.Index(fields=["study","participant_external_id", "created_at"]),
         ]
         verbose_name = "Diary Entry"
         verbose_name_plural = "Diary Entries"
 
     def clean(self):
-        # Must be in collection window
-        if not self.study.is_in_collection_window_now():
-            raise ValidationError("This study is not currently collecting diary entries.")
+        
+        # Identify if the participant is internal (i.e., exists in ChronicleUX)
+        # Or it is external (i.e., imported entries from external source)
+        has_internal_participant = self.participant is not None
+        has_external_participant = bool (
+            (self.participant_external_id or "").strip() or
+            (self.participant_display_name or "").strip()
+        )
 
-        # Participant must be enrolled as PARTICIPANT
-        is_participant = StudyMembership.objects.filter(
-            study=self.study,
-            user=self.participant,
-            role=MembershipRole.PARTICIPANT,
-        ).exists()
-        if not is_participant:
-            raise ValidationError("User is not an enrolled participant in this study.")
+        # All entries must have a participant identity (internal or external)
+        if not has_internal_participant and not has_external_participant:
+            raise ValidationError("Entries must have either a linked internal participant or an external participant identity.")
 
-        # Enforce max 1 per frequency window (server timezone)
-        if self.study.entry_frequency == EntryFrequency.DAILY:
-            start = timezone.localtime(timezone.now()).replace(
-                hour=0, minute=0, second=0, microsecond=0
-            )
-            end = start + timedelta(days=1)
-            exists = DiaryEntry.objects.filter(
+        # Internal entries must always have a linked ChronicleUX participant
+        if self.source == DiaryEntrySource.INTERNAL and not has_internal_participant:
+            raise ValidationError("Entries submitted through ChronicleUX must have a linked internal participant")
+
+        # Even if entries have internal or external participant, the display name cannae be empty
+        # Check if display name is empty... 
+        if not (self.participant_display_name and self.participant_display_name.strip()):
+            if self.participant:
+                # ... then, if it is empty but the user is internal (i.e., self.participant exists), participant_display_name = username
+                self.participant_display_name = self.participant.username
+            else:
+                # Raise error
+                raise ValidationError (
+                    {"participant_display_name" : "Attribute `participant_display_name` is required"}
+                )
+
+        # If there is a linked internal participant, they must belong to the study
+        # And if the entry source is also internal, they must follow the temporal validation logic
+        if self.participant:    
+            # Check if the creator of the entry is a participant of the study
+            is_participant = StudyMembership.objects.filter(
                 study=self.study,
-                participant=self.participant,
-                created_at__gte=start,
-                created_at__lt=end,
-            )
-            if self.pk:
-                exists = exists.exclude(pk=self.pk)
-            if exists.exists():
-                raise ValidationError("You have already submitted an entry for today.")
+                user=self.participant,
+                role=MembershipRole.PARTICIPANT,
+            ).exists()
 
-        elif self.study.entry_frequency == EntryFrequency.WEEKLY:
-            now_local = timezone.localtime(timezone.now())
-            monday = now_local - timedelta(days=now_local.weekday())
-            week_start = monday.replace(hour=0, minute=0, second=0, microsecond=0)
-            week_end = week_start + timedelta(days=7)
-            exists = DiaryEntry.objects.filter(
-                study=self.study,
-                participant=self.participant,
-                created_at__gte=week_start,
-                created_at__lt=week_end,
-            )
-            if self.pk:
-                exists = exists.exclude(pk=self.pk)
-            if exists.exists():
-                raise ValidationError("You have already submitted an entry for this week.")
+            # Raise error if user is not participant
+            if not is_participant:
+                raise ValidationError("User is not an enrolled participant in this study.")
+            
+            # If entry was created through ChronicleUX (i.e., entry is INTERNAL to the system) follow the temporal validation logic
+            if self.source == DiaryEntrySource.INTERNAL:
 
-        # EVENT_BASED and FREEFORM are unlimited.
+                # Raise error if study is not collecting diary entries
+                if not self.study.is_in_collection_window_now():
+                    raise ValidationError("This study is not currently collecting diary entries.")
+
+                # Enforce max 1 per frequency window (server timezone)
+                # DAILY
+                if self.study.entry_frequency == EntryFrequency.DAILY:
+                    start = timezone.localtime(self.created_at).replace(
+                        hour=0, minute=0, second=0, microsecond=0
+                    )
+                    end = start + timedelta(days=1)
+                    exists = DiaryEntry.objects.filter(
+                        study=self.study,
+                        participant=self.participant,
+                        created_at__gte=start,
+                        created_at__lt=end,
+                    )
+                    if self.pk:
+                        exists = exists.exclude(pk=self.pk)
+                    if exists.exists():
+                        raise ValidationError("You have already submitted an entry for today.")
+                # WEEKLY
+                elif self.study.entry_frequency == EntryFrequency.WEEKLY:
+                    now_local = timezone.localtime(self.created_at)
+                    monday = now_local - timedelta(days=now_local.weekday())
+                    week_start = monday.replace(hour=0, minute=0, second=0, microsecond=0)
+                    week_end = week_start + timedelta(days=7)
+                    exists = DiaryEntry.objects.filter(
+                        study=self.study,
+                        participant=self.participant,
+                        created_at__gte=week_start,
+                        created_at__lt=week_end,
+                    )
+                    if self.pk:
+                        exists = exists.exclude(pk=self.pk)
+                    if exists.exists():
+                        raise ValidationError("You have already submitted an entry for this week.")
+
+                # EVENT_BASED and FREEFORM are unlimited.
 
     def __str__(self) -> str:
+        participant_label = None
+
+        if self.participant_id:
+            participant_label = f"user={self.participant_id}"
+        elif self.participant_external_id:
+            participant_label = f"external_id={self.participant_external_id}"
+        elif self.participant_display_name:
+            participant_label = f"name={self.participant_display_name}"
+        else:
+            participant_label = "unknown_participant"
         return (
-            f"Entry {self.pk} · {self.study.pk} · {self.participant.pk} · "
-            f"{self.created_at}"
+            f"Entry {self.pk} · study={self.study_id} · "
+            f"{participant_label} · {self.created_at}"
         )
 
 
