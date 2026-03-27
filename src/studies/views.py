@@ -126,6 +126,27 @@ def import_entries(request, pk):
         if not uploaded_file:
             messages.error(request, "Please choose a file to import.")
         else:
+            filename = uploaded_file.name.lower()
+            if filename.endswith(".csv"):
+                import csv
+                from io import TextIOWrapper
+
+                file_data = TextIOWrapper(uploaded_file.file, encoding="utf-8")
+                reader = csv.DictReader(file_data)
+
+                rows = list(reader)
+                messages.success(request, f"Parsed {len(rows)} CSV rows")
+            elif filename.endswith(".json"):
+                import json
+
+                data = json.load(uploaded_file)
+
+                if not isinstance(data, list):
+                    messages.error(request, "JSON must be a list of entries")
+                else:
+                    messages.success(request, f"Parsed {len(data)} JSON entries")
+            else:
+                messages.error(request, "Unsupported file type. Please upload a CSV or JSON.")
             messages.success(request, f"Received file: {uploaded_file.name}")
 
     return render(request, "studies/import_entries.html", {

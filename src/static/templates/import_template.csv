@@ -1,0 +1,4 @@
+participant_external_id,participant_display_name,participant_email,sentiment_self_report,issue_encountered,content,created_at
+P001,Alice,,POSITIVE,false,"I really enjoyed the onboarding experience.",2025-03-01T10:15:00Z
+P002,Bob,,NEGATIVE,true,"I couldn't find the settings page and got frustrated.",2025-03-02T14:30:00Z
+,Pablo,pablo@example.com,NEUTRAL,false,"It works fine, nothing special.",2025-03-03T09:00:00Z

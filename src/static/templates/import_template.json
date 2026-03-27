@@ -1,0 +1,29 @@
+[
+  {
+    "participant_external_id": "P001",
+    "participant_display_name": "Alice",
+    "participant_email": null,
+    "sentiment_self_report": "POSITIVE",
+    "issue_encountered": false,
+    "content": "I really enjoyed the onboarding experience.",
+    "created_at": "2025-03-01T10:15:00Z"
+  },
+  {
+    "participant_external_id": "P002",
+    "participant_display_name": "Bob",
+    "participant_email": null,
+    "sentiment_self_report": "NEGATIVE",
+    "issue_encountered": true,
+    "content": "I couldn't find the settings page and got frustrated.",
+    "created_at": "2025-03-02T14:30:00Z"
+  },
+  {
+    "participant_external_id": null,
+    "participant_display_name": "Pablo",
+    "participant_email": "pablo@example.com",
+    "sentiment_self_report": "NEUTRAL",
+    "issue_encountered": false,
+    "content": "It works fine, nothing special.",
+    "created_at": "2025-03-03T09:00:00Z"
+  }
+]
