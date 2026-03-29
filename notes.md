@@ -38,3 +38,9 @@ python manage.py migrate
 ```
 
 And restart the server
+
+## Watch NPM changes on files
+ 
+ ```
+ npm run watch:css
+ ```
