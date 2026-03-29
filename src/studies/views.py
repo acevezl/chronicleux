@@ -1,11 +1,16 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect, get_object_or_404
+
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, redirect
+from django.contrib.auth import get_user_model
 from django.contrib import messages
 
-from .models import Study
-from .forms import StudyForm
-from .models import StudyMembership, MembershipRole
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.http import HttpResponseForbidden
+from django.utils.dateparse import parse_datetime
+
+from .forms import StudyForm, DiaryEntryForm
+from .models import  DiaryEntry, DiaryEntrySentiment, DiaryEntrySource, MembershipRole, Study, StudyMembership
 
 # CREATE STUDY
 @login_required
@@ -14,14 +19,16 @@ def create_study(request):
         form = StudyForm(request.POST)
         if form.is_valid():
             study = form.save(commit=False)
+
+            # Makes study creator the owner by default
             study.owner = request.user
             study.save()
 
-            # Makes study creator the owner by default
+            # The owner is an evaluator by default
             StudyMembership.objects.get_or_create(
                 study = study,
                 user = request.user,
-                defaults={"role":"owner"}
+                defaults={"role": MembershipRole.EVALUATOR}
             )
 
             messages.success(request, f"Study '{study.title}' created successfully by {study.owner}.")
@@ -29,8 +36,6 @@ def create_study(request):
     else:
         form = StudyForm()
     return render(request, "studies/create_study.html", {"form": form})
-
-from django.shortcuts import get_object_or_404
 
 # VIEW STUDY
 @login_required
@@ -80,6 +85,7 @@ def create_diary_entry(request, study_id):
             entry = form.save(commit=False)
             entry.study = study
             entry.participant = request.user
+            entry.source = DiaryEntrySource.INTERNAL
 
             try:
                 entry.full_clean()
@@ -96,7 +102,7 @@ def create_diary_entry(request, study_id):
                     form.add_error(None, e)
             else:
                 messages.success(request, "Your diary entry was submitted successfully.")
-                return redirect("study_detail", study_id=study.pk)
+                return redirect("study_detail", pk=study.pk)
     else:
         form = DiaryEntryForm()
 
@@ -107,6 +113,10 @@ def create_diary_entry(request, study_id):
     return render(request, "studies/create_diary_entry.html", context)
 
 # IMPORT ENTRIES
+User = get_user_model()
+
+VALID_SENTIMENTS = {choice[0] for choice in DiaryEntrySentiment.choices}
+
 @login_required
 def import_entries(request, pk):
     study = get_object_or_404(Study, pk=pk)
@@ -120,6 +130,7 @@ def import_entries(request, pk):
     if not is_evaluator:
         return HttpResponseForbidden()
 
+    # If form was post-submitted
     if request.method == "POST":
         uploaded_file = request.FILES.get("file")
         if not uploaded_file:
@@ -127,14 +138,172 @@ def import_entries(request, pk):
         else:
             try:
                 rows = parse_uploaded_file(uploaded_file)
-                messages.success(request, f"Parsed {len(rows)} entries successfully.")
-                print(rows[:2])  # temporary debug
+                result = import_rows_into_study(study, rows)
+
+                messages.success(
+                    request,
+                    f"Imported {result['created']} entries. "
+                    f"Ignored {result['skipped_owner']} owner rows and "
+                    f"{result['skipped_evaluator']} evaluator rows."
+                )
+
+                return redirect("study_detail", pk=study.pk)
             except ValueError as e:
                 messages.error(request, str(e))
+            except ValidationError as e:
+                messages.error(request, str(e))
+            except Exception as e:
+                messages.error(request, f"Import failed: {e}")
 
     return render(request, "studies/import_entries.html", {
         "study": study,
     })
+
+@transaction.atomic
+def import_rows_into_study (study, rows):
+    created_count = 0
+    skipped_owner = 0
+    skipped_evaluator = 0
+
+    for index, row in enumerate(rows, start=1):
+        try:
+            # Ignore the rows if they were authored by the study owner or an evaluator
+            # B/c study owners and evaluators shall never write diary entries
+            if is_owner_row(study, row):
+                skipped_owner+=1
+                continue
+
+            if is_evaluator_row(study, row):
+                skipped_evaluator+=1
+                continue
+
+            create_diary_entry_from_row(study, row)
+            created_count+=1
+
+        except Exception as e:
+            raise ValueError(f"Row {index}: {e}")
+    
+    return {
+        "created": created_count,
+        "skipped_owner": skipped_owner,
+        "skipped_evaluator": skipped_evaluator,
+    }
+
+def create_diary_entry_from_row(study, row):
+    participant = resolve_participant_for_study(study, row)
+
+    content = row.get("content")
+    if not content:
+        raise ValueError ("Field `content` is required in a diary entry")
+    
+    sentiment_self_report = row.get("sentiment_self_report")
+    if not sentiment_self_report:
+        raise ValueError ("Field `sentiment_self_report` is required in a diary entry")
+    
+    participant_display_name = row.get("participant_display_name")
+    if participant is None and not participant_display_name:
+        raise ValueError("Each entry must have either a resolvable ChronicleUX participant or a `participant_display_name`")
+    
+    created_at = parse_imported_datetime (row.get("created_at"))
+
+    entry = DiaryEntry(
+        study=study,
+        participant=participant,
+        participant_display_name=participant_display_name or "",
+        participant_external_id=row.get("participant_external_id") or "",
+        participant_email=row.get("participant_email") or "",
+        content=content,
+        sentiment_self_report=sentiment_self_report,
+        issue_encountered=row.get("issue_encountered"),
+        created_at=created_at,
+        source=DiaryEntrySource.EXTERNAL,
+    )
+
+    entry.full_clean()
+    entry.save()
+
+    return entry
+
+def is_owner_row(study, row):
+    participant_email = row.get("participant_email")
+    participant_external_id = row.get("participant_external_id")
+
+    if participant_email and study.owner.email and participant_email.lower() == study.owner.email.lower():
+        return True
+    
+    if participant_external_id and participant_external_id == study.owner.username:
+        return True
+    
+    return False
+
+def is_evaluator_row(study, row):
+    participant_email = row.get("participant_email")
+    participant_external_id = row.get("participant_external_id")
+
+    evaluator_user = None
+
+    if participant_email:
+        evaluator_user = User.objects.filter(email__iexact=participant_email).first()
+
+    if evaluator_user is None and participant_external_id:
+        evaluator_user = User.objects.filter(username=participant_external_id).first()
+
+    if evaluator_user is None:
+        return False
+
+    return StudyMembership.objects.filter(
+        study=study,
+        user=evaluator_user,
+        role=MembershipRole.EVALUATOR,
+    ).exists()
+
+
+def resolve_participant_for_study(study, row):
+    participant_email = row.get("participant_email")
+    participant_external_id = row.get("participant_external_id")
+
+    participant_user = None
+
+    # If the entry has a participant e-mail or participant_external_id, see if they resolve to a user
+    if participant_email:
+        participant_user = User.objects.filter(email__iexact=participant_email).first()
+    
+    if participant_user is None and participant_external_id:
+        participant_user = User.objects.filter(username=participant_external_id).first()
+        
+    # If a user was found, validate if the user is actually a study participant
+    if participant_user:
+        is_participant_in_study = StudyMembership.objects.filter(
+            study=study,
+            user=participant_user,
+            role=MembershipRole.PARTICIPANT,
+        ).exists()
+
+        # If the user is not a participant in the study, make them a participant
+        if not is_participant_in_study:
+            StudyMembership.objects.create(
+                study=study,
+                user=participant_user,
+                role=MembershipRole.PARTICIPANT
+            )
+
+        return participant_user
+    
+    return None
+
+def parse_imported_datetime(value):
+    value = normalize_str(value)
+    if value is None:
+        return None
+
+    dt = parse_datetime(value)
+    if dt is None:
+        raise ValueError(
+            "Invalid created_at value. Use ISO 8601 format, for example "
+            "'2026-03-29T14:30:00Z'."
+        )
+
+    return dt
 
 def parse_uploaded_file(uploaded_file):
     filename = uploaded_file.name.lower()
@@ -146,6 +315,17 @@ def parse_uploaded_file(uploaded_file):
         return parse_json(uploaded_file.file)
 
     raise ValueError("Unsupported file type. Please upload a CSV or JSON file.")
+
+def normalize_sentiment(value):
+    value = normalize_str(value)
+    if value is None:
+        raise ValueError("sentiment_self_report is required.")
+    if value not in VALID_SENTIMENTS:
+        raise ValueError(
+            f"Invalid sentiment_self_report: {value}. "
+            f"Allowed values: {', '.join(VALID_SENTIMENTS)}"
+        )
+    return value
 
 def normalize_str(value):
     if value is None:
@@ -176,7 +356,7 @@ def normalize_row(row):
         "participant_external_id": normalize_str(row.get("participant_external_id")),
         "participant_display_name": normalize_str(row.get("participant_display_name")),
         "participant_email": normalize_str(row.get("participant_email")),
-        "sentiment_self_report": normalize_str(row.get("sentiment_self_report")),
+        "sentiment_self_report": normalize_sentiment(row.get("sentiment_self_report")),
         "issue_encountered": normalize_bool(row.get("issue_encountered")),
         "content": normalize_str(row.get("content")),
         "created_at": normalize_str(row.get("created_at")),
@@ -186,7 +366,7 @@ def parse_csv(file):
     import csv
     from io import TextIOWrapper
 
-    text_file = TextIOWrapper(file, encoding="utf-8")
+    text_file = TextIOWrapper(file, encoding="utf-8", newline="")
     reader = csv.DictReader(text_file)
 
     rows = []

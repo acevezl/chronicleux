@@ -207,6 +207,7 @@ class DiaryEntry(models.Model):
     # These two attributes are needed for external entries imported into ChronicleUX
     participant_external_id = models.CharField(max_length=255, blank=True)
     participant_display_name = models.CharField(max_length=255, blank=True)
+    participant_email = models.EmailField(blank=True)
 
     sentiment_self_report = models.CharField(
         max_length=20,
