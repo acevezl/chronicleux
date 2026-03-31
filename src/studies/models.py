@@ -32,15 +32,14 @@ class PromptType(models.TextChoices):
 
 class Study(models.Model):
 
-    # participant-facing
     title = models.CharField(max_length=255) 
     description = models.TextField(blank=False) 
-    participant_instructions = models.TextField(blank=True) 
-
-    # evaluator-facing
+    
     goal = models.TextField(blank=True)
     context = models.TextField(blank=True)
     hypotheses = models.TextField(blank=True)
+
+    participant_instructions = models.TextField(blank=True) 
     tags = models.CharField(max_length=300, blank=True)  # optional, comma-separated for PoC
 
     # owners are evaluators who create the study and manage it
