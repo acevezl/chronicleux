@@ -49,10 +49,13 @@ def study_detail(request, pk):
         role=MembershipRole.EVALUATOR
     ).exists()
 
+    diary_entries = DiaryEntry.objects.filter(study=study).select_related("participant").order_by("-created_at")
+
     return render(request, "studies/study_detail.html", {
         "study": study,
         "tags_list": tags_list,
         "is_evaluator": is_evaluator,
+        "diary_entries": diary_entries,
     })
 
 # EDIT STUDY

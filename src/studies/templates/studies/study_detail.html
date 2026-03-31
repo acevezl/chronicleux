@@ -16,7 +16,7 @@
 <div class="mt-6 grid grid-cols-1 gap-4">
   <div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden ">
     
-    <div class="px-6 py-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+    <div class="p-6 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
       <span class="text-xl text-fuchsia-700 dark:text-gray-200">{{ study.title }}</span>
       
       <!-- META DATA -->
@@ -63,8 +63,8 @@
     </div>
 
     <!-- STUDY DATA -->
-    <div class="p-6">
-      <div class="space-y-4">
+    <div class="lg:grid lg:grid-cols-3 lg:gap-12 p-6">
+      <div class="col-span-2 space-y-4">
         <!-- GOAL -->
         <div>
           <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
@@ -114,9 +114,10 @@
             {{ study.context|default:"—" }}
           </div>
         </div>
+      </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
+      <div class="lg:col-span-1 pt-4 lg:pt-0 ">
+        <div class="grid md:grid-cols-4 sm:grid-cols-2 lg:grid-cols-1 gap-6">
           <!-- STATUS -->
           <div>
             <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
@@ -139,10 +140,7 @@
             </div>
           </div>
 
-        </div>
-
-        <!-- START AND END DATES -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- START AND END DATES -->
           <div>
             <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
               Data Collection Start
@@ -161,19 +159,19 @@
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- TAGS -->
-        <div>
-          {% if tags_list %}
-            <div class="mt-2 flex flex-wrap gap-2">
-              {% for tag in tags_list %}
-                <span class="border border-fuchsia-700 rounded-full px-3 py-1 text-xs text-fuchsia-700">
-                  {{ tag }}
-                </span>
-              {% endfor %}
-            </div>
-          {% endif %}
-        </div>
+      <!-- TAGS -->
+      <div class="pt-4 lg:pt-0">
+        {% if tags_list %}
+          <div class="mt-2 flex flex-wrap gap-2">
+            {% for tag in tags_list %}
+              <span class="border border-fuchsia-700 rounded-full px-3 py-1 text-xs text-fuchsia-700">
+                {{ tag }}
+              </span>
+            {% endfor %}
+          </div>
+        {% endif %}
       </div>
     </div>
   </div>
