@@ -115,6 +115,56 @@ def create_diary_entry(request, study_id):
     }
     return render(request, "studies/create_diary_entry.html", context)
 
+# VIEW ENTRIES
+@login_required
+def study_entries(request, pk):
+    study = get_object_or_404(Study, pk=pk)
+
+    diary_entries = (
+        DiaryEntry.objects
+        .filter(study=study)
+        .select_related("participant")
+    )
+
+    # filters
+    sentiment = request.GET.get("sentiment")
+    issue = request.GET.get("issue")
+    participant = request.GET.get("participant")
+
+    if sentiment:
+        diary_entries = diary_entries.filter(sentiment_self_report=sentiment)
+
+    if issue in ["true", "false"]:
+        diary_entries = diary_entries.filter(issue_encountered=(issue == "true"))
+
+    if participant:
+        diary_entries = diary_entries.filter(participant__participant_display_name__icontains=participant)
+
+    # sorting
+    sort = request.GET.get("sort", "-created_at")
+    allowed_sorts = {
+        "created_at",
+        "-created_at",
+        "sentiment_self_report",
+        "-sentiment_self_report",
+        "participant__participant_display_name",
+        "-participant__participant_display_name",
+    }
+
+    if sort not in allowed_sorts:
+        sort = "-created_at"
+
+    diary_entries = diary_entries.order_by(sort)
+
+    return render(request, "studies/diary_entries.html", {
+        "study": study,
+        "diary_entries": diary_entries,
+        "current_sentiment": sentiment,
+        "current_issue": issue,
+        "current_participant": participant,
+        "current_sort": sort,
+    })
+
 # IMPORT ENTRIES
 User = get_user_model()
 

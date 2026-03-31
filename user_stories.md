@@ -135,3 +135,9 @@ Pipelines are defined as configurable analytical processes that may include:
 #### 9.2 As an Evaluator, I want structured summaries of findings so that I can support decision-making
 
 #### 9.3 As an Evaluator, I want visualizations of trends so that insights are easy to communicate
+
+### 10. User Interface and Experience Improvements
+
+#### 10.1 As a user, I want to see the participant details when I click on a system username so that I can see the user details
+
+#### 10.2 As a user, I want to sort any and all tables by their headers, so that I can organize the information in the screen.

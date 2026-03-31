@@ -16,7 +16,7 @@
 <div class="mt-6 grid grid-cols-1 gap-4">
   <div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden ">
     
-    <div class="p-6 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+    <div class="py-4 px-6 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
       <span class="text-xl text-fuchsia-700 dark:text-gray-200">{{ study.title }}</span>
       
       <!-- META DATA -->
@@ -37,7 +37,7 @@
       <div class="flex gap-3 pt-4">
 
         <a
-          href="{% url 'edit_study' study.id %}"
+          href="{% url 'edit_study' study.pk %}"
           class="rounded-sm px-4 py-2 text-sm font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
         >
           Edit Study
@@ -45,7 +45,7 @@
 
         {% if is_evaluator %}
         <a
-          href="{% url 'import_entries' study.id %}"
+          href="{% url 'import_entries' study.pk %}"
           class="rounded-sm px-4 py-2 text-sm font-medium text-gray-200 dark:text-gray-500 hover:text-white bg-gray-950  hover:bg-gray-600 border border-gray-950 dark:border-gray-500 dark:hover:border-gray-200 cursor-pointer"
         >
           Import Entries
@@ -172,6 +172,27 @@
             {% endfor %}
           </div>
         {% endif %}
+      </div>
+    </div>
+
+    <div class="p-6 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+      <div class="flex gap-3">
+        {% if is_evaluator %}
+        <a
+          href="{% url 'study_entries' study.pk %}"
+          class="rounded-sm px-4 py-2 text-sm font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
+        >
+          View Diary Entries
+        </a>
+        {% endif %}
+
+        <a
+          href="{% url 'evaluator_dashboard' %}"
+          class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+        >
+          Back to Dashboard
+        </a>
+
       </div>
     </div>
   </div>

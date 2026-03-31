@@ -1,3 +1,9 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ study.title }} · ChronicleUX{% endblock %}
+
+{% block content %}
 <div class="mt-2 md:flex md:items-center md:justify-between">
   <div class="min-w-0 flex-1">
     <h1 class="text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight dark:text-white">
@@ -7,9 +13,76 @@
 </div>
 
 <div class="mt-6 grid grid-cols-1 gap-4">
-  <div class="bg-white border border-gray-200 rounded-sm overflow-hidden">
+  <div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden ">
+    
+    <div class="p-6 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+      <span class="text-xl text-fuchsia-700 dark:text-gray-200">{{study.title}}</span>
+    </div>
+    <div class="px-6 py-4 bg-white dark:bg-gray-900">
+        <form method="get" class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Participant</label>
+                <input
+                type="text"
+                name="participant"
+                value="{{ current_participant|default:'' }}"
+                class="mt-1 block w-full rounded-md border-gray-300 text-sm"
+                >
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Sentiment</label>
+                <select name="sentiment" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                <option value="">All</option>
+                <option value="VERY_NEGATIVE" {% if current_sentiment == "VERY_NEGATIVE" %}selected{% endif %}>Very negative</option>
+                <option value="NEGATIVE" {% if current_sentiment == "NEGATIVE" %}selected{% endif %}>Negative</option>
+                <option value="NEUTRAL" {% if current_sentiment == "NEUTRAL" %}selected{% endif %}>Neutral</option>
+                <option value="POSITIVE" {% if current_sentiment == "POSITIVE" %}selected{% endif %}>Positive</option>
+                <option value="VERY_POSITIVE" {% if current_sentiment == "VERY_POSITIVE" %}selected{% endif %}>Very positive</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Issue encountered</label>
+                <select name="issue" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                <option value="">All</option>
+                <option value="true" {% if current_issue == "true" %}selected{% endif %}>Yes</option>
+                <option value="false" {% if current_issue == "false" %}selected{% endif %}>No</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Sort by</label>
+                <select name="sort" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                <option value="-created_at" {% if current_sort == "-created_at" %}selected{% endif %}>Newest first</option>
+                <option value="created_at" {% if current_sort == "created_at" %}selected{% endif %}>Oldest first</option>
+                <option value="participant__participant_display_name" {% if current_sort == "participant__participant_display_name" %}selected{% endif %}>Participant A-Z</option>
+                <option value="-participant__participant_display_name" {% if current_sort == "-participant__participant_display_name" %}selected{% endif %}>Participant Z-A</option>
+                <option value="sentiment_self_report" {% if current_sort == "sentiment_self_report" %}selected{% endif %}>Sentiment A-Z</option>
+                <option value="-sentiment_self_report" {% if current_sort == "-sentiment_self_report" %}selected{% endif %}>Sentiment Z-A</option>
+                </select>
+            </div>
+
+            <div class="md:col-span-4 flex gap-2">
+                <button
+                type="submit"
+                class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500"
+                >
+                Apply
+                </button>
+
+                <a
+                href="{% url 'study_entries' study.pk %}"
+                class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                >
+                Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
     <div class="overflow-x-auto">
-    {% if entries %}
+    {% if diary_entries %}
         <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
             <tr>
@@ -20,13 +93,10 @@
                 Participant
             </th>
             <th scope="col" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
-                Title
-            </th>
-            <th scope="col" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
                 Date
             </th>
             <th scope="col" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
-                Sentiment
+                Self-reported Sentiment
             </th>
             <th scope="col" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
                 Preview
@@ -38,7 +108,7 @@
         </thead>
 
         <tbody class="divide-y divide-gray-200 bg-white">
-            {% for entry in entries %}
+            {% for entry in diary_entries %}
             <tr class="hover:bg-gray-50">
                 <td class="whitespace-nowrap px-4 py-4 text-sm text-gray-500">
                 {{ forloop.counter }}
@@ -46,17 +116,9 @@
 
                 <td class="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900">
                 {% if entry.participant %}
-                    {{ entry.participant }}
+                    {{ entry.participant.username }}
                 {% else %}
-                    —
-                {% endif %}
-                </td>
-
-                <td class="px-4 py-4 text-sm text-gray-900">
-                {% if entry.title %}
-                    {{ entry.title }}
-                {% else %}
-                    <span class="text-gray-400">Untitled</span>
+                    {{ entry.participant_display_name }} (External)
                 {% endif %}
                 </td>
 
@@ -73,21 +135,9 @@
                 </td>
 
                 <td class="whitespace-nowrap px-4 py-4 text-sm">
-                {% if entry.sentiment_label == "positive" %}
-                    <span class="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-                    Positive
-                    </span>
-                {% elif entry.sentiment_label == "neutral" %}
-                    <span class="inline-flex items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600/20">
-                    Neutral
-                    </span>
-                {% elif entry.sentiment_label == "negative" %}
-                    <span class="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
-                    Negative
-                    </span>
-                {% else %}
-                    <span class="text-gray-400">—</span>
-                {% endif %}
+                  <span class="sentiment-{{entry.sentiment_self_report}}">
+                    {{entry.get_sentiment_self_report_display}}
+                  </span>
                 </td>
 
                 <td class="px-4 py-4 text-sm text-gray-500 max-w-md">
@@ -102,7 +152,7 @@
 
                 <td class="whitespace-nowrap px-4 py-4 text-right text-sm font-medium">
                 <a
-                    href="{% url 'entry_detail' entry.id %}"
+                    href="#"
                     class="text-indigo-600 hover:text-indigo-500"
                 >
                     View
@@ -123,3 +173,5 @@
     </div>
   </div>
 </div>
+
+{% endblock %}

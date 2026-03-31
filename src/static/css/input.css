@@ -44,4 +44,25 @@
   .ui-link {
     @apply text-slate-600 hover:text-fuchsia-700 active:text-indigo-700;
   }
+
+  .sentiment-VERY_NEGATIVE {
+    @apply inline-flex items-center rounded-full bg-red-200 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-700;
+  }
+
+  .sentiment-NEGATIVE {
+    @apply inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-500 ring-1 ring-inset ring-red-500;
+  }
+
+  .sentiment-NEUTRAL {
+    @apply inline-flex items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-600;
+  }
+
+  .sentiment-POSITIVE {
+    @apply inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-500 ring-1 ring-inset ring-green-500;
+  }
+
+  .sentiment-VERY_POSITIVE {
+    @apply inline-flex items-center rounded-full bg-green-200 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700;
+  }
+
 }

@@ -6,4 +6,5 @@ urlpatterns = [
     path("<int:pk>/", views.study_detail, name="study_detail"),
     path("<int:pk>/edit/", views.edit_study, name="edit_study"),
     path("studies/<int:pk>/import/", views.import_entries, name="import_entries"),
+    path("<int:pk>/entries/", views.study_entries, name="study_entries"),
 ]
