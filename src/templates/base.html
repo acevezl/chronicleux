@@ -36,7 +36,7 @@
                     <ul role="list" class=" space-y-1 p-4">
                       <li>
                         <!-- Current: "bg-gray-50 dark:bg-white/5 text-fuchsia-700 dark:text-white", Default: "text-gray-700 dark:text-gray-400 hover:text-fuchsia-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5" -->
-                        <a href="/" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold bg-gray-100 text-fuchsia-700 dark:bg-gray-500 dark:text-white">
+                        <a href="{% url 'evaluator_dashboard' %}" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold bg-gray-100 text-fuchsia-700 dark:bg-gray-500 dark:text-white">
                           {% heroicon_outline "academic-cap" %}
                           Evaluator Dashboard
                         </a>
@@ -64,7 +64,7 @@
                   <li class="mt-auto">
                     <ul role="list" class="flex flex-1 flex-col relative bg-gray-50 border-t dark:bg-gray-800 dark:border-gray-600 border-gray-200 p-4">
                       <li>
-                        <a href="/admin" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
+                        <a href="{% url 'admin:index' %}" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
                           {% heroicon_outline "cog-6-tooth" %}
                           Admin
                         </a>
@@ -114,7 +114,7 @@
               <ul role="list" class=" space-y-1 p-4">
                 <li>
                   <!-- Current: "bg-gray-50 dark:bg-white/5 text-fuchsia-700 dark:text-white", Default: "text-gray-700 dark:text-gray-400 hover:text-fuchsia-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5" -->
-                  <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold bg-gray-100 text-fuchsia-700 dark:bg-gray-500 dark:text-white">
+                  <a href="{% url 'evaluator_dashboard' %}" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold bg-gray-100 text-fuchsia-700 dark:bg-gray-500 dark:text-white">
                     {% heroicon_outline "academic-cap" %}
                     Evaluator Dashboard
                   </a>
@@ -142,7 +142,7 @@
             <li class="mt-auto">
               <ul role="list" class="flex flex-1 flex-col relative bg-gray-50 border-t dark:bg-gray-800 dark:border-gray-600 border-gray-200 p-4">
                 <li>
-                  <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
+                  <a href="{% url 'admin:index' %}" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
                     {% heroicon_outline "cog-6-tooth" %}
                     Admin
                   </a>
