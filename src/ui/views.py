@@ -37,7 +37,7 @@ def evaluator_dashboard(request):
         "owner__username",
     ]
 
-    if sort.lstrip("-") in allowed_sort_fields:
+    if sort.lstrip("-") not in allowed_sort_fields:
         studies = studies.order_by(sort)
 
     # Pagination

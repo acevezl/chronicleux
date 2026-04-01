@@ -5,9 +5,12 @@ from django.contrib.auth import get_user_model
 from django.contrib import messages
 
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.http import HttpResponseForbidden
 from django.utils.dateparse import parse_datetime
+
+
 
 from .forms import StudyForm, DiaryEntryForm
 from .models import  DiaryEntry, DiaryEntrySentiment, DiaryEntrySource, MembershipRole, Study, StudyMembership
@@ -118,6 +121,7 @@ def create_diary_entry(request, study_id):
 # VIEW ENTRIES
 @login_required
 def study_entries(request, pk):
+
     study = get_object_or_404(Study, pk=pk)
 
     diary_entries = (
@@ -126,10 +130,17 @@ def study_entries(request, pk):
         .select_related("participant")
     )
 
-    # filters
+    # Filtering
+    q = request.GET.get("q")
+    participant = request.GET.get("participant")
     sentiment = request.GET.get("sentiment")
     issue = request.GET.get("issue")
-    participant = request.GET.get("participant")
+
+    if q:
+        diary_entries = diary_entries.filter(content__icontains=q)
+
+    if participant:
+        diary_entries = diary_entries.filter(participant_display_name__icontains=participant)
 
     if sentiment:
         diary_entries = diary_entries.filter(sentiment_self_report=sentiment)
@@ -137,32 +148,32 @@ def study_entries(request, pk):
     if issue in ["true", "false"]:
         diary_entries = diary_entries.filter(issue_encountered=(issue == "true"))
 
-    if participant:
-        diary_entries = diary_entries.filter(participant__participant_display_name__icontains=participant)
-
-    # sorting
+    # Sorting
     sort = request.GET.get("sort", "-created_at")
-    allowed_sorts = {
+    
+    allowed_sort_fields = {
         "created_at",
-        "-created_at",
+        "participant_display_name",
         "sentiment_self_report",
-        "-sentiment_self_report",
-        "participant__participant_display_name",
-        "-participant__participant_display_name",
     }
 
-    if sort not in allowed_sorts:
-        sort = "-created_at"
+    if sort.lstrip("-") in allowed_sort_fields:
+        diary_entries = diary_entries.order_by(sort)
 
-    diary_entries = diary_entries.order_by(sort)
+    # Pagination
+    paginator = Paginator(diary_entries, 10)  # 10 per page
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
 
     return render(request, "studies/diary_entries.html", {
         "study": study,
-        "diary_entries": diary_entries,
-        "current_sentiment": sentiment,
-        "current_issue": issue,
-        "current_participant": participant,
-        "current_sort": sort,
+        "diary_entries": page_obj,
+        "page_obj": page_obj,
+        "sentiment": sentiment,
+        "issue": issue,
+        "participant": participant,
+        "q": q,
+        "sort": sort,
     })
 
 # IMPORT ENTRIES

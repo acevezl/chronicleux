@@ -59,8 +59,8 @@
 
           {% if request.GET.q or request.GET.owner or request.GET.status %}
           <a
-            href="{% url 'dashboard' %}"
-            class="rounded-sm px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 border border-gray-700 dark:border-gray-500 dark:text-gray-500  dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+            href="{% url 'evaluator_dashboard' %}"
+            class="rounded-sm px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 border border-gray-700 dark:border-gray-500 dark:text-gray-500  dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 cursor-pointer"
           >
             Clear Filter
           </a>
