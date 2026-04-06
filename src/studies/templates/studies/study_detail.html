@@ -137,7 +137,7 @@
                 </span>
                 {% elif study.sentiment_category == "VERY_NEGATIVE" or study.sentiment_category == "NEGATIVE" %}
                 <span class="inline-flex items-center rounded-full bg-red-200 gap-1 px-2 py-1 text-xs font-medium text-red-800 inset-ring inset-ring-red-500/10 border border-red-800">
-                  {% heroicon_outline "face-frowm" %} {{ study.get_sentiment_category_display }} ({{study.sentiment}})
+                  {% heroicon_outline "face-frown" %} {{ study.get_sentiment_category_display }} ({{study.sentiment}})
                 </span>
                 {% elif study.sentiment_category == "NEUTRAL" %}
                 <span class="inline-flex items-center rounded-full bg-amber-200 gap-1 px-2 py-1 text-xs font-medium text-amber-800 inset-ring inset-ring-amber-500/10 border border-amber-800">

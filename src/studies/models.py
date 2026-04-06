@@ -250,6 +250,34 @@ class DiaryEntry(models.Model):
     content = models.TextField()  # unstructured narrative
     created_at = models.DateTimeField(default=timezone.now)
 
+    sentiment = models.FloatField(null=True, blank=True)
+
+    sentiment_category = models.CharField(
+        max_length=20,
+        choices=DiaryEntrySentimentCategory.choices,
+        null=True,
+        blank=True,
+    )
+
+    @staticmethod
+    def map_sentiment_to_category(score: float | None) -> str | None:
+        if score is None:
+            return None
+        if score <= -0.6:
+            return DiaryEntrySentimentCategory.VERY_NEGATIVE
+        elif score <= -0.2:
+            return DiaryEntrySentimentCategory.NEGATIVE
+        elif score < 0.2:
+            return DiaryEntrySentimentCategory.NEUTRAL
+        elif score < 0.6:
+            return DiaryEntrySentimentCategory.POSITIVE
+        else:
+            return DiaryEntrySentimentCategory.VERY_POSITIVE
+
+    def set_sentiment(self, score: float | None) -> None:
+        self.sentiment = score
+        self.sentiment_category = self.map_sentiment_to_category(score)
+
     class Meta:
         ordering = ["-created_at"]
         indexes = [

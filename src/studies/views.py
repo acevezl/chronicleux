@@ -176,6 +176,21 @@ def study_entries(request, pk):
         "sort": sort,
     })
 
+# STUDY ANALYSIS
+@login_required
+def study_analysis(request, pk):
+    study = get_object_or_404(Study, pk=pk)
+
+    entries_total = study.entries.count()
+    entries_analyzed = study.entries.exclude(sentiment__isnull=True).count()
+
+    context = {
+        "study": study,
+        "entries_total": entries_total,
+        "entries_analyzed": entries_analyzed,
+    }
+    return render(request, "studies/study_analysis.html", context)
+
 # IMPORT ENTRIES
 User = get_user_model()
 

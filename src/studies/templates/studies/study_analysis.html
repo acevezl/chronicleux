@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block title %}{{ study.title }} Analysis · ChronicleUX{% endblock %}
+
+{% block content %}
+
+<div class="mt-2 md:flex md:items-center md:justify-between">
+  <div class="min-w-0 flex-1">
+    <h1 class="text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight dark:text-white">
+      Diary Study Analysis
+    </h1>
+  </div>
+</div>
+
+<div class="mt-6 grid grid-cols-1 gap-4">
+  <div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden">
+    
+    <!-- HEADER -->
+    <div class="lg:grid lg:grid-cols-2 py-4 px-6 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+      <div>
+        <span class="text-xl text-fuchsia-700 dark:text-gray-200">{{ study.title }}</span>
+
+        <div class="flex md:grid-cols-2 gap-6">
+          <div>
+            <div class="mt-1 text-sm text-gray-900 dark:text-gray-200">
+              Owner: {{ study.owner.username }}
+            </div>
+          </div>
+
+          <div>
+            <div class="mt-1 text-sm text-gray-900 dark:text-gray-200">
+              Created on: {{ study.created_at|date:"Y-m-d H:i" }}
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <a
+            href="{% url 'study_detail' study.pk %}"
+            class="rounded-sm px-4 py-2 text-sm font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
+          >
+            Back to Study Details
+          </a>
+
+          {% if is_evaluator %}
+          <a
+            href="{% url 'study_entries' study.pk %}"
+            class="rounded-sm px-4 py-2 text-sm font-medium text-gray-200 dark:text-gray-500 hover:text-white bg-gray-950 hover:bg-gray-600 border border-gray-950 dark:border-gray-500 dark:hover:border-gray-200 cursor-pointer"
+          >
+            View Diary Entries
+          </a>
+          {% endif %}
+
+          <a
+            href="{% url 'evaluator_dashboard' %}"
+            class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+          >
+            Back to Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYSIS SUMMARY -->
+    <div class="lg:grid lg:grid-cols-3 lg:gap-12 p-6">
+      
+      <!-- LEFT COLUMN -->
+      <div class="col-span-2 space-y-6">
+
+        <!-- SENTIMENT TRENDS -->
+        <div>
+          <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+            Sentiment Trends
+          </label>
+
+          <div class="mt-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+            <div class="flex gap-2 pb-4">
+              <button class="rounded-sm px-3 py-1 text-xs font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700">
+                Daily
+              </button>
+              <button class="rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
+                Weekly
+              </button>
+              <button class="rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800">
+                Monthly
+              </button>
+            </div>
+
+            <div class="flex h-72 items-center justify-center rounded-sm border border-dashed border-gray-300 dark:border-gray-600 text-sm text-gray-500 dark:text-gray-400">
+              Sentiment trend chart goes here
+            </div>
+          </div>
+        </div>
+
+        <!-- THEMATIC ANALYSIS -->
+        <div>
+          <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+            Thematic Analysis
+          </label>
+
+          <div class="mt-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+            {% if themes %}
+              <div class="flex flex-wrap gap-2">
+                {% for theme in themes %}
+                  <span class="border border-fuchsia-700 rounded-full px-3 py-1 text-xs text-fuchsia-700">
+                    {{ theme.label }}{% if theme.count %} ({{ theme.count }}){% endif %}
+                  </span>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-sm text-gray-500 dark:text-gray-400">
+                No thematic analysis available yet.
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="lg:col-span-1 pt-4 lg:pt-0">
+        <div class="grid md:grid-cols-4 sm:grid-cols-2 lg:grid-cols-1 gap-6">
+
+          <!-- OVERALL SENTIMENT -->
+          <div>
+            <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+              Overall Sentiment
+            </label>
+            <div class="mt-1 text-sm">
+              {% if study.sentiment is not None %}
+                {% if study.sentiment_category == "VERY_POSITIVE" or study.sentiment_category == "POSITIVE" %}
+                  <span class="inline-flex items-center rounded-full bg-green-200 gap-1 px-2 py-1 text-xs font-medium text-green-800 inset-ring inset-ring-green-500/10 border border-green-800">
+                    {% heroicon_outline "face-smile" %}
+                    {{ study.get_sentiment_category_display }} ({{ study.sentiment }})
+                  </span>
+                {% elif study.sentiment_category == "VERY_NEGATIVE" or study.sentiment_category == "NEGATIVE" %}
+                  <span class="inline-flex items-center rounded-full bg-red-200 gap-1 px-2 py-1 text-xs font-medium text-red-800 inset-ring inset-ring-red-500/10 border border-red-800">
+                    {% heroicon_outline "face-frown" %}
+                    {{ study.get_sentiment_category_display }} ({{ study.sentiment }})
+                  </span>
+                {% elif study.sentiment_category == "NEUTRAL" %}
+                  <span class="inline-flex items-center rounded-full bg-amber-200 gap-1 px-2 py-1 text-xs font-medium text-amber-800 inset-ring inset-ring-amber-500/10 border border-amber-800">
+                    {% heroicon_outline "question-mark-circle" %}
+                    {{ study.get_sentiment_category_display }} ({{ study.sentiment }})
+                  </span>
+                {% endif %}
+              {% else %}
+                <span class="inline-flex items-center rounded-full bg-gray-200 gap-1 px-2 py-1 text-xs font-medium text-gray-800 inset-ring inset-ring-gray-500/10 border border-gray-800">
+                  {% heroicon_outline "ellipsis-horizontal-circle" %}
+                  Pending Analysis
+                </span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- TOTAL ENTRIES -->
+          <div>
+            <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+              Total Entries
+            </label>
+            <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+              {{ entries_analyzed|default:"0" }} analyzed / {{ entries_total|default:"0" }} collected
+            </div>
+          </div>
+
+          <!-- LAST ANALYSIS -->
+          <div>
+            <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+              Last Analysis
+            </label>
+            <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+              {% if study.last_analysis_at %}
+                {{ study.last_analysis_at|date:"Y-m-d H:i" }}
+              {% else %}
+                —
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- STATUS -->
+          <div>
+            <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+              Status
+            </label>
+            <div class="mt-1 text-sm">
+              <span class="inline-flex items-center rounded-full gap-1 px-3 py-2 text-xs font-medium status-cell-{{ study.status }}">
+                {{ study.get_status_display }}
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER ACTIONS -->
+    <div class="p-6 bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600">
+      <div class="flex gap-3">
+        {% if is_evaluator %}
+        <a
+          href="{% url 'study_entries' study.pk %}"
+          class="rounded-sm px-4 py-2 text-sm font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
+        >
+          View Diary Entries
+        </a>
+        {% endif %}
+
+        <a
+          href="{% url 'study_detail' study.pk %}"
+          class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+        >
+          Back to Study Details
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

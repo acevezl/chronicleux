@@ -346,6 +346,9 @@
   .h-16 {
     height: calc(var(--spacing) * 16);
   }
+  .h-72 {
+    height: calc(var(--spacing) * 72);
+  }
   .h-full {
     height: 100%;
   }
@@ -519,6 +522,10 @@
   .border-b {
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 1px;
+  }
+  .border-dashed {
+    --tw-border-style: dashed;
+    border-style: dashed;
   }
   .border-amber-800 {
     border-color: var(--color-amber-800);

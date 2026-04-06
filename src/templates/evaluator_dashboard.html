@@ -130,8 +130,10 @@
                     {{ study.created_at|date:"Y-m-d" }}
                   </td>
 
-                  <td class="px-4 py-3 status-cell-{{ study.status }}">
-                    {{ study.get_status_display }}
+                  <td class="px-4 py-3">
+                    <span class="inline-flex items-center rounded-full gap-1 px-3 py-2 text-xs font-medium status-cell-{{ study.status }}">
+                      {{ study.get_status_display }}
+                    </span>
                   </td>
 
                   <td class="px-4 py-3">
