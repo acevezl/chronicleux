@@ -80,7 +80,7 @@ List of diary entry attributes
 
 ### 5. Study Lifecycle Management
 
-#### 5.1 As an Evaluator, I want to move a study through its status so that I can start and stop diary entry collection and move on to analysis and completion.
+#### 5.1 As an Evaluator, I want to move a study through its status so that I can start and stop diary entry collection and move on to analysis and completion. [Complete]
 
 - Study workflow:
     - {PLANNING -> COLLECTING -> ANALYZING -> COMPLETED}

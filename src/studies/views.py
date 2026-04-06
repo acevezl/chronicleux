@@ -10,8 +10,6 @@ from django.db import transaction
 from django.http import HttpResponseForbidden
 from django.utils.dateparse import parse_datetime
 
-
-
 from .forms import StudyForm, DiaryEntryForm
 from .models import  DiaryEntry, DiaryEntrySentiment, DiaryEntrySource, MembershipRole, Study, StudyMembership
 
@@ -164,8 +162,11 @@ def study_entries(request, pk):
     paginator = Paginator(diary_entries, 10)  # 10 per page
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
+    
+    params = request.GET.copy()
+    params.pop("page", None)
 
-    return render(request, "studies/diary_entries.html", {
+    context = {
         "study": study,
         "diary_entries": page_obj,
         "page_obj": page_obj,
@@ -174,7 +175,10 @@ def study_entries(request, pk):
         "participant": participant,
         "q": q,
         "sort": sort,
-    })
+        "page_params": params,
+    }
+
+    return render(request, "studies/diary_entries.html", context)
 
 # STUDY ANALYSIS
 @login_required

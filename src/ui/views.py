@@ -52,13 +52,15 @@ def evaluator_dashboard(request):
     page_params = request.GET.copy()
     page_params.pop("page", None)
 
-    return render(request, "evaluator_dashboard.html", {
+    context = {
         "studies": page_obj,
         "page_obj": page_obj,
         "sort": sort,
         "sort_params": sort_params,
         "page_params": page_params,
-    })
+    }
+
+    return render(request, "evaluator_dashboard.html", context)
 
 def signup(request):
     if request.user.is_authenticated:

@@ -17,7 +17,47 @@
   <div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden">
     
     <div class="p-6 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+
       <span class="text-xl text-fuchsia-700 dark:text-gray-200">{{ study.title }}</span>
+
+      <div class="flex md:grid-cols-2 gap-6">
+          <div>
+            <div class="mt-1 text-sm text-gray-900 dark:text-gray-200">
+              Owner: {{ study.owner.username }}
+            </div>
+          </div>
+
+          <div>
+            <div class="mt-1 text-sm text-gray-900 dark:text-gray-200">
+              Created on: {{ study.created_at|date:"Y-m-d H:i" }}
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <a
+            href="{% url 'study_detail' study.pk %}"
+            class="rounded-sm px-4 py-2 text-sm font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
+          >
+            Back to Study Details
+          </a>
+
+          {% if is_evaluator %}
+          <a
+            href="{% url 'study_entries' study.pk %}"
+            class="rounded-sm px-4 py-2 text-sm font-medium text-gray-200 dark:text-gray-500 hover:text-white bg-gray-950 hover:bg-gray-600 border border-gray-950 dark:border-gray-500 dark:hover:border-gray-200 cursor-pointer"
+          >
+            View Diary Entries
+          </a>
+          {% endif %}
+
+          <a
+            href="{% url 'evaluator_dashboard' %}"
+            class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+          >
+            Back to Dashboard
+          </a>
+        </div>
     </div>
 
     <div class="px-6 py-4 bg-white dark:bg-gray-900">
@@ -73,6 +113,69 @@
 
     <div class="overflow-x-auto">
         {% if diary_entries %}
+            <div class="flex items-center justify-between px-6 py-4 bg-gray-100 border-t border-gray-200 dark:border-gray-600 dark:bg-gray-800">
+
+                <div class="text-sm text-gray-600 dark:text-gray-200">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </div>
+
+                <div class="flex gap-2">
+                
+                    {% if page_obj.paginator.num_pages > 1 and page_obj.number != 1 %}
+                        <a
+                        href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page=1"
+                        class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                        >
+                        {% heroicon_outline "chevron-double-left" %}
+                        </a>
+                    {% else %}
+                        <span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
+                        {% heroicon_outline "chevron-double-left" %}
+                        </span>
+                    {% endif %}
+
+                    {% if page_obj.has_previous %}
+                        <a
+                        href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
+                        class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                        >
+                        {% heroicon_outline "chevron-left" %}
+                        </a>
+                    {% else %}
+                        <span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
+                        {% heroicon_outline "chevron-left" %}
+                        </span>
+                    {% endif %}
+
+                    {% if page_obj.has_next %}
+                        <a
+                        href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
+                        class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                        >
+                        {% heroicon_outline "chevron-right" %}
+                        </a>
+                    {% else %}
+                        <span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
+                        {% heroicon_outline "chevron-right" %}
+                        </span>
+                    {% endif %}
+
+                    {% if page_obj.paginator.num_pages > 1 and page_obj.number != page_obj.paginator.num_pages%}
+                        <a
+                        href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{page_obj.paginator.num_pages}}"
+                        class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                        >
+                        {% heroicon_outline "chevron-double-right" %}
+                        </a>
+                    {% else %}
+                        <span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
+                        {% heroicon_outline "chevron-double-right" %}
+                        </span>
+                    {% endif %}
+
+                </div>
+
+            </div>
             <table class="w-full table-auto text-sm">
                 <thead class="bg-gray-100 dark:bg-gray-700 dark:text-gray-200 text-gray-600">
                     <tr class="border-b border-t border-gray-200 dark:border-gray-600">
@@ -166,28 +269,62 @@
             <div class="flex items-center justify-between px-6 py-4 bg-gray-100 border-t border-gray-200 dark:border-gray-600 dark:bg-gray-800">
 
                 <div class="text-sm text-gray-600 dark:text-gray-200">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
                 </div>
 
                 <div class="flex gap-2">
+                
+                    {% if page_obj.paginator.num_pages > 1 and page_obj.number != 1 %}
+                        <a
+                        href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page=1"
+                        class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                        >
+                        {% heroicon_outline "chevron-double-left" %}
+                        </a>
+                    {% else %}
+                        <span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
+                        {% heroicon_outline "chevron-double-left" %}
+                        </span>
+                    {% endif %}
 
-                {% if page_obj.has_previous %}
-                    <a
-                    href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
-                    class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
-                    >
-                    Previous
-                    </a>
-                {% endif %}
+                    {% if page_obj.has_previous %}
+                        <a
+                        href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
+                        class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                        >
+                        {% heroicon_outline "chevron-left" %}
+                        </a>
+                    {% else %}
+                        <span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
+                        {% heroicon_outline "chevron-left" %}
+                        </span>
+                    {% endif %}
 
-                {% if page_obj.has_next %}
-                    <a
-                    href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
-                    class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
-                    >
-                    Next
-                    </a>
-                {% endif %}
+                    {% if page_obj.has_next %}
+                        <a
+                        href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
+                        class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                        >
+                        {% heroicon_outline "chevron-right" %}
+                        </a>
+                    {% else %}
+                        <span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
+                        {% heroicon_outline "chevron-right" %}
+                        </span>
+                    {% endif %}
+
+                    {% if page_obj.paginator.num_pages > 1 and page_obj.number != page_obj.paginator.num_pages%}
+                        <a
+                        href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{page_obj.paginator.num_pages}}"
+                        class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                        >
+                        {% heroicon_outline "chevron-double-right" %}
+                        </a>
+                    {% else %}
+                        <span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
+                        {% heroicon_outline "chevron-double-right" %}
+                        </span>
+                    {% endif %}
 
                 </div>
 
