@@ -10,35 +10,35 @@
 
 @layer components {
   .status-cell-PLANNING {
-    @apply bg-gray-50 text-gray-700;
+    @apply bg-gray-50 text-gray-700 border border-gray-700;
   }
 
   .status-cell-COLLECTING {
-    @apply bg-blue-50 text-blue-800;
+    @apply bg-blue-50 text-blue-800 border border-blue-800;
   }
 
   .status-cell-ANALYZING {
-    @apply bg-amber-50 text-amber-800;
+    @apply bg-amber-50 text-amber-800 border border-amber-800;
   }
 
   .status-cell-COMPLETED {
-    @apply bg-green-50 text-green-800;
+    @apply bg-green-50 text-green-800 border border-green-800;
   }
 
   .status-cell-PLANNING-dark {
-    @apply bg-gray-50 text-gray-700;
+    @apply bg-gray-50 text-gray-700 border border-gray-700;
   }
 
   .status-cell-COLLECTING-dark {
-    @apply bg-blue-50 text-blue-800;
+    @apply bg-blue-50 text-blue-800 border border-blue-800;
   }
 
   .status-cell-ANALYZING-dark {
-    @apply bg-amber-50 text-amber-800;
+    @apply bg-amber-50 text-amber-800 border border-amber-800;
   }
 
   .status-cell-COMPLETED-dark {
-    @apply bg-green-50 text-green-800;
+    @apply bg-green-50 text-green-800 border border-green-800;
   }
 
   .ui-link {

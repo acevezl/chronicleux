@@ -30,6 +30,13 @@ class PromptType(models.TextChoices):
     LIKERT_7 = "LIKERT_7", "Likert (7-point)"
     SHORT_TEXT = "SHORT_TEXT", "Short text"
 
+class DiaryEntrySentimentCategory(models.TextChoices):
+    VERY_NEGATIVE = "VERY_NEGATIVE", "Very negative"
+    NEGATIVE = "NEGATIVE", "Negative"
+    NEUTRAL = "NEUTRAL", "Neutral"
+    POSITIVE = "POSITIVE", "Positive"
+    VERY_POSITIVE = "VERY_POSITIVE", "Very positive"
+
 class Study(models.Model):
 
     title = models.CharField(max_length=255) 
@@ -61,6 +68,15 @@ class Study(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    sentiment = models.FloatField(null=True, blank=True)  # -1 to 1
+
+    sentiment_category = models.CharField(
+        max_length=20,
+        choices=DiaryEntrySentimentCategory.choices,
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         ordering = ["-created_at"]
@@ -96,6 +112,21 @@ class Study(models.Model):
         if self.data_collection_end and now > self.data_collection_end:
             return False
         return True
+
+    @staticmethod
+    def map_sentiment_to_category(score: float | None) -> str | None:
+        if score is None:
+            return None
+        if score <= -0.6:
+            return DiaryEntrySentimentCategory.VERY_NEGATIVE
+        elif score <= -0.2:
+            return DiaryEntrySentimentCategory.NEGATIVE
+        elif score < 0.2:
+            return DiaryEntrySentimentCategory.NEUTRAL
+        elif score < 0.6:
+            return DiaryEntrySentimentCategory.POSITIVE
+        else:
+            return DiaryEntrySentimentCategory.VERY_POSITIVE
 
     def __str__(self) -> str:
         return f"{self.title} ({self.status})"

@@ -22,9 +22,9 @@ Reduce the time and effort required to analyze diary study entries by augmenting
 
 ### 1. Study Design and Setup (i.e., Study Protocol Definition)
 
-#### 1.1 As an Evaluator, I want to create diary studies so that I can use this technique in my UX research initiative.
+#### 1.1 As an Evaluator, I want to create diary studies so that I can use this technique in my UX research initiative. [Complete]
 
-#### 1.2 As an Evaluator, I want to define the study protocol and key attributes so that analysis is grounded in research intent, participation is time bound, and study information is categorizable and retrievable.
+#### 1.2 As an Evaluator, I want to define the study protocol and key attributes so that analysis is grounded in research intent, participation is time bound, and study information is categorizable and retrievable. [Complete]
 
 List of protocol attributes:
 * Study title | `CharField`
@@ -41,7 +41,7 @@ List of protocol attributes:
 * Created at | `DatetimeField`
 * Updated at | `DatetimeField`
 
-#### 1.3 As an Evaluator, I want to define diary entry attributes and relevant prompts so that diary entries are standardized, consistent, guided, and relevant
+#### 1.3 As an Evaluator, I want to define diary entry attributes and relevant prompts so that diary entries are standardized, consistent, guided, and relevant. [Complete]
 
 List of diary entry attributes
 * Study | `Study`
@@ -76,7 +76,7 @@ List of diary entry attributes
 
 ### 4. Data Ingestion & Import
 
-#### 4.1 As an Evaluator, I want to import external diary entries (CSV, JSON) so that I can analyze data collected outside the platform
+#### 4.1 As an Evaluator, I want to import external diary entries (CSV, JSON) so that I can analyze data collected outside the platform. [Complete]
 
 ### 5. Study Lifecycle Management
 
@@ -92,7 +92,7 @@ List of diary entry attributes
 
 ### 6. Analysis
 
-#### 6.1 As an Evaluator, I want to run analysis on a study so that I can efficiently synthesize large volumes of diary data without manual review
+#### 6.1 As an Evaluator, I want to run analysis on a study so that I can efficiently synthesize large volumes of diary data without manual review.
 
 #### 6.2 As an Evaluator, I want to see sentiment trends over time so that I can understand how experiences evolve
 
