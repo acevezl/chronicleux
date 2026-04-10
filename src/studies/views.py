@@ -116,7 +116,7 @@ def create_diary_entry(request, study_id):
     }
     return render(request, "studies/create_diary_entry.html", context)
 
-# VIEW ENTRIES
+# LIST ENTRIES
 @login_required
 def study_entries(request, pk):
 
@@ -179,6 +179,19 @@ def study_entries(request, pk):
     }
 
     return render(request, "studies/diary_entries.html", context)
+
+# ENTRY DETAILS
+@login_required
+def entry_detail(request, pk):
+    entry = get_object_or_404(
+        DiaryEntry.objects.select_related("study", "participant"),
+        pk=pk,
+    )
+
+    return render(request, "studies/entry_detail.html", {
+        "entry": entry,
+        "study": entry.study,
+    })
 
 # STUDY ANALYSIS
 @login_required

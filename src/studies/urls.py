@@ -8,4 +8,5 @@ urlpatterns = [
     path("studies/<int:pk>/import/", views.import_entries, name="import_entries"),
     path("<int:pk>/entries/", views.study_entries, name="study_entries"),
     path("<int:pk>/analysis/", views.study_analysis, name="study_analysis"),
+    path("entries/<int:pk>/", views.entry_detail, name="entry_detail"),
 ]
