@@ -130,7 +130,7 @@
               Overall Sentiment
             </label>
             <div class="mt-1 text-sm">
-              {% if study.sentiment %}
+              {% if study.avg_sentiment %}
                 {% if study.sentiment_category == "VERY_POSITIVE" or study.sentiment_category == "POSITIVE" %}
                 <span class="inline-flex items-center rounded-full bg-green-200 gap-1 px-2 py-1 text-xs font-medium text-green-800 inset-ring inset-ring-green-500/10 border border-green-800">
                   {% heroicon_outline "face-smile" %} {{ study.get_sentiment_category_display }} ({{study.sentiment}})

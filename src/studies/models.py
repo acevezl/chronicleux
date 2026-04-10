@@ -10,33 +10,45 @@ from django.utils import timezone
 
 User = settings.AUTH_USER_MODEL
 
+# STUDY STATUS ENUM
 class StudyStatus(models.TextChoices):
     PLANNING = "PLANNING", "Not started (Planning)"
     COLLECTING = "COLLECTING", "Collecting diary entries"
     ANALYZING = "ANALYZING", "Analyzing diary entries"
     COMPLETED = "COMPLETED", "Completed"
 
+
+# ENTRY FREQUENCY ENUM
 class EntryFrequency(models.TextChoices):
     DAILY = "DAILY", "Daily"
     WEEKLY = "WEEKLY", "Weekly"
     EVENT_BASED = "EVENT_BASED", "Event-based"
     FREEFORM = "FREEFORM", "Freeform"
 
+
+# MEMBERSHIP ROLE ENUM
 class MembershipRole(models.TextChoices):
     EVALUATOR = "EVALUATOR", "Evaluator"
     PARTICIPANT = "PARTICIPANT", "Participant"
 
+
+# PROMPT TYPES ENUM
 class PromptType(models.TextChoices):
     LIKERT_7 = "LIKERT_7", "Likert (7-point)"
     SHORT_TEXT = "SHORT_TEXT", "Short text"
 
-class DiaryEntrySentimentCategory(models.TextChoices):
+
+# SENTIMENT CATEGORIES (I.E., SENTIMENT LABELS) 
+# Used on both Diary Sentiment and Entry Sentiment
+class SentimentCategory(models.TextChoices):
     VERY_NEGATIVE = "VERY_NEGATIVE", "Very negative"
     NEGATIVE = "NEGATIVE", "Negative"
     NEUTRAL = "NEUTRAL", "Neutral"
     POSITIVE = "POSITIVE", "Positive"
     VERY_POSITIVE = "VERY_POSITIVE", "Very positive"
 
+
+# STUDY MODEL
 class Study(models.Model):
 
     title = models.CharField(max_length=255) 
@@ -69,14 +81,26 @@ class Study(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    sentiment = models.FloatField(null=True, blank=True)  # -1 to 1
+    # After each study analysis, these attributes are udpated
+    # to always show the results of the last run
+    avg_sentiment = models.FloatField(null=True, blank=True)  # -1 to 1
 
     sentiment_category = models.CharField(
         max_length=20,
-        choices=DiaryEntrySentimentCategory.choices,
+        choices=SentimentCategory.choices,
         null=True,
         blank=True,
     )
+
+    # Outputs of the last analysis run
+    sentiment_distribution = models.JSONField(default=dict, blank=True)
+    recurring_issues = models.JSONField(default=list, blank=True)
+    recurring_themes = models.JSONField(default=list, blank=True)
+    evolution_over_time = models.JSONField(default=list, blank=True)
+    top_representative_quotes = models.JSONField(default=list, blank=True)
+    analysis_model = models.CharField(max_length=100, blank=True)
+    analysis_version = models.CharField(max_length=50, blank=True)
+    analyzed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at"]
@@ -113,25 +137,26 @@ class Study(models.Model):
             return False
         return True
 
+    # Map score ranges to sentiment category labels
     @staticmethod
     def map_sentiment_to_category(score: float | None) -> str | None:
         if score is None:
             return None
         if score <= -0.6:
-            return DiaryEntrySentimentCategory.VERY_NEGATIVE
+            return SentimentCategory.VERY_NEGATIVE
         elif score <= -0.2:
-            return DiaryEntrySentimentCategory.NEGATIVE
+            return SentimentCategory.NEGATIVE
         elif score < 0.2:
-            return DiaryEntrySentimentCategory.NEUTRAL
+            return SentimentCategory.NEUTRAL
         elif score < 0.6:
-            return DiaryEntrySentimentCategory.POSITIVE
+            return SentimentCategory.POSITIVE
         else:
-            return DiaryEntrySentimentCategory.VERY_POSITIVE
+            return SentimentCategory.VERY_POSITIVE
 
     def __str__(self) -> str:
         return f"{self.title} ({self.status})"
 
-
+# STUDY MEMBERSHIP MODEL (I.E. WHAT PARTICIPANTS BELONG TO STUDY WITH WHAT ROLE)
 class StudyMembership(models.Model):
 
     study = models.ForeignKey(Study, on_delete=models.CASCADE, related_name="memberships")
@@ -153,7 +178,7 @@ class StudyMembership(models.Model):
         verbose_name_plural = "Study Memberships"
 
     def clean(self):
-        # Owner must always be an evaluator in their study.
+        # Owner must always be an evaluator in their study, cannot write entries
         if self.role == MembershipRole.PARTICIPANT and self.study.owner.pk == self.user.pk:
             raise ValidationError("Study owner cannot be a Participant in their own study.")
 
@@ -161,6 +186,7 @@ class StudyMembership(models.Model):
         return f"{self.user} · {self.study} · {self.role}"
 
 
+# PROMPT MODEL
 class Prompt(models.Model):
 
     study = models.ForeignKey(Study, on_delete=models.CASCADE, related_name="prompts")
@@ -198,17 +224,12 @@ class Prompt(models.Model):
         return f"[{self.study.pk}] {self.order}. {self.text}"
 
 
-class DiaryEntrySentiment(models.TextChoices):
-    VERY_NEGATIVE = "VERY_NEGATIVE", "Very negative"
-    NEGATIVE = "NEGATIVE", "Negative"
-    NEUTRAL = "NEUTRAL", "Neutral"
-    POSITIVE = "POSITIVE", "Positive"
-    VERY_POSITIVE = "VERY_POSITIVE", "Very positive"
-
+# DIARY ENTRY SOURCE ENUM
 class DiaryEntrySource(models.TextChoices):
     INTERNAL = "INTERNAL", "ChronicleUX submission"
     EXTERNAL = "EXTERNAL", "External submission imported into ChronicleUX"
 
+# DIARY ENTRY
 class DiaryEntry(models.Model):
 
     # Entry SOURCE (Internal vs. External)
@@ -239,9 +260,10 @@ class DiaryEntry(models.Model):
     participant_display_name = models.CharField(max_length=255, blank=True)
     participant_email = models.EmailField(blank=True)
 
+    # This is the sentiment ground truth
     sentiment_self_report = models.CharField(
         max_length=20,
-        choices=DiaryEntrySentiment.choices,
+        choices=SentimentCategory.choices,
         help_text="How would you describe your overall experience sentiment for this entry?",
     )
     issue_encountered = models.BooleanField(
@@ -250,29 +272,41 @@ class DiaryEntry(models.Model):
     content = models.TextField()  # unstructured narrative
     created_at = models.DateTimeField(default=timezone.now)
 
+    # After each analysis run, these fields are updated
+    # (i.e., they show the last analysis results for each entry)
+    # This is the inferred signal from the model
     sentiment = models.FloatField(null=True, blank=True)
 
     sentiment_category = models.CharField(
         max_length=20,
-        choices=DiaryEntrySentimentCategory.choices,
+        choices=SentimentCategory.choices,
         null=True,
         blank=True,
     )
+
+    analysis_issue_detected = models.BooleanField(null=True, blank=True)
+    analysis_issue_tags = models.JSONField(default=list, blank=True)
+    analysis_themes = models.JSONField(default=list, blank=True)
+    entry_summary = models.TextField(blank=True)
+
+    analysis_model = models.CharField(max_length=100, blank=True)
+    analysis_version = models.CharField(max_length=50, blank=True)
+    analyzed_at = models.DateTimeField(null=True, blank=True)
 
     @staticmethod
     def map_sentiment_to_category(score: float | None) -> str | None:
         if score is None:
             return None
         if score <= -0.6:
-            return DiaryEntrySentimentCategory.VERY_NEGATIVE
+            return SentimentCategory.VERY_NEGATIVE
         elif score <= -0.2:
-            return DiaryEntrySentimentCategory.NEGATIVE
+            return SentimentCategory.NEGATIVE
         elif score < 0.2:
-            return DiaryEntrySentimentCategory.NEUTRAL
+            return SentimentCategory.NEUTRAL
         elif score < 0.6:
-            return DiaryEntrySentimentCategory.POSITIVE
+            return SentimentCategory.POSITIVE
         else:
-            return DiaryEntrySentimentCategory.VERY_POSITIVE
+            return SentimentCategory.VERY_POSITIVE
 
     def set_sentiment(self, score: float | None) -> None:
         self.sentiment = score
@@ -391,6 +425,7 @@ class DiaryEntry(models.Model):
         )
 
 
+# PROMPT RESPONSE
 class PromptResponse(models.Model):
     diary_entry = models.ForeignKey(DiaryEntry, on_delete=models.CASCADE, related_name="prompt_responses")
     prompt = models.ForeignKey(Prompt, on_delete=models.PROTECT, related_name="responses")
@@ -426,3 +461,105 @@ class PromptResponse(models.Model):
 
     def __str__(self) -> str:
         return f"Response · entry={self.diary_entry.pk} · prompt={self.prompt.pk}"
+
+
+# ANALYSIS RUN STATUS
+class AnalysisRunStatus(models.TextChoices):
+    PENDING = "PENDING", "Pending"
+    RUNNING = "RUNNING", "Running"
+    COMPLETED = "COMPLETED", "Completed"
+    FAILED = "FAILED", "Failed"
+
+
+# STUDY ANALYSIS RUN
+# Results of the full study analysis (i.e., all entries)
+class StudyAnalysisRun(models.Model):
+
+    study = models.ForeignKey(
+        Study, 
+        on_delete=models.CASCADE, 
+        related_name="analysis_runs"
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=AnalysisRunStatus.choices,
+        default=AnalysisRunStatus.PENDING,
+    )
+
+    # start and end times
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    # model and version
+    analysis_model = models.CharField(max_length=100)
+    analysis_version = models.CharField(max_length=50)
+
+    # study-level outputs
+    sentiment_distribution = models.JSONField(default=dict, blank=True)
+    recurring_issues = models.JSONField(default=list, blank=True)
+    recurring_themes = models.JSONField(default=list, blank=True)
+    evolution_over_time = models.JSONField(default=list, blank=True)
+    top_representative_quotes = models.JSONField(default=list, blank=True)
+
+    # error message (if analysis failed)
+    error_message = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-started_at"]
+
+    def __str__(self) -> str:
+        return f"StudyAnalysisRun {self.pk} · study={self.study_id} · {self.status}"
+    
+
+# DIARY ENTRY ANALYSIS RUN
+# Results of the analysis of each entry
+class DiaryEntryAnalysis(models.Model):
+    
+    run = models.ForeignKey(
+        StudyAnalysisRun,
+        on_delete=models.CASCADE,
+        related_name="entry_analyses",
+    )
+
+    entry = models.ForeignKey(
+        DiaryEntry,
+        on_delete=models.CASCADE,
+        related_name="analysis_results",
+    )
+
+    # Required per-entry outputs
+    sentiment = models.FloatField(null=True, blank=True)
+
+    sentiment_category = models.CharField(
+        max_length=20,
+        choices=SentimentCategory.choices,
+        null=True,
+        blank=True,
+    )
+
+    issue_detected = models.BooleanField(default=False)
+    issue_tags = models.JSONField(default=list, blank=True)
+    themes = models.JSONField(default=list, blank=True)
+
+    entry_summary = models.TextField(blank=True)
+    analyzed_at = models.DateTimeField(auto_now_add=True)
+    raw_response = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["-analyzed_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["run", "entry"],
+                name="unique_entry_per_run_analysis",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["run"]),
+            models.Index(fields=["entry"])
+        ]
+
+    def __str__(self) -> str:
+        return f"DiaryEntryAnalysis {self.pk} · entry={self.entry_id} · run={self.run_id}"
+
+
