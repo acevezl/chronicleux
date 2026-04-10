@@ -46,8 +46,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    # django extensions
+    # "django.extensions",
+
     # chronicleux apps
-    "studies"
+    "studies",
 ]
 
 from django.templatetags.static import static

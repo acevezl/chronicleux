@@ -154,7 +154,7 @@ class Study(models.Model):
             return SentimentCategory.VERY_POSITIVE
 
     def __str__(self) -> str:
-        return f"{self.title} ({self.status})"
+        return f"{self.title} [{self.get_status_display()}]"
 
 # STUDY MEMBERSHIP MODEL (I.E. WHAT PARTICIPANTS BELONG TO STUDY WITH WHAT ROLE)
 class StudyMembership(models.Model):

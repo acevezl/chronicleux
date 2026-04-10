@@ -7,6 +7,8 @@ from .models import (
     Prompt,
     DiaryEntry,
     PromptResponse,
+    StudyAnalysisRun,
+    DiaryEntryAnalysis,
 )
 
 
@@ -33,7 +35,22 @@ class DiaryEntryAdmin(admin.ModelAdmin):
     list_filter = ("study",)
 
 
+@admin.register(StudyAnalysisRun)
+class StudyAnalysisRunAdmin(admin.ModelAdmin):
+    list_display = ("id", "study", "status", "analysis_model", "analysis_version", "started_at", "completed_at")
+    list_filter = ("status", "analysis_model", "analysis_version")
+    search_fields = ("study__title",)
+
+
+@admin.register(DiaryEntryAnalysis)
+class DiaryEntryAnalysisAdmin(admin.ModelAdmin):
+    list_display = ("id", "entry", "run", "sentiment_category", "issue_detected", "analyzed_at")
+    list_filter = ("sentiment_category", "issue_detected", "run__analysis_model", "run__analysis_version")
+    search_fields = ("entry__content", "entry__participant_display_name", "entry__study__title")
+
+
 admin.site.register(Prompt)
 admin.site.register(StudyMembership)
 admin.site.register(PromptResponse)
+
 

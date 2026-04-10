@@ -11,7 +11,7 @@ from django.http import HttpResponseForbidden
 from django.utils.dateparse import parse_datetime
 
 from .forms import StudyForm, DiaryEntryForm
-from .models import  DiaryEntry, DiaryEntrySentiment, DiaryEntrySource, MembershipRole, Study, StudyMembership
+from .models import  DiaryEntry, SentimentCategory, DiaryEntrySource, MembershipRole, Study, StudyMembership
 
 # CREATE STUDY
 @login_required
@@ -198,7 +198,7 @@ def study_analysis(request, pk):
 # IMPORT ENTRIES
 User = get_user_model()
 
-VALID_SENTIMENTS = {choice[0] for choice in DiaryEntrySentiment.choices}
+VALID_SENTIMENTS = {choice[0] for choice in SentimentCategory.choices}
 
 @login_required
 def import_entries(request, pk):
