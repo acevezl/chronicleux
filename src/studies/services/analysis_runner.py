@@ -1,8 +1,15 @@
 from __future__ import annotations
 
 from collections import Counter
+import re
+from typing import Any
+
 from django.db import transaction
 from django.utils import timezone
+
+from nltk.sentiment import SentimentIntensityAnalyzer
+from sklearn.decomposition import NMF
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 from studies.models import (
     Study,
@@ -14,58 +21,174 @@ from studies.models import (
 )
 
 
+DEFAULT_THEME_COUNT = 3
+DEFAULT_THEME_TERMS = 6
+MAX_SUMMARY_LENGTH = 180
+
+ISSUE_KEYWORDS = {
+    "bug": ["bug", "error", "crash", "broken", "glitch", "failed", "failure"],
+    "confusion": ["confusing", "unclear", "lost", "didn't understand", "not sure", "uncertain"],
+    "performance": ["slow", "lag", "laggy", "delay", "delayed", "loading", "freeze", "frozen"],
+    "usability": ["hard", "difficult", "awkward", "annoying", "frustrating", "frustration"],
+}
+
+
 def normalize_entry_text(text: str) -> str:
+    """
+    Light normalization only.
+    Do not over-clean, because VADER benefits from punctuation/casing cues.
+    """
     return " ".join((text or "").split())
 
 
-def analyze_entry(content: str) -> dict:
+def make_entry_summary(text: str, max_length: int = MAX_SUMMARY_LENGTH) -> str:
+    normalized = normalize_entry_text(text)
+    if len(normalized) <= max_length:
+        return normalized
+    return normalized[:max_length].rstrip() + "..."
+
+
+def detect_issue_tags(text: str) -> list[str]:
+    lowered = (text or "").lower()
+    tags: list[str] = []
+
+    for tag, keywords in ISSUE_KEYWORDS.items():
+        if any(keyword in lowered for keyword in keywords):
+            tags.append(tag)
+
+    return tags
+
+
+def analyze_entry_sentiment(content: str, sia: SentimentIntensityAnalyzer) -> dict[str, Any]:
     normalized = normalize_entry_text(content)
-
-    # stub implementation for now
-    sentiment = None
-    if any(word in normalized.lower() for word in ["love", "great", "easy", "good"]):
-        sentiment = 0.5
-    elif any(word in normalized.lower() for word in ["bad", "frustrating", "confusing", "annoying"]):
-        sentiment = -0.5
-
+    scores = sia.polarity_scores(normalized)
+    sentiment = round(scores["compound"], 4)
     sentiment_category = DiaryEntry.map_sentiment_to_category(sentiment)
-
-    issue_detected = any(
-        word in normalized.lower()
-        for word in ["issue", "problem", "bug", "frustrating", "confusing", "error"]
-    )
-
-    issue_tags = []
-    if "bug" in normalized.lower() or "error" in normalized.lower():
-        issue_tags.append("bug")
-    if "confusing" in normalized.lower():
-        issue_tags.append("confusion")
-    if "slow" in normalized.lower():
-        issue_tags.append("performance")
-
-    themes = []
-    if "onboarding" in normalized.lower():
-        themes.append("onboarding")
-    if "navigation" in normalized.lower():
-        themes.append("navigation")
-    if not themes:
-        themes.append("general experience")
-
-    summary = normalized[:180]
-    if len(normalized) > 180:
-        summary += "..."
+    issue_tags = detect_issue_tags(normalized)
 
     return {
         "sentiment": sentiment,
         "sentiment_category": sentiment_category,
-        "issue_detected": issue_detected,
+        "issue_detected": bool(issue_tags),
         "issue_tags": issue_tags,
-        "themes": themes,
-        "entry_summary": summary,
+        "entry_summary": make_entry_summary(normalized),
         "raw_response": {
-            "analyzer": "stub_v1"
+            "analyzer": "vader_tfidf_nmf",
+            "sentiment_engine": "nltk_vader",
+            "vader_scores": scores,
         },
     }
+
+
+def build_theme_label(terms: list[str]) -> str:
+    """
+    Simple human-readable label from top NMF terms.
+    You can later replace this with a manual labeling table if you want nicer labels.
+    """
+    cleaned_terms = [term.replace("_", " ") for term in terms if term]
+    return " / ".join(cleaned_terms[:3]) if cleaned_terms else "general experience"
+
+
+def extract_themes_for_entries(
+    entries: list[DiaryEntry],
+    n_components: int = DEFAULT_THEME_COUNT,
+    top_terms_per_theme: int = DEFAULT_THEME_TERMS,
+) -> tuple[dict[int, list[str]], list[dict[str, Any]]]:
+    """
+    Returns:
+      - entry_id -> assigned theme labels
+      - recurring themes metadata for study/run aggregates
+    """
+    if not entries:
+        return {}, []
+
+    entry_texts = [normalize_entry_text(entry.content) for entry in entries]
+    non_empty_entries = [(entry, text) for entry, text in zip(entries, entry_texts) if text]
+
+    if len(non_empty_entries) < 2:
+        fallback = {
+            entry.id: ["general experience"]
+            for entry, text in non_empty_entries
+        }
+        recurring = [{"theme": "general experience", "count": len(non_empty_entries)}]
+        return fallback, recurring
+
+    filtered_entries = [entry for entry, _ in non_empty_entries]
+    filtered_texts = [text for _, text in non_empty_entries]
+
+    vectorizer = TfidfVectorizer(
+        lowercase=True,
+        stop_words="english",
+        ngram_range=(1, 2),
+        max_df=0.85,
+        min_df=1 if len(filtered_texts) < 5 else 2,
+        max_features=1000,
+    )
+    tfidf_matrix = vectorizer.fit_transform(filtered_texts)
+
+    if tfidf_matrix.shape[1] == 0:
+        fallback = {entry.id: ["general experience"] for entry in filtered_entries}
+        recurring = [{"theme": "general experience", "count": len(filtered_entries)}]
+        return fallback, recurring
+
+    actual_components = max(
+        1,
+        min(n_components, tfidf_matrix.shape[0], tfidf_matrix.shape[1]),
+    )
+
+    nmf = NMF(
+        n_components=actual_components,
+        init="nndsvda",
+        random_state=42,
+        max_iter=400,
+    )
+    doc_topic_matrix = nmf.fit_transform(tfidf_matrix)
+
+    feature_names = vectorizer.get_feature_names_out()
+
+    theme_labels: list[str] = []
+    recurring_themes: list[dict[str, Any]] = []
+
+    for topic_idx, topic_weights in enumerate(nmf.components_):
+        top_indices = topic_weights.argsort()[::-1][:top_terms_per_theme]
+        top_terms = [feature_names[i] for i in top_indices]
+        label = build_theme_label(top_terms)
+        theme_labels.append(label)
+
+        recurring_themes.append({
+            "theme": label,
+            "keywords": top_terms,
+            "topic_index": topic_idx,
+        })
+
+    entry_theme_map: dict[int, list[str]] = {}
+    theme_counter = Counter()
+
+    for row_idx, entry in enumerate(filtered_entries):
+        topic_scores = doc_topic_matrix[row_idx]
+        if len(topic_scores) == 0:
+            assigned = ["general experience"]
+        else:
+            dominant_topic_idx = int(topic_scores.argmax())
+            assigned = [theme_labels[dominant_topic_idx]]
+            theme_counter.update(assigned)
+
+        entry_theme_map[entry.id] = assigned
+
+    recurring_output = []
+    for theme, count in theme_counter.most_common():
+        metadata = next((item for item in recurring_themes if item["theme"] == theme), {})
+        recurring_output.append({
+            "theme": theme,
+            "count": count,
+            "keywords": metadata.get("keywords", []),
+        })
+
+    # Give empty-text entries a fallback
+    for entry in entries:
+        entry_theme_map.setdefault(entry.id, ["general experience"])
+
+    return entry_theme_map, recurring_output
 
 
 def build_sentiment_distribution(entry_results: list[dict]) -> dict:
@@ -149,7 +272,13 @@ def build_evolution_over_time(entries_with_results: list[tuple]) -> list[dict]:
 def build_top_representative_quotes(entries_with_results: list[tuple]) -> list[dict]:
     selected = []
 
-    for entry, result in entries_with_results[:5]:
+    ranked = sorted(
+        entries_with_results,
+        key=lambda pair: abs(pair[1].get("sentiment") or 0),
+        reverse=True,
+    )
+
+    for entry, result in ranked[:5]:
         quote = (entry.content or "").strip()
         if len(quote) > 240:
             quote = quote[:240] + "..."
@@ -171,8 +300,8 @@ def run_study_analysis(study_id: int) -> StudyAnalysisRun:
     run = StudyAnalysisRun.objects.create(
         study=study,
         status=AnalysisRunStatus.RUNNING,
-        analysis_model="stub",
-        analysis_version="v1",
+        analysis_model="vader_tfidf_nmf",
+        analysis_version="v2",
     )
 
     study.status = StudyStatus.ANALYZING
@@ -182,14 +311,16 @@ def run_study_analysis(study_id: int) -> StudyAnalysisRun:
     entries_with_results = []
 
     try:
-        entries = list(
-            study.entries.all().order_by("created_at")
-        )
-
+        entries = list(study.entries.all().order_by("created_at"))
         now = timezone.now()
 
+        sia = SentimentIntensityAnalyzer()
+        entry_theme_map, recurring_themes = extract_themes_for_entries(entries)
+
         for entry in entries:
-            result = analyze_entry(entry.content)
+            result = analyze_entry_sentiment(entry.content, sia)
+            result["themes"] = entry_theme_map.get(entry.id, ["general experience"])
+            result["raw_response"]["theme_engine"] = "sklearn_tfidf_nmf"
 
             DiaryEntryAnalysis.objects.create(
                 run=run,
@@ -239,7 +370,6 @@ def run_study_analysis(study_id: int) -> StudyAnalysisRun:
 
         sentiment_distribution = build_sentiment_distribution(entry_results)
         recurring_issues = build_recurring_issues(entry_results)
-        recurring_themes = build_recurring_themes(entry_results)
         evolution_over_time = build_evolution_over_time(entries_with_results)
         top_representative_quotes = build_top_representative_quotes(entries_with_results)
 
@@ -262,7 +392,7 @@ def run_study_analysis(study_id: int) -> StudyAnalysisRun:
         ])
 
         now = timezone.now()
-        study.avg_sentiment  = avg_sentiment
+        study.avg_sentiment = avg_sentiment
         study.sentiment_category = sentiment_category
         study.sentiment_distribution = sentiment_distribution
         study.recurring_issues = recurring_issues
