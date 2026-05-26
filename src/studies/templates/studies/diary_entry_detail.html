@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% load heroicons %}
+{% load formatters %}
 
 {% block title %}Diary Entry Details · ChronicleUX{% endblock %}
 
@@ -64,62 +65,49 @@
                         <label class="block text-md font-medium text-gray-700 dark:text-gray-200">
                         Diary Entry
                         </label>
-                        <div class="mt-1 text-sm text-gray-900 dark:text-gray-100 whitespace-pre-line">
-                        {{ entry.content|default:"—" }}
+                        <div class="text-sm text-gray-900 dark:text-gray-100">
+                            <i>{{ entry.content|default:"—" }}</i>
+                        </div>
+                    </div>
+                    <div class="flex gap-6">
+                        <div>
+                            <label class="block text-md font-medium text-gray-700 dark:text-gray-200">
+                                Self-reported Sentiment
+                            </label>
+                            {% include "studies/partials/_sentiment_badge.html" with sentiment=entry.sentiment_self_report %}
+                        </div>
+                        <div>
+                            <label class="block text-md font-medium text-gray-700 dark:text-gray-200">
+                                Self-reported Issue Encountered
+                            </label>
+                            <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                                {{ entry.issue_encountered|yesno:"Yes,No" }}
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="lg:col-span-1 pt-4 lg:pt-0">
-                <div class="grid md:grid-cols-3 sm:grid-cols-2 lg:grid-cols-1 gap-6">
-                    <div>
-                        <div class="mt-1 text-sm">
-                            {% if entry.sentiment_self_report == "VERY_POSITIVE" or entry.sentiment_self_report == "POSITIVE" %}
-                            <span class="inline-flex items-center rounded-full bg-green-200 gap-1 px-2 py-1 text-xs font-medium text-green-800 inset-ring inset-ring-green-500/10 border border-green-800">
-                                {% heroicon_outline "face-smile" %} Self-reported {{ entry.get_sentiment_self_report_display }}
-                            </span>
-                            {% elif entry.sentiment_self_report == "VERY_NEGATIVE" or entry.sentiment_self_report == "NEGATIVE" %}
-                            <span class="inline-flex items-center rounded-full bg-red-200 gap-1 px-2 py-1 text-xs font-medium text-red-800 inset-ring inset-ring-red-500/10 border border-red-800">
-                                {% heroicon_outline "face-frown" %} Self-reported {{ entry.get_sentiment_self_report_display }}
-                            </span>
-                            {% elif entry.sentiment_self_report == "NEUTRAL" %}
-                            <span class="inline-flex items-center rounded-full bg-amber-200 gap-1 px-2 py-1 text-xs font-medium text-amber-800 inset-ring inset-ring-amber-500/10 border border-amber-800">
-                                {% heroicon_outline "question-mark-circle" %} Self-reported {{ entry.get_sentiment_self_report_display }}
-                            </span>
-                            {% else %}
-                            <span class="inline-flex items-center rounded-full bg-gray-200 gap-1 px-2 py-1 text-xs font-medium text-gray-800 inset-ring inset-ring-gray-500/10 border border-gray-800">
-                                {% heroicon_outline "ellipsis-horizontal-circle" %} Self-reported None
-                            </span>
-                            {% endif %}
+                    <div class="grid md:grid-cols-3 sm:grid-cols-2 lg:grid-cols-1 gap-6">
+
+                        <div>
+                            <label class="block text-md font-medium text-gray-700 dark:text-gray-200">
+                                Entry Source
+                            </label>
+                            <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                                {{ entry.get_source_display|default:"—" }}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-md font-medium text-gray-700 dark:text-gray-200">
+                                Submitted At
+                            </label>
+                            <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                                {{ entry.created_at|date:"Y-m-d H:i"|default:"—" }}
+                            </div>
                         </div>
                     </div>
-                    <div>
-                    <label class="block text-md font-medium text-gray-700 dark:text-gray-200">
-                        Issue Encountered
-                    </label>
-                    <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                        {{ entry.issue_encountered|yesno:"Yes,No" }}
-                    </div>
-                    </div>
-
-                    <div>
-                    <label class="block text-md font-medium text-gray-700 dark:text-gray-200">
-                        Entry Source
-                    </label>
-                    <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                        {{ entry.get_source_display|default:"—" }}
-                    </div>
-                    </div>
-
-                    <div>
-                    <label class="block text-md font-medium text-gray-700 dark:text-gray-200">
-                        Submitted At
-                    </label>
-                    <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                        {{ entry.created_at|date:"Y-m-d H:i"|default:"—" }}
-                    </div>
-                    </div>
-                </div>
                 </div>
             </div>
         </div>
@@ -131,7 +119,7 @@
                 <div class="lg:col-span-2 space-y-4">
                     <div>
                         <h2 class="text-xl font-medium text-gray-900 dark:text-white">
-                        Analysis Results
+                        Automated Interpretation Results
                         </h2>
                     </div>
 
@@ -143,24 +131,28 @@
                     {{ entry.entry_summary|default:"—" }}
                     </div>
                 </div>
+                <div class="flex gap-6">
+                    <div>
+                        <label class="block text-md font-medium text-gray-700 dark:text-gray-200">
+                        Sentiment Identified
+                        </label>
+                        {% include "studies/partials/_sentiment_badge.html" with sentiment=entry.sentiment_category %}
+                    </div>
+                    <div>
+                        <label class="block text-md font-medium text-gray-700 dark:text-gray-200">
+                            Self-Report vs Model
+                        </label>
+                        <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                            {{ entry.get_sentiment_self_report_display|default:"—" }} → {{ entry.get_sentiment_category_display|default:"—" }}
+                        </div>
+                    </div>
+                </div>
 
                 <div>
                     <label class="block text-md font-medium text-gray-700 dark:text-gray-200">
-                    Themes
+                    Themes Identified
                     </label>
-                    <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                    {% if entry.analysis_themes %}
-                        <div class="mt-2 flex flex-wrap gap-2">
-                        {% for theme in entry.analysis_themes %}
-                            <span class="border border-fuchsia-700 rounded-full px-3 py-1 text-xs text-fuchsia-700">
-                            {{ theme }}
-                            </span>
-                        {% endfor %}
-                        </div>
-                    {% else %}
-                        —
-                    {% endif %}
-                    </div>
+                    {% include "studies/partials/_theme_labels.html" with themes=entry.analysis_themes %}
                 </div>
 
                 <div>
@@ -195,39 +187,6 @@
 
             <div class="lg:col-span-1 pt-4 lg:pt-0">
                 <div class="grid md:grid-cols-3 sm:grid-cols-2 lg:grid-cols-1 gap-6">
-
-                    <div>
-                        <div class="mt-1 text-sm">
-                            {% if entry.sentiment_category %}
-                                {% if entry.sentiment_category == "VERY_POSITIVE" or entry.sentiment_category == "POSITIVE" %}
-                                    <span class="inline-flex items-center rounded-full bg-green-200 gap-1 px-2 py-1 text-xs font-medium text-green-800 inset-ring inset-ring-green-500/10 border border-green-800">
-                                    {% heroicon_outline "face-smile" %} Inferred {{ entry.get_sentiment_category_display }} ({{ entry.sentiment }})
-                                    </span>
-                                {% elif entry.sentiment_category == "VERY_NEGATIVE" or entry.sentiment_category == "NEGATIVE" %}
-                                    <span class="inline-flex items-center rounded-full bg-red-200 gap-1 px-2 py-1 text-xs font-medium text-red-800 inset-ring inset-ring-red-500/10 border border-red-800">
-                                    {% heroicon_outline "face-frown" %} Inferred {{ entry.get_sentiment_category_display }} ({{ entry.sentiment }})
-                                    </span>
-                                {% elif entry.sentiment_category == "NEUTRAL" %}
-                                    <span class="inline-flex items-center rounded-full bg-amber-200 gap-1 px-2 py-1 text-xs font-medium text-amber-800 inset-ring inset-ring-amber-500/10 border border-amber-800">
-                                    {% heroicon_outline "question-mark-circle" %} Inferred {{ entry.get_sentiment_category_display }} ({{ entry.sentiment }})
-                                    </span>
-                                {% endif %}
-                            {% else %}
-                            <span class="inline-flex items-center rounded-full bg-gray-200 gap-1 px-2 py-1 text-xs font-medium text-gray-800 inset-ring inset-ring-gray-500/10 border border-gray-800">
-                                {% heroicon_outline "ellipsis-horizontal-circle" %} Pending Analysis
-                            </span>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-md font-medium text-gray-700 dark:text-gray-200">
-                            Self-Report vs Model
-                        </label>
-                        <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-                            {{ entry.get_sentiment_self_report_display|default:"—" }} → {{ entry.get_sentiment_category_display|default:"—" }}
-                        </div>
-                    </div>
 
                     <div>
                         <label class="block text-md font-medium text-gray-700 dark:text-gray-200">

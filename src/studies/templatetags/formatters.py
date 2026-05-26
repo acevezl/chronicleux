@@ -63,3 +63,27 @@ def content_snippet(text, query, radius=80):
     )
 
     return mark_safe(highlighted)
+
+@register.filter
+def humanize_enum(value):
+	if not value:
+		return "None"
+
+	return str(value).replace("_", " ").capitalize()
+
+@register.filter
+def split_csv(value):
+	if not value:
+		return []
+
+	value = str(value).strip()
+
+	# Remove Python-list-looking wrappers if the string was saved like "['a, b, c']"
+	value = value.strip("[]")
+	value = value.replace("'", "").replace('"', "")
+
+	return [
+		item.strip()
+		for item in value.replace("\n", ",").split(",")
+		if item.strip()
+	]

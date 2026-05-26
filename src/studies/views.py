@@ -241,13 +241,13 @@ def study_entries(request, pk):
 
 # ENTRY DETAILS
 @login_required
-def entry_detail(request, pk):
+def diary_entry_detail(request, pk):
     entry = get_object_or_404(
         DiaryEntry.objects.select_related("study", "participant"),
         pk=pk,
     )
 
-    return render(request, "studies/entry_detail.html", {
+    return render(request, "studies/diary_entry_detail.html", {
         "entry": entry,
         "study": entry.study,
     })
