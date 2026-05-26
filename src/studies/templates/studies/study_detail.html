@@ -41,7 +41,7 @@
 
           <a
             href="{% url 'edit_study' study.pk %}"
-            class="rounded-sm px-4 py-2 text-sm font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
+            class="button-PRIMARY"
           >
             Edit Study
           </a>
@@ -49,7 +49,7 @@
           {% if is_evaluator %}
           <a
             href="{% url 'import_entries' study.pk %}"
-            class="rounded-sm px-4 py-2 text-sm font-medium text-gray-200 dark:text-gray-500 hover:text-white bg-gray-950 hover:bg-gray-600 border border-gray-950 dark:border-gray-500 dark:hover:border-gray-200 cursor-pointer"
+            class="button-SECONDARY"
           >
             Import Entries
           </a>
@@ -63,7 +63,7 @@
 
                 <button
                   type="submit"
-                  class="rounded-sm px-4 py-2 text-sm font-medium text-gray-200 dark:text-gray-500 hover:text-white bg-gray-950 hover:bg-gray-600 border border-gray-950 dark:border-gray-500 dark:hover:border-gray-200 cursor-pointer"
+                  class="button-SECONDARY"
                 >
                   Run Machine Analysis
                 </button>
@@ -75,8 +75,8 @@
           
 
           <a
-            href="{% url 'evaluator_dashboard' %}"
-            class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+            href="{% url 'studies' %}"
+            class="button-TERTIARY"
           >
             Back to Dashboard
           </a>
@@ -242,8 +242,8 @@
         {% endif %}
 
         <a
-          href="{% url 'evaluator_dashboard' %}"
-          class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+          href="{% url 'studies' %}"
+          class="button-TERTIARY"
         >
           Back to Dashboard
         </a>

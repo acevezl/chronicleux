@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_datetime
@@ -15,6 +16,61 @@ from studies.services.analysis_runner import run_study_analysis
 
 from .forms import StudyForm, DiaryEntryForm
 from .models import  DiaryEntry, SentimentCategory, DiaryEntrySource, MembershipRole, Study, StudyMembership
+
+# LIST STUDIES
+@login_required
+def studies(request):
+
+    studies = Study.objects.all()
+
+    # Filtering
+    q = request.GET.get("q")
+    owner = request.GET.get("owner")
+    status = request.GET.get("status")
+
+    if q:
+        studies = studies.filter(title__icontains=q)
+
+    if owner:
+        studies = studies.filter(owner__username__icontains=owner)
+
+    if status:
+        studies = studies.filter(status=status)
+
+    # Sorting
+    sort = request.GET.get("sort", "-created_at")
+
+    allowed_sort_fields = [
+        "title",
+        "created_at",
+        "status",
+        "owner__username",
+    ]
+
+    if sort.lstrip("-") not in allowed_sort_fields:
+        studies = studies.order_by(sort)
+
+    # Pagination
+    paginator = Paginator(studies, 10)  # 10 per page
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    sort_params = request.GET.copy()
+    sort_params.pop("sort", None)
+    sort_params.pop("page", None)
+
+    page_params = request.GET.copy()
+    page_params.pop("page", None)
+
+    context = {
+        "studies": page_obj,
+        "page_obj": page_obj,
+        "sort": sort,
+        "sort_params": sort_params,
+        "page_params": page_params,
+    }
+
+    return render(request, "studies/studies.html", context)
 
 # CREATE STUDY
 @login_required

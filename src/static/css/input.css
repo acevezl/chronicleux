@@ -17,7 +17,11 @@
     @apply bg-blue-50 text-blue-800 border border-blue-800;
   }
 
-  .status-cell-ANALYZING {
+  .status-cell-MACHINE_ANALYSIS {
+    @apply bg-amber-50 text-amber-800 border border-amber-800;
+  }
+
+   .status-cell-HUMAN_ANALYSIS {
     @apply bg-amber-50 text-amber-800 border border-amber-800;
   }
 
@@ -63,6 +67,26 @@
 
   .sentiment-VERY_POSITIVE {
     @apply inline-flex items-center rounded-full bg-green-200 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700;
+  }
+
+  .button-PRIMARY {
+    @apply bg-fuchsia-800 text-white px-4 py-2 rounded hover:bg-fuchsia-700 text-sm
+  }
+
+  .button-SECONDARY {
+    @apply rounded-sm px-4 py-2 text-sm font-medium text-gray-200 dark:text-gray-500 hover:text-white bg-gray-950 hover:bg-gray-600 border border-gray-950 dark:border-gray-500 dark:hover:border-gray-200 cursor-pointer
+  }
+
+  .button-TERTIARY {
+    @apply border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer
+  }
+
+  .button-FILTER {
+    @apply rounded-sm px-4 py-2 text-sm font-medium text-gray-200 dark:text-gray-500 hover:text-white bg-gray-950  hover:bg-gray-600 border border-gray-950 dark:border-gray-500 dark:hover:border-gray-200 cursor-pointer
+  }
+
+  .button-FILTER-CLEAR {
+    @apply rounded-sm px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 border border-gray-700 dark:border-gray-500 dark:text-gray-500  dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 cursor-pointer
   }
 
 }

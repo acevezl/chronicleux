@@ -18,14 +18,19 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth.views import LogoutView
-from ui.views import evaluator_dashboard, signup
+from ui.views import home, evaluator_dashboard, participant_dashboard, signup
 
 
 urlpatterns = [
+    # Home
+    path("", home, name="home"),
+    path("dashboard/evaluator/", evaluator_dashboard, name="evaluator_dashboard"),
+    path("dashboard/participant/", participant_dashboard, name="participant_dashboard"),
+
+    # Admin
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
     path("accounts/signup/", signup, name="signup"),
-    path("", evaluator_dashboard, name="evaluator_dashboard"),
     path("logout/", LogoutView.as_view(), name="logout"),
     
     # Studies

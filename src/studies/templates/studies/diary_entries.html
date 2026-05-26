@@ -43,8 +43,8 @@
           </a>
 
           <a
-            href="{% url 'evaluator_dashboard' %}"
-            class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+            href="{% url 'studies' %}"
+            class="button-TERTIARY"
           >
             Back to Dashboard
           </a>
@@ -86,7 +86,7 @@
 
             <button
             type="submit"
-            class="rounded-sm px-4 py-2 text-sm font-medium text-gray-200 dark:text-gray-500 hover:text-white bg-gray-950  hover:bg-gray-600 border border-gray-950 dark:border-gray-500 dark:hover:border-gray-200 cursor-pointer">
+            class="button-FILTER">
             Filter
             </button>
 
@@ -115,7 +115,7 @@
                     {% if page_obj.paginator.num_pages > 1 and page_obj.number != 1 %}
                         <a
                         href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page=1"
-                        class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                        class="button-TERTIARY"
                         >
                         {% heroicon_outline "chevron-double-left" %}
                         </a>
@@ -128,7 +128,7 @@
                     {% if page_obj.has_previous %}
                         <a
                         href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
-                        class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                        class="button-TERTIARY"
                         >
                         {% heroicon_outline "chevron-left" %}
                         </a>
@@ -141,7 +141,7 @@
                     {% if page_obj.has_next %}
                         <a
                         href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
-                        class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                        class="button-TERTIARY"
                         >
                         {% heroicon_outline "chevron-right" %}
                         </a>
@@ -154,7 +154,7 @@
                     {% if page_obj.paginator.num_pages > 1 and page_obj.number != page_obj.paginator.num_pages%}
                         <a
                         href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{page_obj.paginator.num_pages}}"
-                        class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                        class="button-TERTIARY"
                         >
                         {% heroicon_outline "chevron-double-right" %}
                         </a>
@@ -268,7 +268,7 @@
                     {% if page_obj.paginator.num_pages > 1 and page_obj.number != 1 %}
                         <a
                         href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page=1"
-                        class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                        class="button-TERTIARY"
                         >
                         {% heroicon_outline "chevron-double-left" %}
                         </a>
@@ -281,7 +281,7 @@
                     {% if page_obj.has_previous %}
                         <a
                         href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
-                        class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                        class="button-TERTIARY"
                         >
                         {% heroicon_outline "chevron-left" %}
                         </a>
@@ -294,7 +294,7 @@
                     {% if page_obj.has_next %}
                         <a
                         href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
-                        class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                        class="button-TERTIARY"
                         >
                         {% heroicon_outline "chevron-right" %}
                         </a>
@@ -307,7 +307,7 @@
                     {% if page_obj.paginator.num_pages > 1 and page_obj.number != page_obj.paginator.num_pages%}
                         <a
                         href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{page_obj.paginator.num_pages}}"
-                        class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                        class="button-TERTIARY"
                         >
                         {% heroicon_outline "chevron-double-right" %}
                         </a>

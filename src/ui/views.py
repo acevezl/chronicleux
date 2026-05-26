@@ -3,64 +3,37 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login
 
 from .forms import SignUpForm
-from studies.models import Study
-from django.db.models import Q
 
-from django.core.paginator import Paginator
+from studies.models import MembershipRole, StudyMembership
+
+# HOME
+@login_required
+def home(request):
+	is_evaluator = StudyMembership.objects.filter(
+		user=request.user,
+		role=MembershipRole.EVALUATOR,
+	).exists()
+
+	is_participant = StudyMembership.objects.filter(
+		user=request.user,
+		role=MembershipRole.PARTICIPANT,
+	).exists()
+
+	if is_evaluator:
+		return redirect("evaluator_dashboard")
+
+	if is_participant:
+		return redirect("participant_dashboard")
+
+	return redirect("studies")
 
 @login_required
 def evaluator_dashboard(request):
+	return render(request, "ui/evaluator_dashboard.html")
 
-    studies = Study.objects.all()
-
-    # Filtering
-    q = request.GET.get("q")
-    owner = request.GET.get("owner")
-    status = request.GET.get("status")
-
-    if q:
-        studies = studies.filter(title__icontains=q)
-
-    if owner:
-        studies = studies.filter(owner__username__icontains=owner)
-
-    if status:
-        studies = studies.filter(status=status)
-
-    # Sorting
-    sort = request.GET.get("sort", "-created_at")
-
-    allowed_sort_fields = [
-        "title",
-        "created_at",
-        "status",
-        "owner__username",
-    ]
-
-    if sort.lstrip("-") not in allowed_sort_fields:
-        studies = studies.order_by(sort)
-
-    # Pagination
-    paginator = Paginator(studies, 10)  # 10 per page
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
-
-    sort_params = request.GET.copy()
-    sort_params.pop("sort", None)
-    sort_params.pop("page", None)
-
-    page_params = request.GET.copy()
-    page_params.pop("page", None)
-
-    context = {
-        "studies": page_obj,
-        "page_obj": page_obj,
-        "sort": sort,
-        "sort_params": sort_params,
-        "page_params": page_params,
-    }
-
-    return render(request, "evaluator_dashboard.html", context)
+@login_required
+def participant_dashboard(request):
+	return render(request, "ui/participant_dashboard.html")
 
 def signup(request):
     if request.user.is_authenticated:
@@ -77,7 +50,9 @@ def signup(request):
 
     return render(request, "registration/signup.html", {"form": form})
 
-
+# --------------------
+# HELPERS
+# --------------------
 def get_user_initials(user):
     first = (user.first_name or "").strip()
     last = (user.last_name or "").strip()

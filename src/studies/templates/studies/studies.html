@@ -20,7 +20,7 @@
         <h2 class="text-lg dark:text-gray-200">My Studies</h2>
 
         <a href="{% url 'create_study' %}"
-           class="bg-fuchsia-800 text-white px-4 py-2 rounded hover:bg-fuchsia-700 text-sm">
+           class="button-PRIMARY">
           + Create Study
         </a>
       </div>
@@ -53,14 +53,14 @@
 
           <button
             type="submit"
-            class="rounded-sm px-4 py-2 text-sm font-medium text-gray-200 dark:text-gray-500 hover:text-white bg-gray-950  hover:bg-gray-600 border border-gray-950 dark:border-gray-500 dark:hover:border-gray-200 cursor-pointer">
+            class="button-FILTER">
             Filter
           </button>
 
           {% if request.GET.q or request.GET.owner or request.GET.status %}
           <a
-            href="{% url 'evaluator_dashboard' %}"
-            class="rounded-sm px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 border border-gray-700 dark:border-gray-500 dark:text-gray-500  dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 cursor-pointer"
+            href="{% url 'studies' %}"
+            class="button-FILTER-CLEAR"
           >
             Clear Filter
           </a>
@@ -131,9 +131,7 @@
                   </td>
 
                   <td class="px-4 py-3">
-                    <span class="inline-flex items-center rounded-full gap-1 px-3 py-2 text-xs font-medium status-cell-{{ study.status }}">
-                      {{ study.get_status_display }}
-                    </span>
+                    {% include "studies/partials/_status_badge.html" with status_value=study.status status_label=study.get_status_display %}
                   </td>
 
                   <td class="px-4 py-3">
@@ -155,12 +153,12 @@
                 {% if page_obj.paginator.num_pages > 1 and page_obj.number != 1 %}
                     <a
                     href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page=1"
-                    class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                    class="button-TERTIARY"
                     >
                     {% heroicon_outline "chevron-double-left" %}
                     </a>
                 {% else %}
-                    <span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
+                    <span class="button-TERTIARY">
                     {% heroicon_outline "chevron-double-left" %}
                     </span>
                 {% endif %}
@@ -168,7 +166,7 @@
                 {% if page_obj.has_previous %}
                     <a
                     href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
-                    class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                    class="button-TERTIARY"
                     >
                     {% heroicon_outline "chevron-left" %}
                     </a>
@@ -181,7 +179,7 @@
                 {% if page_obj.has_next %}
                     <a
                     href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
-                    class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                    class="button-TERTIARY"
                     >
                     {% heroicon_outline "chevron-right" %}
                     </a>
@@ -194,7 +192,7 @@
                 {% if page_obj.paginator.num_pages > 1 and page_obj.number != page_obj.paginator.num_pages%}
                     <a
                     href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{page_obj.paginator.num_pages}}"
-                    class="border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer"
+                    class="button-TERTIARY"
                     >
                     {% heroicon_outline "chevron-double-right" %}
                     </a>

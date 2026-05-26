@@ -14,8 +14,8 @@ User = settings.AUTH_USER_MODEL
 class StudyStatus(models.TextChoices):
 	PLANNING = "PLANNING", "Planning"
 	COLLECTING = "COLLECTING", "Collecting diary entries"
-	MACHINE_ANALYSIS = "MACHINE_ANALYSIS", "Machine analyzing diary entries"
-	HUMAN_ANALYSIS = "HUMAN_ANALYSIS", "Human analyzing results"
+	MACHINE_ANALYSIS = "MACHINE_ANALYSIS", "Machine analyzing study"
+	HUMAN_ANALYSIS = "HUMAN_ANALYSIS", "Pending human analysis"
 	COMPLETED = "COMPLETED", "Completed"
 
 
