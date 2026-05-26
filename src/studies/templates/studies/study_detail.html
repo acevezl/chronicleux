@@ -49,11 +49,30 @@
           {% if is_evaluator %}
           <a
             href="{% url 'import_entries' study.pk %}"
-            class="rounded-sm px-4 py-2 text-sm font-medium text-gray-200 dark:text-gray-500 hover:text-white bg-gray-950  hover:bg-gray-600 border border-gray-950 dark:border-gray-500 dark:hover:border-gray-200 cursor-pointer"
+            class="rounded-sm px-4 py-2 text-sm font-medium text-gray-200 dark:text-gray-500 hover:text-white bg-gray-950 hover:bg-gray-600 border border-gray-950 dark:border-gray-500 dark:hover:border-gray-200 cursor-pointer"
           >
             Import Entries
           </a>
+
+            {% if study.entries.count > 0 %}
+              <form
+                method="post"
+                action="{% url 'run_machine_analysis' study.id %}"
+              >
+                {% csrf_token %}
+
+                <button
+                  type="submit"
+                  class="rounded-sm px-4 py-2 text-sm font-medium text-gray-200 dark:text-gray-500 hover:text-white bg-gray-950 hover:bg-gray-600 border border-gray-950 dark:border-gray-500 dark:hover:border-gray-200 cursor-pointer"
+                >
+                  Run Machine Analysis
+                </button>
+              </form>
+            {% endif %}
+
           {% endif %}
+
+          
 
           <a
             href="{% url 'evaluator_dashboard' %}"

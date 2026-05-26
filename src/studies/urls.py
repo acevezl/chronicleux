@@ -9,4 +9,6 @@ urlpatterns = [
     path("<int:pk>/entries/", views.study_entries, name="study_entries"),
     path("<int:pk>/analysis/", views.study_analysis, name="study_analysis"),
     path("entries/<int:pk>/", views.entry_detail, name="entry_detail"),
+    path("<int:pk>/run-machine-analysis/", views.run_machine_analysis, name="run_machine_analysis"),
+    path("<int:pk>/analysis/", views.study_analysis, name="study_analysis"),
 ]

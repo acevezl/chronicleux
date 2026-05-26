@@ -129,7 +129,7 @@
               Overall Sentiment
             </label>
             <div class="mt-1 text-sm">
-              {% if study.sentiment is not None %}
+              {% if study.avg_sentiment is not None %}
                 {% if study.sentiment_category == "VERY_POSITIVE" or study.sentiment_category == "POSITIVE" %}
                   <span class="inline-flex items-center rounded-full bg-green-200 gap-1 px-2 py-1 text-xs font-medium text-green-800 inset-ring inset-ring-green-500/10 border border-green-800">
                     {% heroicon_outline "face-smile" %}
@@ -171,8 +171,8 @@
               Last Analysis
             </label>
             <div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-              {% if study.last_analysis_at %}
-                {{ study.last_analysis_at|date:"Y-m-d H:i" }}
+              {% if study.analyzed_at %}
+                {{ study.analyzed_at|date:"Y-m-d H:i" }}
               {% else %}
                 —
               {% endif %}
@@ -205,6 +205,22 @@
         >
           View Diary Entries
         </a>
+
+          {% if is_evaluator and entries_total > 0 %}
+          <form
+            method="post"
+            action="{% url 'run_machine_analysis' study.pk %}"
+          >
+            {% csrf_token %}
+            <button
+              type="submit"
+              class="rounded-sm px-4 py-2 text-sm font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
+            >
+              Run Machine Analysis
+            </button>
+          </form>
+          {% endif %}
+          
         {% endif %}
 
         <a

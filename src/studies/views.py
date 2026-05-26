@@ -8,7 +8,10 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.http import HttpResponseForbidden
+from django.views.decorators.http import require_POST
 from django.utils.dateparse import parse_datetime
+
+from studies.services.analysis_runner import run_study_analysis
 
 from .forms import StudyForm, DiaryEntryForm
 from .models import  DiaryEntry, SentimentCategory, DiaryEntrySource, MembershipRole, Study, StudyMembership
@@ -199,16 +202,67 @@ def study_analysis(request, pk):
     study = get_object_or_404(Study, pk=pk)
 
     entries_total = study.entries.count()
-    entries_analyzed = study.entries.exclude(sentiment__isnull=True).count()
+    latest_run = study.analysis_runs.order_by("-started_at").first()
+    entries_analyzed = latest_run.entry_analyses.count() if latest_run else 0
+
+    is_evaluator = StudyMembership.objects.filter(
+        study=study,
+        user=request.user,
+        role=MembershipRole.EVALUATOR
+    ).exists()
 
     context = {
         "study": study,
+        "is_evaluator": is_evaluator,
         "entries_total": entries_total,
         "entries_analyzed": entries_analyzed,
+        "latest_run": latest_run,
+        "themes": study.recurring_themes,
     }
+
     return render(request, "studies/study_analysis.html", context)
 
-# IMPORT ENTRIES
+# RUN MACHINE ANALYSIS
+@login_required
+@require_POST
+def run_machine_analysis(request, pk):
+    study = get_object_or_404(Study, pk=pk)
+
+    if not study.entries.exists():
+        messages.warning(request, "Cannot run machine analysis: No diary entries found in the study.")
+        return redirect("study_detail", pk=study.pk)
+
+    try:
+        study_analysis_run = run_study_analysis(study_id=study.pk)
+
+        messages.success(request, f"Machine analysis started successfully. Run ID: {study_analysis_run.id}")
+        
+    except Exception as e:
+        messages.error(request, f"Machine analysis failed: {e}")
+        
+    return redirect("study_analysis", pk=study.pk)
+
+# STUDY ANALYSIS
+@login_required
+def study_analysis(request, pk):
+    study = get_object_or_404(Study, pk=pk)
+
+    latest_run = study.analysis_runs.prefetch_related("entry_analyses").order_by("-started_at").first()
+
+    entry_analyses = []
+
+    if latest_run:
+        entry_analyses = latest_run.entry_analyses.select_related("entry").order_by("entry__created_at")
+
+    context = {
+        "study": study,
+        "latest_run": latest_run,
+        "entry_analyses": entry_analyses,
+    }
+
+    return render(request, "studies/study_analysis.html", context)
+
+# IMPORT ENTRIES & IMPORT HELPER FUNCTIONS BELOW THIS LINE
 User = get_user_model()
 
 VALID_SENTIMENTS = {choice[0] for choice in SentimentCategory.choices}
