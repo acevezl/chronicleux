@@ -12,10 +12,11 @@ User = settings.AUTH_USER_MODEL
 
 # STUDY STATUS ENUM
 class StudyStatus(models.TextChoices):
-    PLANNING = "PLANNING", "Not started (Planning)"
-    COLLECTING = "COLLECTING", "Collecting diary entries"
-    ANALYZING = "ANALYZING", "Analyzing diary entries"
-    COMPLETED = "COMPLETED", "Completed"
+	PLANNING = "PLANNING", "Planning"
+	COLLECTING = "COLLECTING", "Collecting diary entries"
+	MACHINE_ANALYSIS = "MACHINE_ANALYSIS", "Machine analyzing diary entries"
+	HUMAN_ANALYSIS = "HUMAN_ANALYSIS", "Human analyzing results"
+	COMPLETED = "COMPLETED", "Completed"
 
 
 # ENTRY FREQUENCY ENUM
@@ -118,10 +119,11 @@ class Study(models.Model):
     # Prompts become immutable once collection starts, to ensure data integrity.
     @property
     def prompts_locked(self) -> bool:
-        """Prompts become immutable once data collection starts (status COLLECTING or later)."""
+        """Prompts become immutable once data collection starts."""
         return self.status in {
             StudyStatus.COLLECTING,
-            StudyStatus.ANALYZING,
+            StudyStatus.MACHINE_ANALYSIS,
+            StudyStatus.HUMAN_ANALYSIS,
             StudyStatus.COMPLETED,
         }
 
