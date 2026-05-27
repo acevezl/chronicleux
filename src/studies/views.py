@@ -15,7 +15,7 @@ from django.utils.dateparse import parse_datetime
 from studies.services.analysis_runner import run_study_analysis
 
 from .forms import StudyForm, DiaryEntryForm
-from .models import  DiaryEntry, SentimentCategory, DiaryEntrySource, MembershipRole, Study, StudyMembership
+from .models import  DiaryEntry, SentimentCategory, DiaryEntrySource, MembershipRole, Study, StudyMembership, StudyAnalysisRun
 
 # LIST STUDIES
 @login_required
@@ -100,23 +100,30 @@ def create_study(request):
 # VIEW STUDY
 @login_required
 def study_detail(request, pk):
-    study = get_object_or_404(Study, pk=pk)
-    tags_list = [tag.strip() for tag in study.tags.split(",") if tag.strip()] if study.tags else []
+	study = get_object_or_404(Study, pk=pk)
+	tags_list = [tag.strip() for tag in study.tags.split(",") if tag.strip()] if study.tags else []
 
-    is_evaluator = StudyMembership.objects.filter(
-        study=study,
-        user=request.user,
-        role=MembershipRole.EVALUATOR
-    ).exists()
+	is_evaluator = StudyMembership.objects.filter(
+		study=study,
+		user=request.user,
+		role=MembershipRole.EVALUATOR
+	).exists()
 
-    diary_entries = DiaryEntry.objects.filter(study=study).select_related("participant").order_by("-created_at")
+	diary_entries = DiaryEntry.objects.filter(
+		study=study
+	).select_related("participant").order_by("-created_at")
 
-    return render(request, "studies/study_detail.html", {
-        "study": study,
-        "tags_list": tags_list,
-        "is_evaluator": is_evaluator,
-        "diary_entries": diary_entries,
-    })
+	analysis_runs = StudyAnalysisRun.objects.filter(
+		study=study
+	).order_by("-started_at")
+
+	return render(request, "studies/study_detail.html", {
+		"study": study,
+		"tags_list": tags_list,
+		"is_evaluator": is_evaluator,
+		"diary_entries": diary_entries,
+		"analysis_runs": analysis_runs,
+	})
 
 # EDIT STUDY
 @login_required

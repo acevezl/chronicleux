@@ -18,7 +18,10 @@
     
     <div class="p-6 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
 
-      <span class="text-xl text-fuchsia-700 dark:text-gray-200">{{ study.title }}</span>
+        <span class="flex gap-2 text-lg font-medium text-gray-900 dark:text-gray-100">
+        {% heroicon_outline "folder-open" %}
+        {{ study.title }}
+        </span>
 
       <div class="flex md:grid-cols-2 gap-6">
           <div>
@@ -35,18 +38,16 @@
         </div>
 
         <div class="flex gap-3 pt-4">
-          <a
-            href="{% url 'study_detail' study.pk %}"
-            class="rounded-sm px-4 py-2 text-sm font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
-          >
-            Back to Study Details
+          <a href="{% url 'study_detail' study.pk %}" class="button-TERTIARY">
+            {% heroicon_outline "folder-open" %}
+            {% heroicon_outline "arrow-left" %}
+            Back to Study
           </a>
 
-          <a
-            href="{% url 'studies' %}"
-            class="button-TERTIARY"
-          >
-            Back to Dashboard
+          <a href="{% url 'studies' %}" class="button-TERTIARY">
+            {% heroicon_outline "queue-list" %}
+            {% heroicon_outline "arrow-left" %}
+            Back to My Studies
           </a>
         </div>
     </div>

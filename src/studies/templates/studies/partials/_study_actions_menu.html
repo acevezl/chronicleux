@@ -1,0 +1,65 @@
+{% load heroicons %}
+
+<div class="pt-4">
+	<div class="flex flex-wrap items-center gap-2">
+
+		{% if study.entries.count > 0 %}
+			<a
+				href="{% url 'study_entries' study.pk %}"
+				class="button-PRIMARY"
+			>
+				{% heroicon_outline "book-open" %}
+				View Entries
+			</a>
+		{% endif %}
+
+		{% if is_evaluator and study.entries.count > 0 %}
+			<form
+				method="post"
+				action="{% url 'run_machine_analysis' study.id %}"
+				class="inline-flex"
+			>
+				{% csrf_token %}
+
+				<button
+					type="submit"
+					class="button-SECONDARY"
+				>
+					{% heroicon_outline "sparkles" %}
+					Run Analysis
+				</button>
+			</form>
+		{% endif %}
+		
+		{% if study.entries.count > 0 %}
+			<div class="mx-1 h-6 border-l border-gray-300 dark:border-gray-600"></div>
+		{% endif %}
+
+		<a
+			href="{% url 'edit_study' study.pk %}"
+			class="button-TERTIARY"
+		>
+			{% heroicon_outline "pencil-square" %}
+			Edit Study
+		</a>
+
+		{% if is_evaluator %}
+			<a
+				href="{% url 'import_entries' study.pk %}"
+				class="button-TERTIARY"
+			>
+				{% heroicon_outline "arrow-up-tray" %}
+				Import Entries
+			</a>
+		{% endif %}
+
+		<a
+			href="{% url 'studies' %}"
+			class="button-TERTIARY"
+		>
+			{% heroicon_outline "arrow-left" %}
+			Go Back
+		</a>
+
+	</div>
+</div>

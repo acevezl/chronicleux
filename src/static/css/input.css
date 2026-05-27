@@ -70,27 +70,27 @@
   }
 
   .button-PRIMARY {
-    @apply bg-fuchsia-800 text-white px-4 py-2 rounded hover:bg-fuchsia-700 text-sm
+    @apply inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border border-fuchsia-800 bg-fuchsia-800 text-white hover:bg-fuchsia-700 cursor-pointer
   }
 
   .button-SECONDARY {
-    @apply rounded-sm px-4 py-2 text-sm font-medium text-gray-200 dark:text-gray-500 hover:text-white bg-gray-950 hover:bg-gray-600 border border-gray-950 dark:border-gray-500 dark:hover:border-gray-200 cursor-pointer
+    @apply inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border border-gray-950 bg-slate-950 hover:bg-slate-800 dark:hover:bg-slate-900 text-white dark:text-gray-200 hover:text-white cursor-pointer
   }
 
   .button-TERTIARY {
-    @apply border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer
+    @apply inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border border-slate-600 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 cursor-pointer
   }
 
   .button-FILTER {
-    @apply rounded-sm px-4 py-2 text-sm font-medium text-gray-200 dark:text-gray-500 hover:text-white bg-gray-950  hover:bg-gray-600 border border-gray-950 dark:border-gray-500 dark:hover:border-gray-200 cursor-pointer
+    @apply inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border border-gray-950 bg-slate-950 hover:bg-slate-800 dark:hover:bg-slate-900 text-white dark:text-gray-200 hover:text-white cursor-pointer
   }
 
   .button-FILTER-CLEAR {
-    @apply rounded-sm px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 border border-gray-700 dark:border-gray-500 dark:text-gray-500  dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 cursor-pointer
+    @apply inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border  border-slate-600 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 cursor-pointer
   }
 
   .button-PAGINATOR {
-    @apply border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 px-4 py-2 rounded-sm text-sm cursor-pointer
+    @apply inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 cursor-pointer
   }
 
 }

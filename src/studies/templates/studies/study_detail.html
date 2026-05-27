@@ -15,75 +15,32 @@
 
 <div class="mt-6 grid grid-cols-1 gap-4">
   <div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden ">
-    
     <div class="py-4 px-6 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
       
-      <div class="">
-
-        <span class="text-xl text-fuchsia-700 dark:text-gray-200">{{ study.title }}</span>
+      <div class="flex items-center gap-2">
         
-        <!-- META DATA -->
-        <div class="flex md:grid-cols-2 gap-6">
-          <div>
-            <div class="mt-1 text-sm text-gray-900 dark:text-gray-200">
-              Owner: {{ study.owner.username }}
-            </div>
-          </div>
-
-          <div>
-            <div class="mt-1 text-sm text-gray-900 dark:text-gray-200">
-              Created on: {{ study.created_at|date:"Y-m-d H:i" }}
-            </div>
-          </div>
-        </div>
-
-        <div class="flex gap-3 pt-4">
-
-          <a
-            href="{% url 'edit_study' study.pk %}"
-            class="button-PRIMARY"
-          >
-            Edit Study
-          </a>
-
-          {% if is_evaluator %}
-          <a
-            href="{% url 'import_entries' study.pk %}"
-            class="button-SECONDARY"
-          >
-            Import Entries
-          </a>
-
-            {% if study.entries.count > 0 %}
-              <form
-                method="post"
-                action="{% url 'run_machine_analysis' study.id %}"
-              >
-                {% csrf_token %}
-
-                <button
-                  type="submit"
-                  class="button-SECONDARY"
-                >
-                  Run Machine Analysis
-                </button>
-              </form>
-            {% endif %}
-
-          {% endif %}
-
-          
-
-          <a
-            href="{% url 'studies' %}"
-            class="button-TERTIARY"
-          >
-            Back to Dashboard
-          </a>
-
-        </div>
-
+        <span class="flex gap-2 text-lg font-medium text-gray-900 dark:text-gray-100">
+          {% heroicon_outline "folder-open" %}
+          {{study.title}}
+        </span>
       </div>
+      
+      <!-- META DATA -->
+      <div class="flex md:grid-cols-2 gap-6">
+        <div>
+          <div class="mt-1 text-sm text-gray-900 dark:text-gray-200">
+            Owner: {{ study.owner.username }}
+          </div>
+        </div>
+
+        <div>
+          <div class="mt-1 text-sm text-gray-900 dark:text-gray-200">
+            Created on: {{ study.created_at|date:"Y-m-d H:i" }}
+          </div>
+        </div>
+      </div>
+
+      {% include "studies/partials/_study_actions_menu.html" with study=study is_evaluator=is_evaluator %}
 
     </div>
 
@@ -213,28 +170,12 @@
         {% endif %}
       </div>
     </div>
-
-    <div class="p-6 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
-      <div class="flex gap-3">
-        {% if is_evaluator %}
-        <a
-          href="{% url 'study_entries' study.pk %}"
-          class="rounded-sm px-4 py-2 text-sm font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
-        >
-          View Diary Entries
-        </a>
-        {% endif %}
-
-        <a
-          href="{% url 'studies' %}"
-          class="button-TERTIARY"
-        >
-          Back to Dashboard
-        </a>
-
-      </div>
-    </div>
+    
   </div>
 </div>
+
+{% if is_evaluator %}
+  {% include "studies/partials/_analysis_runs.html" with analysis_runs=analysis_runs %}
+{% endif %}
 
 {% endblock %}
