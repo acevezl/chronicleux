@@ -106,8 +106,8 @@
               Overall Sentiment
             </label>
             <div class="mt-1 text-sm">
-              {% if study.avg_sentiment %}
-                {% include "studies/partials/_sentiment_badge.html" with sentiment=study.sentiment_category %}
+              {% if study.dominant_sentiment_label %}
+                {% include "studies/partials/_sentiment_badge.html" with sentiment=study.dominant_sentiment_label %}
               {% else %}
                 <span class="inline-flex items-center rounded-full bg-gray-200 gap-1 px-2 py-1 text-xs font-medium text-gray-800 inset-ring inset-ring-gray-500/10 border border-gray-800">
                   {% heroicon_outline "ellipsis-horizontal-circle" %} Pending Analysis

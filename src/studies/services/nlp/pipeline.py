@@ -6,12 +6,15 @@
 
 from collections import Counter
 
-from studies.services.nlp.contracts import EntryAnalysisResult, StudyAnalysisResult
+from studies.services.nlp.contracts import EntryAnalysisResult, StudyAnalysisResult, SentimentResult, ThemeResult
 from studies.services.nlp.registry import get_sentiment_analyzer, get_theme_extractor
+from studies.models import SentimentCategory, SENTIMENT_SCORE_THRESHOLDS
 
 def analyze_study_entries(study_id: int, entries: list[dict], sentiment_method: str = "vader", theme_method: str = "tfidf_nmf") -> StudyAnalysisResult:
-    entry_list = list(entries)  # Ensure it's a list if it's a query result or other iterable
+    # First, ensure the entries are in list form
+    entry_list = list(entries)  
 
+    # Get the sentiment analyzer and the theme extractor from the params
     sentiment_analyzer = get_sentiment_analyzer(sentiment_method)
     theme_extractor = get_theme_extractor(theme_method)
 
@@ -32,7 +35,9 @@ def analyze_study_entries(study_id: int, entries: list[dict], sentiment_method: 
     entry_analysis_results = []
 
     for document_index, entry in enumerate(entry_list):
-        sentiment_result = sentiment_analyzer.analyze(entry.content or "")
+        entry_text = entry.content or ""
+
+        sentiment_result = sentiment_analyzer.analyze(entry_text)
 
         assignment = assignments_by_document_index.get(document_index)
         theme_result = None
@@ -42,13 +47,26 @@ def analyze_study_entries(study_id: int, entries: list[dict], sentiment_method: 
             theme_id = assignment["theme_id"]
             theme_result = themes_by_id.get(theme_id)
             theme_weight = assignment.get("theme_weight")
+
+            if theme_result and theme_weight is not None:
+                theme_result = ThemeResult(
+                    theme_id = theme_result.theme_id,
+                    weight = theme_weight,
+                    label = theme_result.label,
+                    keywords = theme_result.keywords,
+                    method = theme_result.method,
+                    metadata= {
+                        **theme_result.metadata,
+                    },
+                )
         
         entry_analysis_result = EntryAnalysisResult(
             entry_id=entry.id,
             sentiment=sentiment_result,
             theme=theme_result,
             metadata={
-                "theme_weight": theme_weight,
+                "word_count": len(entry_text.split()),
+                "language": "en",
             }
         )
 
@@ -64,30 +82,61 @@ def analyze_study_entries(study_id: int, entries: list[dict], sentiment_method: 
 
 def build_study_analysis_result(study_id: int, entry_analysis_results: list[EntryAnalysisResult], themes: list, sentiment_method: str, theme_method: str) -> StudyAnalysisResult:
     
-    sentiment_scores = [
-        result.sentiment.score
-        for result in entry_analysis_results
-        if result.sentiment and result.sentiment.score is not None
-    ]
-
     sentiment_labels = [
         result.sentiment.label
         for result in entry_analysis_results
         if result.sentiment and result.sentiment.label
     ]
 
-    study_sentiment_distribution = dict(Counter(sentiment_labels))
+    sentiment_scores = [
+        result.sentiment.score
+        for result in entry_analysis_results
+        if result.sentiment and result.sentiment.score is not None
+    ]
 
-    dominant_study_sentiment_label = None
-    if study_sentiment_distribution:
-        dominant_study_sentiment_label = max(
-                study_sentiment_distribution, 
-                key=study_sentiment_distribution.get,
+    sentiment_distribution = dict(Counter(sentiment_labels))
+
+    average_sentiment_score = None
+    if sentiment_scores:
+        average_sentiment_score = sum(sentiment_scores) / len(sentiment_scores)
+
+    average_sentiment_label = None
+    if average_sentiment_score is not None:
+        for lower, upper, label in SENTIMENT_SCORE_THRESHOLDS:
+            if lower <= average_sentiment_score < upper:
+                average_sentiment_label = label
+                break
+
+        if average_sentiment_score == 1.0:
+            average_sentiment_label = SentimentCategory.VERY_POSITIVE
+
+        if average_sentiment_score == -1.0:
+            average_sentiment_label = SentimentCategory.VERY_NEGATIVE
+        
+
+    dominant_sentiment_label = None
+    if sentiment_distribution:
+        dominant_sentiment_label = max(
+                sentiment_distribution, 
+                key=sentiment_distribution.get,
                 )
         
-    average_study_sentiment_score = None
-    if sentiment_scores:
-        average_study_sentiment_score = sum(sentiment_scores) / len(sentiment_scores)
+    dominant_sentiment_score = None
+    if dominant_sentiment_label:
+        dominant_sentiment_scores = [
+            result.sentiment.score
+            for result in entry_analysis_results
+            if (
+                result.sentiment
+                and result.sentiment.label == dominant_sentiment_label
+                and result.sentiment.score is not None
+            )
+        ]
+
+        if dominant_sentiment_scores:
+            dominant_sentiment_score = (
+                sum(dominant_sentiment_scores) / len(dominant_sentiment_scores)
+            )
 
     theme_labels = [
         result.theme.label
@@ -95,39 +144,43 @@ def build_study_analysis_result(study_id: int, entry_analysis_results: list[Entr
         if result.theme and result.theme.label
     ]
 
-    study_theme_distribution = dict(Counter(theme_labels))  
+    theme_distribution = dict(Counter(theme_labels))  
 
-    dominant_study_theme_label = None
-    if study_theme_distribution:
-        dominant_study_theme_label = max(
-            study_theme_distribution, 
-            key=study_theme_distribution.get,
+    dominant_theme_label = None
+    if theme_distribution:
+        dominant_theme_label = max(
+            theme_distribution, 
+            key=theme_distribution.get,
             )
         
     dominant_theme_weights = []
-    if dominant_study_theme_label:
+    if dominant_theme_label:
         for result in entry_analysis_results:
-            if result.theme and result.theme.label == dominant_study_theme_label:
+            if result.theme and result.theme.label == dominant_theme_label:
                 theme_weight = result.metadata.get("theme_weight")
                 if theme_weight is not None:
                     dominant_theme_weights.append(theme_weight)
 
-    average_study_theme_weight = None
-
-    if dominant_theme_weights:
-        average_study_theme_weight = sum(dominant_theme_weights) / len(dominant_theme_weights)
+    dominant_theme_weight = None
 
     return StudyAnalysisResult(
         study_id=study_id,
-        dominant_study_sentiment_label=dominant_study_sentiment_label,
-        average_study_sentiment_score=average_study_sentiment_score,
-        study_sentiment_distribution=study_sentiment_distribution,
-        dominant_study_theme_label=dominant_study_theme_label,
-        average_study_theme_weight=average_study_theme_weight,
-        study_theme_distribution=study_theme_distribution,
+
+        average_sentiment_label=average_sentiment_label,
+        average_sentiment_score=average_sentiment_score,
+
+        dominant_sentiment_label=dominant_sentiment_label,
+        dominant_sentiment_score=dominant_sentiment_score,
+        sentiment_distribution=sentiment_distribution,
+
+        dominant_theme_label=dominant_theme_label,
+        dominant_theme_weight=dominant_theme_weight,
+        theme_distribution=theme_distribution,
+
         entry_analysis_results=entry_analysis_results,
         total_entries = len(entry_analysis_results),
         total_themes = len(themes),
+
         methods={
             "sentiment": sentiment_method,
             "theme": theme_method,

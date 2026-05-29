@@ -27,6 +27,7 @@ class SentimentResult:
 @dataclass
 class ThemeResult:
     theme_id: int
+    weight: float
     label: str
     keywords: list[str]
     method: str
@@ -35,11 +36,12 @@ class ThemeResult:
 # Example usage:
 # theme = ThemeResult(
 #   theme_id=0,
+#   weight= 0.74
 # 	label="login frustration",
 # 	keywords=["login", "password", "error", "reset", "access"],
 # 	method="tfidf_nmf",
 # 	metadata={
-# 		"topic_weight": 0.74,
+# 		"num_keywords": 4,
 # 	}
 # )
 
@@ -66,11 +68,12 @@ class EntryAnalysisResult:
 # 	),
 # 	theme=ThemeResult(
 # 		theme_id=0,
+#       weight=0.74
 # 		label="login frustration",
 # 		keywords=["login", "password", "error", "reset", "access"],
 # 		method="tfidf_nmf",
 # 		metadata={
-# 			"topic_weight": 0.74,
+# 			"some_data": 0.5,
 # 		}
 # 	),
 # 	metadata={
@@ -84,29 +87,23 @@ class StudyAnalysisResult:
     study_id: int
 
     # Sentiment / Opinion Analysis
-    dominant_study_sentiment_label: str | None = None
-    average_study_sentiment_score: float | None = None
-    study_sentiment_distribution: dict[str, int] = field(default_factory=dict)
+    average_sentiment_label: str | None = None
+    average_sentiment_score: float | None = None
+    dominant_sentiment_label: str | None = None
+    dominant_sentiment_score: float | None = None
+    sentiment_distribution: dict[str, int] = field(default_factory=dict)
     
     # Theme / Topic Analysis
-    dominant_study_theme_label: str | None = None
-    average_study_theme_weight: float | None = None
-    study_theme_distribution: dict[str, int] = field(default_factory=dict)
+    dominant_theme_label: str | None = None
+    dominant_theme_weight: float | None = None
+    theme_distribution: dict[str, int] = field(default_factory=dict)
 
     # All entry results, for traceability
     entry_analysis_results: list[EntryAnalysisResult] = field(default_factory=list)
-    
     total_entries: int = 0
     total_themes: int = 0
 
     methods: dict[str, str] = field(default_factory=dict)
-
-    # Example of methods dict:
-    # methods = {
-    # 	"sentiment": "vader",
-    # 	"theme": "tfidf_nmf",
-    # }
-
     metadata: dict[str, Any] = field(default_factory=dict)
 
 # Example usage:

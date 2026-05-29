@@ -60,10 +60,10 @@ class TfidfNmfThemeExtractor (BaseThemeExtractor):
             theme_result = ThemeResult(
                 theme_id=theme_index,
                 label=", ".join(keywords[:3]),
+                weight=float(topic[top_indices].mean()),
                 keywords=keywords,
                 method=self.method_name,
                 metadata={
-                    "topic_weight": float(topic[top_indices].mean()),
                     "num_keywords": len(keywords),
                 }
             )

@@ -93,4 +93,24 @@
     @apply inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border border-gray-700 dark:border-gray-500 text-gray-700 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 cursor-pointer
   }
 
+  .run-COMPLETED {
+    @apply text-xs text-green-600 dark:text-green-400
+  }
+
+  .run-FAILED {
+    @apply text-xs text-red-600 dark:text-red-400
+  }
+
+  .xs-label {
+    @apply block text-xs font-medium text-gray-500 dark:text-gray-400
+  }
+
+  .sm-label {
+    @apply block text-sm font-medium text-gray-500 dark:text-gray-400
+  }
+
+  .md-card-title {
+    @apply text-md font-medium text-gray-900 dark:text-gray-100
+  }
+
 }

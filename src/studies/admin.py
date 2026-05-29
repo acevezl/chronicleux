@@ -37,15 +37,15 @@ class DiaryEntryAdmin(admin.ModelAdmin):
 
 @admin.register(StudyAnalysisRun)
 class StudyAnalysisRunAdmin(admin.ModelAdmin):
-    list_display = ("id", "study", "status", "analysis_model", "analysis_version", "started_at", "completed_at")
-    list_filter = ("status", "analysis_model", "analysis_version")
+    list_display = ("id", "study", "status", "analysis_model", "analysis_version", "started_at", "completed_at", "dominant_sentiment_label", "dominant_sentiment_score", "dominant_theme_weight", "dominant_theme_label", "error_message")
+    list_filter = ("status", "analysis_model", "analysis_version", "dominant_sentiment_label")
     search_fields = ("study__title",)
 
 
 @admin.register(DiaryEntryAnalysis)
 class DiaryEntryAnalysisAdmin(admin.ModelAdmin):
-    list_display = ("id", "entry", "run", "sentiment_category", "issue_detected", "analyzed_at")
-    list_filter = ("sentiment_category", "issue_detected", "run__analysis_model", "run__analysis_version")
+    list_display = ("id", "run", "entry", "analyzed_at", "sentiment_label", "sentiment_score", "raw_sentiment_result", "theme_label", "theme_weight", "raw_theme_result", "issue_detected", "issues", "entry_summary", "methods", "metadata")
+    list_filter = ("sentiment_label", "theme_label", "issues", "analyzed_at")
     search_fields = ("entry__content", "entry__participant_display_name", "entry__study__title")
 
 

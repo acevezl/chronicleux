@@ -48,6 +48,15 @@ class SentimentCategory(models.TextChoices):
     POSITIVE = "POSITIVE", "Positive"
     VERY_POSITIVE = "VERY_POSITIVE", "Very positive"
 
+# SENTIMENT SCORE THRESHOLDS
+# Used at the Study Level to label average sentiment score
+SENTIMENT_SCORE_THRESHOLDS = [
+    (-1.0, -0.6, SentimentCategory.VERY_NEGATIVE),
+    (-0.6, -0.2, SentimentCategory.NEGATIVE),
+    (-0.2, 0.2, SentimentCategory.NEUTRAL),
+    (0.2, 0.6, SentimentCategory.POSITIVE),
+    (0.6, 1.0, SentimentCategory.VERY_POSITIVE),
+]
 
 # STUDY MODEL
 class Study(models.Model):
@@ -82,26 +91,39 @@ class Study(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # After each study analysis, these attributes are udpated
-    # to always show the results of the last run
-    avg_sentiment = models.FloatField(null=True, blank=True)  # -1 to 1
+    # Output of the last successful study analysis run
 
-    sentiment_category = models.CharField(
-        max_length=20,
-        choices=SentimentCategory.choices,
-        null=True,
-        blank=True,
-    )
+    # Model and version
+    analysis_model = models.CharField(max_length=100)
+    analysis_version = models.CharField(max_length=50)
 
-    # Outputs of the last analysis run
+    # Analyzed time
+    analyzed_at = models.DateTimeField(null=True, blank=True) 
+    # analyzed_at === completed_at on the study analysis run
+
+    # Sentiment / Opinion Analysis
+    average_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
+    average_sentiment_score = models.FloatField(null=True, blank=True)
+    dominant_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
+    dominant_sentiment_score = models.FloatField(null=True, blank=True)
     sentiment_distribution = models.JSONField(default=dict, blank=True)
+    
+    # Theme / Topic Analysis
+    dominant_theme_label = models.CharField(max_length=255, blank=True, null=True)
+    dominant_theme_weight = models.FloatField(null=True, blank=True)
+    theme_distribution = models.JSONField(default=dict, blank=True)
+
+    # Issues
     recurring_issues = models.JSONField(default=list, blank=True)
-    recurring_themes = models.JSONField(default=list, blank=True)
+    
+    # Evolution of Sentiment, Theme, and Issues over time
     evolution_over_time = models.JSONField(default=list, blank=True)
+
+    # Top quotes
     top_representative_quotes = models.JSONField(default=list, blank=True)
-    analysis_model = models.CharField(max_length=100, blank=True)
-    analysis_version = models.CharField(max_length=50, blank=True)
-    analyzed_at = models.DateTimeField(null=True, blank=True)
+    
+    total_entries = models.PositiveIntegerField(default=0)
+    total_themes = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["-created_at"]
@@ -277,18 +299,20 @@ class DiaryEntry(models.Model):
     # After each analysis run, these fields are updated
     # (i.e., they show the last analysis results for each entry)
     # This is the inferred signal from the model
-    sentiment = models.FloatField(null=True, blank=True)
-
-    sentiment_category = models.CharField(
+    machine_sentiment_score = models.FloatField(null=True, blank=True)
+    machine_sentiment_label = models.CharField(
         max_length=20,
         choices=SentimentCategory.choices,
         null=True,
         blank=True,
     )
 
+    machine_theme_weight = models.FloatField(null=True, blank=True)
+    machine_theme_label = models.CharField(max_length=255, blank=True, null=True)
+
     analysis_issue_detected = models.BooleanField(null=True, blank=True)
     analysis_issue_tags = models.JSONField(default=list, blank=True)
-    analysis_themes = models.JSONField(default=list, blank=True)
+    
     entry_summary = models.TextField(blank=True)
 
     analysis_model = models.CharField(max_length=100, blank=True)
@@ -489,32 +513,60 @@ class StudyAnalysisRun(models.Model):
         default=AnalysisRunStatus.PENDING,
     )
 
-    # start and end times
-    started_at = models.DateTimeField(auto_now_add=True)
-    completed_at = models.DateTimeField(null=True, blank=True)
-
     # model and version
     analysis_model = models.CharField(max_length=100)
     analysis_version = models.CharField(max_length=50)
 
-    # study-level outputs
+    # start and end times
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True) 
+    # completed_at === analyzed_at on the study when caching the latest run
+
+    # Study-level outputs
+
+    # Sentiment / Opinion Analysis
+    average_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
+    average_sentiment_score = models.FloatField(null=True, blank=True)
+    dominant_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
+    dominant_sentiment_score = models.FloatField(null=True, blank=True)
     sentiment_distribution = models.JSONField(default=dict, blank=True)
+    
+    # Theme / Topic Analysis
+    dominant_theme_label = models.CharField(max_length=255, blank=True, null=True)
+    dominant_theme_weight = models.FloatField(null=True, blank=True)
+    theme_distribution = models.JSONField(default=dict, blank=True)
+
+    # Issues
     recurring_issues = models.JSONField(default=list, blank=True)
-    recurring_themes = models.JSONField(default=list, blank=True)
+    
+    # Evolution of Sentiment, Theme, and Issues over time
     evolution_over_time = models.JSONField(default=list, blank=True)
+
+    # Top quotes
     top_representative_quotes = models.JSONField(default=list, blank=True)
+
+    # All entry results, for traceability
+    entry_analysis_results = models.JSONField(default=list, blank=True)
+    
+    total_entries = models.PositiveIntegerField(default=0)
+    total_themes = models.PositiveIntegerField(default=0)
+
+    methods = models.JSONField(default=dict, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
 
     # error message (if analysis failed)
     error_message = models.TextField(blank=True)
 
     class Meta:
         ordering = ["-started_at"]
+        verbose_name = "Study Analysis Run"
+        verbose_name_plural = "Study Analysis Runs"
 
     def __str__(self) -> str:
         return f"StudyAnalysisRun {self.pk} · study={self.study_id} · {self.status}"
     
 
-# DIARY ENTRY ANALYSIS RUN
+# DIARY ENTRY ANALYSIS
 # Results of the analysis of each entry
 class DiaryEntryAnalysis(models.Model):
     
@@ -530,19 +582,27 @@ class DiaryEntryAnalysis(models.Model):
         related_name="analysis_results",
     )
 
-    # Required per-entry outputs
-    sentiment = models.FloatField(null=True, blank=True)
-
-    sentiment_category = models.CharField(
+    # Sentiment Analysis Outputs
+    sentiment_score = models.FloatField(null=True, blank=True)
+    sentiment_label = models.CharField(
         max_length=20,
         choices=SentimentCategory.choices,
         null=True,
         blank=True,
     )
+    raw_sentiment_result = models.JSONField(default=list, blank=True)
 
-    issue_detected = models.BooleanField(default=False)
-    issue_tags = models.JSONField(default=list, blank=True)
-    themes = models.JSONField(default=list, blank=True)
+    # Thematic Analysis Outputs
+    theme_weight = models.FloatField(null=True, blank=True)
+    theme_label = models.CharField(max_length=255, blank=True, null=True)
+    raw_theme_result = models.JSONField(default=list, blank=True)
+
+    # Issues Identified
+    issue_detected = models.BooleanField(default=False, blank=False)
+    issues = models.JSONField(default=list, blank=True)
+
+    methods = models.JSONField(default=dict, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
 
     entry_summary = models.TextField(blank=True)
     analyzed_at = models.DateTimeField(auto_now_add=True)
@@ -560,6 +620,8 @@ class DiaryEntryAnalysis(models.Model):
             models.Index(fields=["run"]),
             models.Index(fields=["entry"])
         ]
+        verbose_name = "Diary Entry Analysis"
+        verbose_name_plural = "Diary Entry Analyses"
 
     def __str__(self) -> str:
         return f"DiaryEntryAnalysis {self.pk} · entry={self.entry_id} · run={self.run_id}"
