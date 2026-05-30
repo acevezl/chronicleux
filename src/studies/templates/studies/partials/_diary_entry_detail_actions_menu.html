@@ -1,0 +1,16 @@
+{% load heroicons %}
+
+<div class="px-4 py-2 bg-gray-100 dark:bg-gray-900">
+	<div class="flex flex-wrap items-center gap-2">
+
+		<a
+			href="{% url 'study_entries' entry.study_id %}"
+			class="button-TERTIARY"
+		>
+			{% heroicon_outline "book-open" class="h-4 w-4" %}
+            {% heroicon_outline "arrow-left" class="h-4 w-4" %}
+            Back to Entries
+		</a>
+
+	</div>
+</div>

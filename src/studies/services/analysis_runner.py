@@ -328,8 +328,8 @@ def run_study_analysis(study_id: int) -> StudyAnalysisRun:
 				entry.sentiment_score = sentiment_score
 				entry.sentiment_label = sentiment_label
 				
-				entry.analysis_theme_weight = theme_weight
-				entry.analysis_theme_label = theme_label
+				entry.machine_theme_weight = theme_weight
+				entry.machine_theme_label = theme_label
 				
 				entry.analysis_issue_detected = bool(issue_tags)
 				entry.analysis_issue_tags = issue_tags

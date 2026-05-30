@@ -1,0 +1,28 @@
+<div>
+    <div class="px-4 pt-6 pb-4 border-b border-gray-200">
+
+        <!-- TITLE -->
+        <span class="top-title">
+            {% heroicon_outline "queue-list" %}
+            My Studies
+        </span>
+
+        <!-- SUBTITLE -->
+        <div class="flex md:grid-cols-2 gap-6">
+            <div class="top-subtitle">
+            Studies I own and studies I evaluate.
+            </div>
+        </div>
+
+    </div>
+
+    <div class="px-4 py-2 bg-gray-100 dark:bg-gray-900">
+	    <div class="flex flex-wrap items-center gap-2">
+            <a href="{% url 'create_study' %}" class="button-PRIMARY">
+            {% heroicon_outline "folder-plus" class="h-4 w-4" %}
+            Create Study
+            </a>
+        </div>
+    </div>
+
+</div>

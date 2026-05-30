@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import get_user_model
 from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
@@ -15,7 +15,7 @@ from django.utils.dateparse import parse_datetime
 from studies.services.analysis_runner import run_study_analysis
 
 from .forms import StudyForm, DiaryEntryForm
-from .models import  DiaryEntry, SentimentCategory, DiaryEntrySource, MembershipRole, Study, StudyMembership, StudyAnalysisRun
+from .models import  DiaryEntry, SentimentCategory, DiaryEntrySource, MembershipRole, Study, StudyMembership, StudyAnalysisRun, DiaryEntryAnalysis
 
 # LIST STUDIES
 @login_required
@@ -255,16 +255,39 @@ def study_entries(request, pk):
 
 # ENTRY DETAILS
 @login_required
-def diary_entry_detail(request, pk):
-    entry = get_object_or_404(
-        DiaryEntry.objects.select_related("study", "participant"),
-        pk=pk,
-    )
+def diary_entry_detail(request, study_pk, entry_pk, run_pk=None):
+	study = get_object_or_404(Study, pk=study_pk)
 
-    return render(request, "studies/diary_entry_detail.html", {
-        "entry": entry,
-        "study": entry.study,
-    })
+	entry = get_object_or_404(
+		DiaryEntry.objects.prefetch_related("prompt_responses__prompt"),
+		pk=entry_pk,
+		study=study,
+	)
+
+	run = None
+	entry_analysis = None
+
+	if run_pk:
+		run = get_object_or_404(
+			StudyAnalysisRun,
+			pk=run_pk,
+			study=study,
+		)
+
+		entry_analysis = get_object_or_404(
+			DiaryEntryAnalysis,
+			run=run,
+			entry=entry,
+		)
+
+	context = {
+		"study": study,
+		"entry": entry,
+		"run": run,
+		"entry_analysis": entry_analysis,
+	}
+
+	return render(request, "studies/diary_entry_detail.html", context)
 
 # RUN MACHINE ANALYSIS
 @login_required
@@ -298,6 +321,176 @@ def machine_analysis_details (request, study_pk, run_pk):
     }
 
     return render (request, "studies/machine_analysis_details.html", context)
+
+# MANAGE STUDY PARTICIPANTS
+@login_required
+def manage_participants(request, pk):
+	study = get_object_or_404(Study, pk=pk)
+
+	if study.owner != request.user:
+		return HttpResponseForbidden()
+
+	if request.method == "POST":
+		action = request.POST.get("action")
+		user_id = request.POST.get("user_id")
+
+		user = get_object_or_404(User, pk=user_id)
+
+		if user == study.owner:
+			messages.error(request, "The study owner cannot be managed as a participant.")
+			return redirect("manage_participants", pk=study.pk)
+
+		if action == "add":
+			membership, created = StudyMembership.objects.get_or_create(
+				study=study,
+				user=user,
+				defaults={"role": MembershipRole.PARTICIPANT},
+			)
+
+			if created:
+				messages.success(request, "Participant added.")
+			elif membership.role == MembershipRole.EVALUATOR:
+				messages.error(request, "This user is already an evaluator and cannot also be a participant.")
+			else:
+				messages.warning(request, "This user is already a participant in this study.")
+
+		elif action == "remove":
+			deleted_count, _ = StudyMembership.objects.filter(
+				study=study,
+				user=user,
+				role=MembershipRole.PARTICIPANT,
+			).delete()
+
+			if deleted_count:
+				messages.success(request, "Participant removed.")
+			else:
+				messages.warning(request, "This user is not a participant in this study.")
+
+		return redirect("manage_participants", pk=study.pk)
+
+	q = request.GET.get("q", "").strip()
+
+	participant_memberships = (
+		StudyMembership.objects
+		.filter(study=study, role=MembershipRole.PARTICIPANT)
+		.select_related("user")
+		.order_by("user__username")
+	)
+
+	excluded_user_ids = StudyMembership.objects.filter(
+		study=study
+	).values_list("user_id", flat=True)
+
+	available_users = User.objects.exclude(
+		id__in=excluded_user_ids
+	).exclude(
+		id=study.owner_id
+	)
+
+	if q:
+		available_users = available_users.filter(
+			Q(username__icontains=q)
+			| Q(email__icontains=q)
+			| Q(first_name__icontains=q)
+			| Q(last_name__icontains=q)
+		)
+
+	available_users = available_users.order_by("username")[:25]
+
+	context = {
+		"study": study,
+		"participant_memberships": participant_memberships,
+		"available_users": available_users,
+		"q": q,
+	}
+
+	return render(request, "studies/manage_participants.html", context)
+
+# MANAGE STUDY EVALUATORS
+@login_required
+def manage_evaluators(request, pk):
+	study = get_object_or_404(Study, pk=pk)
+
+	if study.owner != request.user:
+		return HttpResponseForbidden()
+
+	if request.method == "POST":
+		action = request.POST.get("action")
+		user_id = request.POST.get("user_id")
+
+		user = get_object_or_404(User, pk=user_id)
+
+		if user == study.owner:
+			messages.error(request, "The study owner cannot be managed as an evaluator.")
+			return redirect("manage_evaluators", pk=study.pk)
+
+		if action == "add":
+			membership, created = StudyMembership.objects.get_or_create(
+				study=study,
+				user=user,
+				defaults={"role": MembershipRole.EVALUATOR},
+			)
+
+			if created:
+				messages.success(request, "Evaluator added.")
+			elif membership.role == MembershipRole.PARTICIPANT:
+				messages.error(request, "This user is already a participant and cannot also be an evaluator.")
+			else:
+				messages.warning(request, "This user is already an evaluator in this study.")
+
+		elif action == "remove":
+			deleted_count, _ = StudyMembership.objects.filter(
+				study=study,
+				user=user,
+				role=MembershipRole.EVALUATOR,
+			).exclude(
+				user=study.owner
+			).delete()
+
+			if deleted_count:
+				messages.success(request, "Evaluator removed.")
+			else:
+				messages.warning(request, "This user is not a removable evaluator in this study.")
+
+		return redirect("manage_evaluators", pk=study.pk)
+
+	q = request.GET.get("q", "").strip()
+
+	evaluator_memberships = (
+		StudyMembership.objects
+		.filter(study=study, role=MembershipRole.EVALUATOR)
+		.select_related("user")
+		.order_by("user__username")
+	)
+
+	excluded_user_ids = StudyMembership.objects.filter(
+		study=study
+	).values_list("user_id", flat=True)
+
+	available_users = User.objects.exclude(
+		id__in=excluded_user_ids
+	).exclude(
+		id=study.owner_id
+	)
+
+	if q:
+		available_users = available_users.filter(
+			Q(username__icontains=q)
+			| Q(email__icontains=q)
+			| Q(first_name__icontains=q)
+			| Q(last_name__icontains=q)
+		)
+
+	available_users = available_users.order_by("username")[:25]
+
+	context = {
+		"study": study,
+		"evaluator_memberships": evaluator_memberships,
+		"available_users": available_users,
+		"q": q,
+	}
+
+	return render(request, "studies/manage_evaluators.html", context)
 
 # IMPORT ENTRIES & IMPORT HELPER FUNCTIONS BELOW THIS LINE
 User = get_user_model()
