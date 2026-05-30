@@ -101,7 +101,7 @@
     <!-- Static sidebar for mobile -->
 
     <!-- Static sidebar for desktop -->
-    <div class="hidden bg-gray-900 lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
+    <div class="hidden dark:bg-gray-900 lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
       <!-- Sidebar component, swap this element with another sidebar if you like -->
       <div class="flex flex-col border-r border-b border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-600 px-6 py-4">
         <span class="text-3xl font-serif text-fuchsia-950 dark:text-gray-300">ChronicleUX</span>
@@ -184,15 +184,13 @@
         <div aria-hidden="true" class="h-6 w-px bg-gray-200 lg:hidden dark:bg-white/10"></div>
         <div class="flex flex-col py-4 lg:hidden">
           <span class="text-2xl font-serif text-fuchsia-950 dark:text-gray-300">ChronicleUX</span>
-          <span class="text-xs dark:text-gray-400">A Diary Study Research Platform EAT MY SHORTS</span>
+          <span class="text-xs dark:text-gray-400">A Diary Study Research Platform</span>
         </div>
       </div>
 
-      <main class="py-6">
-        <div class="px-4 sm:px-6 lg:px-8">
+      <main class="m-auto">
           {% block content %}
           {% endblock %}
-        </div>
       </main>
     </div>
   </body>

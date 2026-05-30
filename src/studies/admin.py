@@ -31,7 +31,7 @@ class StudyAdmin(admin.ModelAdmin):
 
 @admin.register(DiaryEntry)
 class DiaryEntryAdmin(admin.ModelAdmin):
-    list_display = ("study", "participant", "created_at")
+    list_display = ("study", "participant", "source", "sentiment_self_report", "created_at")
     list_filter = ("study",)
 
 

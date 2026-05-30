@@ -3,16 +3,6 @@
 <div class="px-4 py-2 bg-gray-100 dark:bg-gray-900">
 	<div class="flex flex-wrap items-center gap-2">
 
-		{% if study.entries.count > 0 %}
-			<a
-				href="{% url 'study_entries' study.pk %}"
-				class="button-PRIMARY"
-			>
-				{% heroicon_outline "book-open" class="h-4 w-4" %}
-				View Entries
-			</a>
-		{% endif %}
-
 		{% if is_evaluator and study.entries.count > 0 %}
 			<form
 				method="post"
@@ -31,17 +21,9 @@
 			</form>
 		{% endif %}
 		
-		{% if study.entries.count > 0 %}
+		{% if is_evaluator %}
 			<div class="mx-1 h-6 border-l border-gray-300 dark:border-gray-600"></div>
 		{% endif %}
-
-		<a
-			href="{% url 'edit_study' study.pk %}"
-			class="button-TERTIARY"
-		>
-			{% heroicon_outline "pencil-square" class="h-4 w-4" %}
-			Edit Study
-		</a>
 
 		{% if is_evaluator %}
 			<a
@@ -54,11 +36,12 @@
 		{% endif %}
 
 		<a
-			href="{% url 'studies' %}"
+			href="{% url 'study_detail' study.pk %}"
 			class="button-TERTIARY"
 		>
-			{% heroicon_outline "arrow-left" class="h-4 w-4" %}
-			Back to Studies
+			{% heroicon_outline "folder-open" class="h-4 w-4" %}
+            {% heroicon_outline "arrow-left" class="h-4 w-4" %}
+            Back to Study
 		</a>
 
 	</div>

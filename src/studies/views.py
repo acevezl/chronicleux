@@ -232,6 +232,12 @@ def study_entries(request, pk):
     params = request.GET.copy()
     params.pop("page", None)
 
+    is_evaluator = StudyMembership.objects.filter(
+		study=study,
+		user=request.user,
+		role=MembershipRole.EVALUATOR
+	).exists()
+
     context = {
         "study": study,
         "diary_entries": page_obj,
@@ -242,6 +248,7 @@ def study_entries(request, pk):
         "q": q,
         "sort": sort,
         "page_params": params,
+        "is_evaluator": is_evaluator,
     }
 
     return render(request, "studies/diary_entries.html", context)
@@ -272,12 +279,12 @@ def run_machine_analysis(request, pk):
     try:
         study_analysis_run = run_study_analysis(study_id=study.pk)
 
-        messages.success(request, f"Machine analysis started successfully. Run ID: {study_analysis_run.id}")
+        messages.success(request, f"Machine analysis started successfully. Run ID: {study_analysis_run.pk}")
         
     except Exception as e:
         messages.error(request, f"Machine analysis failed: {e}")
         
-    return redirect("machine_analysis_details", study_pk=study.pk, run_pk=study_analysis_run.id)
+    return redirect("machine_analysis_details", study_pk=study.pk, run_pk=study_analysis_run.pk)
 
 # MACHINE ANALYSIS DETAILS
 @login_required

@@ -1,0 +1,175 @@
+{% load formatters %}
+
+<div class="px-4 mt-4">
+  <div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden">
+    
+    <div class="px-6 py-4 bg-white dark:bg-gray-900">
+        <form method="get" class="flex flex-wrap gap-3">
+            <input
+            type="text"
+            name="participant"
+            placeholder="Search participant..."
+            value="{{ participant|default:'' }}"
+            class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
+            >
+
+            <input
+            type="text"
+            name="q"
+            placeholder="Search entries..."
+            value="{{ request.GET.q }}"
+            class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
+            >
+
+            <select name="sentiment" class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500">
+                <option value="">All Self-reported Sentiments</option>
+                <option value="VERY_NEGATIVE" {% if sentiment == "VERY_NEGATIVE" %}selected{% endif %}>Very negative</option>
+                <option value="NEGATIVE" {% if sentiment == "NEGATIVE" %}selected{% endif %}>Negative</option>
+                <option value="NEUTRAL" {% if sentiment == "NEUTRAL" %}selected{% endif %}>Neutral</option>
+                <option value="POSITIVE" {% if sentiment == "POSITIVE" %}selected{% endif %}>Positive</option>
+                <option value="VERY_POSITIVE" {% if sentiment == "VERY_POSITIVE" %}selected{% endif %}>Very positive</option>
+            </select>
+
+            <select name="issue" class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500">
+                <option value="">Issues found</option>
+                <option value="true" {% if issue == "true" %}selected{% endif %}>Yes</option>
+                <option value="false" {% if issue == "false" %}selected{% endif %}>No</option>
+            </select>
+
+            <button
+            type="submit"
+            class="button-FILTER">
+            Filter
+            </button>
+
+            {% if request.GET.q or request.GET.participant or request.GET.sentiment %}
+            <a
+            href="{% url 'study_entries' study.pk %}"
+            class="rounded-sm px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 border border-gray-700 dark:border-gray-500 dark:text-gray-500  dark:hover:bg-gray-800 dark:hover:border-gray-200 dark:hover:text-gray-200 cursor-pointer"
+            >
+            Clear Filter
+            </a>
+            {% endif %}
+            
+        </form>
+    </div>
+
+    <div class="overflow-x-auto">
+        {% if diary_entries %}
+        
+            {% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params %}    
+
+            <table class="w-full table-auto text-sm">
+                <thead class="bg-gray-100 dark:bg-gray-700 dark:text-gray-200 text-gray-600">
+                    <tr class="border-b border-t border-gray-200 dark:border-gray-600">
+
+                        <th class="text-left px-4 py-3 font-medium">
+                            <a
+                            href="?participant={{ participant|default:''|urlencode }}&sentiment={{ sentiment|default:'' }}&issue={{ issue|default:'' }}&sort={% if sort == '-created_at' %}created_at{% else %}-created_at{% endif %}"
+                            class="hover:text-gray-900 dark:hover:text-white"
+                            >
+                            Date
+                            {% if sort == "created_at" %}↑{% elif sort == "-created_at" %}↓{% endif %}
+                            </a>
+                        </th>
+
+                        <th class="text-left px-4 py-3 font-medium">
+                            Preview
+                        </th>
+                        
+                        <th class="text-left px-4 py-3 font-medium">
+                            <a
+                            href="?participant={{ participant|default:''|urlencode }}&sentiment={{ sentiment|default:'' }}&issue={{ issue|default:'' }}&sort={% if sort == '-participant_display_name' %}participant_display_name{% else %}-participant_display_name{% endif %}"
+                            class="hover:text-gray-900 dark:hover:text-white"
+                            >
+                            Participant
+                            {% if sort == "participant_display_name" %}↑{% elif sort == "-participant_display_name" %}↓{% endif %}
+                            </a>
+                        </th>
+
+                        <th class="text-left px-4 py-3 font-medium">
+                            <a
+                            href="?participant={{ participant|default:''|urlencode }}&sentiment={{ sentiment|default:'' }}&issue={{ issue|default:'' }}&sort={% if sort == '-sentiment_self_report' %}sentiment_self_report{% else %}-sentiment_self_report{% endif %}"
+                            class="hover:text-gray-900 dark:hover:text-white"
+                            >
+                            Self-reported Sentiment
+                            {% if sort == "sentiment_self_report" %}↑{% elif sort == "-sentiment_self_report" %}↓{% endif %}
+                            </a>
+                        </th>
+
+                        <th class="text-left px-4 py-3 font-medium">
+                            <a
+                            href="?participant={{ participant|default:''|urlencode }}&sentiment={{ sentiment|default:'' }}&issue={{ issue|default:'' }}&sort={% if sort == '-machine_sentiment_label' %}machine_sentiment_label{% else %}-machine_sentiment_label{% endif %}"
+                            class="hover:text-gray-900 dark:hover:text-white"
+                            >
+                            Detected Sentiment (Last run)
+                            {% if sort == "sentiment_self_report" %}↑{% elif sort == "-sentiment_self_report" %}↓{% endif %}
+                            </a>
+                        </th>
+
+                        <th class="text-left px-4 py-3 font-medium">
+                            <span class="sr-only">Actions</span>
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-600 text-gray-600 dark:text-gray-200">
+                    {% for entry in diary_entries %}
+                    <tr class="hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 transition-colors">
+
+                        <td class="px-4 py-3">
+                        {{ entry.created_at|date:"M j, Y" }}<br>
+                        <span class="text-xs text-gray-400">{{ entry.created_at|date:"H:i" }}</span>
+                        </td>
+
+                        <td class="px-4 py-3 text-sm max-w-md">
+                        {% if entry.content %}
+                            <p>
+                            {% content_snippet entry.content q 50 %}
+                            </p>
+                        {% else %}
+                            —
+                        {% endif %}
+                        </td>
+
+                        <td class="px-4 py-3">
+                        {{ entry.participant_display_name }}
+                        {% if not entry.participant %}
+                            (External)
+                        {% endif %}
+                        </td>
+
+                        <td class="whitespace-nowrap px-4 py-3 text-sm">
+                            {% include "studies/partials/_sentiment_badge.html" with sentiment=entry.sentiment_self_report %}
+                        </td>
+
+                        <td class="whitespace-nowrap px-4 py-3 text-sm">
+                            {% include "studies/partials/_sentiment_badge.html" with sentiment=entry.machine_sentiment_label %}
+                        </td>
+
+                        <td class="whitespace-nowrap px-4 py-4 text-right text-sm font-medium">
+                        <a
+                            href="{% url 'diary_entry_detail' entry.pk %}"
+                            class="dark:text-gray-400 hover:dark:text-white text-gray-700 hover:text-gray-500"
+                        >
+                            {% heroicon_outline "document-magnifying-glass" %}
+                        </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params %}
+            
+        {% else %}
+            <div class="p-8 text-center">
+            <h2 class="text-sm font-semibold text-gray-900">No diary entries yet</h2>
+            <p class="mt-2 text-sm text-gray-500">
+                Entries submitted for this diary study will appear here.
+            </p>
+            </div>
+        {% endif %}
+    </div>
+  </div>
+</div>

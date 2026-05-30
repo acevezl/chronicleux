@@ -11,11 +11,11 @@
 			href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page=1"
 			class="button-PAGINATOR"
 			>
-			{% heroicon_outline "chevron-double-left" %}
+			{% heroicon_outline "chevron-double-left" class="h-4 w-4" %}
 			</a>
 		{% else %}
 			<span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
-			{% heroicon_outline "chevron-double-left" %}
+			{% heroicon_outline "chevron-double-left" class="h-4 w-4" %}
 			</span>
 		{% endif %}
 
@@ -24,11 +24,11 @@
 			href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
 			class="button-PAGINATOR"
 			>
-			{% heroicon_outline "chevron-left" %}
+			{% heroicon_outline "chevron-left" class="h-4 w-4" %}
 			</a>
 		{% else %}
 			<span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
-			{% heroicon_outline "chevron-left" %}
+			{% heroicon_outline "chevron-left" class="h-4 w-4" %}
 			</span>
 		{% endif %}
 
@@ -37,11 +37,11 @@
 			href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
 			class="button-PAGINATOR"
 			>
-			{% heroicon_outline "chevron-right" %}
+			{% heroicon_outline "chevron-right" class="h-4 w-4" %}
 			</a>
 		{% else %}
 			<span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
-			{% heroicon_outline "chevron-right" %}
+			{% heroicon_outline "chevron-right" class="h-4 w-4" %}
 			</span>
 		{% endif %}
 
@@ -50,11 +50,11 @@
 			href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{page_obj.paginator.num_pages}}"
 			class="button-PAGINATOR"
 			>
-			{% heroicon_outline "chevron-double-right" %}
+			{% heroicon_outline "chevron-double-right" class="h-4 w-4" %}
 			</a>
 		{% else %}
 			<span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
-			{% heroicon_outline "chevron-double-right" %}
+			{% heroicon_outline "chevron-double-right" class="h-4 w-4" %}
 			</span>
 		{% endif %}
 
