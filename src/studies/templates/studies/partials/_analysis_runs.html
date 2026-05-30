@@ -23,7 +23,9 @@
 						<div class="flex items-start justify-between gap-3">
 							<div>
 								<div class="md-card-title">
+									<a href="{% url 'machine_analysis_details' run.study.pk run.pk %}" class="hover:text-fuchsia-950 dark:hover:text-gray-50 hover:underline">
 									Machine Analysis Run #{{ run.id }}
+									</a>
 								</div>
 
 								<div class="mt-1 text-xs text-gray-500 dark:text-gray-400">

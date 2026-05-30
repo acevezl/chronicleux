@@ -8,8 +8,7 @@ urlpatterns = [
     path("<int:pk>/edit/", views.edit_study, name="edit_study"),
     path("studies/<int:pk>/import/", views.import_entries, name="import_entries"),
     path("<int:pk>/entries/", views.study_entries, name="study_entries"),
-    path("<int:pk>/analysis/", views.study_analysis, name="study_analysis"),
     path("entries/<int:pk>/", views.diary_entry_detail, name="diary_entry_detail"),
     path("<int:pk>/run-machine-analysis/", views.run_machine_analysis, name="run_machine_analysis"),
-    path("<int:pk>/analysis/", views.study_analysis, name="study_analysis"),
+    path("studies/<int:study_pk>/machine_analysis/<int:run_pk>/", views.machine_analysis_details, name="machine_analysis_details"),
 ]

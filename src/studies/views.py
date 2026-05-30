@@ -259,32 +259,6 @@ def diary_entry_detail(request, pk):
         "study": entry.study,
     })
 
-# STUDY ANALYSIS
-@login_required
-def study_analysis(request, pk):
-    study = get_object_or_404(Study, pk=pk)
-
-    entries_total = study.entries.count()
-    latest_run = study.analysis_runs.order_by("-started_at").first()
-    entries_analyzed = latest_run.entry_analyses.count() if latest_run else 0
-
-    is_evaluator = StudyMembership.objects.filter(
-        study=study,
-        user=request.user,
-        role=MembershipRole.EVALUATOR
-    ).exists()
-
-    context = {
-        "study": study,
-        "is_evaluator": is_evaluator,
-        "entries_total": entries_total,
-        "entries_analyzed": entries_analyzed,
-        "latest_run": latest_run,
-        "themes": study.recurring_themes,
-    }
-
-    return render(request, "studies/study_analysis.html", context)
-
 # RUN MACHINE ANALYSIS
 @login_required
 @require_POST
@@ -303,27 +277,20 @@ def run_machine_analysis(request, pk):
     except Exception as e:
         messages.error(request, f"Machine analysis failed: {e}")
         
-    return redirect("study_analysis", pk=study.pk)
+    return redirect("machine_analysis_details", study_pk=study.pk, run_pk=study_analysis_run.id)
 
-# STUDY ANALYSIS
+# MACHINE ANALYSIS DETAILS
 @login_required
-def study_analysis(request, pk):
-    study = get_object_or_404(Study, pk=pk)
-
-    latest_run = study.analysis_runs.prefetch_related("entry_analyses").order_by("-started_at").first()
-
-    entry_analyses = []
-
-    if latest_run:
-        entry_analyses = latest_run.entry_analyses.select_related("entry").order_by("entry__created_at")
+def machine_analysis_details (request, study_pk, run_pk):
+    study = get_object_or_404(Study, pk=study_pk)
+    run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
 
     context = {
         "study": study,
-        "latest_run": latest_run,
-        "entry_analyses": entry_analyses,
+        "run": run
     }
 
-    return render(request, "studies/study_analysis.html", context)
+    return render (request, "studies/machine_analysis_details.html", context)
 
 # IMPORT ENTRIES & IMPORT HELPER FUNCTIONS BELOW THIS LINE
 User = get_user_model()
