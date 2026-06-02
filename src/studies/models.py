@@ -10,6 +10,8 @@ from django.utils import timezone
 
 User = settings.AUTH_USER_MODEL
 
+# ----------------------- ENUMS ----------------------- #
+
 # STUDY STATUS ENUM
 class StudyStatus(models.TextChoices):
 	PLANNING = "PLANNING", "Planning"
@@ -48,6 +50,18 @@ class SentimentCategory(models.TextChoices):
     POSITIVE = "POSITIVE", "Positive"
     VERY_POSITIVE = "VERY_POSITIVE", "Very positive"
 
+# DIARY ENTRY SOURCE ENUM
+class DiaryEntrySource(models.TextChoices):
+    INTERNAL = "INTERNAL", "ChronicleUX submission"
+    EXTERNAL = "EXTERNAL", "External submission imported into ChronicleUX"
+
+# ANALYSIS RUN STATUS
+class AnalysisRunStatus(models.TextChoices):
+    PENDING = "PENDING", "Pending"
+    RUNNING = "RUNNING", "Running"
+    COMPLETED = "COMPLETED", "Completed"
+    FAILED = "FAILED", "Failed"
+
 # SENTIMENT SCORE THRESHOLDS
 # Used at the Study Level to label average sentiment score
 SENTIMENT_SCORE_THRESHOLDS = [
@@ -57,6 +71,9 @@ SENTIMENT_SCORE_THRESHOLDS = [
     (0.2, 0.6, SentimentCategory.POSITIVE),
     (0.6, 1.0, SentimentCategory.VERY_POSITIVE),
 ]
+
+
+# ----------------------- MODELS ----------------------- #
 
 # STUDY MODEL
 class Study(models.Model):
@@ -91,39 +108,49 @@ class Study(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # Output of the last successful study analysis run
+    # Selected Analysis Run
+    selected_run = models.ForeignKey(
+        "StudyAnalysisRun",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="preferred_by_studies",
+        help_text="The analysis run selected as the preferred interpretation for this study.",
+    )
 
-    # Model and version
-    analysis_model = models.CharField(max_length=100)
-    analysis_version = models.CharField(max_length=50)
+    # # Output of the last successful study analysis run
 
-    # Analyzed time
-    analyzed_at = models.DateTimeField(null=True, blank=True) 
-    # analyzed_at === completed_at on the study analysis run
+    # # Model and version
+    # analysis_model = models.CharField(max_length=100)
+    # analysis_version = models.CharField(max_length=50)
 
-    # Sentiment / Opinion Analysis
-    average_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
-    average_sentiment_score = models.FloatField(null=True, blank=True)
-    dominant_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
-    dominant_sentiment_score = models.FloatField(null=True, blank=True)
-    sentiment_distribution = models.JSONField(default=dict, blank=True)
+    # # Analyzed time
+    # analyzed_at = models.DateTimeField(null=True, blank=True) 
+    # # analyzed_at === completed_at on the study analysis run
+
+    # # Sentiment / Opinion Analysis
+    # average_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
+    # average_sentiment_score = models.FloatField(null=True, blank=True)
+    # dominant_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
+    # dominant_sentiment_score = models.FloatField(null=True, blank=True)
+    # sentiment_distribution = models.JSONField(default=dict, blank=True)
     
-    # Theme / Topic Analysis
-    dominant_theme_label = models.CharField(max_length=255, blank=True, null=True)
-    dominant_theme_weight = models.FloatField(null=True, blank=True)
-    theme_distribution = models.JSONField(default=dict, blank=True)
+    # # Theme / Topic Analysis
+    # dominant_theme_label = models.CharField(max_length=255, blank=True, null=True)
+    # dominant_theme_weight = models.FloatField(null=True, blank=True)
+    # theme_distribution = models.JSONField(default=dict, blank=True)
 
-    # Issues
-    recurring_issues = models.JSONField(default=list, blank=True)
+    # # Issues
+    # recurring_issues = models.JSONField(default=list, blank=True)
     
-    # Evolution of Sentiment, Theme, and Issues over time
-    evolution_over_time = models.JSONField(default=list, blank=True)
+    # # Evolution of Sentiment, Theme, and Issues over time
+    # evolution_over_time = models.JSONField(default=list, blank=True)
 
-    # Top quotes
-    top_representative_quotes = models.JSONField(default=list, blank=True)
+    # # Top quotes
+    # top_representative_quotes = models.JSONField(default=list, blank=True)
     
-    total_entries = models.PositiveIntegerField(default=0)
-    total_themes = models.PositiveIntegerField(default=0)
+    # total_entries = models.PositiveIntegerField(default=0)
+    # total_themes = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["-created_at"]
@@ -209,7 +236,6 @@ class StudyMembership(models.Model):
     def __str__(self) -> str:
         return f"{self.user} · {self.study} · {self.role}"
 
-
 # PROMPT MODEL
 class Prompt(models.Model):
 
@@ -246,12 +272,6 @@ class Prompt(models.Model):
 
     def __str__(self) -> str:
         return f"[{self.study.pk}] {self.order}. {self.text}"
-
-
-# DIARY ENTRY SOURCE ENUM
-class DiaryEntrySource(models.TextChoices):
-    INTERNAL = "INTERNAL", "ChronicleUX submission"
-    EXTERNAL = "EXTERNAL", "External submission imported into ChronicleUX"
 
 # DIARY ENTRY
 class DiaryEntry(models.Model):
@@ -296,43 +316,45 @@ class DiaryEntry(models.Model):
     content = models.TextField()  # unstructured narrative
     created_at = models.DateTimeField(default=timezone.now)
 
-    # After each analysis run, these fields are updated
-    # (i.e., they show the last analysis results for each entry)
-    # This is the inferred signal from the model
-    machine_sentiment_score = models.FloatField(null=True, blank=True)
-    machine_sentiment_label = models.CharField(
-        max_length=20,
-        choices=SentimentCategory.choices,
-        null=True,
-        blank=True,
-    )
+    # # After each analysis run, these fields are updated
+    # # (i.e., they show the last analysis results for each entry)
+    # # This is the inferred signal from the model
+    # machine_sentiment_score = models.FloatField(null=True, blank=True)
+    # machine_sentiment_label = models.CharField(
+    #     max_length=20,
+    #     choices=SentimentCategory.choices,
+    #     null=True,
+    #     blank=True,
+    # )
 
-    machine_theme_weight = models.FloatField(null=True, blank=True)
-    machine_theme_label = models.CharField(max_length=255, blank=True, null=True)
+    # machine_theme_weight = models.FloatField(null=True, blank=True)
+    # machine_theme_label = models.CharField(max_length=255, blank=True, null=True)
 
-    analysis_issue_detected = models.BooleanField(null=True, blank=True)
-    analysis_issue_tags = models.JSONField(default=list, blank=True)
+    # analysis_issue_detected = models.BooleanField(null=True, blank=True)
+    # analysis_issue_tags = models.JSONField(default=list, blank=True)
     
-    entry_summary = models.TextField(blank=True)
+    # entry_summary = models.TextField(blank=True)
 
-    analysis_model = models.CharField(max_length=100, blank=True)
-    analysis_version = models.CharField(max_length=50, blank=True)
-    analyzed_at = models.DateTimeField(null=True, blank=True)
+    # analysis_model = models.CharField(max_length=100, blank=True)
+    # analysis_version = models.CharField(max_length=50, blank=True)
+    # analyzed_at = models.DateTimeField(null=True, blank=True)
 
     @staticmethod
     def map_sentiment_to_category(score: float | None) -> str | None:
         if score is None:
             return None
-        if score <= -0.6:
-            return SentimentCategory.VERY_NEGATIVE
-        elif score <= -0.2:
-            return SentimentCategory.NEGATIVE
-        elif score < 0.2:
-            return SentimentCategory.NEUTRAL
-        elif score < 0.6:
-            return SentimentCategory.POSITIVE
-        else:
-            return SentimentCategory.VERY_POSITIVE
+
+        for index, (min_score, max_score, category) in enumerate(SENTIMENT_SCORE_THRESHOLDS):
+            is_last_range = index == len(SENTIMENT_SCORE_THRESHOLDS) - 1
+
+            if is_last_range:
+                if min_score <= score <= max_score:
+                    return category
+            else:
+                if min_score <= score < max_score:
+                    return category
+
+        return None
 
     def set_sentiment(self, score: float | None) -> None:
         self.sentiment = score
@@ -450,7 +472,6 @@ class DiaryEntry(models.Model):
             f"{participant_label} · {self.created_at}"
         )
 
-
 # PROMPT RESPONSE
 class PromptResponse(models.Model):
     diary_entry = models.ForeignKey(DiaryEntry, on_delete=models.CASCADE, related_name="prompt_responses")
@@ -487,15 +508,6 @@ class PromptResponse(models.Model):
 
     def __str__(self) -> str:
         return f"Response · entry={self.diary_entry.pk} · prompt={self.prompt.pk}"
-
-
-# ANALYSIS RUN STATUS
-class AnalysisRunStatus(models.TextChoices):
-    PENDING = "PENDING", "Pending"
-    RUNNING = "RUNNING", "Running"
-    COMPLETED = "COMPLETED", "Completed"
-    FAILED = "FAILED", "Failed"
-
 
 # STUDY ANALYSIS RUN
 # Results of the full study analysis (i.e., all entries)

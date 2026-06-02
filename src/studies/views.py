@@ -51,7 +51,7 @@ def create_diary_entry(request, study_id):
 					form.add_error(None, e)
 			else:
 				messages.success(request, "Your diary entry was submitted successfully.")
-				return redirect("study_detail", pk=study.pk)
+				return redirect("diary_study_detail", pk=study.pk)
 	else:
 		form = DiaryEntryForm()
 
@@ -84,11 +84,41 @@ def create_study(request):
 			)
 
 			messages.success(request, f"Study '{study.title}' created successfully by {study.owner}.")
-			return redirect("study_detail", pk=study.pk)
+			return redirect("diary_study_detail", pk=study.pk)
 	else:
 		form = StudyForm()
 	return render(request, "studies/create_study.html", {"form": form})
 
+
+# ------------------ #
+# DIARY STUDY DETAIL #
+# ------------------ #
+@login_required
+def diary_study_detail(request, pk):
+	study = get_object_or_404(Study, pk=pk)
+	tags_list = [tag.strip() for tag in study.tags.split(",") if tag.strip()] if study.tags else []
+
+	is_evaluator = StudyMembership.objects.filter(
+		study=study,
+		user=request.user,
+		role=MembershipRole.EVALUATOR
+	).exists()
+
+	diary_entries = DiaryEntry.objects.filter(
+		study=study
+	).select_related("participant").order_by("-created_at")
+
+	analysis_runs = StudyAnalysisRun.objects.filter(
+		study=study
+	).order_by("-started_at")
+
+	return render(request, "studies/diary_study_detail.html", {
+		"study": study,
+		"tags_list": tags_list,
+		"is_evaluator": is_evaluator,
+		"diary_entries": diary_entries,
+		"analysis_runs": analysis_runs,
+	})
 
 # ------------------ #
 # DIARY ENTRY DETAIL #
@@ -144,7 +174,7 @@ def edit_study(request, pk):
 		if form.is_valid():
 			form.save()
 			messages.success(request, f"Study '{study.title}' was updated successfully.")
-			return redirect("study_detail", pk=study.pk)
+			return redirect("diary_study_detail", pk=study.pk)
 	else:
 		form = StudyForm(instance=study)
 
@@ -190,7 +220,7 @@ def import_entries(request, pk):
 					f"{result['skipped_evaluator']} evaluator rows."
 				)
 
-				return redirect("study_detail", pk=study.pk)
+				return redirect("diary_study_detail", pk=study.pk)
 			except ValueError as e:
 				messages.error(request, str(e))
 			except ValidationError as e:
@@ -447,14 +477,14 @@ def run_machine_analysis(request, pk):
 			request,
 			"Cannot run machine analysis: No diary entries found in the study."
 		)
-		return redirect("study_detail", pk=study.pk)
+		return redirect("diary_study_detail", pk=study.pk)
 
 	try:
 		study_analysis_run = run_study_analysis(study_id=study.pk)
 
 	except Exception as e:
 		messages.error(request, f"Machine analysis failed: {e}")
-		return redirect("study_detail", pk=study.pk)
+		return redirect("diary_study_detail", pk=study.pk)
 
 	messages.success(
 		request,
@@ -523,38 +553,10 @@ def studies(request):
 		"page_params": page_params,
 	}
 
-	return render(request, "studies/studies.html", context)
+	return render(request, "studies/diary_study_list.html", context)
 
 
-# ----------------------------- #
-# STUDY DETAIL (AKA VIEW STUDY) #
-# ----------------------------- #
-@login_required
-def study_detail(request, pk):
-	study = get_object_or_404(Study, pk=pk)
-	tags_list = [tag.strip() for tag in study.tags.split(",") if tag.strip()] if study.tags else []
 
-	is_evaluator = StudyMembership.objects.filter(
-		study=study,
-		user=request.user,
-		role=MembershipRole.EVALUATOR
-	).exists()
-
-	diary_entries = DiaryEntry.objects.filter(
-		study=study
-	).select_related("participant").order_by("-created_at")
-
-	analysis_runs = StudyAnalysisRun.objects.filter(
-		study=study
-	).order_by("-started_at")
-
-	return render(request, "studies/study_detail.html", {
-		"study": study,
-		"tags_list": tags_list,
-		"is_evaluator": is_evaluator,
-		"diary_entries": diary_entries,
-		"analysis_runs": analysis_runs,
-	})
 
 
 # ----------------------- #

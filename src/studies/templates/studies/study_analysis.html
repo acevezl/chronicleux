@@ -38,7 +38,7 @@
 
         <div class="flex gap-3 pt-4">
           <a
-            href="{% url 'study_detail' study.pk %}"
+            href="{% url 'diary_study_detail' study.pk %}"
             class="rounded-sm px-4 py-2 text-sm font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
           >
             Back to Study Details
@@ -224,7 +224,7 @@
         {% endif %}
 
         <a
-          href="{% url 'study_detail' study.pk %}"
+          href="{% url 'diary_study_detail' study.pk %}"
           class="button-TERTIARY"
         >
           Back to Study Details

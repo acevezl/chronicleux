@@ -4,7 +4,7 @@ from . import views
 urlpatterns = [
     path("", views.studies, name="studies"),
     path("new/", views.create_study, name="create_study"),
-    path("<int:pk>/", views.study_detail, name="study_detail"),
+    path("<int:pk>/", views.diary_study_detail, name="diary_study_detail"),
     path("<int:pk>/edit/", views.edit_study, name="edit_study"),
     path("<int:pk>/import/", views.import_entries, name="import_entries"),
 
