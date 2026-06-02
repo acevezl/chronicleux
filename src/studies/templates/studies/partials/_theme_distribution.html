@@ -2,21 +2,8 @@
     <div class="card-summary">
         <div class="card-summary-title">
             {% heroicon_outline "rectangle-group" %}
-            Dominant Theme
+            Theme Distribution
         </div>
-
-        <div class="card-summary-subtitle">
-        {% if dominant_theme %}
-            <span class="inline-flex items-center rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1 text-sm font-medium text-gray-700 dark:text-gray-200">
-                {{ dominant_theme|capfirst }}
-            </span>
-        {% else %}
-            <span class="text-sm text-gray-500 dark:text-gray-400">
-                —
-            </span>
-        {% endif %}
-        </div>
-
     </div>
 
     {% if theme_distribution %}

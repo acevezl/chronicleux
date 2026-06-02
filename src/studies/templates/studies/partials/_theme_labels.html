@@ -1,13 +1,12 @@
 {% load formatters %}
-
 <div class="flex flex-wrap gap-2">
 	{% for theme in themes|split_csv %}
-		<span class="border border-fuchsia-700 rounded-full px-2 py-1 text-xs text-fuchsia-700">
+		<span class="border border-sky-500 rounded-full px-2 py-1 text-xs text-sky-500">
 			{{ theme }}
 		</span>
 	{% empty %}
 		<span class="border border-gray-500 dark:border-gray-400 rounded-full px-2 py-1 text-xs text-gray-500 dark:text-gray-400">
-			No themes detected
+			None
 		</span>
 	{% endfor %}
 </div>

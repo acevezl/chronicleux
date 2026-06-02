@@ -1,60 +1,96 @@
 <div class="flex items-center justify-between px-6 py-4 bg-gray-100 border-t border-gray-200 dark:border-gray-600 dark:bg-gray-800">
 
 	<div class="text-sm text-gray-600 dark:text-gray-200">
-		Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+		<div>
+			Showing
+			<span class="font-medium text-gray-700 dark:text-gray-200">
+				{{ displayed_entries_count }}
+			</span>
+			of
+			<span class="font-medium text-gray-700 dark:text-gray-200">
+				{{ total_filtered_entries_count }}
+			</span>
+			matching entries
+
+			{% if total_filtered_entries_count != total_study_entries_count %}
+				<span class="text-gray-400">
+					(out of {{ total_study_entries_count }} total in the study)
+				</span>
+			{% endif %}
+		</div>
 	</div>
 
-	<div class="flex gap-2">
+	<div class="flex gap-2 align-middle items-center">
 
 		{% if page_obj.paginator.num_pages > 1 and page_obj.number != 1 %}
 			<a
-			href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page=1"
-			class="button-PAGINATOR"
+				href="{{ diary_entries_filter_url }}?{% if page_params %}{{ page_params }}&{% endif %}page=1"
+				hx-get="{{ diary_entries_filter_url }}?{% if page_params %}{{ page_params }}&{% endif %}page=1"
+				hx-target="#diary-entries-panel"
+				hx-swap="innerHTML"
+				hx-push-url="true"
+				class="button-PAGINATOR"
 			>
-			{% heroicon_outline "chevron-double-left" class="h-4 w-4" %}
+				{% heroicon_outline "chevron-double-left" class="h-4 w-4" %}
 			</a>
 		{% else %}
 			<span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
-			{% heroicon_outline "chevron-double-left" class="h-4 w-4" %}
+				{% heroicon_outline "chevron-double-left" class="h-4 w-4" %}
 			</span>
 		{% endif %}
 
 		{% if page_obj.has_previous %}
 			<a
-			href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}"
-			class="button-PAGINATOR"
+				href="{{ diary_entries_filter_url }}?{% if page_params %}{{ page_params }}&{% endif %}page={{ page_obj.previous_page_number }}"
+				hx-get="{{ diary_entries_filter_url }}?{% if page_params %}{{ page_params }}&{% endif %}page={{ page_obj.previous_page_number }}"
+				hx-target="#diary-entries-panel"
+				hx-swap="innerHTML"
+				hx-push-url="true"
+				class="button-PAGINATOR"
 			>
-			{% heroicon_outline "chevron-left" class="h-4 w-4" %}
+				{% heroicon_outline "chevron-left" class="h-4 w-4" %}
 			</a>
 		{% else %}
 			<span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
-			{% heroicon_outline "chevron-left" class="h-4 w-4" %}
+				{% heroicon_outline "chevron-left" class="h-4 w-4" %}
 			</span>
 		{% endif %}
+
+		<div class="text-sm">
+			Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+		</div>
 
 		{% if page_obj.has_next %}
 			<a
-			href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}"
-			class="button-PAGINATOR"
+				href="{{ diary_entries_filter_url }}?{% if page_params %}{{ page_params }}&{% endif %}page={{ page_obj.next_page_number }}"
+				hx-get="{{ diary_entries_filter_url }}?{% if page_params %}{{ page_params }}&{% endif %}page={{ page_obj.next_page_number }}"
+				hx-target="#diary-entries-panel"
+				hx-swap="innerHTML"
+				hx-push-url="true"
+				class="button-PAGINATOR"
 			>
-			{% heroicon_outline "chevron-right" class="h-4 w-4" %}
+				{% heroicon_outline "chevron-right" class="h-4 w-4" %}
 			</a>
 		{% else %}
 			<span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
-			{% heroicon_outline "chevron-right" class="h-4 w-4" %}
+				{% heroicon_outline "chevron-right" class="h-4 w-4" %}
 			</span>
 		{% endif %}
 
-		{% if page_obj.paginator.num_pages > 1 and page_obj.number != page_obj.paginator.num_pages%}
+		{% if page_obj.paginator.num_pages > 1 and page_obj.number != page_obj.paginator.num_pages %}
 			<a
-			href="?{% if page_params %}{{ page_params.urlencode }}&{% endif %}page={{page_obj.paginator.num_pages}}"
-			class="button-PAGINATOR"
+				href="{{ diary_entries_filter_url }}?{% if page_params %}{{ page_params }}&{% endif %}page={{ page_obj.paginator.num_pages }}"
+				hx-get="{{ diary_entries_filter_url }}?{% if page_params %}{{ page_params }}&{% endif %}page={{ page_obj.paginator.num_pages }}"
+				hx-target="#diary-entries-panel"
+				hx-swap="innerHTML"
+				hx-push-url="true"
+				class="button-PAGINATOR"
 			>
-			{% heroicon_outline "chevron-double-right" class="h-4 w-4" %}
+				{% heroicon_outline "chevron-double-right" class="h-4 w-4" %}
 			</a>
 		{% else %}
 			<span class="border border-gray-200 dark:border-gray-700 text-gray-200 dark:text-gray-700 px-4 py-2 rounded-sm text-sm">
-			{% heroicon_outline "chevron-double-right" class="h-4 w-4" %}
+				{% heroicon_outline "chevron-double-right" class="h-4 w-4" %}
 			</span>
 		{% endif %}
 

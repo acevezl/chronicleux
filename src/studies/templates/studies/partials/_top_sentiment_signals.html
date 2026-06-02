@@ -36,6 +36,7 @@
                     {% if top_quotes.positive.sentiment_label %}
                         {% include "studies/partials/_sentiment_badge.html" with sentiment=top_quotes.positive.sentiment_label %}
                     {% endif %}
+
                 </div>
 
                 {% if top_quotes.positive %}
@@ -44,6 +45,7 @@
                     </p>
 
                     <div class="mt-4 flex items-center justify-between gap-3">
+                        
                         {% if top_quotes.positive.sentiment_score %}
                             <span class="text-sm text-gray-500 dark:text-gray-400">
                                 Score: {{ top_quotes.positive.sentiment_score }}

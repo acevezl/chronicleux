@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import asdict
 import re
 from typing import Any
@@ -23,6 +23,13 @@ DEFAULT_THEME_COUNT = 3
 DEFAULT_THEME_TERMS = 6
 MAX_SUMMARY_LENGTH = 180
 
+ISSUE_CUES = [
+	"problem", "issue", "bug", "broken", "confusing", "confused",
+	"frustrating", "frustrated", "hard to", "difficult", "annoying",
+	"slow", "lag", "crash", "stuck", "couldn't", "cannot", "can't",
+	"unclear", "missing", "failed", "error", "didn't work", "trouble"
+]
+
 ISSUE_KEYWORDS = {
 	"bug": [
 		"bug", "bugs", "error", "errors", "crash", "crashed", "crashes",
@@ -36,7 +43,7 @@ ISSUE_KEYWORDS = {
 		"didn't understand", "did not understand", "don't understand",
 		"not sure", "unsure", "uncertain", "couldn't figure out",
 		"could not figure out", "hard to understand", "where to",
-		"what to do", "how to", "no idea",
+		"what to do", "how to", "no idea", "blended together"
 	],
 
 	"performance": [
@@ -64,7 +71,8 @@ ISSUE_KEYWORDS = {
 		"hard to read", "small text", "too small", "contrast",
 		"can't see", "cannot see", "difficult to see", "color",
 		"screen reader", "keyboard", "tab", "focus", "accessible",
-		"accessibility", "disabled", "vision", "hearing",
+		"accessibility", "disabled", "vision", "hearing", "readability",
+		"trouble reading"
 	],
 
 	"trust": [
@@ -93,7 +101,6 @@ def normalize_entry_text(text: str) -> str:
 	"""
 	return " ".join((text or "").split())
 
-
 def make_entry_summary(text: str, max_length: int = MAX_SUMMARY_LENGTH) -> str:
 	"""
 	Create a summary of the entry text, truncated to a maximum length.
@@ -103,17 +110,34 @@ def make_entry_summary(text: str, max_length: int = MAX_SUMMARY_LENGTH) -> str:
 		return normalized
 	return normalized[:max_length].rstrip() + "..."
 
+def has_keyword_match(text: str, keywords: list[str]) -> bool:
+	"""
+	Matches keywords with word boundaries \b
+	"""
+	lowered = (text or "").lower()
+
+	for keyword in keywords:
+		pattern = r"\b" + re.escape(keyword.lower()) + r"\b"
+
+		if re.search(pattern, lowered):
+			return True
+
+	return False
 
 def detect_issue_tags(text: str) -> list[str]:
 	"""
-	Detect potential issue tags in the entry text based on keyword matching.
-	This helps identify common problems users might be mentioning, which can be useful for highlighting recurring issues in the study analysis.
+	Detect issue tags using keyword matching, but only when the entry appears
+	to describe an actual problem, barrier, frustration, or negative experience.
 	"""
 	lowered = (text or "").lower()
+
+	if not has_keyword_match(lowered, ISSUE_CUES):
+		return []
+
 	tags: list[str] = []
 
 	for tag, keywords in ISSUE_KEYWORDS.items():
-		if any(keyword in lowered for keyword in keywords):
+		if has_keyword_match(lowered, keywords):
 			tags.append(tag)
 
 	return tags
@@ -152,25 +176,59 @@ def build_sentiment_distribution(entry_results: list[dict]) -> dict:
 
 def build_recurring_issues(entry_results: list[dict]) -> list[dict]:
 	"""
-	Build a list of recurring issues based on detected issue tags in the entry results, including both COUNTS and PERCENTAGES.
+	Build a list of recurring issues based on detected issue tags in the entry results,
+	including counts, percentages, negative ratio, and average sentiment.
+
 	This helps identify common problems users are mentioning across entries in the study.
 
-	Returns same form as sentiment [ {"label":value, "count":value, "percentage":value}]
+	Returns:
+	[
+		{
+			"label": value,
+			"count": value,
+			"percentage": value,
+			"negative_ratio": value,
+			"avg_sentiment": value,
+		}
+	]
 	"""
 	counter = Counter()
+	sentiment_totals = defaultdict(float)
+	negative_counts = Counter()
 	total_issue_entries = 0
 
+	negative_labels = {"VERY_NEGATIVE", "NEGATIVE"}
+	print(entry_results[0])
 	for result in entry_results:
-		tags = result.get("analysis_issue_tags", [])
-		if tags:
-			total_issue_entries += 1
-			counter.update(tags)
+		tags = result.get("analysis_issue_tags") or []
+
+		if not tags:
+			continue
+
+		total_issue_entries += 1
+
+		sentiment_score = result.get("sentiment_score") or 0
+		sentiment_label = result.get("sentiment_label")
+
+		for tag in tags:
+			tag = str(tag).strip().lower()
+
+			if not tag:
+				continue
+
+			counter[tag] += 1
+			sentiment_totals[tag] += sentiment_score
+
+			if sentiment_label in negative_labels:
+				negative_counts[tag] += 1
 
 	return [
 		{
 			"label": tag,
 			"count": count,
 			"percentage": round(count / total_issue_entries, 4) if total_issue_entries else 0,
+			"negative_ratio": round(negative_counts[tag] / count, 4) if count else 0,
+			"avg_sentiment": round(sentiment_totals[tag] / count, 4) if count else 0,
 		}
 		for tag, count in counter.most_common()
 	]
@@ -219,8 +277,8 @@ def build_evolution_over_time(entries_with_results: list[tuple]) -> list[dict]:
 			"entry_count": len(day_results),
 			"avg_sentiment": avg_sentiment,
 			"sentiment_distribution": build_sentiment_distribution(day_results),
-			"top_themes": build_recurring_themes(day_results)[:3],
-			"top_issues": build_recurring_issues(day_results)[:3],
+			"top_themes": build_recurring_themes(day_results),
+			"top_issues": build_recurring_issues(day_results),
 		})
 
 	return output

@@ -9,6 +9,8 @@
     {% include "studies/partials/_study_header.html" with study=study actions_menu_template="studies/partials/_diary_entries_actions_menu.html"  %}
     </div>
 
+    <div id="diary-entries-panel">
     {% include "studies/partials/_diary_entries.html" with study=study diary_entries=diary_entries %}
+    </div>
 
 {% endblock %}

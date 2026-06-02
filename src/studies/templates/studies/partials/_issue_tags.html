@@ -1,13 +1,12 @@
 {% load formatters %}
-
 <div class="flex flex-wrap gap-2">
-	{% for issue in issues %}
-		<span class="border border-fuchsia-700 rounded-full px-2 py-1 text-xs text-fuchsia-700">
-			{{ issue.tag }}: {{ issue.count }}
+	{% for issue in issues|split_csv %}
+		<span class="issue-tag">
+			{{ issue }}
 		</span>
 	{% empty %}
-		<span class="border border-gray-500 dark:border-gray-400 rounded-full px-2 py-1 text-xs text-gray-500 dark:text-gray-400">
-			No issues detected
+		<span class="non-issue-tag">
+			None
 		</span>
 	{% endfor %}
 </div>

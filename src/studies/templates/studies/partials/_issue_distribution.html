@@ -4,26 +4,6 @@
             {% heroicon_outline "exclamation-triangle" %}
             Recurring Issues
         </div>
-
-        <div class="card-summary-subtitle">
-			{% if issue_distribution %}
-				<div class="flex flex-wrap gap-2">
-					{% for issue in issue_distribution|slice:":3" %}
-						<span class="inline-flex items-center rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200">
-							{{ issue.label|capfirst }}
-							<span class="ml-1 text-gray-500 dark:text-gray-400">
-								{{ issue.count }}
-							</span>
-						</span>
-					{% endfor %}
-				</div>
-			{% else %}
-				<span class="text-sm text-gray-500 dark:text-gray-400">
-					—
-				</span>
-			{% endif %}
-		</div>
-
     </div>
 
     {% if issue_distribution %}

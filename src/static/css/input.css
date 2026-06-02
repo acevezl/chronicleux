@@ -149,5 +149,16 @@
     @apply list-none flex items-center gap-4 py-4 px-6 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600
   }
 
+  th {
+    @apply text-left px-4 py-3 font-medium text-xs text-nowrap
+  }
+
+  .issue-tag {
+    @apply border border-red-500 rounded-full px-2 py-1 text-xs text-red-500 bg-red-100
+  }
+
+  .non-issue-tag {
+    @apply border border-gray-500 dark:border-gray-400 rounded-full px-2 py-1 text-xs text-gray-500 dark:text-gray-400
+  }
 
 }

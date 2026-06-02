@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+
 {% load heroicons %}
 {% load formatters %}
 
@@ -9,441 +10,279 @@
 
 {% include "studies/partials/_study_header.html" with study=study is_evaluator=is_evaluator actions_menu_template="studies/partials/_diary_entry_detail_actions_menu.html" %}
 
-<div class="px-4 mt-4 space-y-4">
+{% load heroicons %}
+{% load formatters %}
 
-	<!-- RAW ENTRY CARD -->
+<div class="px-4 mt-4">
 	<details open class="group main-card">
 
 		<!-- CARD TITLE (I.E., SUMMARY) -->
 		<summary class="card-summary">
+
 			<div class="flex flex-col">
 				<span class="card-summary-title">
-					{% heroicon_outline "document-text"%}
-					Diary Entry #{{ entry.pk }}
+					{% heroicon_outline "document-text" %}
+					Diary Entry Details
 				</span>
 
 				<p class="card-summary-subtitle">
-					Original participant-submitted entry and self-reported experience data.
+					Entry narrative and selected machine analysis for this diary entry.
 				</p>
 			</div>
 
 			<span class="card-summary-chevron">
 				{% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
 			</span>
+
 		</summary>
 
-		<!-- RAW ENTRY DATA -->
-		<div class="p-4 bg-gray-100 dark:bg-gray-800">
+		<!-- ENTRY DATA + SELECTED ANALYSIS -->
+		<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
 
-			<div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+			<!-- MAIN ENTRY CONTENT -->
+			<div class="lg:col-span-2 grid grid-cols-1 xl:grid-cols-2 gap-4">
 
-				<!-- LEFT COLUMN: ENTRY META -->
-				<div class="lg:col-span-1 space-y-3">
-
-					<!-- PARTICIPANT -->
-					<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-3">
-						<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-							{% heroicon_outline "user" class="h-4 w-4" %}
-							Participant
-						</div>
-
-						<div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-							{{ entry.participant_display_name|default:"Anonymous"|capfirst }}
-						</div>
+				<!-- ENTRY CONTENT -->
+				<div class="xl:col-span-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "chat-bubble-left-right" class="h-4 w-4" %}
+						Diary Entry
 					</div>
 
-					<!-- SOURCE -->
-					<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-3">
-						<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-							{% heroicon_outline "inbox-arrow-down" class="h-4 w-4" %}
-							Source
-						</div>
-
-						<div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-							{{ entry.get_source_display|default:"—" }}
-						</div>
-					</div>
-
-					<!-- SUBMITTED -->
-					<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-3">
-						<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-							{% heroicon_outline "calendar-days" class="h-4 w-4" %}
-							Submitted
-						</div>
-
-						<div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-							{{ entry.created_at|date:"Y-m-d H:i"|default:"—" }}
-						</div>
-					</div>
-
+					<p class="mt-2 text-sm leading-6 text-gray-900 dark:text-gray-100">
+						{{ entry.content|linebreaksbr|default:"—" }}
+					</p>
 				</div>
 
-				<!-- RIGHT COLUMN: SELF-REPORTED SIGNALS + CONTENT -->
-				<div class="lg:col-span-2 space-y-3">
-
-					<!-- SELF-REPORTED SIGNALS -->
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-
-						<!-- SELF-REPORTED SENTIMENT -->
-						<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-3">
-							<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-								{% heroicon_outline "face-smile" class="h-4 w-4" %}
-								Self-Reported Sentiment
-							</div>
-
-							<div class="mt-2">
-								{% include "studies/partials/_sentiment_badge.html" with sentiment=entry.sentiment_self_report %}
-							</div>
-						</div>
-
-						<!-- SELF-REPORTED ISSUE -->
-						<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-3">
-							<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-								{% heroicon_outline "exclamation-triangle" class="h-4 w-4" %}
-								Self-Reported Issue
-							</div>
-
-							<div class="mt-2">
-								{% if entry.issue_encountered %}
-									<span class="inline-flex items-center rounded-full bg-red-100 gap-1 px-2 py-1 text-xs font-medium text-red-800 border border-red-700">
-										{% heroicon_outline "exclamation-circle" class="h-4 w-4" %}
-										Issue encountered
-									</span>
-								{% else %}
-									<span class="inline-flex items-center rounded-full bg-gray-100 gap-1 px-2 py-1 text-xs font-medium text-gray-800 border border-gray-500">
-										{% heroicon_outline "minus-circle" class="h-4 w-4" %}
-										Reported no issue
-									</span>
-								{% endif %}
-							</div>
-						</div>
-
+				<!-- PARTICIPANT -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "user-circle" class="h-4 w-4" %}
+						Participant
 					</div>
 
-					<!-- ENTRY CONTENT -->
-					<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
-						<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-							{% heroicon_outline "chat-bubble-left-right" class="h-4 w-4" %}
-							Content
-						</div>
+					<div class="mt-2 text-sm text-gray-900 dark:text-gray-100">
+						{% if entry.participant_display_name %}
+							{{ entry.participant_display_name|capfirst }}
+						{% elif entry.participant %}
+							{{ entry.participant }}
+						{% else %}
+							—
+						{% endif %}
+					</div>
+				</div>
 
-						<p class="mt-2 text-sm leading-6 text-gray-900 dark:text-gray-100">
-							{{ entry.content|default:"—" }}
-						</p>
+				<!-- SOURCE -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "arrow-down-tray" class="h-4 w-4" %}
+						Source
 					</div>
 
-					<!-- PROMPT RESPONSES -->
-					{% if entry.prompt_responses.all %}
-						<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
-							<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-								{% heroicon_outline "queue-list" class="h-4 w-4" %}
-								Prompt Responses
-							</div>
+					<div class="mt-2 text-sm text-gray-900 dark:text-gray-100">
+						{{ entry.get_source_display|default:"—" }}
+					</div>
+				</div>
 
-							<div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-								{% for response in entry.prompt_responses.all %}
-									<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-3">
-										<div class="text-xs font-medium text-gray-500 dark:text-gray-400">
-											{{ response.prompt.text }}
-										</div>
+				<!-- SELF-REPORTED SENTIMENT -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "face-smile" class="h-4 w-4" %}
+						Self-reported Sentiment
+					</div>
 
-										<div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-											{% if response.likert_value %}
-												{{ response.likert_value }} / 7
-											{% elif response.text_value %}
-												{{ response.text_value }}
-											{% else %}
-												—
-											{% endif %}
-										</div>
-									</div>
-								{% endfor %}
-							</div>
-						</div>
-					{% endif %}
+					<div class="mt-2 text-sm">
+						{% if entry.sentiment_self_report %}
+							{% include "studies/partials/_sentiment_badge.html" with sentiment=entry.sentiment_self_report %}
+						{% else %}
+							<span class="text-sm text-gray-900 dark:text-gray-100">—</span>
+						{% endif %}
+					</div>
+				</div>
 
+				<!-- SELF-REPORTED ISSUE -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "exclamation-triangle" class="h-4 w-4" %}
+						Self-reported Issue
+					</div>
+
+					<div class="mt-2 text-sm text-gray-900 dark:text-gray-100">
+						{% if entry.issue_encountered %}
+							<span class="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600 dark:bg-red-950 dark:text-red-300 dark:ring-red-700">
+								Yes
+							</span>
+						{% else %}
+							<span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:ring-gray-600">
+								No
+							</span>
+						{% endif %}
+					</div>
 				</div>
 
 			</div>
 
-		</div>
-	</details>
+			<!-- SIDE METADATA / SELECTED ANALYSIS -->
+			<div class="lg:col-span-1 space-y-4">
 
+				{% if selected_run %}
 
-	<!-- MACHINE ANALYSIS CARD -->
-	<details open class="group main-card">
-
-		<!-- CARD TITLE (I.E., SUMMARY) -->
-		<summary class="card-summary">
-			<div class="flex flex-col">
-				<span class="card-summary-title">
-					{% heroicon_outline "cpu-chip"%}
-					Machine Interpretation
-				</span>
-
-				<p class="card-summary-subtitle">
-					Automated sentiment analysis, theme extraction, and issue detection.
-				</p>
-			</div>
-
-			<span class="card-summary-chevron">
-				{% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
-			</span>
-		</summary>
-
-		<!-- ANALYSIS DATA -->
-		<div class="p-4 bg-white dark:bg-gray-900">
-
-			{% if entry.analyzed_at %}
-
-				<div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-
-					<!-- LEFT COLUMN: ANALYSIS META -->
-					<div class="lg:col-span-1 space-y-3">
-
-						<!-- MODEL AND VERSION -->
-						<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-3">
-							<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-								{% heroicon_outline "command-line" class="h-4 w-4" %}
-								Model · Version
-							</div>
-							
-							<div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-								{{ entry.analysis_model|default:"—" }}
-								<span class="text-gray-400">·</span>
-								{{ entry.analysis_version|default:"—" }}
-							</div>
+					<!-- ANALYSIS RUN -->
+					<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+						<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+							{% heroicon_outline "cpu-chip" class="h-4 w-4" %}
+							Analysis Run
 						</div>
 
-						<!-- ANALYSIS METHODS -->
-						<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-3">
-							<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-								{% heroicon_outline "adjustments-horizontal" class="h-4 w-4" %}
-								Interpretation Methods
+						<div class="mt-2 space-y-2 text-sm text-gray-900 dark:text-gray-100">
+							<div class="font-medium">
+								Run #{{ selected_run.id }}
 							</div>
 
-							<div class="mt-1 space-y-1 text-sm text-gray-900 dark:text-gray-100">
-								<div>
-									Sentiment Analysis: {{ entry.methods.sentiment|default:"—" }}
-								</div>
-
-								<div>
-									Thematic Extraction: {{ entry.methods.theme|default:"—" }}
-								</div>
+							<div class="text-xs text-gray-500 dark:text-gray-400">
+								Analyzed at:
+								<span class="text-gray-900 dark:text-gray-100">
+									{{ selected_run.analyzed_at|date:"Y-m-d H:i"|default:"—" }}
+								</span>
 							</div>
 						</div>
+					</div>
+					
+					<!-- SENTIMENT ANALYSIS -->
+					<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+						<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+							{% heroicon_outline "face-smile" class="h-4 w-4" %}
+							Sentiment Analysis
+						</div>
 
-						<!-- ANALYZED AT -->
-						<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-3">
-							<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-								{% heroicon_outline "clock" class="h-4 w-4" %}
-								Analyzed At
-							</div>
-
-							<div class="mt-1 text-sm text-gray-900 dark:text-gray-100">
-								{% if entry_analysis %}
-									{{ entry_analysis.analyzed_at|date:"Y-m-d H:i"|default:"—" }}
+						<div class="mt-3 space-y-3 text-sm">
+							<div>
+								{% if selected_run.sentiment_label %}
+									{% include "studies/partials/_sentiment_badge.html" with sentiment=selected_run.sentiment_label %}
 								{% else %}
-									{{ entry.analyzed_at|date:"Y-m-d H:i"|default:"—" }}
+									<span class="text-gray-900 dark:text-gray-100">—</span>
 								{% endif %}
 							</div>
-						</div>
 
-					</div>
-
-					<!-- RIGHT COLUMN: ANALYSIS RESULTS -->
-					<div class="lg:col-span-2 space-y-3">
-
-						<!-- SENTIMENT + THEME -->
-						<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-
-							<!-- SENTIMENT ANALYSIS -->
-							<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
-								<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-									{% heroicon_outline "scale" class="h-4 w-4" %}
-									Sentiment Analysis
+							<div class="grid grid-cols-2 gap-3">
+								<div>
+									<div class="text-xs text-gray-500 dark:text-gray-400">
+										Score
+									</div>
+									<div class="text-gray-900 dark:text-gray-100">
+										{{ selected_run.sentiment_score|floatformat:3|default:"—" }}
+									</div>
 								</div>
 
-								<div class="mt-3 flex flex-wrap items-center gap-3">
-
-									<!-- SELF REPORTED -->
-									<div class="flex flex-col items-center justify-center text-center rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-3">
-										<div class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-											Self-reported
-										</div>
-
-										{% include "studies/partials/_sentiment_badge.html" with sentiment=entry.sentiment_self_report %}
+								<div>
+									<div class="text-xs text-gray-500 dark:text-gray-400">
+										Method
 									</div>
-
-									<!-- TO -->
-									<div class="text-gray-400 dark:text-gray-500">
-										{% heroicon_outline "arrow-right" class="h-4 w-4" %}
+									<div class="text-gray-900 dark:text-gray-100">
+										{{ selected_run.methods.sentiment }}
+										
 									</div>
-
-									<!-- MACHINE DETECTED -->
-									<div class="flex flex-col items-center justify-center text-center rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-3">
-										<div class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-											Detected
-										</div>
-
-										{% if entry_analysis and entry_analysis.sentiment_label %}
-											{% include "studies/partials/_sentiment_badge.html" with sentiment=entry_analysis.sentiment_label %}
-										{% elif entry.machine_sentiment_label %}
-											{% include "studies/partials/_sentiment_badge.html" with sentiment=entry.machine_sentiment_label %}
-										{% else %}
-											<span class="text-sm text-gray-500 dark:text-gray-400">—</span>
-										{% endif %}
-									</div>
-
-									<!-- SCORE -->
-									<div class="flex flex-col items-center justify-center text-center rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-3">
-										<div class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
-											Detected score
-										</div>
-
-										{% if entry_analysis and entry_analysis.sentiment_score is not None %}
-											{{ entry_analysis.sentiment_score|floatformat:2 }}
-										{% elif entry.machine_sentiment_score is not None %}
-											{{ entry.machine_sentiment_score|floatformat:2 }}
-										{% else %}
-											—
-										{% endif %}
-									</div>
-
 								</div>
 							</div>
-
-							<!-- THEME ANALYSIS -->
-							<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
-								<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-									{% heroicon_outline "tag" class="h-4 w-4" %}
-									Theme Extraction
-								</div>
-
-								<div class="mt-3 flex flex-wrap items-center gap-3">
-
-									<div class="flex flex-col items-center justify-center text-center rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-3">
-										<div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-											Detected
-										</div>
-
-										{% include "studies/partials/_theme_labels.html" with themes=entry.machine_theme_label %}
-									</div>
-
-									<div class="flex flex-col items-center justify-center text-center rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-3">
-										<div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-											Weight
-										</div>
-
-										{{ entry.machine_theme_weight|floatformat:2|default:"-" }}
-									</div>
-
-								</div>
-							</div>
-
-						</div>
-
-						<!-- ISSUE DETECTION -->
-						<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
-							<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-								{% heroicon_outline "exclamation-triangle" class="h-4 w-4" %}
-								Issue Detection
-							</div>
-
-							<div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-
-								<!-- DETECTED ISSUE -->
-								<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-3">
-									<div class="text-xs font-medium text-gray-500 dark:text-gray-400">
-										Detected by machine analysis
-									</div>
-
-									<div class="mt-2">
-										{% if entry_analysis %}
-											{% if entry.issue_detected %}
-												<span class="inline-flex items-center rounded-full bg-red-100 gap-1 px-2 py-1 text-xs font-medium text-red-800 border border-red-700">
-													{% heroicon_outline "exclamation-circle" %}
-													Issue detected
-												</span>
-											{% else %}
-												<span class="inline-flex items-center rounded-full bg-gray-100 gap-1 px-2 py-1 text-xs font-medium text-gray-800 border border-gray-500">
-													{% heroicon_outline "minus-circle" %}
-													No issue
-												</span>
-											{% endif %}
-										{% elif entry.analysis_issue_detected is not None %}
-											{% if entry.analysis_issue_detected %}
-												<span class="inline-flex items-center rounded-full bg-red-100 gap-1 px-2 py-1 text-xs font-medium text-red-800 border border-red-700">
-													{% heroicon_outline "exclamation-circle"%}
-													Issue detected
-												</span>
-											{% else %}
-												<span class="inline-flex items-center rounded-full bg-gray-100 gap-1 px-2 py-1 text-xs font-medium text-gray-800 border border-gray-500">
-													{% heroicon_outline "minus-circle" %}
-													No issue
-												</span>
-											{% endif %}
-										{% else %}
-											<span class="text-sm text-gray-500 dark:text-gray-400">—</span>
-										{% endif %}
-									</div>
-								</div>
-								
-								<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-3">
-									<div class="text-xs font-medium text-gray-500 dark:text-gray-400">
-										Issue Tags
-									</div>
-									
-									<!-- ISSUE TAGS -->
-									<div class="mt-2 flex flex-wrap gap-2">
-										{% if entry.analysis_issue_tags %}
-											{% for issue in entry.analysis_issue_tags %}
-												<span class="border border-red-700 rounded-full px-3 py-1 text-xs text-red-700">
-													{{ issue }}
-												</span>
-											{% endfor %}
-										{% else %}
-											<span class="text-sm text-gray-500 dark:text-gray-400">
-												No issue tags available.
-											</span>
-										{% endif %}
-									</div>
-								</div>
-
-							</div>
-
-						</div>
-
-					</div>
-
-				</div>
-
-			{% else %}
-
-				<!-- EMPTY ANALYSIS STATE -->
-				<div class="rounded-sm border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
-					<div class="flex items-start gap-3">
-						<div class="mt-0.5 text-gray-400 dark:text-gray-500">
-							{% heroicon_outline "cpu-chip" class="h-5 w-5" %}
-						</div>
-
-						<div>
-							<div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-								No machine analysis available yet.
-							</div>
-
-							<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-								Once this entry is analyzed, ChronicleUX will show the detected sentiment, theme and issue signals here.
-							</p>
 						</div>
 					</div>
-				</div>
 
-			{% endif %}
+					<!-- THEME ANALYSIS -->
+					<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+						<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+							{% heroicon_outline "tag" class="h-4 w-4" %}
+							Theme Analysis
+						</div>
+
+						<div class="mt-3 space-y-3 text-sm text-gray-900 dark:text-gray-100">
+							<div>
+								<div class="text-xs text-gray-500 dark:text-gray-400">
+									Theme
+								</div>
+								<div>
+									{{ selected_run.theme_label|default:"—" }}
+								</div>
+							</div>
+
+							<div class="grid grid-cols-2 gap-3">
+								<div>
+									<div class="text-xs text-gray-500 dark:text-gray-400">
+										Weight
+									</div>
+									<div>
+										{{ selected_run.theme_weight|floatformat:3|default:"—" }}
+									</div>
+								</div>
+
+								<div>
+									<div class="text-xs text-gray-500 dark:text-gray-400">
+										Method
+									</div>
+									<div>
+										{{ selected_run.methods.theme|default:"—" }}
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- ISSUES DETECTED -->
+					<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+						<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+							{% heroicon_outline "exclamation-circle" class="h-4 w-4" %}
+							Issues Detected
+						</div>
+
+						<div class="mt-3 text-sm">
+							{% if selected_run.issue_detected %}
+								<span class="issue-tag">
+									Yes
+								</span>
+							{% else %}
+								<span class="non-issue-tag">
+									No
+								</span>
+							{% endif %}
+						</div>
+
+						<div class="mt-3 text-sm">
+							{% include "studies/partials/_issue_tags.html" with issues=entry.analysis_issue_tags %}
+						</div>
+					</div>
+
+					<!-- ENTRY ANALYZED AT -->
+					<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+						<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+							{% heroicon_outline "clock" class="h-4 w-4" %}
+							Entry Analyzed At
+						</div>
+
+						<div class="mt-2 text-sm text-gray-900 dark:text-gray-100">
+							{{ selected_run.analyzed_at|date:"Y-m-d H:i"|default:"—" }}
+						</div>
+					</div>
+
+				{% else %}
+
+					<!-- NO ANALYSIS -->
+					<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+						<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+							{% heroicon_outline "cpu-chip" class="h-4 w-4" %}
+							Selected Analysis
+						</div>
+
+						<div class="mt-2 text-sm text-gray-900 dark:text-gray-100">
+							No machine analysis is available for this diary entry yet.
+						</div>
+					</div>
+
+				{% endif %}
+
+			</div>
 
 		</div>
-	</details>
 
+	</details>
 </div>
 
 {% endblock %}

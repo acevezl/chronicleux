@@ -90,43 +90,46 @@ def create_study(request):
 	return render(request, "studies/create_study.html", {"form": form})
 
 
-# ------------------- #
-# DIARY ENTRY DETAILS #
-# ------------------- #
+# ------------------ #
+# DIARY ENTRY DETAIL #
+# ------------------ #
 @login_required
-def diary_entry_detail(request, study_pk, entry_pk, run_pk=None):
+def diary_entry_detail(request, study_pk, entry_pk):
 	study = get_object_or_404(Study, pk=study_pk)
 
+	is_owner = study.owner_id == request.user.id
+
+	is_evaluator = StudyMembership.objects.filter(
+		study=study,
+		user=request.user,
+		role=MembershipRole.EVALUATOR,
+	).exists()
+
+	if not is_owner and not is_evaluator:
+		return HttpResponseForbidden()
+
 	entry = get_object_or_404(
-		DiaryEntry.objects.prefetch_related("prompt_responses__prompt"),
+		DiaryEntry.objects.select_related("study", "participant"),
 		pk=entry_pk,
 		study=study,
 	)
 
-	run = None
-	entry_analysis = None
+	diary_entry_analysis = (
+		DiaryEntryAnalysis.objects
+		.filter(entry=entry)
+		.first()
+	)
 
-	if run_pk:
-		run = get_object_or_404(
-			StudyAnalysisRun,
-			pk=run_pk,
-			study=study,
-		)
-
-		entry_analysis = get_object_or_404(
-			DiaryEntryAnalysis,
-			run=run,
-			entry=entry,
-		)
-
-	context = {
-		"study": study,
-		"entry": entry,
-		"run": run,
-		"entry_analysis": entry_analysis,
-	}
-
-	return render(request, "studies/diary_entry_detail.html", context)
+	print (diary_entry_analysis)
+	return render(
+		request,
+		"studies/diary_entry_detail.html",
+		{
+			"study": study,
+			"entry": entry,
+			"selected_run": diary_entry_analysis,
+		},
+	)
 
 
 # ---------- #
@@ -229,6 +232,28 @@ def machine_analysis_details (request, study_pk, run_pk):
 
 	return render (request, "studies/machine_analysis_details.html", context)
 
+
+# ------------------------------- #
+# MACHINE ANALYSIS ETRIES PARTIAL #
+# ------------------------------- #
+
+@login_required
+def machine_analysis_entries_partial(request, study_pk, run_pk):
+	study = get_object_or_404(Study, pk=study_pk)
+	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
+
+	if not user_can_evaluate_study(request.user, study):
+		return HttpResponseForbidden()
+
+	context = filter_diary_entries(request, study, run=run)
+	context["study"] = study
+	context["run"] = run
+	context["diary_entries_filter_url"] = reverse(
+		"machine_analysis_entries_partial",
+		args=[study.pk, run.pk],
+	)
+
+	return render(request, "studies/partials/_diary_entries.html", context)
 
 # ---------------------------- #
 # MANAGE EVALUATORS (OF STUDY) #
@@ -418,18 +443,29 @@ def run_machine_analysis(request, pk):
 		return HttpResponseForbidden()
 
 	if not study.entries.exists():
-		messages.warning(request, "Cannot run machine analysis: No diary entries found in the study.")
+		messages.warning(
+			request,
+			"Cannot run machine analysis: No diary entries found in the study."
+		)
 		return redirect("study_detail", pk=study.pk)
 
 	try:
 		study_analysis_run = run_study_analysis(study_id=study.pk)
 
-		messages.success(request, f"Machine analysis started successfully. Run ID: {study_analysis_run.pk}")
-		
 	except Exception as e:
 		messages.error(request, f"Machine analysis failed: {e}")
-		
-	return redirect("machine_analysis_details", study_pk=study.pk, run_pk=study_analysis_run.pk)
+		return redirect("study_detail", pk=study.pk)
+
+	messages.success(
+		request,
+		f"Machine analysis completed successfully. Run ID: {study_analysis_run.pk}"
+	)
+
+	return redirect(
+		"machine_analysis_details",
+		study_pk=study.pk,
+		run_pk=study_analysis_run.pk,
+	)
 
 
 # ----------------- #
@@ -526,81 +562,97 @@ def study_detail(request, pk):
 # ----------------------- #
 @login_required
 def study_entries(request, pk):
-
 	study = get_object_or_404(Study, pk=pk)
 
-	diary_entries = (
-		DiaryEntry.objects
-		.filter(study=study)
-		.select_related("participant")
+	if not user_can_evaluate_study(request.user, study):
+		return HttpResponseForbidden()
+
+	context = filter_diary_entries(request, study)
+	context["study"] = study
+	context["diary_entries_filter_url"] = reverse(
+		"diary_entries_partial",
+		args=[study.pk],
 	)
 
-	# # Filtering
-	# Suppressing this while I try HTMX for a/s get requests instead of posts b/c I HATE WITH ODIO JAROCHO reloading the page every time I update the filter or sort.
-	# q = request.GET.get("q")
-	# participant = request.GET.get("participant")
-	# sentiment = request.GET.get("sentiment")
-	# issue = request.GET.get("issue")
-
-	# if q:
-	# 	diary_entries = diary_entries.filter(content__icontains=q)
-
-	# if participant:
-	# 	diary_entries = diary_entries.filter(participant_display_name__icontains=participant)
-
-	# if sentiment:
-	# 	diary_entries = diary_entries.filter(sentiment_self_report=sentiment)
-
-	# if issue in ["true", "false"]:
-	# 	diary_entries = diary_entries.filter(issue_encountered=(issue == "true"))
-
-	# # Sorting
-	# sort = request.GET.get("sort", "-created_at")
-	
-	# allowed_sort_fields = {
-	# 	"created_at",
-	# 	"participant_display_name",
-	# 	"sentiment_self_report",
-	# }
-
-	# if sort.lstrip("-") in allowed_sort_fields:
-	# 	diary_entries = diary_entries.order_by(sort)
-
-	# # Pagination
-	# paginator = Paginator(diary_entries, 10)  # 10 per page
-	# page_number = request.GET.get("page")
-	# page_obj = paginator.get_page(page_number)
-	
-	# params = request.GET.copy()
-	# params.pop("page", None)
-
-	is_evaluator = StudyMembership.objects.filter(
-		study=study,
-		user=request.user,
-		role=MembershipRole.EVALUATOR
-	).exists()
-
-	# context = {
-	# 	"study": study,
-	# 	"diary_entries": page_obj,
-	# 	"page_obj": page_obj,
-	# 	"sentiment": sentiment,
-	# 	"issue": issue,
-	# 	"participant": participant,
-	# 	"q": q,
-	# 	"sort": sort,
-	# 	"page_params": params,
-	# 	"is_evaluator": is_evaluator,
-	# }
-
-	# Using this context instead of the long one with a query while I try HTMX for async querying, sorting, and pagination.
-	context = {
-		"study": study,
-		"diary_entries": diary_entries,
-		"diary_entries_filter_url": reverse("diary_entries_partial", args=[study.pk]),
-	}
-
 	return render(request, "studies/diary_entries.html", context)
+
+# @login_required
+# def study_entries(request, pk):
+
+# 	study = get_object_or_404(Study, pk=pk)
+
+# 	diary_entries = (
+# 		DiaryEntry.objects
+# 		.filter(study=study)
+# 		.select_related("participant")
+# 	)
+
+# 	# # Filtering
+# 	# Suppressing this while I try HTMX for a/s get requests instead of posts b/c I HATE WITH ODIO JAROCHO reloading the page every time I update the filter or sort.
+# 	# q = request.GET.get("q")
+# 	# participant = request.GET.get("participant")
+# 	# sentiment = request.GET.get("sentiment")
+# 	# issue = request.GET.get("issue")
+
+# 	# if q:
+# 	# 	diary_entries = diary_entries.filter(content__icontains=q)
+
+# 	# if participant:
+# 	# 	diary_entries = diary_entries.filter(participant_display_name__icontains=participant)
+
+# 	# if sentiment:
+# 	# 	diary_entries = diary_entries.filter(sentiment_self_report=sentiment)
+
+# 	# if issue in ["true", "false"]:
+# 	# 	diary_entries = diary_entries.filter(issue_encountered=(issue == "true"))
+
+# 	# # Sorting
+# 	# sort = request.GET.get("sort", "-created_at")
+	
+# 	# allowed_sort_fields = {
+# 	# 	"created_at",
+# 	# 	"participant_display_name",
+# 	# 	"sentiment_self_report",
+# 	# }
+
+# 	# if sort.lstrip("-") in allowed_sort_fields:
+# 	# 	diary_entries = diary_entries.order_by(sort)
+
+# 	# # Pagination
+# 	# paginator = Paginator(diary_entries, 10)  # 10 per page
+# 	# page_number = request.GET.get("page")
+# 	# page_obj = paginator.get_page(page_number)
+	
+# 	# params = request.GET.copy()
+# 	# params.pop("page", None)
+
+# 	is_evaluator = StudyMembership.objects.filter(
+# 		study=study,
+# 		user=request.user,
+# 		role=MembershipRole.EVALUATOR
+# 	).exists()
+
+# 	# context = {
+# 	# 	"study": study,
+# 	# 	"diary_entries": page_obj,
+# 	# 	"page_obj": page_obj,
+# 	# 	"sentiment": sentiment,
+# 	# 	"issue": issue,
+# 	# 	"participant": participant,
+# 	# 	"q": q,
+# 	# 	"sort": sort,
+# 	# 	"page_params": params,
+# 	# 	"is_evaluator": is_evaluator,
+# 	# }
+
+# 	# Using this context instead of the long one with a query while I try HTMX for async querying, sorting, and pagination.
+# 	context = {
+# 		"study": study,
+# 		"diary_entries": diary_entries,
+# 		"diary_entries_filter_url": reverse("diary_entries_partial", args=[study.pk]),
+# 	}
+
+# 	return render(request, "studies/diary_entries.html", context)
 
 
 # --------------------- #
@@ -608,19 +660,45 @@ def study_entries(request, pk):
 # --------------------- #
 @login_required
 def study_entries_partial(request, study_pk):
-    study = get_object_or_404(Study, pk=study_pk)
+	study = get_object_or_404(Study, pk=study_pk)
 
-    if study.owner != request.user:
-        return HttpResponseForbidden()
+	if not user_can_evaluate_study(request.user, study):
+		return HttpResponseForbidden()
+	
+	# If the user opens or refeshes the partial URL directly,
+	# send them to the full page instead. No looky looky for you Mr or Mrs...
+	if request.headers.get("HX-Request") != "true":
+		url = reverse("study_entries", args=[study.pk])
+		querystring = request.GET.urlencode()
 
-    context = filter_diary_entries(request, study)
-    context["study"] = study
-    context["diary_entries_filter_url"] = reverse(
-        "diary_entries_partial",
-        args=[study.pk],
-    )
+		if querystring:
+			url = f"{url}?{querystring}"
 
-    return render(request, "studies/partials/_diary_entries.html", context)
+		return redirect(url)
+
+	context = filter_diary_entries(request, study)
+	context["study"] = study
+	context["diary_entries_filter_url"] = reverse(
+		"diary_entries_partial",
+		args=[study.pk],
+	)
+
+	response = render(
+		request,
+		"studies/partials/_diary_entries.html",
+		context,
+	)
+
+	# Push the clean full-page URL into the browser, not the partial URL.
+	full_page_url = reverse("study_entries", args=[study.pk])
+	querystring = request.GET.urlencode()
+
+	if querystring:
+		full_page_url = f"{full_page_url}?{querystring}"
+
+	response["HX-Push-Url"] = full_page_url
+
+	return response
 
 
 # ----------------------- FILTERS ----------------------- #
@@ -630,6 +708,32 @@ def study_entries_partial(request, study_pk):
 
 # ----------------------- HELPERS ----------------------- #
 # Thinking about moving these to helpers.py (-n-)... maybe in the future
+
+# USER CAN EVALUATE STUDY?
+def user_can_evaluate_study(user, study):
+	"""
+	Returns True if the user can view/evaluate study entries and analysis.
+
+	Allowed:
+	- Study owner
+	- Study members with evaluator role
+
+	Not allowed:
+	- Participants
+	- Non authenticated users (obvs)
+	"""
+
+	if not user or not user.is_authenticated:
+		return False
+
+	if study.owner_id == user.id:
+		return True
+
+	return StudyMembership.objects.filter(
+		study=study,
+		user=user,
+		role=MembershipRole.EVALUATOR,
+	).exists()
 
 # IMPORT ENTRIES: IMPORT ROWS INTO STUDY
 @transaction.atomic
