@@ -4,7 +4,15 @@
   <div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden">
     
     <div class="px-6 py-4 bg-white dark:bg-gray-900">
-        <form method="get" class="flex flex-wrap gap-3">
+        <form
+            method="get"
+            hx-get="{{ diary_entries_filter_url }}"
+            hx-target="#diary-entries-panel"
+            hx-swap="innerHTML"
+            hx-push-url="true"
+            hx-trigger="submit, change delay:300ms from:input, keyup changed delay:500ms from:input"
+            class="flex flex-wrap gap-3"
+        >
             <input
             type="text"
             name="participant"

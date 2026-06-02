@@ -38,11 +38,12 @@
 											href="{% url 'machine_analysis_details' run.study_id run.pk %}"
 											class="md-card-title hover:text-fuchsia-950 dark:hover:text-gray-50 hover:underline"
 										>
+											{% heroicon_outline "cpu-chip" class="h-4 w-4" %}
 											Machine Analysis Run #{{ run.id }}
 										</a>
 
 										<div class="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-											{% heroicon_outline "calendar-days" class="h-3.5 w-3.5" %}
+											{% heroicon_outline "calendar-days" class="h-4 w-4" %}
 
 											{% if run.completed_at %}
 												Completed {{ run.completed_at|date:"Y-m-d H:i" }}
@@ -71,7 +72,7 @@
 									<!-- SENTIMENT METHOD -->
 									<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-3">
 										<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-											{% heroicon_outline "face-smile" class="h-3.5 w-3.5" %}
+											{% heroicon_outline "face-smile" class="h-4 w-4" %}
 											Sentiment Method
 										</div>
 
@@ -83,7 +84,7 @@
 									<!-- THEME METHOD -->
 									<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-3">
 										<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-											{% heroicon_outline "tag" class="h-3.5 w-3.5" %}
+											{% heroicon_outline "tag" class="h-4 w-4" %}
 											Theme Method
 										</div>
 
@@ -100,7 +101,7 @@
 									<!-- DOMINANT SENTIMENT -->
 									<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-3">
 										<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-											{% heroicon_outline "arrow-trending-up" class="h-3.5 w-3.5" %}
+											{% heroicon_outline "arrow-trending-up" class="h-4 w-4" %}
 											Dominant Sentiment
 										</div>
 
@@ -118,7 +119,7 @@
 									<!-- DOMINANT THEMES -->
 									<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-3">
 										<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-											{% heroicon_outline "rectangle-group" class="h-3.5 w-3.5" %}
+											{% heroicon_outline "rectangle-group" class="h-4 w-4" %}
 											Dominant Themes
 										</div>
 

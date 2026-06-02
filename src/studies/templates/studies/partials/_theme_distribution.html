@@ -1,0 +1,97 @@
+<div class="group main-card">
+    <div class="card-summary">
+        <div class="card-summary-title">
+            {% heroicon_outline "rectangle-group" %}
+            Dominant Theme
+        </div>
+
+        <div class="card-summary-subtitle">
+        {% if dominant_theme %}
+            <span class="inline-flex items-center rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1 text-sm font-medium text-gray-700 dark:text-gray-200">
+                {{ dominant_theme|capfirst }}
+            </span>
+        {% else %}
+            <span class="text-sm text-gray-500 dark:text-gray-400">
+                —
+            </span>
+        {% endif %}
+        </div>
+
+    </div>
+
+    {% if theme_distribution %}
+    <div class="mt-4">
+        <div class="relative h-64 w-full overflow-hidden">
+            <canvas
+                id="themeDistributionChart-{{ study_id }}-{{ run_id }}"
+            ></canvas>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    function prettifyThemeLabel(label) {
+        return label
+            .replaceAll("_", " ")
+            .split(" ")
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
+    }
+
+    const themeData = [
+        {% for theme in theme_distribution %}
+            {
+                label: "{{ theme.label|escapejs }}",
+                count: {{ theme.count }},
+                percentage: {{ theme.percentage }}
+            },
+        {% endfor %}
+    ];
+
+    const themeLabels = themeData.map(item => {
+        const label = prettifyThemeLabel(item.label);
+        const percentage = (item.percentage * 100).toFixed(1);
+        return `${label} (${percentage}%)`;
+    });
+
+    const themeCounts = themeData.map(item => item.count);
+
+    const themeCtx = document.getElementById("themeDistributionChart-{{ study_id }}-{{ run_id }}");
+
+    new Chart(themeCtx, {
+        type: "doughnut",
+        data: {
+            labels: themeLabels,
+            datasets: [{
+                data: themeCounts,
+                borderWidth: 2,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: "60%",
+            plugins: {
+                legend: {
+                    display: true,
+                    position: "bottom",
+                    labels: {
+                        boxWidth: 12,
+                        padding: 12
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const item = themeData[context.dataIndex];
+                            const percentage = (item.percentage * 100).toFixed(1);
+                            return ` ${item.count} entries`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>

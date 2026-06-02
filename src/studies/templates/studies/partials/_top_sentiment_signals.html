@@ -1,0 +1,136 @@
+<div class="group main-card">
+    <div class="card-summary">
+        <div class="card-summary-title">
+            {% heroicon_outline "chat-bubble-left-right" %}
+            Key Experience Moments
+        </div>
+    </div>
+
+    {% if top_quotes %}
+        <div class="p-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+
+            <!-- MOST POSITIVE QUOTE -->
+            <div class="rounded-sm border border-gray-200 bg-white p-4 dark:border-gray-600 dark:bg-gray-900">
+                <div class="mb-3 flex items-start justify-between gap-3">
+                    <div>
+
+                        <div class="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            {% heroicon_outline "arrow-trending-up" class="h-4 w-4" %}
+                            Most positive quote
+                        </div>
+
+                        {% if top_quotes.positive.participant_name %}
+                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {{ top_quotes.positive.participant_name|capfirst}} 
+                            </div>
+                        {% endif %}
+
+                        {% if top_quotes.positive.created_at_display %}
+                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {{ top_quotes.positive.created_at_display }}
+                            </div>
+                        {% endif %}
+                        
+                    </div>
+
+                    {% if top_quotes.positive.sentiment_label %}
+                        {% include "studies/partials/_sentiment_badge.html" with sentiment=top_quotes.positive.sentiment_label %}
+                    {% endif %}
+                </div>
+
+                {% if top_quotes.positive %}
+                    <p class="text-sm leading-6 text-gray-700 dark:text-gray-300">
+                        {{ top_quotes.positive.summary|default:top_quotes.positive.quote }}
+                    </p>
+
+                    <div class="mt-4 flex items-center justify-between gap-3">
+                        {% if top_quotes.positive.sentiment_score %}
+                            <span class="text-sm text-gray-500 dark:text-gray-400">
+                                Score: {{ top_quotes.positive.sentiment_score }}
+                            </span>
+                        {% else %}
+                            <span></span>
+                        {% endif %}
+
+                        <a
+                            href="/studies/{{ study_id }}/entries/{{ top_quotes.positive.entry_id }}/"
+                            class="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                        >
+                            View entry
+                            {% heroicon_mini "arrow-right" %}
+                        </a>
+                    </div>
+                {% else %}
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        No positive quote detected.
+                    </p>
+                {% endif %}
+            </div>
+
+            <!-- MOST NEGATIVE QUOTE -->
+            <div class="rounded-sm border border-gray-200 bg-white p-4 dark:border-gray-600 dark:bg-gray-900">
+                <div class="mb-3 flex items-start justify-between gap-3">
+                    <div>
+
+                        <div class="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            {% heroicon_outline "arrow-trending-down" class="h-4 w-4" %}
+                            Most negative quote
+                        </div>
+
+                        {% if top_quotes.negative.participant_name %}
+                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {{ top_quotes.negative.participant_name|capfirst}} 
+                            </div>
+                        {% endif %}
+
+                        {% if top_quotes.negative.created_at_display %}
+                            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                {{ top_quotes.negative.created_at_display }}
+                            </div>
+                        {% endif %}
+
+                    </div>
+
+                    {% if top_quotes.negative.sentiment_label %}
+                        {% include "studies/partials/_sentiment_badge.html" with sentiment=top_quotes.negative.sentiment_label %}
+                    {% endif %}
+                </div>
+
+                {% if top_quotes.negative %}
+                    <p class="text-sm leading-6 text-gray-700 dark:text-gray-300">
+                        {{ top_quotes.negative.summary|default:top_quotes.negative.quote }}
+                    </p>
+
+                    <div class="mt-4 flex items-center justify-between gap-3">
+                        {% if top_quotes.negative.sentiment_score %}
+                            <span class="text-sm text-gray-500 dark:text-gray-400">
+                                Score: {{ top_quotes.negative.sentiment_score }}
+                            </span>
+                        {% else %}
+                            <span></span>
+                        {% endif %}
+
+                        <a
+                            href="/studies/{{ study_id }}/entries/{{ top_quotes.negative.entry_id }}"
+                            class="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                        >
+                            View entry
+                            {% heroicon_mini "arrow-right" %}
+                        </a>
+                    </div>
+                {% else %}
+                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                        No negative quote detected.
+                    </p>
+                {% endif %}
+            </div>
+
+        </div>
+    {% else %}
+        <div class="mt-4 rounded-sm border border-dashed border-gray-300 p-4 dark:border-gray-600">
+            <p class="text-sm text-gray-500 dark:text-gray-400">
+                No sentiment signals available for this run.
+            </p>
+        </div>
+    {% endif %}
+</div>

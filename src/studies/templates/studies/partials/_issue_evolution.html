@@ -1,0 +1,386 @@
+<div class="mt-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+    <div class="flex gap-2 pb-4">
+        <button
+            type="button"
+            data-issue-bubble-scale="daily"
+            class="issue-bubble-scale-btn rounded-sm px-3 py-1 text-xs font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
+        >
+            Daily
+        </button>
+
+        <button
+            type="button"
+            data-issue-bubble-scale="weekly"
+            class="issue-bubble-scale-btn rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
+            Weekly
+        </button>
+
+        <button
+            type="button"
+            data-issue-bubble-scale="monthly"
+            class="issue-bubble-scale-btn rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
+            Monthly
+        </button>
+    </div>
+
+    <div class="p-4 h-96 justify-center rounded-sm border border-dashed border-gray-300 dark:border-gray-600 text-sm text-gray-500 dark:text-gray-400">
+        <div class="mb-4 flex items-start justify-between gap-4">
+            <div>
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    Issue detection timeline
+                </h3>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Bubble size shows how often each issue category appeared in each time period.
+                </p>
+            </div>
+
+            {% if evolution %}
+                <div class="text-right flex gap-1">
+                    <div class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                        Entries analyzed:
+                    </div>
+                    <div class="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                        {{ run.total_entries }}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if evolution %}
+            <div class="relative h-72 w-full overflow-hidden">
+                <canvas id="issueTimelineBubbleChart"></canvas>
+
+                {{ evolution|json_script:"issue-timeline-bubble-data" }}
+
+                <script>
+                    (function () {
+                        const dataElement = document.getElementById("issue-timeline-bubble-data");
+                        const canvas = document.getElementById("issueTimelineBubbleChart");
+                        const scaleButtons = document.querySelectorAll(".issue-bubble-scale-btn");
+
+                        if (!dataElement || !canvas || typeof Chart === "undefined") {
+                            return;
+                        }
+
+                        const evolution = JSON.parse(dataElement.textContent);
+
+                        const activeButtonClass = [
+                            "text-white",
+                            "bg-fuchsia-800",
+                            "hover:bg-fuchsia-700",
+                        ];
+
+                        const inactiveButtonClass = [
+                            "border",
+                            "border-gray-300",
+                            "dark:border-gray-600",
+                            "text-gray-700",
+                            "dark:text-gray-200",
+                            "hover:bg-gray-100",
+                            "dark:hover:bg-gray-800",
+                        ];
+
+                        const bubbleColors = [
+                            "#dc2626cc",
+                            "#ea580ccc",
+                            "#ca8a04cc",
+                            "#7c3aedcc",
+                            "#2563ebcc",
+                            "#0891b2cc",
+                            "#0f766ecc",
+                            "#16a34acc",
+                            "#db2777cc",
+                            "#4f46e5cc",
+                        ];
+
+                        function parseDate(dateString) {
+                            return new Date(dateString + "T00:00:00");
+                        }
+
+                        function getISOWeekKey(dateString) {
+                            const date = parseDate(dateString);
+
+                            const tempDate = new Date(Date.UTC(
+                                date.getFullYear(),
+                                date.getMonth(),
+                                date.getDate()
+                            ));
+
+                            const dayNumber = tempDate.getUTCDay() || 7;
+                            tempDate.setUTCDate(tempDate.getUTCDate() + 4 - dayNumber);
+
+                            const yearStart = new Date(Date.UTC(tempDate.getUTCFullYear(), 0, 1));
+                            const weekNumber = Math.ceil((((tempDate - yearStart) / 86400000) + 1) / 7);
+                            const year = tempDate.getUTCFullYear();
+
+                            return `${year}-W${String(weekNumber).padStart(2, "0")}`;
+                        }
+
+                        function getMonthKey(dateString) {
+                            return dateString.slice(0, 7);
+                        }
+
+                        function getBucketKey(item, scale) {
+                            if (scale === "weekly") {
+                                return getISOWeekKey(item.date);
+                            }
+
+                            if (scale === "monthly") {
+                                return getMonthKey(item.date);
+                            }
+
+                            return item.date;
+                        }
+
+                        function normalizeIssueLabel(issue) {
+                            if (!issue) {
+                                return null;
+                            }
+
+                            return issue.label || issue.issue_label || issue.name || issue.tag || null;
+                        }
+
+                        function normalizeIssueCount(issue) {
+                            if (!issue) {
+                                return 0;
+                            }
+
+                            return issue.count || issue.entry_count || issue.frequency || 1;
+                        }
+
+                        function getTopIssueLabels(limit = 10) {
+                            const totals = {};
+
+                            evolution.forEach(item => {
+                                const issues = item.top_issues || [];
+
+                                issues.forEach(issue => {
+                                    const label = normalizeIssueLabel(issue);
+                                    const count = normalizeIssueCount(issue);
+
+                                    if (!label) {
+                                        return;
+                                    }
+
+                                    totals[label] = (totals[label] || 0) + count;
+                                });
+                            });
+
+                            return Object.entries(totals)
+                                .sort((a, b) => b[1] - a[1])
+                                .map(([label]) => label)
+                                .slice(0, limit);
+                        }
+
+                        const issueLabels = getTopIssueLabels();
+
+                        function aggregateIssues(scale) {
+                            const buckets = {};
+
+                            evolution.forEach(item => {
+                                const key = getBucketKey(item, scale);
+
+                                if (!buckets[key]) {
+                                    buckets[key] = {
+                                        label: key,
+                                        counts: {},
+                                    };
+
+                                    issueLabels.forEach(issueLabel => {
+                                        buckets[key].counts[issueLabel] = 0;
+                                    });
+                                }
+
+                                const issues = item.top_issues || [];
+
+                                issues.forEach(issue => {
+                                    const label = normalizeIssueLabel(issue);
+                                    const count = normalizeIssueCount(issue);
+
+                                    if (!label || !issueLabels.includes(label)) {
+                                        return;
+                                    }
+
+                                    buckets[key].counts[label] += count;
+                                });
+                            });
+
+                            return Object.values(buckets);
+                        }
+
+                        function buildBubbleData(scale) {
+                            const buckets = aggregateIssues(scale);
+                            const bucketLabels = buckets.map(bucket => bucket.label);
+
+                            const maxCount = Math.max(
+                                1,
+                                ...buckets.flatMap(bucket =>
+                                    issueLabels.map(issueLabel => bucket.counts[issueLabel] || 0)
+                                )
+                            );
+
+                            const points = [];
+
+                            buckets.forEach(bucket => {
+                                issueLabels.forEach((issueLabel, issueIndex) => {
+                                    const count = bucket.counts[issueLabel] || 0;
+
+                                    if (!count) {
+                                        return;
+                                    }
+
+                                    points.push({
+                                        x: bucket.label,
+                                        y: issueLabel,
+                                        r: Math.max(4, Math.round((count / maxCount) * 18)),
+                                        count: count,
+                                        bucketLabel: bucket.label,
+                                        issueLabel: issueLabel,
+                                        backgroundColor: bubbleColors[issueIndex % bubbleColors.length],
+                                    });
+                                });
+                            });
+
+                            return {
+                                labels: bucketLabels,
+                                points: points,
+                            };
+                        }
+
+                        function setActiveButton(scale) {
+                            scaleButtons.forEach(button => {
+                                const isActive = button.dataset.issueBubbleScale === scale;
+
+                                button.classList.remove(...activeButtonClass, ...inactiveButtonClass);
+
+                                if (isActive) {
+                                    button.classList.add(...activeButtonClass);
+                                } else {
+                                    button.classList.add(...inactiveButtonClass);
+                                }
+                            });
+                        }
+
+                        const existingChart = Chart.getChart(canvas);
+                        if (existingChart) {
+                            existingChart.destroy();
+                        }
+
+                        const chart = new Chart(canvas, {
+                            type: "bubble",
+                            data: {
+                                datasets: [
+                                    {
+                                        label: "Detected issues",
+                                        data: [],
+                                        backgroundColor: [],
+                                        borderColor: "#ffffff",
+                                        borderWidth: 1,
+                                    },
+                                ],
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                layout: {
+                                    padding: {
+                                        top: 10,
+                                        right: 10,
+                                        bottom: 10,
+                                        left: 10,
+                                    },
+                                },
+                                interaction: {
+                                    mode: "nearest",
+                                    intersect: true,
+                                },
+                                plugins: {
+                                    legend: {
+                                        display: false,
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function (context) {
+                                                const point = context.raw;
+
+                                                return `${point.issueLabel} · ${point.bucketLabel}: ${point.count}`;
+                                            },
+                                        },
+                                    },
+                                },
+                                scales: {
+                                    x: {
+                                        type: "category",
+                                        position: "bottom",
+                                        offset: true,
+                                        title: {
+                                            display: true,
+                                            text: "Date",
+                                        },
+                                        ticks: {
+                                            display: true,
+                                            autoSkip: false,
+                                            maxRotation: 90,
+                                        },
+                                        grid: {
+                                            display: true,
+                                        },
+                                    },
+                                    y: {
+                                        type: "category",
+                                        position: "left",
+                                        offset: true,
+                                        reverse: true,
+                                        title: {
+                                            display: true,
+                                            text: "Issue category",
+                                        },
+                                        ticks: {
+                                            display: true,
+                                            autoSkip: false,
+                                        },
+                                        grid: {
+                                            display: true,
+                                        },
+                                    },
+                                }
+                            },
+                        });
+
+                        function updateChart(scale) {
+                            const bubbleData = buildBubbleData(scale);
+
+                            chart.data.labels = bubbleData.labels;
+
+                            chart.data.datasets[0].data = bubbleData.points;
+                            chart.data.datasets[0].backgroundColor = bubbleData.points.map(point => point.backgroundColor);
+
+                            chart.options.scales.x.labels = bubbleData.labels;
+                            chart.options.scales.y.labels = issueLabels;
+
+                            chart.update();
+
+                            setActiveButton(scale);
+                        }
+
+                        scaleButtons.forEach(button => {
+                            button.addEventListener("click", function () {
+                                updateChart(this.dataset.issueBubbleScale);
+                            });
+                        });
+
+                        updateChart("daily");
+                    })();
+                </script>
+            </div>
+        {% else %}
+            <div class="rounded-sm border border-dashed border-gray-300 dark:border-gray-700 p-6 text-center">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    No issue detection data available yet.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>

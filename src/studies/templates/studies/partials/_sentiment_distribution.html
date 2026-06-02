@@ -1,0 +1,137 @@
+<div class="group main-card">
+    <div class="card-summary">
+        <div class="card-summary-title">
+            {% heroicon_outline "arrow-trending-up" %}
+            Dominant Sentiment
+        </div>
+
+        <div class="card-summary-subtitle">
+        {% if dominant_sentiment %}
+            {% include "studies/partials/_sentiment_badge.html" with sentiment=dominant_sentiment %}
+        {% else %}
+            <span class="text-sm text-gray-500 dark:text-gray-400">
+                —
+            </span>
+        {% endif %}
+        </div>
+    </div>
+
+    {% if sentiment_distribution %}
+    <div class="mt-4">
+        <div class="relative h-64 w-full overflow-hidden">
+            <canvas
+                id="sentimentDistributionChart-{{ study_id }}-{{ run_id }}"
+            ></canvas>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    function prettifySentimentLabel(label) {
+        return label
+            .toLowerCase()
+            .split("_")
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ");
+    }
+
+    const sentimentData = [
+        {% for sentiment in sentiment_distribution %}
+            {
+                label: "{{ sentiment.label|escapejs }}",
+                count: {{ sentiment.count }},
+                percentage: {{ sentiment.percentage }}
+            },
+        {% endfor %}
+    ];
+
+    const sentimentOrder = {
+        VERY_POSITIVE: 1,
+        POSITIVE: 2,
+        NEUTRAL: 3,
+        NEGATIVE: 4,
+        VERY_NEGATIVE: 5
+    };
+
+    sentimentData.sort((a, b) => {
+        return sentimentOrder[a.label] - sentimentOrder[b.label];
+    });
+
+    const sentimentColors = {
+        VERY_NEGATIVE: "#fecacacc", 
+        NEGATIVE: "#fef2f2cc",      
+        NEUTRAL: "#fde68acc",       
+        POSITIVE: "#f0fdf4cc",      
+        VERY_POSITIVE: "#bbf7d0cc"  
+    };
+
+    const sentimentBorderColors = {
+        VERY_NEGATIVE: "#b91c1c", 
+        NEGATIVE: "#b91c1c",      
+        NEUTRAL: "#b45309",       
+        POSITIVE: "#15803d",      
+        VERY_POSITIVE: "#15803d"  
+    };
+
+    const sentimentLabels = sentimentData.map(item => {
+        const label = prettifySentimentLabel(item.label);
+        const percentage = (item.percentage * 100).toFixed(1);
+        return `${label} (${percentage}%)`;
+    });
+
+    const sentimentCounts = sentimentData.map(item => item.count);
+
+    const ctx = document.getElementById("sentimentDistributionChart-{{ study_id }}-{{ run_id }}");
+
+    new Chart(ctx, {
+        type: "polarArea",
+        data: {
+            labels: sentimentLabels,
+            datasets: [{
+                data: sentimentCounts,
+                backgroundColor: sentimentData.map(item => sentimentColors[item.label] || "#e5e7ebcc"),
+                borderColor: sentimentData.map(item => sentimentBorderColors[item.label] || "#374151"),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    ticks: {
+                        display: true
+                    },
+                    grid: {
+                        display: true
+                    },
+                    angleLines: {
+                        display: true
+                    },
+                    pointLabels: {
+                        display: true,
+                        centerPointLabels: true,
+                        font: {
+                            size: 12
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const item = sentimentData[context.dataIndex];
+                            const percentage = (item.percentage * 100).toFixed(1);
+                            return ` ${item.count} entries`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>

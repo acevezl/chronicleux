@@ -122,6 +122,17 @@ def build_sentiment_distribution(entry_results: list[dict]) -> dict:
 	"""
 	Build a distribution of sentiment categories from the entry results, including both COUNTS and PERCENTAGES.
 	Useful for understanding the sentiment landscape of the study.
+
+	Returns:
+		[
+			{
+				"label": "POSITIVE",
+				"count": 12,
+				"percentage": 0.3158,
+			},
+			...
+		]
+
 	"""
 	counts = Counter(
 		result["sentiment_label"]
@@ -130,23 +141,21 @@ def build_sentiment_distribution(entry_results: list[dict]) -> dict:
 	)
 	total = sum(counts.values())
 
-	percentages = {}
-	if total:
-		percentages = {
-			key: round(value / total, 4)
-			for key, value in counts.items()
+	return [
+		{
+			"label": label,
+			"count": count,
+			"percentage": round(count / total, 4) if total else 0,
 		}
-
-	return {
-		"counts": dict(counts),
-		"percentages": percentages,
-		"total_entries": total,
-	}
+		for label, count in counts.most_common()
+	]
 
 def build_recurring_issues(entry_results: list[dict]) -> list[dict]:
 	"""
 	Build a list of recurring issues based on detected issue tags in the entry results, including both COUNTS and PERCENTAGES.
 	This helps identify common problems users are mentioning across entries in the study.
+
+	Returns same form as sentiment [ {"label":value, "count":value, "percentage":value}]
 	"""
 	counter = Counter()
 	total_issue_entries = 0
@@ -157,28 +166,35 @@ def build_recurring_issues(entry_results: list[dict]) -> list[dict]:
 			total_issue_entries += 1
 			counter.update(tags)
 
-	output = []
-	for tag, count in counter.most_common():
-		percentage = round(count / total_issue_entries, 4) if total_issue_entries else 0
-		output.append({
-			"tag": tag,
+	return [
+		{
+			"label": tag,
 			"count": count,
-			"percentage": percentage,
-		})
-	return output
+			"percentage": round(count / total_issue_entries, 4) if total_issue_entries else 0,
+		}
+		for tag, count in counter.most_common()
+	]
 
 def build_recurring_themes(entry_results: list[dict]) -> list[dict]:
 	"""
 	Build a list of recurring themes based on the themes detected in the entry results, including both COUNTS and PERCENTAGES.
 	This helps identify common themes that are emerging across entries in the study.
 	"""
-	counter = Counter()
-	for result in entry_results:
-		counter.update(result.get("themes", []))
+	counts = Counter(
+		result["theme_label"]
+		for result in entry_results
+		if result.get("theme_label")
+	)
+
+	total = sum(counts.values())
 
 	return [
-		{"theme": theme, "count": count}
-		for theme, count in counter.most_common()
+		{
+			"label": label,
+			"count": count,
+			"percentage": round(count / total, 4) if total else 0,
+		}
+		for label, count in counts.most_common()
 	]
 
 def build_evolution_over_time(entries_with_results: list[tuple]) -> list[dict]:
@@ -195,7 +211,7 @@ def build_evolution_over_time(entries_with_results: list[tuple]) -> list[dict]:
 	output = []
 	for day in sorted(grouped.keys()):
 		day_results = grouped[day]
-		sentiments = [r["sentiment"] for r in day_results if r.get("sentiment") is not None]
+		sentiments = [r["sentiment_score"] for r in day_results if r.get("sentiment_score") is not None]
 		avg_sentiment = round(sum(sentiments) / len(sentiments), 4) if sentiments else None
 
 		output.append({
@@ -209,32 +225,102 @@ def build_evolution_over_time(entries_with_results: list[tuple]) -> list[dict]:
 
 	return output
 
-def build_top_representative_quotes(entries_with_results: list[tuple]) -> list[dict]:
+def get_entry_participant_display_name(entry: DiaryEntry) -> str:
 	"""
-	Build a list of top representative quotes from entries with the most extreme sentiment scores, including their sentiment category and themes.
-	This helps surface specific user feedback that is strongly positive or negative, along with the context ofm themes they mention.
+	Return the human-readable participant name for an entry.
+
+	Imported entries may not have an associated User/participant relation,
+	so participant_display_name is the canonical display value.
 	"""
-	selected = []
+	display_name = (getattr(entry, "participant_display_name", "") or "").strip()
 
-	ranked = sorted(
-		entries_with_results,
-		key=lambda pair: abs(pair[1].get("sentiment") or 0),
-		reverse=True,
-	)
+	if display_name:
+		return display_name
 
-	for entry, result in ranked[:5]:
-		quote = (entry.content or "").strip()
-		if len(quote) > 240:
-			quote = quote[:240] + "..."
+	# Fallback only for older entries or defensive compatibility.
+	participant = getattr(entry, "participant", None)
 
-		selected.append({
-			"entry_id": entry.id,
-			"quote": quote,
-			"sentiment_label": result.get("sentiment_label"),
-			"themes": result.get("themes", []),
-		})
+	if participant:
+		full_name = (participant.get_full_name() or "").strip()
+		if full_name:
+			return full_name
 
-	return selected
+		username = (participant.get_username() or "").strip()
+		if username:
+			return username
+
+	return "Anonymous"
+
+
+def serialize_dashboard_entry(entry, result: dict) -> dict:
+	"""
+	Serialize one entry for dashboard sentiment highlights.
+	"""
+	quote = (entry.content or "").strip()
+
+	if len(quote) > 240:
+		quote = quote[:240].rstrip() + "..."
+
+	participant_name = get_entry_participant_display_name(entry)
+
+	return {
+		"entry_id": entry.id,
+		"summary": result.get("entry_summary") or quote,
+		"quote": quote,
+		"sentiment_score": result.get("sentiment_score"),
+		"sentiment_label": result.get("sentiment_label"),
+		"theme_label": result.get("theme_label"),
+		"theme_weight": result.get("theme_weight"),
+		"issue_tags": result.get("analysis_issue_tags", []),
+		"created_at": entry.created_at.isoformat() if entry.created_at else None,
+		"created_at_display": entry.created_at.strftime("%b %d, %Y") if entry.created_at else "—",
+		"participant_name": participant_name,
+	}
+
+
+def build_top_sentiment_entries(entries_with_results: list[tuple]) -> dict:
+	"""
+	Return only the top positive and top negative entries for dashboard display.
+	"""
+	scored_entries = [
+		(entry, result)
+		for entry, result in entries_with_results
+		if result.get("sentiment_score") is not None
+	]
+
+	top_positive = None
+	top_negative = None
+
+	positive_entries = [
+		(entry, result)
+		for entry, result in scored_entries
+		if result["sentiment_score"] > 0
+	]
+
+	negative_entries = [
+		(entry, result)
+		for entry, result in scored_entries
+		if result["sentiment_score"] < 0
+	]
+
+	if positive_entries:
+		entry, result = max(
+			positive_entries,
+			key=lambda pair: pair[1]["sentiment_score"],
+		)
+		top_positive = serialize_dashboard_entry(entry, result)
+
+	if negative_entries:
+		entry, result = min(
+			negative_entries,
+			key=lambda pair: pair[1]["sentiment_score"],
+		)
+		top_negative = serialize_dashboard_entry(entry, result)
+
+	return {
+		"positive": top_positive,
+		"negative": top_negative,
+	}
 
 #-------------------------------#
 # Main analysis runner function #
@@ -325,8 +411,8 @@ def run_study_analysis(study_id: int) -> StudyAnalysisRun:
 					raw_response=entry_analysis_result_data
 				)
 
-				entry.sentiment_score = sentiment_score
-				entry.sentiment_label = sentiment_label
+				entry.machine_sentiment_score = sentiment_score
+				entry.machine_sentiment_label = sentiment_label
 				
 				entry.machine_theme_weight = theme_weight
 				entry.machine_theme_label = theme_label
@@ -364,6 +450,8 @@ def run_study_analysis(study_id: int) -> StudyAnalysisRun:
 					
 					"analysis_issue_detected": bool(issue_tags),
 					"analysis_issue_tags": issue_tags,
+
+					"entry_summary": entry_summary
 				}
 
 				entry_results.append(result)
@@ -383,7 +471,7 @@ def run_study_analysis(study_id: int) -> StudyAnalysisRun:
 				if study_analysis_result.dominant_sentiment_score is not None
 				else None
 			)
-			study.sentiment_distribution = run.sentiment_distribution = study_analysis_result.sentiment_distribution
+			study.sentiment_distribution = run.sentiment_distribution = build_sentiment_distribution(entry_results)
 
 			study.dominant_theme_label = run.dominant_theme_label = study_analysis_result.dominant_theme_label
 			study.dominant_theme_weight = run.dominant_theme_weight = (
@@ -391,13 +479,13 @@ def run_study_analysis(study_id: int) -> StudyAnalysisRun:
 				if study_analysis_result.dominant_theme_weight is not None
 				else None
 			)
-			study.theme_distribution = run.theme_distribution = study_analysis_result.theme_distribution
+			study.theme_distribution = run.theme_distribution = build_recurring_themes(entry_results)
 
 			study.recurring_issues = run.recurring_issues = build_recurring_issues(entry_results)
 
 			study.evolution_over_time = run.evolution_over_time = build_evolution_over_time(entries_with_results)
 
-			study.top_representative_quotes = run.top_representative_quotes = build_top_representative_quotes(entries_with_results)
+			study.top_representative_quotes = run.top_representative_quotes = build_top_sentiment_entries(entries_with_results)
 
 			study.total_entries = run.total_entries = study_analysis_result.total_entries
 			study.total_themes = run.total_themes = study_analysis_result.total_themes

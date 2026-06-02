@@ -3,20 +3,20 @@
 
 <div class="text-sm">
     {% if sentiment == "VERY_POSITIVE" or sentiment == "POSITIVE" %}
-    <span class="inline-flex items-center rounded-full bg-green-200 gap-1 px-2 py-0.5 text-xs font-medium text-green-800 inset-ring inset-ring-green-500/10 border border-green-800">
-        {% heroicon_outline "face-smile" %} {{ sentiment|humanize_enum }}
+    <span class="sentiment-{{sentiment}}">
+        {% heroicon_outline "face-smile" class="h-4 w-4" %} &nbsp;{{ sentiment|humanize_enum }}
     </span>
     {% elif sentiment == "VERY_NEGATIVE" or sentiment == "NEGATIVE" %}
-    <span class="inline-flex items-center rounded-full bg-red-200 gap-1 px-2 py-1 text-xs font-medium text-red-800 inset-ring inset-ring-red-500/10 border border-red-800">
-        {% heroicon_outline "face-frown" %} {{ sentiment|humanize_enum }}
+    <span class="sentiment-{{sentiment}}">
+        {% heroicon_outline "face-frown" class="h-4 w-4" %} &nbsp;{{ sentiment|humanize_enum }}
     </span>
     {% elif sentiment == "NEUTRAL" %}
-    <span class="inline-flex items-center rounded-full bg-amber-200 gap-1 px-2 py-1 text-xs font-medium text-amber-800 inset-ring inset-ring-amber-500/10 border border-amber-800">
-        {% heroicon_outline "question-mark-circle" %}  {{ sentiment|humanize_enum }}
+    <span class="sentiment-{{sentiment}}">
+        {% heroicon_outline "question-mark-circle" class="h-4 w-4" %} &nbsp;{{ sentiment|humanize_enum }}
     </span>
     {% else %}
-    <span class="inline-flex items-center rounded-full bg-gray-200 gap-1 px-2 py-1 text-xs font-medium text-gray-800 inset-ring inset-ring-gray-500/10 border border-gray-800">
-        {% heroicon_outline "ellipsis-horizontal-circle" %} None
+    <span class="">
+        {% heroicon_outline "ellipsis-horizontal-circle" class="h-4 w-4" %} &nbsp;None
     </span>
     {% endif %}
 </div>
