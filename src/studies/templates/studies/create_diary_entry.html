@@ -6,87 +6,87 @@
 {% block content %}
 
 <div class="mt-2 md:flex md:items-center md:justify-between">
-  <div class="min-w-0 flex-1">
-    <h1 class="text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight dark:text-white">
-      Log a New Entry
-    </h1>
-  </div>
+	<div class="min-w-0 flex-1">
+		<h1 class="text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight dark:text-white">
+			Log a New Entry
+		</h1>
+	</div>
 </div>
 
 <div class="mt-6 grid grid-cols-1 gap-4">
-  <div class="bg-white border border-gray-200 rounded-sm overflow-hidden">
-    <div class="border-b border-gray-200 bg-gray-50 p-4">
-      <span class="text-xl text-fuchsia-700 dark:text-gray-200">Diary Entry</span>
-      <div class="flex md:grid-cols-2 gap-4">
-        <span class="mt-1 text-sm text-gray-900">
-          Submit a new entry for <span class="font-medium">{{ study.title }}</span>.
-        </span>
-      </div>
-    </div>
+	<div class="bg-white border border-gray-200 rounded-sm overflow-hidden">
+		<div class="border-b border-gray-200 bg-gray-50 p-4">
+			<span class="text-xl text-fuchsia-700 dark:text-gray-200">Diary Entry</span>
+			<div class="flex md:grid-cols-2 gap-4">
+				<span class="mt-1 text-sm text-gray-900">
+					Submit a new entry for <span class="font-medium">{{ study.title }}</span>.
+				</span>
+			</div>
+		</div>
 
-    <div class="p-4">
-      <form method="post" class="space-y-6">
-        {% csrf_token %}
+		<div class="p-4">
+			<form method="post" class="space-y-6">
+				{% csrf_token %}
 
-        {% if study.participant_instructions %}
-          <div>
-            <label class="block text-lg font-medium text-gray-700">
-              Participant Instructions
-            </label>
-            <div class="mt-1 rounded-sm border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 whitespace-pre-line">
-              {{ study.participant_instructions }}
-            </div>
-          </div>
-        {% endif %}
+				{% if study.participant_instructions %}
+					<div>
+						<label class="block text-lg font-medium text-gray-700">
+							Participant Instructions
+						</label>
+						<div class="mt-1 rounded-sm border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 whitespace-pre-line">
+							{{ study.participant_instructions }}
+						</div>
+					</div>
+				{% endif %}
 
-        {% if study.context %}
-          <div>
-            <label class="block text-lg font-medium text-gray-700">
-              Entry Context
-            </label>
-            <div class="mt-1 rounded-sm border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 whitespace-pre-line">
-              {{ study.context }}
-            </div>
-          </div>
-        {% endif %}
+				{% if study.context %}
+					<div>
+						<label class="block text-lg font-medium text-gray-700">
+							Entry Context
+						</label>
+						<div class="mt-1 rounded-sm border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 whitespace-pre-line">
+							{{ study.context }}
+						</div>
+					</div>
+				{% endif %}
 
-        <div>
-          <label for="{{ form.content.id_for_label }}" class="block text-lg font-medium text-gray-700">
-            Diary Entry
-          </label>
-          <p class="mt-1 text-sm text-gray-500">
-            Describe your experience, observations, frustrations, or anything relevant to this study session.
-          </p>
-          {{ form.content }}
-          {% if form.content.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.content.errors|join:", " }}</p>
-          {% endif %}
-        </div>
+				<div>
+					<label for="{{ form.content.id_for_label }}" class="block text-lg font-medium text-gray-700">
+						Diary Entry
+					</label>
+					<p class="mt-1 text-sm text-gray-500">
+						Describe your experience, observations, frustrations, or anything relevant to this study session.
+					</p>
+					{{ form.content }}
+					{% if form.content.errors %}
+						<p class="mt-1 text-sm text-red-600">{{ form.content.errors|join:", " }}</p>
+					{% endif %}
+				</div>
 
-        {% if form.non_field_errors %}
-          <div class="rounded-md bg-red-50 p-4 text-sm text-red-700">
-            {{ form.non_field_errors }}
-          </div>
-        {% endif %}
+				{% if form.non_field_errors %}
+					<div class="rounded-md bg-red-50 p-4 text-sm text-red-700">
+						{{ form.non_field_errors }}
+					</div>
+				{% endif %}
 
-        <div class="flex justify-end gap-3 pt-4">
-          <button
-            type="submit"
-            class="button-PRIMARY"
-          >
-            Submit Entry
-          </button>
+				<div class="flex justify-end gap-3 pt-4">
+					<button
+						type="submit"
+						class="button-PRIMARY"
+					>
+						Submit Entry
+					</button>
 
-          <a
-            href="{% url'diary_study_detail' study.id %}"
-            class="button-TERTIARY"
-          >
-            Return to Study
-          </a>
-        </div>
-      </form>
-    </div>
-  </div>
+					<a
+						href="{% url'diary_study_detail' study.id %}"
+						class="button-TERTIARY"
+					>
+						Return to Study
+					</a>
+				</div>
+			</form>
+		</div>
+	</div>
 </div>
 
 {% endblock %}

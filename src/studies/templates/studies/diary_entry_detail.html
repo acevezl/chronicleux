@@ -7,44 +7,19 @@
 {% block title %}Diary Entry Details · ChronicleUX{% endblock %}
 
 {% block content %}
+	<div class="sticky-top">
+	{% include "studies/partials/_header_study.html" with study=study %}
+	{% include "studies/partials/_menu_entry_actions.html" with is_evaluator=is_evaluator %}
+	</div>
 
-{% include "studies/partials/_header_study.html" with study=study %}
-{% include "studies/partials/_menu_entry_actions.html" with is_evaluator=is_evaluator %}
+	<div class="p-4">
+		
+		{% include "studies/partials/_entry.html" with entry=entry %}
 
-{% load heroicons %}
-{% load formatters %}
+		{% if entry_runs %}
+			{% include "studies/partials/_analysis_runs_entry_level.html" with entry_analyses=entry_runs study=study entry=entry %}
+		{% endif %}
 
-<div class="px-4 mt-4">
-	
-	{% include "studies/partials/_entry.html" with entry=entry %}
-
-	{% if entry_runs %}
-		<details open class="group main-card mt-4">
-			<!-- CARD TITLE (I.E., SUMMARY) -->
-			<summary class="card-summary">
-
-				<div class="flex flex-col">
-					<span class="card-summary-title">
-						{% heroicon_outline "cpu-chip" %}
-						Machine Analyses
-					</span>
-
-					<p class="card-summary-subtitle">
-						Individual analysis runs per entry. 
-					</p>
-				</div>
-
-				<span class="card-summary-chevron">
-					{% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
-				</span>
-
-			</summary>
-			<div class="p-4">
-				{% include "studies/partials/_analysis_runs_entry_level.html" with entry_analyses=entry_runs study=study entry=entry %}
-			</div>
-		</details>
-	{% endif %}
-
-</div>
+	</div>
 
 {% endblock %}
