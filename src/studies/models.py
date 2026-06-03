@@ -57,7 +57,7 @@ class DiaryEntrySource(models.TextChoices):
 
 # ANALYSIS RUN STATUS
 class AnalysisRunStatus(models.TextChoices):
-    PENDING = "PENDING", "Pending"
+    QUEUED = "QUEUED", "Queued"
     RUNNING = "RUNNING", "Running"
     COMPLETED = "COMPLETED", "Completed"
     FAILED = "FAILED", "Failed"
@@ -438,7 +438,7 @@ class StudyAnalysisRun(models.Model):
     status = models.CharField(
         max_length=20,
         choices=AnalysisRunStatus.choices,
-        default=AnalysisRunStatus.PENDING,
+        default=AnalysisRunStatus.QUEUED,
     )
 
     # model and version

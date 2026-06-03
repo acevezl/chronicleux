@@ -38,3 +38,10 @@ def get_theme_extractor(method: str):
             f"Unknown theme extraction method '{method}'." 
             f"Available methods: {available_methods}"
         )
+    
+def get_available_sentiment_methods():
+    return list(SENTIMENT_ANALYZERS.keys())
+
+
+def get_available_theme_methods():
+    return list(THEME_EXTRACTORS.keys())

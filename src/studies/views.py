@@ -14,6 +14,10 @@ from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 
 from studies.services.analysis_runner import run_study_analysis
+from studies.services.nlp.registry import (
+    get_available_sentiment_methods,
+    get_available_theme_methods,
+)
 
 from .filters import filter_diary_entries, filter_analysis_entries
 from .forms import StudyForm, DiaryEntryForm
@@ -636,8 +640,38 @@ def study_entries_partial(request, study_pk):
 	return response
 
 
-# ----------------------- FILTERS ----------------------- #
-# Filters moved to filter.py
+# ----------------------- #
+# SELECT ANALYSIS METHODS #
+# ----------------------- #
+@login_required
+def select_analysis_methods(request, pk):
+    study = get_object_or_404(Study, pk=pk)
+
+    if study.owner != request.user:
+        return HttpResponseForbidden()
+
+    sentiment_methods = get_available_sentiment_methods()
+    theme_methods = get_available_theme_methods()
+
+    context = {
+        "study": study,
+        "sentiment_methods": [
+            {
+                "value": method,
+                "label": method.replace("_", " ").title(),
+            }
+            for method in sentiment_methods
+        ],
+        "theme_methods": [
+            {
+                "value": method,
+                "label": method.replace("_", " ").title(),
+            }
+            for method in theme_methods
+        ],
+    }
+
+    return render(request, "studies/select_analysis_methods.html", context)
 
 
 

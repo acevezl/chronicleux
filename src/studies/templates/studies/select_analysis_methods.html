@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Select Analysis Methods · ChronicleUX{% endblock %}
+
+{% block content %}
+
+	<div class="sticky-top">
+		{% include "studies/partials/_header_study.html" with study=study %}
+		{% include "studies/partials/_menu_back_to_study.html" with study=study %}
+	</div>
+
+	<div class="p-4">
+		{% include "studies/partials/_messages.html" %}
+
+		<details open class="group main-card">
+
+            <!-- CARD TITLE (I.E., SUMMARY) -->
+            <summary class="card-summary">
+
+                <div class="flex flex-col">
+                    <span class="card-summary-title">
+                        {% heroicon_outline "sparkles" %}
+                        Run Machine Analysis
+                    </span>
+
+                    <p class="card-summary-subtitle">
+                        Choose the NLP methods to use on this machine analysis run.
+                    </p>
+                </div>
+
+                <span class="card-summary-chevron">
+                    {% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
+                </span>
+
+            </summary>
+
+            <!-- CARD BODY -->
+			<div class="p-4">
+				<form
+					method="post"
+					action="{% url 'run_machine_analysis' study.id %}"
+					class="space-y-6"
+				>
+					{% csrf_token %}
+
+					<!-- METHODS -->
+					<div class="grid grid-cols-1 gap-4">
+
+						<!-- SENTIMENT METHOD -->
+						<div class="w-auto">
+							<label
+								for="sentiment_method"
+								class="block text-lg font-medium text-gray-700 dark:text-gray-200"
+							>
+								Sentiment analysis
+							</label>
+
+							<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+								Method used to classify the sentiment of each diary entry.
+							</p>
+
+							<select
+								id="sentiment_method"
+								name="sentiment_method"
+								class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
+								required
+							>
+								{% for method in sentiment_methods %}
+									<option value="{{ method.value }}">{{ method.label }}</option>
+								{% endfor %}
+							</select>
+						</div>
+
+						<!-- THEME METHOD -->
+						<div>
+							<label
+								for="theme_method"
+								class="block text-lg font-medium text-gray-700 dark:text-gray-200"
+							>
+								Thematic analysis
+							</label>
+
+							<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+								Method used to extract recurring themes across diary entries.
+							</p>
+
+							<select
+								id="theme_method"
+								name="theme_method"
+                                class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
+								required
+							>
+								{% for method in theme_methods %}
+									<option value="{{ method.value }}">{{ method.label|upper }}</option>
+								{% endfor %}
+							</select>
+						</div>
+
+					</div>
+
+					<!-- ACTIONS -->
+					<div class="flex gap-2 pt-4">
+
+						<button
+							type="submit"
+							class="button-PRIMARY"
+						>
+							Start Analysis
+						</button>
+
+						<a
+							href="{% url 'diary_study_detail' study.id %}"
+							class="button-TERTIARY"
+						>
+							Cancel
+						</a>
+
+					</div>
+
+				</form>
+			</div>
+
+		</details>
+	</div>
+
+{% endblock %}

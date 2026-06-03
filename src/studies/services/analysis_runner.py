@@ -386,7 +386,7 @@ def run_study_analysis(study_id: int) -> StudyAnalysisRun:
 	study = Study.objects.get(pk=study_id)
 
 	# Future: Obtain these from dropdown
-	sentiment_method = "vader"
+	sentiment_method = "bert"
 	theme_method = "tfidf_nmf"
 
 	run = StudyAnalysisRun.objects.create(
