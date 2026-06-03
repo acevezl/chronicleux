@@ -10,19 +10,10 @@
                 {% heroicon_outline "document-duplicate" %}
                 Diary Entries
             </span>
-
-            <!-- ANALYSIS DATE -->
             <div class="card-summary-subtitle block">
-                {% if study.selected_study_run %}
-                Detected sentiment, themes, and issues reflect the last machine analysis performed on the study.
-                <div>
-                    <span class="xs-label">Last analyzed on: {{ study.selected_study_run.completed_at }}</span>
-                    <span class="xs-label"> Analysis model: {{ study.selected_study_run.analysis_model|upper}} {{ study.selected_study_run.analysis_version}}</span>
-                </div>
-
-                {% else %}
-                <span class="xs-label">Entries in this study have not been machine-analyzed yet.</span>
-                {% endif %}
+                <span class="xs-label">
+                    Browse submitted diary entries for this study.
+                </span>
             </div>
             
         </div>
@@ -38,58 +29,53 @@
             hx-target="#diary-entries-panel"
             hx-swap="innerHTML"
             hx-push-url="true"
-            hx-trigger="submit, change delay:300ms from:input, keyup changed delay:300ms from:input"
+            hx-trigger="submit, change delay:100ms from:select, change delay:500ms from:input, keyup changed delay:500ms from:input"
             class="space-y-3"
         >
             <!-- Row 1: search + dropdown filters -->
             <div class="flex flex-wrap gap-3">
-                <input
-                    type="text"
-                    name="q"
-                    placeholder="Search entries..."
-                    value="{{ request.GET.q }}"
-                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
-                >
+                <div>
+                    <label for="date_from" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        Open search:
+                    </label>
+                    <input
+                        type="text"
+                        name="q"
+                        placeholder="Search entries..."
+                        value="{{ request.GET.q }}"
+                        class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
+                    >
+                </div>
 
-                <select name="reported_sentiment" class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500">
-                    <option value="">All Self-reported Sentiments</option>
-                    <option value="VERY_NEGATIVE" {% if reported_sentiment == "VERY_NEGATIVE" %}selected{% endif %}>Very negative</option>
-                    <option value="NEGATIVE" {% if reported_sentiment == "NEGATIVE" %}selected{% endif %}>Negative</option>
-                    <option value="NEUTRAL" {% if reported_sentiment == "NEUTRAL" %}selected{% endif %}>Neutral</option>
-                    <option value="POSITIVE" {% if reported_sentiment == "POSITIVE" %}selected{% endif %}>Positive</option>
-                    <option value="VERY_POSITIVE" {% if reported_sentiment == "VERY_POSITIVE" %}selected{% endif %}>Very positive</option>
-                </select>
+                <div>
+                    <label for="date_from" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        Self-reported Sentiment:
+                    </label>
+                    <select name="reported_sentiment" class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500">
+                        <option value="">All self-reported sentiments</option>
+                        <option value="VERY_NEGATIVE" {% if reported_sentiment == "VERY_NEGATIVE" %}selected{% endif %}>Very negative</option>
+                        <option value="NEGATIVE" {% if reported_sentiment == "NEGATIVE" %}selected{% endif %}>Negative</option>
+                        <option value="NEUTRAL" {% if reported_sentiment == "NEUTRAL" %}selected{% endif %}>Neutral</option>
+                        <option value="POSITIVE" {% if reported_sentiment == "POSITIVE" %}selected{% endif %}>Positive</option>
+                        <option value="VERY_POSITIVE" {% if reported_sentiment == "VERY_POSITIVE" %}selected{% endif %}>Very positive</option>
+                    </select>
+                </div>
 
-                <select name="detected_sentiment" class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500">
-                    <option value="">All Detected Sentiments</option>
-                    <option value="VERY_NEGATIVE" {% if detected_sentiment == "VERY_NEGATIVE" %}selected{% endif %}>Very negative</option>
-                    <option value="NEGATIVE" {% if detected_sentiment == "NEGATIVE" %}selected{% endif %}>Negative</option>
-                    <option value="NEUTRAL" {% if detected_sentiment == "NEUTRAL" %}selected{% endif %}>Neutral</option>
-                    <option value="POSITIVE" {% if detected_sentiment == "POSITIVE" %}selected{% endif %}>Positive</option>
-                    <option value="VERY_POSITIVE" {% if detected_sentiment == "VERY_POSITIVE" %}selected{% endif %}>Very positive</option>
-                </select>
+                <div>
+                    <label for="issue_encountered" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        Self-reported Issue:
+                    </label>
+                    <select
+                        id="issue_encountered"
+                        name="issue_encountered"
+                        class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-48 dark:text-white dark:border-gray-500"
+                    >
+                        <option value="">All self-reported</option>
+                        <option value="yes" {% if issue_encountered == "yes" %}selected{% endif %}>Yes</option>
+                        <option value="no" {% if issue_encountered == "no" %}selected{% endif %}>No</option>
+                    </select>
+                </div>
 
-                <select name="theme" class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500">
-                    <option value="">All Theme Keywords</option>
-                    {% for theme_option in theme_options %}
-                        <option value="{{ theme_option }}" {% if theme == theme_option %}selected{% endif %}>
-                            {{ theme_option|humanize_csv }}
-                        </option>
-                    {% endfor %}
-                </select>
-
-                <select name="issue" class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500">
-                    <option value="">All Issues</option>
-                    {% for issue_option in issue_options %}
-                        <option value="{{ issue_option }}" {% if issue == issue_option %}selected{% endif %}>
-                            {{ issue_option|capfirst }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <!-- Row 2: date range + actions -->
-            <div class="flex flex-wrap items-end gap-3">
                 <div>
                     <label for="date_from" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                         From:
@@ -123,7 +109,7 @@
                     Filter
                 </button>
 
-                {% if q or reported_sentiment or detected_sentiment or date_from or date_to or theme or issue %}
+                {% if q or reported_sentiment or issue_encountered or date_from or date_to %}
                     <a
                         href="{{ diary_entries_filter_url }}"
                         hx-get="{{ diary_entries_filter_url }}"
@@ -150,8 +136,8 @@
 
                         <th>
                             <a
-                                href="{{ diary_entries_filter_url }}?{{ page_params }}&sort={% if sort == '-created_at' %}created_at{% else %}-created_at{% endif %}"
-                                hx-get="{{ diary_entries_filter_url }}?{{ page_params }}&sort={% if sort == '-created_at' %}created_at{% else %}-created_at{% endif %}"
+                                href="{{ diary_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == '-created_at' %}created_at{% else %}-created_at{% endif %}"
+                                hx-get="{{ diary_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == '-created_at' %}created_at{% else %}-created_at{% endif %}"
                                 hx-target="#diary-entries-panel"
                                 hx-swap="innerHTML"
                                 hx-push-url="true"
@@ -168,8 +154,8 @@
 
                         <th>
                             <a
-                                href="{{ diary_entries_filter_url }}?{{ page_params }}&sort={% if sort == '-participant_display_name' %}participant_display_name{% else %}-participant_display_name{% endif %}"
-                                hx-get="{{ diary_entries_filter_url }}?{{ page_params }}&sort={% if sort == '-participant_display_name' %}participant_display_name{% else %}-participant_display_name{% endif %}"
+                                href="{{ diary_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == '-participant_display_name' %}participant_display_name{% else %}-participant_display_name{% endif %}"
+                                hx-get="{{ diary_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == '-participant_display_name' %}participant_display_name{% else %}-participant_display_name{% endif %}"
                                 hx-target="#diary-entries-panel"
                                 hx-swap="innerHTML"
                                 hx-push-url="true"
@@ -182,57 +168,29 @@
 
                         <th>
                             <a
-                                href="{{ diary_entries_filter_url }}?{{ page_params }}&sort={% if sort == '-sentiment_self_report' %}sentiment_self_report{% else %}-sentiment_self_report{% endif %}"
-                                hx-get="{{ diary_entries_filter_url }}?{{ page_params }}&sort={% if sort == '-sentiment_self_report' %}sentiment_self_report{% else %}-sentiment_self_report{% endif %}"
+                                href="{{ diary_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == '-sentiment_self_report' %}sentiment_self_report{% else %}-sentiment_self_report{% endif %}"
+                                hx-get="{{ diary_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == '-sentiment_self_report' %}sentiment_self_report{% else %}-sentiment_self_report{% endif %}"
                                 hx-target="#diary-entries-panel"
                                 hx-swap="innerHTML"
                                 hx-push-url="true"
                                 class="hover:text-gray-900 dark:hover:text-white"
                             >
                                 Self-reported
-                                {% if sort == "-sentiment_self_report" %}↑{% elif sort == "sentiment_self_report" %}↓{% endif %}
+                                {% if sort == "sentiment_self_report" %}↑{% elif sort == "-sentiment_self_report" %}↓{% endif %}
                             </a>
                         </th>
 
                         <th>
                             <a
-                                href="{{ diary_entries_filter_url }}?{{ page_params }}&sort={% if sort == '-selected_entry_run__sentiment_label' %}selected_entry_run__sentiment_label{% else %}-selected_entry_run__sentiment_label{% endif %}"
-                                hx-get="{{ diary_entries_filter_url }}?{{ page_params }}&sort={% if sort == '-selected_entry_run__sentiment_label' %}selected_entry_run__sentiment_label{% else %}-selected_entry_run__sentiment_label{% endif %}"
+                                href="{{ diary_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == '-issue_encountered' %}issue_encountered{% else %}-issue_encountered{% endif %}"
+                                hx-get="{{ diary_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == '-issue_encountered' %}issue_encountered{% else %}-issue_encountered{% endif %}"
                                 hx-target="#diary-entries-panel"
                                 hx-swap="innerHTML"
                                 hx-push-url="true"
                                 class="hover:text-gray-900 dark:hover:text-white"
                             >
-                                Detected Sentiment
-                                {% if sort == "-selected_entry_run__sentiment_label" %}↑{% elif sort == "selected_entry_run__sentiment_label" %}↓{% endif %}
-                            </a>
-                        </th>
-
-                        <th>
-                            <a
-                                href="{{ diary_entries_filter_url }}?{{ page_params }}&sort={% if sort == '-selected_entry_run__theme_label' %}selected_entry_run__theme_label{% else %}-selected_entry_run__theme_label{% endif %}"
-                                hx-get="{{ diary_entries_filter_url }}?{{ page_params }}&sort={% if sort == '-selected_entry_run__theme_label' %}selected_entry_run__theme_label{% else %}-selected_entry_run__theme_label{% endif %}"
-                                hx-target="#diary-entries-panel"
-                                hx-swap="innerHTML"
-                                hx-push-url="true"
-                                class="hover:text-gray-900 dark:hover:text-white"
-                            >
-                                Detected Theme Keywords
-                                {% if sort == "selected_entry_run__theme_label" %}↑{% elif sort == "-selected_entry_run__theme_label" %}↓{% endif %}
-                            </a>
-                        </th>
-
-                        <th>
-                            <a
-                                href="{{ diary_entries_filter_url }}?{{ page_params }}&sort={% if sort == '-selected_entry_run__issues' %}selected_entry_run__issues{% else %}-selected_entry_run__issues{% endif %}"
-                                hx-get="{{ diary_entries_filter_url }}?{{ page_params }}&sort={% if sort == '-selected_entry_run__issues' %}selected_entry_run__issues{% else %}-selected_entry_run__issues{% endif %}"
-                                hx-target="#diary-entries-panel"
-                                hx-swap="innerHTML"
-                                hx-push-url="true"
-                                class="hover:text-gray-900 dark:hover:text-white"
-                            >
-                                Detected Issues
-                                {% if sort == "selected_entry_run__issues" %}↑{% elif sort == "-selected_entry_run__issues" %}↓{% endif %}
+                                Self-reported Issue
+                                {% if sort == "issue_encountered" %}↑{% elif sort == "-issue_encountered" %}↓{% endif %}
                             </a>
                         </th>
 
@@ -273,16 +231,16 @@
                             {% include "studies/partials/_badge_sentiment.html" with sentiment=entry.sentiment_self_report %}
                         </td>
 
-                        <td class="whitespace-nowrap px-4 py-3 text-sm">
-                                {% include "studies/partials/_badge_sentiment.html" with sentiment=entry.selected_entry_run.sentiment_label %}
-                        </td>
-
                         <td class="px-4 py-3 text-sm">
-                                {% include "studies/partials/_badge_theme_labels.html" with themes=entry.selected_entry_run.theme_label %}
-                        </td>
-
-                        <td class="px-4 py-3 text-sm">
-                                {% include "studies/partials/_badge_issue_tags.html" with issues=entry.selected_entry_run.issues %}
+                            {% if entry.issue_encountered %}
+                            <span class="badge-ISSUE">
+                                Yes
+                            </span>
+                            {% else %}
+                            <span class="badge-NONE">
+                                No
+                            </span>
+                            {% endif %}    
                         </td>
 
                         <td class="whitespace-nowrap px-4 py-4 text-right text-sm font-medium">

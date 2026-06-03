@@ -43,7 +43,7 @@ ISSUE_KEYWORDS = {
 		"didn't understand", "did not understand", "don't understand",
 		"not sure", "unsure", "uncertain", "couldn't figure out",
 		"could not figure out", "hard to understand", "where to",
-		"what to do", "how to", "no idea", "blended together"
+		"what to do", "how to", "no idea", "blended together", "ambiguity",
 	],
 
 	"performance": [
