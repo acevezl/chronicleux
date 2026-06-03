@@ -2,19 +2,19 @@
 <div class="text-sm">
     {% if sentiment == "VERY_POSITIVE" or sentiment == "POSITIVE" %}
     <span class="sentiment-{{sentiment}}">
-        {% heroicon_outline "face-smile" class="h-4 w-4" %} &nbsp;{{ sentiment|humanize_enum }}
+        {% heroicon_outline "face-smile" class="h-4 w-4" %}{{ sentiment|humanize_enum }}
     </span>
     {% elif sentiment == "VERY_NEGATIVE" or sentiment == "NEGATIVE" %}
     <span class="sentiment-{{sentiment}}">
-        {% heroicon_outline "face-frown" class="h-4 w-4" %} &nbsp;{{ sentiment|humanize_enum }}
+        {% heroicon_outline "face-frown" class="h-4 w-4" %}{{ sentiment|humanize_enum }}
     </span>
     {% elif sentiment == "NEUTRAL" %}
     <span class="sentiment-{{sentiment}}">
-        {% heroicon_outline "question-mark-circle" class="h-4 w-4" %} &nbsp;{{ sentiment|humanize_enum }}
+        {% heroicon_outline "question-mark-circle" class="h-4 w-4" %}{{ sentiment|humanize_enum }}
     </span>
     {% else %}
     <span class="sentiment-NONE">
-        {% heroicon_outline "ellipsis-horizontal-circle" class="h-4 w-4" %} &nbsp;None
+        {% heroicon_outline "ellipsis-horizontal-circle" class="h-4 w-4" %}None
     </span>
     {% endif %}
 </div>

@@ -7,57 +7,31 @@
 {% block content %}
 
 <div class="sticky-top">
-	<div class="px-4 pt-6 pb-4 border-b border-gray-200">
-
-		<!-- STUDY TITLE -->
-        <span class="top-title">
-            {% heroicon_outline "folder-open" %}
-            {{study.title}}
-        </span>
-
-        <!-- STUDY META DATA -->
-        <div class="flex md:grid-cols-2 gap-4">
-            <div class="top-subtitle">
-            Owner: {{ study.owner.username|capfirst }}
-            </div>
-
-            <div class="top-subtitle">
-            Created on: {{ study.created_at|date:"Y-m-d H:i" }}
-            </div>
-        </div>
-
+		{% include "studies/partials/_header_study.html" %}
+		{% include "studies/partials/_menu_back_to_study.html" %}
 	</div>
-
-	<div class="px-4 py-2 bg-gray-100 dark:bg-gray-900">
-		<div class="flex flex-wrap items-center gap-2">
-			<a
-			href="{% url 'diary_study_detail' study.pk %}"
-			class="button-TERTIARY"
-            >
-                {% heroicon_outline "folder-open" class="h-4 w-4" %}
-                {% heroicon_outline "arrow-left" class="h-4 w-4" %}
-                Return to Study
-            </a>
-		</div>
-	</div>
-</div>
 
 <div class="p-4">
 
-    <details open class="group main-card">
+    <details closed class="group main-card mb-4">
 
         <!-- CARD TITLE (I.E., SUMMARY) -->
 		<summary class="card-summary">
             <div class="flex flex-col">
                 <span class="card-summary-title">
                     {% heroicon_outline "cpu-chip" %}
-                    Machine Analysis Run #{{ run.id }}
+                    Machine Analysis, Study Level
                 </span>
 
                 <!-- ANALYSIS DATE -->
                 <p class="card-summary-subtitle ">
-                    {% heroicon_outline "calendar-days" class="h-4 w-4" %}
+                    {% heroicon_outline "code-bracket-square" class="h-4 w-4" %}
+                    RUN-{{ run.id|stringformat:"03d" }}
 
+                    {% heroicon_outline "document-text" class="h-4 w-4" %}
+                    Entries Analyzed: {{ run.total_entries|default:"0" }}
+
+                    {% heroicon_outline "calendar-days" class="h-4 w-4" %}
                     {% if run.completed_at %}
                         Completed on {{ run.completed_at|date:"Y-m-d H:i" }}
                     {% elif run.created_at %}
@@ -66,54 +40,21 @@
                         Date unavailable
                     {% endif %}
                 </p>
+
+                <!-- RUN METHODS -->
+                <p class="card-summary-subtitle ">
+                    {% heroicon_outline "face-smile" class="h-4 w-4" %}
+                    Sentiment Analysis Method: {{ run.methods.sentiment|upper|default:"—" }}
+
+                    {% heroicon_outline "tag" class="h-4 w-4" %}
+                    Theme Analysis Method: {{ run.methods.theme|upper|default:"—" }}
+                </p>
+
             </div>
             <span class="card-summary-chevron">
                 {% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
             </span>
         </summary>
-
-        <!-- RUN SUMMARY CARDS -->
-        <div class="p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600">
-
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-                <!-- SENTIMENT METHOD -->
-                <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
-                    <div class="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
-                        {% heroicon_outline "face-smile" class="h-4 w-4" %}
-                        Sentiment Method
-                    </div>
-
-                    <div class="mt-2 text-sm text-gray-900 dark:text-gray-100 uppercase">
-                        {{ run.methods.sentiment|default:"—" }}
-                    </div>
-                </div>
-
-                <!-- THEME METHOD -->
-                <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
-                    <div class="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
-                        {% heroicon_outline "tag" class="h-4 w-4" %}
-                        Theme Method
-                    </div>
-
-                    <div class="mt-2 text-sm text-gray-900 dark:text-gray-100 uppercase">
-                        {{ run.methods.theme|default:"—" }}
-                    </div>
-                </div>
-
-                <!-- ENTRIES ANALYZED -->
-                <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
-                    <div class="flex items-center gap-2 text-xs font-medium text-gray-500 dark:text-gray-400">
-                        {% heroicon_outline "document-text" class="h-4 w-4" %}
-                        Entries Analyzed
-                    </div>
-
-                    <div class="mt-2 text-sm text-gray-900 dark:text-gray-100">
-                        {{ run.total_entries|default:"0" }}
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- KEY INSIGHTS -->
         <div class="grid grid-cols-1 gap-4 p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600">
@@ -227,14 +168,58 @@
                         </div>
                     </div>
 
-                    <div class="" id="diary-entries-panel">
-                        {% include "studies/partials/_entries.html" with study=study %}
-                    </div>
                 </div>
             </div>
 
         </div>
 
+    </details>
+
+    <details open class="group main-card" id="entry_analysis">
+
+        <!-- CARD TITLE (I.E., SUMMARY) -->
+		<summary class="card-summary">
+            <div class="flex flex-col">
+                <span class="card-summary-title">
+                    {% heroicon_outline "cpu-chip" %}
+                    Machine Analysis, Per-Entry Results
+                </span>
+
+                <!-- ANALYSIS DATE -->
+                <p class="card-summary-subtitle ">
+                    {% heroicon_outline "code-bracket-square" class="h-4 w-4" %}
+                    RUN-{{ run.id|stringformat:"03d" }}
+
+                    {% heroicon_outline "document-text" class="h-4 w-4" %}
+                    Entries Analyzed: {{ run.total_entries|default:"0" }}
+
+                    {% heroicon_outline "calendar-days" class="h-4 w-4" %}
+                    {% if run.completed_at %}
+                        Completed on {{ run.completed_at|date:"Y-m-d H:i" }}
+                    {% elif run.created_at %}
+                        Started on {{ run.created_at|date:"Y-m-d H:i" }}
+                    {% else %}
+                        Date unavailable
+                    {% endif %}
+                </p>
+
+                <!-- RUN METHODS -->
+                <p class="card-summary-subtitle ">
+                    {% heroicon_outline "face-smile" class="h-4 w-4" %}
+                    Sentiment Analysis Method: {{ run.methods.sentiment|upper|default:"—" }}
+
+                    {% heroicon_outline "tag" class="h-4 w-4" %}
+                    Theme Analysis Method: {{ run.methods.theme|upper|default:"—" }}
+                </p>
+
+            </div>
+            <span class="card-summary-chevron">
+                {% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
+            </span>
+        </summary>
+        <div class="p-4" id="analysis-entries-panel">
+            {% include "studies/partials/_analysis_entries.html" with entry_analyses=entry_analyses study=study run=run %}
+        </div>
     </details>
 </div>
 

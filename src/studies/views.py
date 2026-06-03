@@ -240,10 +240,10 @@ def machine_analysis_details (request, study_pk, run_pk):
 	study = get_object_or_404(Study, pk=study_pk)
 	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
 
-	diary_entries = (
-		DiaryEntry.objects
-		.filter(study=study)
-		.select_related("participant")
+	diary_entry_analyses = (
+		DiaryEntryAnalysis.objects
+		.filter(run=run)
+		.select_related("entry", "entry__participant")
 	)
 
 	is_evaluator = StudyMembership.objects.filter(
@@ -255,8 +255,8 @@ def machine_analysis_details (request, study_pk, run_pk):
 	context = {
 		"study": study,
 		"run": run,
-		"diary_entries": diary_entries,
-		"diary_entries_filter_url": reverse("machine_analysis_entries_partial", args=[study.pk, run.pk]),
+		"entry_analyses": diary_entry_analyses,
+		"is_evaluator": is_evaluator
 	}
 
 	return render (request, "studies/machine_analysis_details.html", context)
@@ -584,84 +584,6 @@ def entries(request, pk):
 	).exists()
 
 	return render(request, "studies/diary_entry_list.html", context)
-
-# @login_required
-# def study_entries(request, pk):
-
-# 	study = get_object_or_404(Study, pk=pk)
-
-# 	diary_entries = (
-# 		DiaryEntry.objects
-# 		.filter(study=study)
-# 		.select_related("participant")
-# 	)
-
-# 	# # Filtering
-# 	# Suppressing this while I try HTMX for a/s get requests instead of posts b/c I HATE WITH ODIO JAROCHO reloading the page every time I update the filter or sort.
-# 	# q = request.GET.get("q")
-# 	# participant = request.GET.get("participant")
-# 	# sentiment = request.GET.get("sentiment")
-# 	# issue = request.GET.get("issue")
-
-# 	# if q:
-# 	# 	diary_entries = diary_entries.filter(content__icontains=q)
-
-# 	# if participant:
-# 	# 	diary_entries = diary_entries.filter(participant_display_name__icontains=participant)
-
-# 	# if sentiment:
-# 	# 	diary_entries = diary_entries.filter(sentiment_self_report=sentiment)
-
-# 	# if issue in ["true", "false"]:
-# 	# 	diary_entries = diary_entries.filter(issue_encountered=(issue == "true"))
-
-# 	# # Sorting
-# 	# sort = request.GET.get("sort", "-created_at")
-	
-# 	# allowed_sort_fields = {
-# 	# 	"created_at",
-# 	# 	"participant_display_name",
-# 	# 	"sentiment_self_report",
-# 	# }
-
-# 	# if sort.lstrip("-") in allowed_sort_fields:
-# 	# 	diary_entries = diary_entries.order_by(sort)
-
-# 	# # Pagination
-# 	# paginator = Paginator(diary_entries, 10)  # 10 per page
-# 	# page_number = request.GET.get("page")
-# 	# page_obj = paginator.get_page(page_number)
-	
-# 	# params = request.GET.copy()
-# 	# params.pop("page", None)
-
-# 	is_evaluator = StudyMembership.objects.filter(
-# 		study=study,
-# 		user=request.user,
-# 		role=MembershipRole.EVALUATOR
-# 	).exists()
-
-# 	# context = {
-# 	# 	"study": study,
-# 	# 	"diary_entries": page_obj,
-# 	# 	"page_obj": page_obj,
-# 	# 	"sentiment": sentiment,
-# 	# 	"issue": issue,
-# 	# 	"participant": participant,
-# 	# 	"q": q,
-# 	# 	"sort": sort,
-# 	# 	"page_params": params,
-# 	# 	"is_evaluator": is_evaluator,
-# 	# }
-
-# 	# Using this context instead of the long one with a query while I try HTMX for async querying, sorting, and pagination.
-# 	context = {
-# 		"study": study,
-# 		"diary_entries": diary_entries,
-# 		"diary_entries_filter_url": reverse("diary_entries_partial", args=[study.pk]),
-# 	}
-
-# 	return render(request, "studies/diary_entry_list.html", context)
 
 
 # --------------------- #

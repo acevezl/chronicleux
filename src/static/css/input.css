@@ -50,55 +50,59 @@
 	}
 
 	.sentiment-VERY_NEGATIVE {
-		@apply inline-flex items-center rounded-full bg-red-200 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-700;
+		@apply text-nowrap inline-flex gap-1 items-center rounded-full bg-red-200 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-700;
 	}
 
 	.sentiment-NEGATIVE {
-		@apply inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-700;
+		@apply text-nowrap inline-flex gap-1 items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-700;
 	}
 
 	.sentiment-NEUTRAL {
-		@apply inline-flex items-center rounded-full bg-amber-200 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-700;
+		@apply text-nowrap inline-flex gap-1 items-center rounded-full bg-amber-200 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-700;
 	}
 
 	.sentiment-POSITIVE {
-		@apply inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700;
+		@apply text-nowrap inline-flex gap-1 items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700;
 	}
 
 	.sentiment-VERY_POSITIVE {
-		@apply inline-flex items-center rounded-full bg-green-200 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700;
+		@apply text-nowrap inline-flex gap-1 items-center rounded-full bg-green-200 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700;
 	}
 
 	.sentiment-NONE, .badge-NONE {
-		@apply inline-flex items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-600;
+		@apply text-nowrap inline-flex gap-1 items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-600;
 	}
 
 	.badge-ISSUE {
-		@apply border border-red-500 rounded-full px-2 py-1 text-xs text-red-500 bg-red-100
+		@apply text-nowrap inline-flex gap-1 border border-red-500 rounded-full px-2 py-1 text-xs text-red-500 bg-red-100
 	}
 
 	.badge-THEME {
-		@apply border border-sky-500 rounded-full px-2 py-1 text-xs text-sky-500
+		@apply text-nowrap inline-flex border border-sky-500 rounded-full px-2 py-1 text-xs text-sky-500
+	}
+
+	.badge {
+		@apply text-nowrap inline-flex items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-600;
 	}
 
 	.button-PRIMARY {
-		@apply inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border border-fuchsia-800 bg-fuchsia-800 text-white hover:bg-fuchsia-700 cursor-pointer
+		@apply text-nowrap inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border border-fuchsia-800 bg-fuchsia-800 text-white hover:bg-fuchsia-700 cursor-pointer
 	}
 
 	.button-SECONDARY {
-		@apply inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border border-gray-950 bg-slate-950 hover:bg-slate-800 dark:hover:bg-slate-900 text-white dark:text-gray-200 hover:text-white cursor-pointer
+		@apply text-nowrap inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border border-gray-950 bg-slate-950 hover:bg-slate-800 dark:hover:bg-slate-900 text-white dark:text-gray-200 hover:text-white cursor-pointer
 	}
 
 	.button-TERTIARY {
-		@apply inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border border-slate-600 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 cursor-pointer
+		@apply text-nowrap inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border border-slate-600 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 cursor-pointer
 	}
 
 	.button-FILTER {
-		@apply inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border border-gray-950 bg-slate-950 hover:bg-slate-800 dark:hover:bg-slate-900 text-white dark:text-gray-200 hover:text-white cursor-pointer
+		@apply text-nowrap inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border border-gray-950 bg-slate-950 hover:bg-slate-800 dark:hover:bg-slate-900 text-white dark:text-gray-200 hover:text-white cursor-pointer
 	}
 
 	.button-FILTER-CLEAR {
-		@apply inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border  border-slate-600 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 cursor-pointer
+		@apply text-nowrap inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border  border-slate-600 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 cursor-pointer
 	}
 
 	.button-PAGINATOR {
@@ -114,11 +118,11 @@
 	}
 
 	.xs-label {
-		@apply block text-xs font-medium text-gray-500 dark:text-gray-400
+		@apply flex flex-nowrap gap-1 text-xs font-medium text-gray-500 dark:text-gray-400
 	}
 
 	.sm-label {
-		@apply block text-sm font-medium text-gray-500 dark:text-gray-400
+		@apply text-sm font-medium text-gray-800 dark:text-gray-300
 	}
 
 	.md-card-title {
@@ -160,9 +164,5 @@
 	th {
 		@apply text-left px-4 py-3 font-medium text-xs text-nowrap
 	}
-
-	
-
- 
 
 }

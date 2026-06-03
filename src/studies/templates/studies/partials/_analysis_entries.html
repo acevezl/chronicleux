@@ -1,0 +1,74 @@
+{% load formatters %}
+
+<div class="grid grid-cols-4 items-center gap-4">
+    {% for entry_analysis in entry_analyses %}
+        {% with entry=entry_analysis.entry %}
+            <article class="flex flex-col justify-between h-full w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                
+                <!-- Analysis Header (Shows Entry data) -->
+                <header class="flex flex-col gap-2 p-2 bg-gray-100">
+                    <div class="flex items-center w-full justify-between mb-2">
+                        <span class="xs-label text-nowrap">Created on {{ entry.created_at|date:"M d, Y H:i" }}</span>
+                        <span class="xs-label">{{ entry.source|default:"-" }}</span>
+                    </div>
+                    <div class="block">
+                        <!-- Summary -->
+                        <p class="mb-2 sm-label line-clamp-2">
+                            {{ entry_analysis.entry_summary|default:"No summary available." }}
+                        </p>
+                        <span class="xs-label text-nowrap">
+                            Author: {{ entry.participant_display_name|capfirst }}
+                        </span>
+                    </div>
+                </header>
+
+                <!-- Analysis Body (Shows Analysis data) -->
+                <section class="flex flex-col gap-2 p-2">
+                    {% if entry_analysis %}
+                        <span class="xs-label text-nowrap">
+                            Analyzed on {{ entry_analysis.analyzed_at|date:"M d, Y H:i" }}
+                        </span>
+                        <!-- Analysis chips -->
+                        <div class="flex flex-col gap-2 justify-between text-xs">
+                            
+                            <div class="flex items-center gap-1">
+                                {% include "studies/partials/_badge_sentiment.html" with sentiment=entry_analysis.sentiment_label %}
+
+                                <span class="badge">
+                                    Score: {{ entry_analysis.sentiment_score|floatformat:2 }}
+                                </span>
+                            </div>
+
+                            <div class="flex items-center gap-1">
+                                {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.theme_label %}
+
+                                <span class="badge">
+                                    Weight: {{ entry_analysis.theme_weight|floatformat:2 }}
+                                </span>
+                            </div>
+
+                            <div class="flex items-center gap-1">
+                                {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.issues %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="mt-2 text-sm text-gray-500 dark:text-gray-400 text-nowrap">
+                            No analysis available for this entry.
+                        </div>
+                    {% endif %}
+                </section>
+                <footer class="flex flex-col gap-2 p-2">
+                    <!-- Link to entry -->
+                    <a href="{% url 'diary_entry_detail' entry.study_id entry.id %}"
+                    class="text-xs font-medium text-blue-600 hover:text-blue-500 dark:text-blue-100 dark:hover:text-blue-50">
+                        View entry →
+                    </a>
+                </footer>
+            </article>
+        {% endwith %}
+    {% empty %}
+        <div class="rounded-md border border-dashed border-gray-300 dark:border-gray-700 p-4 text-sm text-gray-500 dark:text-gray-400">
+            No entries found.
+        </div>
+    {% endfor %}
+</div>

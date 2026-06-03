@@ -2,11 +2,11 @@
 <div class="flex flex-wrap gap-2">
 	{% for issue in issues|split_csv %}
 		<span class="badge-ISSUE">
-			{{ issue }}
+			{{ issue | capfirst }}
 		</span>
 	{% empty %}
 		<span class="badge-NONE">
-			None
+			No issues detected
 		</span>
 	{% endfor %}
 </div>
