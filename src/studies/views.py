@@ -417,6 +417,39 @@ def manage_participants(request, pk):
 
 	return render(request, "studies/manage_participants.html", context)
 
+# ----------------------- #
+# SELECT ANALYSIS METHODS #
+# ----------------------- #
+@login_required
+def select_analysis_methods(request, pk):
+    study = get_object_or_404(Study, pk=pk)
+
+    if study.owner != request.user:
+        return HttpResponseForbidden()
+
+    sentiment_methods = get_available_sentiment_methods()
+    theme_methods = get_available_theme_methods()
+
+    context = {
+        "study": study,
+        "sentiment_methods": [
+            {
+                "value": method,
+                "label": method.replace("_", " ").title(),
+            }
+            for method in sentiment_methods
+        ],
+        "theme_methods": [
+            {
+                "value": method,
+                "label": method.replace("_", " ").title(),
+            }
+            for method in theme_methods
+        ],
+    }
+
+    return render(request, "studies/select_analysis_methods.html", context)
+
 
 # -------------------- #
 # RUN MACHINE ANALYSIS #
@@ -424,35 +457,50 @@ def manage_participants(request, pk):
 @login_required
 @require_POST
 def run_machine_analysis(request, pk):
-	study = get_object_or_404(Study, pk=pk)
+    study = get_object_or_404(Study, pk=pk)
 
-	if study.owner != request.user:
-		return HttpResponseForbidden()
+    if study.owner != request.user:
+        return HttpResponseForbidden()
 
-	if not study.entries.exists():
-		messages.warning(
-			request,
-			"Cannot run machine analysis: No diary entries found in the study."
-		)
-		return redirect("diary_study_detail", pk=study.pk)
+    if not study.entries.exists():
+        messages.warning(
+            request,
+            "Cannot run machine analysis: No diary entries found in the study."
+        )
+        return redirect("diary_study_detail", pk=study.pk)
 
-	try:
-		study_analysis_run = run_study_analysis(study_id=study.pk)
+    sentiment_method = request.POST.get("sentiment_method", "vader")
+    theme_method = request.POST.get("theme_method", "tfidf_nmf")
 
-	except Exception as e:
-		messages.error(request, f"Machine analysis failed: {e}")
-		return redirect("diary_study_detail", pk=study.pk)
+    if sentiment_method not in get_available_sentiment_methods():
+        messages.error(request, "Invalid sentiment analysis method.")
+        return redirect("select_analysis_methods", pk=study.pk)
 
-	messages.success(
-		request,
-		f"Machine analysis completed successfully. Run ID: {study_analysis_run.pk}"
-	)
+    if theme_method not in get_available_theme_methods():
+        messages.error(request, "Invalid thematic analysis method.")
+        return redirect("select_analysis_methods", pk=study.pk)
 
-	return redirect(
-		"machine_analysis_details",
-		study_pk=study.pk,
-		run_pk=study_analysis_run.pk,
-	)
+    try:
+        study_analysis_run = run_study_analysis(
+            study_id=study.pk,
+            sentiment_method=sentiment_method,
+            theme_method=theme_method,
+        )
+
+    except Exception as e:
+        messages.error(request, f"Machine analysis failed: {e}")
+        return redirect("diary_study_detail", pk=study.pk)
+
+    messages.success(
+        request,
+        f"Machine analysis completed successfully. Run ID: {study_analysis_run.pk}"
+    )
+
+    return redirect(
+        "machine_analysis_details",
+        study_pk=study.pk,
+        run_pk=study_analysis_run.pk,
+    )
 
 
 # ------------------------ #
@@ -640,38 +688,7 @@ def study_entries_partial(request, study_pk):
 	return response
 
 
-# ----------------------- #
-# SELECT ANALYSIS METHODS #
-# ----------------------- #
-@login_required
-def select_analysis_methods(request, pk):
-    study = get_object_or_404(Study, pk=pk)
 
-    if study.owner != request.user:
-        return HttpResponseForbidden()
-
-    sentiment_methods = get_available_sentiment_methods()
-    theme_methods = get_available_theme_methods()
-
-    context = {
-        "study": study,
-        "sentiment_methods": [
-            {
-                "value": method,
-                "label": method.replace("_", " ").title(),
-            }
-            for method in sentiment_methods
-        ],
-        "theme_methods": [
-            {
-                "value": method,
-                "label": method.replace("_", " ").title(),
-            }
-            for method in theme_methods
-        ],
-    }
-
-    return render(request, "studies/select_analysis_methods.html", context)
 
 
 

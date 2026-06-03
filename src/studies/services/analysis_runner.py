@@ -382,12 +382,8 @@ def build_top_sentiment_entries(entries_with_results: list[tuple]) -> dict:
 #-------------------------------#
 # Main analysis runner function #
 #-------------------------------#
-def run_study_analysis(study_id: int) -> StudyAnalysisRun:
+def run_study_analysis(study_id: int, sentiment_method="vader", theme_method="tfidf_nmf") -> StudyAnalysisRun:
 	study = Study.objects.get(pk=study_id)
-
-	# Future: Obtain these from dropdown
-	sentiment_method = "bert"
-	theme_method = "tfidf_nmf"
 
 	run = StudyAnalysisRun.objects.create(
 		study=study,
@@ -479,36 +475,6 @@ def run_study_analysis(study_id: int) -> StudyAnalysisRun:
 					]
 				)
 
-				# entry.machine_sentiment_score = sentiment_score
-				# entry.machine_sentiment_label = sentiment_label
-				
-				# entry.machine_theme_weight = theme_weight
-				# entry.machine_theme_label = theme_label
-				
-				# entry.analysis_issue_detected = bool(issue_tags)
-				# entry.analysis_issue_tags = issue_tags
-				
-				# entry.entry_summary = entry_summary
-				
-				# entry.analysis_model = run.analysis_model
-				# entry.analysis_version = run.analysis_version
-				# entry.analyzed_at = now
-
-				# entry.save(
-				# 	update_fields=[
-				# 		"machine_sentiment_score",
-				# 		"machine_sentiment_label",
-				# 		"machine_theme_weight",
-				# 		"machine_theme_label",
-				# 		"analysis_issue_detected",
-				# 		"analysis_issue_tags",
-				# 		"entry_summary",
-				# 		"analysis_model",
-				# 		"analysis_version",
-				# 		"analyzed_at",
-				# 	]
-				# )
-
 				result = {
 					"sentiment_score": sentiment_score,
 					"sentiment_label":sentiment_label,
@@ -599,37 +565,6 @@ def run_study_analysis(study_id: int) -> StudyAnalysisRun:
 					"status",
 				]
 			)
-
-			# study.analysis_model = run.analysis_model
-			# study.analysis_version = run.analysis_version
-			# study.analyzed_at = now
-			
-
-			# study.save(
-			# 	update_fields=[
-			# 		"analysis_model",
-			# 		"analysis_version",
-			# 		"analyzed_at",
-			# 		"status",
-
-			# 		"average_sentiment_label",
-			# 		"average_sentiment_score",
-			# 		"dominant_sentiment_label",
-			# 		"dominant_sentiment_score",
-			# 		"sentiment_distribution",
-
-			# 		"dominant_theme_label",
-			# 		"dominant_theme_weight",
-			# 		"theme_distribution",
-
-			# 		"recurring_issues",
-			# 		"evolution_over_time", 
-			# 		"top_representative_quotes", 
-
-			# 		"total_entries",
-			# 		"total_themes",
-			# 	]
-			# )
 
 		return run
 

@@ -6,7 +6,7 @@ from studies.services.nlp.sentiment._thresholds import map_sentiment_score_to_la
 
 
 class BertSentimentAnalyzer(BaseSentimentAnalyzer):
-    method_name = "bert_sentiment"
+    method_name = "bert"
 
     def __init__(self):
         self.analyzer = pipeline(
