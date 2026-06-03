@@ -85,6 +85,10 @@
 		@apply w-min text-nowrap rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-600;
 	}
 
+	.badge-bigger {
+		@apply w-min text-nowrap rounded-full bg-gray-50 px-2 py-1 text-sm font-bold text-gray-600 ring-1 ring-inset ring-gray-600;
+	}
+
 	.button-PRIMARY {
 		@apply text-nowrap inline-flex items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium border border-fuchsia-800 bg-fuchsia-800 text-white hover:bg-fuchsia-700 cursor-pointer
 	}

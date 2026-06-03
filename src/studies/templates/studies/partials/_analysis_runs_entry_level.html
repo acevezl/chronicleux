@@ -6,7 +6,7 @@
         <div class="flex flex-col">
             <span class="card-summary-title">
                 {% heroicon_outline "cpu-chip" %}
-                Machine Analyses
+                Machine Analysis Runs
             </span>
 
             <p class="card-summary-subtitle">
@@ -26,7 +26,7 @@
                     <article class="card-border">
                         
                         <!-- RUN HEADER -->
-                        <header class="shrink-0 flex flex-col gap-2 p-2 bg-gray-100">
+                        <header class="shrink-0 flex flex-col gap-2 p-2 border-b border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800">
                             <div class="flex items-start justify-between gap-2">
                                 <div class="flex flex-col">
                                     <span class="card-summary-title">
@@ -57,7 +57,7 @@
                         </header>
 
                         <!-- RUN BODY -->
-                        <section class="flex flex-col flex-1 gap-2 p-2">
+                        <section class="flex flex-col flex-1 gap-2 p-2 bg-white dark:bg-gray-400">
                             <!-- SENTIMENT ANALYSIS -->
                             <div class="flex flex-col gap-2 card-border justify-between">
                                 <div class="flex flex-nowrap items-center justify-between p-2 bg-gray-100">
@@ -65,11 +65,12 @@
                                         {% heroicon_outline "face-smile" class="h-4 w-4" %}
                                         Sentiment Analysis
                                     </span>
-                                    <span class="badge">
-                                        Score: {{ entry_analysis.sentiment_score|floatformat:2 }}
+                                    <span class="sm-label uppercase">
+                                        <strong>{{ entry_analysis.methods.sentiment|humanize_enum }}</strong>
                                     </span>
                                 </div>
-                                <div class="flex flex-nowrap items-end justify-center mb-2">
+                                
+                                <div class="flex flex-nowrap items-end justify-center">
                                     <div class="p-2">
                                         <span class="xs-label flex flex-col gap-2 text-nowrap">
                                             SELF-REPORTED
@@ -88,6 +89,11 @@
                                         </span>
                                     </div>
                                 </div>
+                                <div class="flex flex-nowrap items-end justify-center mb-2">
+                                    <span class="badge-bigger">
+                                        Score: {{ entry_analysis.sentiment_score|floatformat:2 }}
+                                    </span>
+                                </div>
                             </div>
                             <!-- THEMATIC ANALYSIS -->
                             <div class="flex flex-col gap-2 card-border justify-between">
@@ -96,8 +102,8 @@
                                         {% heroicon_outline "tag" class="h-4 w-4" %}
                                         Theme Analysis
                                     </span>
-                                    <span class="badge">
-                                        Weight: {{ entry_analysis.theme_weight|floatformat:2 }}
+                                    <span class="sm-label uppercase">
+                                        <strong>{{ entry_analysis.methods.theme|humanize_enum }}</strong>
                                     </span>
                                 </div>
 
@@ -105,6 +111,12 @@
                                     <span class="xs-label flex flex-col gap-2 text-nowrap">
                                         THEME KEYWORDS
                                         {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.theme_label %}
+                                    </span>
+                                </div>
+
+                                <div class="flex flex-nowrap items-end justify-center mb-2">
+                                    <span class="badge-bigger">
+                                        Weight: {{ entry_analysis.theme_weight|floatformat:2 }}
                                     </span>
                                 </div>
                             </div>

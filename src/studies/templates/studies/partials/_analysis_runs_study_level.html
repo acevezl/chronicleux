@@ -12,7 +12,7 @@
 			</span>
 
 			<p class="card-summary-subtitle">
-				Previous machine-generated analyses for this study, including sentiment, theme detection and traceable results.
+				Machine-generated analyses for this study, including sentiment, theme, and issue detection.
 			</p>
 		</div>
 
@@ -28,10 +28,10 @@
 				{% for run in analysis_runs %}
 
 					<!-- ANALYSIS RUN CARD -->
-					<article class="h-full flex flex-col rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 overflow-hidden">
+					<article class="h-full flex flex-col rounded-sm border border-gray-200 dark:border-gray-600overflow-hidden">
 
 						<!-- RUN HEADER -->
-						<header class="shrink-0 p-2 border-b border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900">
+						<header class="shrink-0 p-2 border-b border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800">
 							<div class="flex items-start justify-between gap-2">
 								<div class="flex flex-col">
 									<span class="card-summary-title">
@@ -62,7 +62,7 @@
 						</header>
 
 						<!-- RUN BODY -->
-						<section class="flex-1 p-2 space-y-2">
+						<section class="flex-1 p-2 space-y-2 bg-white dark:bg-gray-400">
 
 							<!-- METHODS -->
 							<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -141,7 +141,7 @@
 						</section>
 
 						<!-- RUN ACTIONS -->
-						<footer class="shrink-0 p-2 border-t border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900">
+						<footer class="shrink-0 p-2 border-t border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800">
 							{% if run.status == "COMPLETED" %}
 							<a
 								href="{% url 'machine_analysis_details' run.study_id run.pk %}"
