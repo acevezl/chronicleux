@@ -15,259 +15,36 @@
 {% load formatters %}
 
 <div class="px-4 mt-4">
-	<details open class="group main-card">
+	
+	{% include "studies/partials/_entry.html" with entry=entry %}
 
-		<!-- CARD TITLE (I.E., SUMMARY) -->
-		<summary class="card-summary">
+	{% if entry_runs %}
+		<details open class="group main-card mt-4">
+			<!-- CARD TITLE (I.E., SUMMARY) -->
+			<summary class="card-summary">
 
-			<div class="flex flex-col">
-				<span class="card-summary-title">
-					{% heroicon_outline "document-text" %}
-					Diary Entry Details
-				</span>
-
-				<p class="card-summary-subtitle">
-					Entry narrative and selected machine analysis for this diary entry.
-				</p>
-			</div>
-
-			<span class="card-summary-chevron">
-				{% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
-			</span>
-
-		</summary>
-
-		<!-- ENTRY DATA + SELECTED ANALYSIS -->
-		<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4">
-
-			<!-- MAIN ENTRY CONTENT -->
-			<div class="lg:col-span-2 grid grid-cols-1 gap-4">
-
-				<!-- ENTRY CONTENT -->
-				<div class="xl:col-span-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
-					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-						{% heroicon_outline "chat-bubble-left-right" class="h-4 w-4" %}
-						Diary Entry
-					</div>
-
-					<div class="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-						Created on: {{ entry.created_at}}
-					</div>
-
-					<p class="mt-2 text-sm leading-6 text-gray-900 dark:text-gray-100">
-						{{ entry.content|linebreaksbr|default:"—" }}
-					</p>
-					
-				</div>
-			</div>
-
-			<!-- ENTRY METADATA -->
-			<div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-1 xl:grid-cols-2 gap-4">
-				<!-- PARTICIPANT -->
-				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
-					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-						{% heroicon_outline "user-circle" class="h-4 w-4" %}
-						Participant
-					</div>
-
-					<div class="mt-2 text-sm text-gray-900 dark:text-gray-100">
-						{% if entry.participant_display_name %}
-							{{ entry.participant_display_name|capfirst }}
-						{% elif entry.participant %}
-							{{ entry.participant }}
-						{% else %}
-							—
-						{% endif %}
-					</div>
-				</div>
-
-				<!-- SOURCE -->
-				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
-					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-						{% heroicon_outline "arrow-down-tray" class="h-4 w-4" %}
-						Source
-					</div>
-
-					<div class="mt-2 text-sm text-gray-900 dark:text-gray-100">
-						{{ entry.get_source_display|default:"—" }}
-					</div>
-				</div>
-
-				<!-- SELF-REPORTED SENTIMENT -->
-				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
-					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-						{% heroicon_outline "face-smile" class="h-4 w-4" %}
-						Self-reported Sentiment
-					</div>
-
-					<div class="mt-2 text-sm">
-						{% if entry.sentiment_self_report %}
-							{% include "studies/partials/_badge_sentiment.html" with sentiment=entry.sentiment_self_report %}
-						{% else %}
-							<span class="text-sm text-gray-900 dark:text-gray-100">—</span>
-						{% endif %}
-					</div>
-				</div>
-
-				<!-- SELF-REPORTED ISSUE -->
-				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
-					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-						{% heroicon_outline "exclamation-triangle" class="h-4 w-4" %}
-						Self-reported Issue
-					</div>
-
-					<div class="mt-2 text-sm text-gray-900 dark:text-gray-100">
-						{% if entry.issue_encountered %}
-							<span class="inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600 dark:bg-red-950 dark:text-red-300 dark:ring-red-700">
-								Yes
-							</span>
-						{% else %}
-							<span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-300 dark:bg-gray-800 dark:text-gray-200 dark:ring-gray-600">
-								No
-							</span>
-						{% endif %}
-					</div>
-				</div>
-			</div>
-
-		</div>
-	</details>
-	{% if selected_run %}
-	<details open class="group main-card mt-4">
-		
-		<!-- CARD TITLE (I.E., SUMMARY) -->
-		<summary class="card-summary">
-
-			<div class="flex flex-col">
-				<span class="card-summary-title">
-					{% heroicon_outline "cpu-chip" %}
-					Machine Analysis, Run #{{ selected_run.id }}
-				</span>
-
-				<div class="card-summary-subtitle">
-					Analyzed at:
-					<span class="text-gray-900 dark:text-gray-100">
-						{{ selected_run.analyzed_at|date:"Y-m-d H:i"|default:"—" }}
+				<div class="flex flex-col">
+					<span class="card-summary-title">
+						{% heroicon_outline "cpu-chip" %}
+						Machine Analyses
 					</span>
+
+					<p class="card-summary-subtitle">
+						Individual analysis runs per entry. 
+					</p>
 				</div>
+
+				<span class="card-summary-chevron">
+					{% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
+				</span>
+
+			</summary>
+			<div class="p-4">
+				{% include "studies/partials/_analysis_runs_entry_level.html" with entry_analyses=entry_runs study=study entry=entry %}
 			</div>
-
-			<span class="card-summary-chevron">
-				{% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
-			</span>
-
-		</summary>
-
-		
-		<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4">
-			<!-- SENTIMENT ANALYSIS -->
-			<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
-				<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-					{% heroicon_outline "face-smile" class="h-4 w-4" %}
-					Sentiment Detected
-				</div>
-
-				<div class="mt-3 space-y-3 text-sm">
-					<div>
-						{% include "studies/partials/_badge_sentiment.html" with sentiment=selected_run.sentiment_label %}
-					</div>
-
-					<div class="grid grid-cols-2 gap-3">
-						<div>
-							<div class="text-xs text-gray-500 dark:text-gray-400">
-								Score
-							</div>
-							<div class="text-gray-900 dark:text-gray-100">
-								{{ selected_run.sentiment_score|floatformat:3|default:"—" }}
-							</div>
-						</div>
-
-						<div>
-							<div class="text-xs text-gray-500 dark:text-gray-400">
-								Method
-							</div>
-							<div class="text-gray-900 dark:text-gray-100">
-								{{ selected_run.methods.sentiment|default:"—"  }}
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- THEME ANALYSIS -->
-			<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
-				<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-					{% heroicon_outline "tag" class="h-4 w-4" %}
-					Theme Detected
-				</div>
-
-				<div class="mt-3 space-y-3 text-sm text-gray-900 dark:text-gray-100">
-					<div>
-						{% include "studies/partials/_badge_theme_labels.html" with themes=selected_run.theme_label %}
-					</div>
-
-					<div class="grid grid-cols-2 gap-3">
-						<div>
-							<div class="text-xs text-gray-500 dark:text-gray-400">
-								Weight
-							</div>
-							<div>
-								{{ selected_run.theme_weight|floatformat:3|default:"—" }}
-							</div>
-						</div>
-
-						<div>
-							<div class="text-xs text-gray-500 dark:text-gray-400">
-								Method
-							</div>
-							<div>
-								{{ selected_run.methods.theme|default:"—" }}
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!-- ISSUES DETECTED -->
-			<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
-				<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-					{% heroicon_outline "exclamation-circle" class="h-4 w-4" %}
-					Issues Detected
-				</div>
-
-				<div class="mt-3 text-sm">
-					{% if selected_run.issue_detected %}
-						<span class="badge-ISSUE">
-							Yes
-						</span>
-					{% else %}
-						<span class="badge-NONE">
-							No
-						</span>
-					{% endif %}
-				</div>
-
-				<div class="mt-3 text-sm">
-					{% include "studies/partials/_badge_issue_tags.html" with issues=selected_run.issues %}
-				</div>
-			</div>
-		</div>
-	</details>
-	{% else %}
-
-		<!-- NO ANALYSIS -->
-		<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4 mt-4">
-			<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-				{% heroicon_outline "cpu-chip" class="h-4 w-4" %}
-				Machine Analysis Not Yet Available
-			</div>
-
-			<div class="mt-2 text-sm text-gray-900 dark:text-gray-100">
-				Entry-level analyses are generated as part of each full study analysis run.
-			</div>
-		</div>
-
+		</details>
 	{% endif %}
+
 </div>
 
 {% endblock %}

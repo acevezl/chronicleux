@@ -1,67 +1,113 @@
 {% load formatters %}
 
-<div class="grid grid-cols-4 items-center gap-4">
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 items-center gap-4">
     {% for entry_analysis in entry_analyses %}
-        {% with entry=entry_analysis.entry %}
-            <article class="flex flex-col justify-between h-full w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        {% with run=entry_analysis.run %}
+            <article class="card-border">
                 
-                <!-- Analysis Header (Shows Entry data) -->
-                <header class="flex flex-col gap-2 p-2 bg-gray-100">
-                    <div class="flex items-center w-full justify-between mb-2">
-                        <span class="xs-label text-nowrap">Created on {{ entry.created_at|date:"M d, Y H:i" }}</span>
-                        <span class="xs-label">{{ entry.source|default:"-" }}</span>
-                    </div>
-                    <div class="block">
-                        <!-- Summary -->
-                        <p class="mb-2 sm-label line-clamp-2">
-                            {{ entry_analysis.entry_summary|default:"No summary available." }}
-                        </p>
-                        <span class="xs-label text-nowrap">
-                            Author: {{ entry.participant_display_name|capfirst }}
-                        </span>
+                <!-- RUN HEADER -->
+                <header class="shrink-0 flex flex-col gap-2 p-2 bg-gray-100">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex flex-col">
+                            <span class="card-summary-title">
+                                {% heroicon_outline "code-bracket-square"%}
+                                RUN-{{ run.id|stringformat:"03d" }}
+                            </span>
+
+                            <!-- ANALYSIS DATE -->
+                            <p class="xs-label p-1">
+                                {% heroicon_outline "calendar-days" class="h-4 w-4" %}
+                                {% if run.completed_at %}
+                                    Completed on: {{ run.completed_at|date:"M d, Y H:i" }}
+
+                                {% elif run.created_at %}
+                                    Started on: {{ run.created_at|date:"M d, Y H:i" }}
+                                {% else %}
+                                    Date unavailable
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        {% if run.status %}
+                            <span class="run-{{ run.status }}">
+                                {{ run.status }}
+                            </span>
+                        {% endif %}
                     </div>
                 </header>
 
-                <!-- Analysis Body (Shows Analysis data) -->
-                <section class="flex flex-col gap-2 p-2">
-                    {% if entry_analysis %}
-                        <span class="xs-label text-nowrap">
-                            Analyzed on {{ entry_analysis.analyzed_at|date:"M d, Y H:i" }}
-                        </span>
-                        <!-- Analysis chips -->
-                        <div class="flex flex-col gap-2 justify-between text-xs">
-                            
-                            <div class="flex items-center gap-1">
-                                {% include "studies/partials/_badge_sentiment.html" with sentiment=entry_analysis.sentiment_label %}
-
-                                <span class="badge">
-                                    Score: {{ entry_analysis.sentiment_score|floatformat:2 }}
+                <!-- RUN BODY -->
+                <section class="flex flex-col flex-1 gap-2 p-2">
+                    <!-- SENTIMENT ANALYSIS -->
+                    <div class="flex flex-col gap-2 card-border justify-between">
+                        <div class="flex flex-nowrap items-center justify-between p-2 bg-gray-100">
+                            <span class="sm-label uppercase">
+                                {% heroicon_outline "face-smile" class="h-4 w-4" %}
+                                Sentiment Analysis
+                            </span>
+                            <span class="badge">
+                                Score: {{ entry_analysis.sentiment_score|floatformat:2 }}
+                            </span>
+                        </div>
+                        <div class="flex flex-nowrap items-end justify-center mb-2">
+                            <div class="p-2">
+                                <span class="xs-label flex flex-col gap-2 text-nowrap">
+                                    SELF-REPORTED
+                                    {% include "studies/partials/_badge_sentiment.html" with sentiment=entry.sentiment_self_report %}
                                 </span>
                             </div>
+                            <div>
+                                <span class="xs-label py-3">
+                                    {% heroicon_outline "arrow-right" class="h-4 w-4" %}
+                                </span>
+                            </div>
+                            <div class="flex flex-col gap-2 p-2">
+                                <span class="xs-label flex flex-col gap-2">
+                                    DETECTED
+                                    {% include "studies/partials/_badge_sentiment.html" with sentiment=entry_analysis.sentiment_label %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- THEMATIC ANALYSIS -->
+                    <div class="flex flex-col gap-2 card-border justify-between">
+                        <div class="flex flex-nowrap items-center justify-between p-2 bg-gray-100">
+                            <span class="sm-label uppercase">
+                                {% heroicon_outline "tag" class="h-4 w-4" %}
+                                Theme Analysis
+                            </span>
+                            <span class="badge">
+                                Weight: {{ entry_analysis.theme_weight|floatformat:2 }}
+                            </span>
+                        </div>
 
-                            <div class="flex items-center gap-1">
+                        <div class="flex flex-nowrap items-end justify-center mb-2">
+                            <span class="xs-label flex flex-col gap-2 text-nowrap">
+                                THEME KEYWORDS
                                 {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.theme_label %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-2 card-border justify-between">
+                        <div class="flex flex-nowrap items-center justify-between p-2 bg-gray-100">
+                            <span class="sm-label uppercase">
+                                {% heroicon_outline "exclamation-triangle" class="h-4 w-4" %}
+                                Issues Detected
+                            </span>
+                        </div>
 
-                                <span class="badge">
-                                    Weight: {{ entry_analysis.theme_weight|floatformat:2 }}
-                                </span>
-                            </div>
-
-                            <div class="flex items-center gap-1">
+                        <div class="flex flex-nowrap items-end justify-center mb-2">
+                            <span class="xs-label flex flex-col gap-2 text-nowrap">
                                 {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.issues %}
-                            </div>
+                            </span>
                         </div>
-                    {% else %}
-                        <div class="mt-2 text-sm text-gray-500 dark:text-gray-400 text-nowrap">
-                            No analysis available for this entry.
-                        </div>
-                    {% endif %}
+                    </div>
                 </section>
                 <footer class="flex flex-col gap-2 p-2">
                     <!-- Link to entry -->
-                    <a href="{% url 'diary_entry_detail' entry.study_id entry.id %}"
+                    <a href="{% url 'machine_analysis_details' study.id run.id %}"
                     class="text-xs font-medium text-blue-600 hover:text-blue-500 dark:text-blue-100 dark:hover:text-blue-50">
-                        View entry →
+                        View full study analysis →
                     </a>
                 </footer>
             </article>

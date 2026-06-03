@@ -118,11 +118,11 @@
 	}
 
 	.xs-label {
-		@apply flex flex-nowrap gap-1 text-xs font-medium text-gray-500 dark:text-gray-400
+		@apply flex flex-nowrap items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400
 	}
 
 	.sm-label {
-		@apply text-sm font-medium text-gray-800 dark:text-gray-300
+		@apply flex flex-nowrap items-center gap-1 text-sm font-medium text-gray-800 dark:text-gray-300
 	}
 
 	.md-card-title {
@@ -167,6 +167,10 @@
 
 	.card-border {
 		@apply rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900
+	}
+
+	.entry-content {
+		@apply mt-2 text-sm leading-6 text-gray-900 dark:text-gray-100
 	}
 
 }
