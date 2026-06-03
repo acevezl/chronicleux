@@ -4,136 +4,138 @@
 {% block title %}Manage Participants of {{ study.title }} · ChronicleUX{% endblock %}
 
 {% block content %}
-<div class="sticky-top">
-	{% include "studies/partials/_header_study.html" with study=study%}
-	{% include "studies/partials/_menu_back_to_study.html" with study=study %}
-</div>
-
-<div class="px-4 mt-4">
-	<details open class="group main-card">
-
-		<!-- CARD TITLE (I.E., SUMMARY) -->
-		<summary class="card-summary">
-            <div class="flex flex-col">
-                <span class="card-summary-title">
-                    {% heroicon_outline "users" %}
-                    Manage Participants
-                </span>
-                <p class="top-subtitle">
-                    Add or remove registered participants for {{ study.title }}.
-                </p>
-            </div>
-            <span class="card-summary-chevron">
-                {% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
-            </span>
-        </summary>
-
-		<div class="px-6 py-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600">
-			<form method="get" class="flex flex-wrap gap-3">
-				<input
-					type="text"
-					name="q"
-					placeholder="Search registered users..."
-					value="{{ q }}"
-					class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-72 dark:text-white dark:border-gray-500"
-				>
-
-				<button type="submit" class="button-FILTER">
-					Search
-				</button>
-
-				{% if q %}
-					<a href="{% url 'manage_participants' study.pk %}" class="button-FILTER-CLEAR">
-						Clear Filter
-					</a>
-				{% endif %}
-			</form>
-		</div>
-
-		<div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-200 dark:divide-gray-600">
-
-			<section class="bg-white dark:bg-gray-900">
-				<div class="px-4 py-3 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-					<h2 class="text-sm font-medium text-gray-700 dark:text-gray-200">
-						Current Participants
-					</h2>
-				</div>
-
-				<div class="divide-y divide-gray-200 dark:divide-gray-600">
-					{% if participant_memberships %}
-						{% for membership in participant_memberships %}
-							<div class="flex items-center justify-between gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-								<div class="min-w-0">
-									<div class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
-										{{ membership.user.username|capfirst }}
-									</div>
-
-									<div class="text-xs text-gray-500 dark:text-gray-400 truncate">
-										{{ membership.user.email|default:"No email" }}
-									</div>
-								</div>
-
-								<form method="post" class="shrink-0">
-									{% csrf_token %}
-									<input type="hidden" name="action" value="remove">
-									<input type="hidden" name="user_id" value="{{ membership.user.id }}">
-
-									<button type="submit" class="button-FILTER-CLEAR">
-										Remove
-									</button>
-								</form>
-							</div>
-						{% endfor %}
-					{% else %}
-						<div class="px-6 py-6">
-							<p class="text-gray-500 italic">No participants added yet.</p>
-						</div>
-					{% endif %}
-				</div>
-			</section>
-
-			<section class="bg-white dark:bg-gray-900">
-				<div class="px-4 py-3 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-					<h2 class="text-sm font-medium text-gray-700 dark:text-gray-200">
-						Available Registered Users
-					</h2>
-				</div>
-
-				<div class="divide-y divide-gray-200 dark:divide-gray-600">
-					{% if available_users %}
-						{% for user in available_users %}
-							<div class="flex items-center justify-between gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-								<div class="min-w-0">
-									<div class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
-										{{ user.username|capfirst }}
-									</div>
-
-									<div class="text-xs text-gray-500 dark:text-gray-400 truncate">
-										{{ user.email|default:"No email" }}
-									</div>
-								</div>
-
-								<form method="post" class="shrink-0">
-									{% csrf_token %}
-									<input type="hidden" name="action" value="add">
-									<input type="hidden" name="user_id" value="{{ user.id }}">
-
-									<button type="submit" class="button-FILTER">
-										Add
-									</button>
-								</form>
-							</div>
-						{% endfor %}
-					{% else %}
-						<div class="px-6 py-6">
-							<p class="text-gray-500 italic">No available registered users found.</p>
-						</div>
-					{% endif %}
-				</div>
-			</section>
-
-		</div>
-
+	<div class="sticky-top">
+		{% include "studies/partials/_header_study.html" with study=study%}
+		{% include "studies/partials/_menu_back_to_study.html" with study=study %}
 	</div>
-</div>
+
+	<div class="p-4">
+		{% include "studies/partials/_messages.html" %}
+
+		<details open class="group main-card">
+
+			<!-- CARD TITLE (I.E., SUMMARY) -->
+			<summary class="card-summary">
+				<div class="flex flex-col">
+					<span class="card-summary-title">
+						{% heroicon_outline "users" %}
+						Manage Participants
+					</span>
+					<p class="top-subtitle">
+						Add or remove registered participants for {{ study.title }}.
+					</p>
+				</div>
+				<span class="card-summary-chevron">
+					{% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
+				</span>
+			</summary>
+
+			<div class="px-6 py-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600">
+				<form method="get" class="flex flex-wrap gap-3">
+					<input
+						type="text"
+						name="q"
+						placeholder="Search registered users..."
+						value="{{ q }}"
+						class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-72 dark:text-white dark:border-gray-500"
+					>
+
+					<button type="submit" class="button-FILTER">
+						Search
+					</button>
+
+					{% if q %}
+						<a href="{% url 'manage_participants' study.pk %}" class="button-FILTER-CLEAR">
+							Clear Filter
+						</a>
+					{% endif %}
+				</form>
+			</div>
+
+			<div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-200 dark:divide-gray-600">
+
+				<section class="bg-white dark:bg-gray-900">
+					<div class="px-4 py-3 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+						<h2 class="text-sm font-medium text-gray-700 dark:text-gray-200">
+							Current Participants
+						</h2>
+					</div>
+
+					<div class="divide-y divide-gray-200 dark:divide-gray-600">
+						{% if participant_memberships %}
+							{% for membership in participant_memberships %}
+								<div class="flex items-center justify-between gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+									<div class="min-w-0">
+										<div class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
+											{{ membership.user.username|capfirst }}
+										</div>
+
+										<div class="text-xs text-gray-500 dark:text-gray-400 truncate">
+											{{ membership.user.email|default:"No email" }}
+										</div>
+									</div>
+
+									<form method="post" class="shrink-0">
+										{% csrf_token %}
+										<input type="hidden" name="action" value="remove">
+										<input type="hidden" name="user_id" value="{{ membership.user.id }}">
+
+										<button type="submit" class="button-FILTER-CLEAR">
+											Remove
+										</button>
+									</form>
+								</div>
+							{% endfor %}
+						{% else %}
+							<div class="px-6 py-6">
+								<p class="text-gray-500 italic">No participants added yet.</p>
+							</div>
+						{% endif %}
+					</div>
+				</section>
+
+				<section class="bg-white dark:bg-gray-900">
+					<div class="px-4 py-3 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+						<h2 class="text-sm font-medium text-gray-700 dark:text-gray-200">
+							Available Registered Users
+						</h2>
+					</div>
+
+					<div class="divide-y divide-gray-200 dark:divide-gray-600">
+						{% if available_users %}
+							{% for user in available_users %}
+								<div class="flex items-center justify-between gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+									<div class="min-w-0">
+										<div class="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
+											{{ user.username|capfirst }}
+										</div>
+
+										<div class="text-xs text-gray-500 dark:text-gray-400 truncate">
+											{{ user.email|default:"No email" }}
+										</div>
+									</div>
+
+									<form method="post" class="shrink-0">
+										{% csrf_token %}
+										<input type="hidden" name="action" value="add">
+										<input type="hidden" name="user_id" value="{{ user.id }}">
+
+										<button type="submit" class="button-FILTER">
+											Add
+										</button>
+									</form>
+								</div>
+							{% endfor %}
+						{% else %}
+							<div class="px-6 py-6">
+								<p class="text-gray-500 italic">No available registered users found.</p>
+							</div>
+						{% endif %}
+					</div>
+				</section>
+
+			</div>
+
+		</div>
+	</div>
 {% endblock %}

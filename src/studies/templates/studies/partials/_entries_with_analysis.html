@@ -1,13 +1,156 @@
 {% load formatters %}
+<div class="border-b border-gray-200 dark:border-gray-600 px-4 py-3 bg-gray-50 dark:bg-gray-800">
+                        
+    <form
+        method="get"
+        hx-get="{{ machine_analysis_entries_filter_url }}"
+        hx-target="#analysis-entries-panel"
+        hx-swap="innerHTML"
+        hx-push-url="false"
+        hx-trigger="submit, change delay:100ms from:select, change delay:500ms from:input, keyup changed delay:500ms from:input"
+        class="space-y-3"
+    >
+        <div class="flex flex-wrap gap-3">
 
-<div class="grid grid-cols-4 items-center gap-4">
+            <div>
+                <label for="q" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Open search:
+                </label>
+                <input
+                    id="q"
+                    type="text"
+                    name="q"
+                    placeholder="Search analyzed entries..."
+                    value="{{ request.GET.q }}"
+                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
+                >
+            </div>
+
+            <div>
+                <label for="sentiment" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Detected Sentiment:
+                </label>
+                <select
+                    id="sentiment"
+                    name="sentiment"
+                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
+                >
+                    <option value="">All detected sentiments</option>
+                    <option value="VERY_NEGATIVE" {% if sentiment == "VERY_NEGATIVE" %}selected{% endif %}>Very negative</option>
+                    <option value="NEGATIVE" {% if sentiment == "NEGATIVE" %}selected{% endif %}>Negative</option>
+                    <option value="NEUTRAL" {% if sentiment == "NEUTRAL" %}selected{% endif %}>Neutral</option>
+                    <option value="POSITIVE" {% if sentiment == "POSITIVE" %}selected{% endif %}>Positive</option>
+                    <option value="VERY_POSITIVE" {% if sentiment == "VERY_POSITIVE" %}selected{% endif %}>Very positive</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="theme" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Detected Theme:
+                </label>
+                <select
+                    id="theme"
+                    name="theme"
+                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
+                >
+                    <option value="">All detected themes</option>
+
+                    {% for theme_item in run.theme_distribution %}
+                        <option value="{{ theme_item.label }}" {% if theme == theme_item.label %}selected{% endif %}>
+                            {{ theme_item.label|capfirst }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="issue_detected" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Issue Detected:
+                </label>
+                <select
+                    id="issue_detected"
+                    name="issue_detected"
+                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-48 dark:text-white dark:border-gray-500"
+                >
+                    <option value="">All analyzed entries</option>
+                    <option value="yes" {% if issue_detected == "yes" %}selected{% endif %}>Yes</option>
+                    <option value="no" {% if issue_detected == "no" %}selected{% endif %}>No</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="issue_tag" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Issue Tag:
+                </label>
+                <select
+                    id="issue_tag"
+                    name="issue_tag"
+                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-48 dark:text-white dark:border-gray-500"
+                >
+                    <option value="">All issue tags</option>
+
+                    {% for issue_item in run.recurring_issues %}
+                        <option value="{{ issue_item.label }}" {% if issue_tag == issue_item.label %}selected{% endif %}>
+                            {{ issue_item.label|capfirst }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="sort" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Sort:
+                </label>
+                <select
+                    id="sort"
+                    name="sort"
+                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-48 dark:text-white dark:border-gray-500"
+                >
+                    <option value="-entry__created_at" {% if sort == "-entry__created_at" %}selected{% endif %}>Newest first</option>
+                    <option value="entry__created_at" {% if sort == "entry__created_at" %}selected{% endif %}>Oldest first</option>
+                    <option value="entry__participant_display_name" {% if sort == "entry__participant_display_name" %}selected{% endif %}>Participant A-Z</option>
+                    <option value="sentiment_label" {% if sort == "sentiment_label" %}selected{% endif %}>Sentiment A-Z</option>
+                    <option value="theme_label" {% if sort == "theme_label" %}selected{% endif %}>Theme A-Z</option>
+                    <option value="-issue_detected" {% if sort == "-issue_detected" %}selected{% endif %}>Issues first</option>
+                </select>
+            </div>
+
+            <button
+                type="submit"
+                class="button-FILTER h-10 self-end"
+            >
+                Filter
+            </button>
+
+            {% if q or sentiment or theme or issue_detected or issue_tag or sort != "-entry__created_at" %}
+                <a
+                    href="{{ machine_analysis_entries_filter_url }}"
+                    hx-get="{{ machine_analysis_entries_filter_url }}"
+                    hx-target="#analysis-entries-panel"
+                    hx-swap="innerHTML"
+                    hx-push-url="false"
+                    class="button-FILTER-CLEAR h-10 self-end inline-flex items-center"
+                >
+                    Clear Filter
+                </a>
+            {% endif %}
+        </div>
+    </form>
+
+    <div class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+        Showing {{ displayed_entry_analyses_count }} of {{ total_filtered_entry_analyses_count }} matching entries.
+        Total entries analyzed in this run: {{ total_run_entry_analyses_count }}.
+    </div>
+</div>
+
+<div class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 items-center gap-4 p-4">
     {% for entry_analysis in entry_analyses %}
         {% with entry=entry_analysis.entry %}
-            <article class="flex flex-col justify-between h-full w-full rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <article class="flex flex-col h-full w-full justify-between rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
                 
                 <!-- Analysis Header (Shows Entry data) -->
                 <header class="flex flex-col gap-2 p-2 bg-gray-100">
-                    <div class="flex items-center w-full justify-between mb-2">
+                    <div class="flex flex-wrap items-center w-full justify-between mb-2">
                         <span class="xs-label text-nowrap">Created on {{ entry.created_at|date:"M d, Y H:i" }}</span>
                         <span class="xs-label">{{ entry.source|default:"-" }}</span>
                     </div>
@@ -29,9 +172,9 @@
                             Analyzed on {{ entry_analysis.analyzed_at|date:"M d, Y H:i" }}
                         </span>
                         <!-- Analysis chips -->
-                        <div class="flex flex-col gap-2 justify-between text-xs">
+                        <div class="flex flex-col gap-3 justify-between text-xs">
                             
-                            <div class="flex items-center gap-1">
+                            <div class="flex flex-wrap items-center gap-1">
                                 {% include "studies/partials/_badge_sentiment.html" with sentiment=entry_analysis.sentiment_label %}
 
                                 <span class="badge">
@@ -39,7 +182,7 @@
                                 </span>
                             </div>
 
-                            <div class="flex items-center gap-1">
+                            <div class="flex flex-wrap  items-center gap-1">
                                 {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.theme_label %}
 
                                 <span class="badge">
@@ -47,7 +190,7 @@
                                 </span>
                             </div>
 
-                            <div class="flex items-center gap-1">
+                            <div class="flex flex-wrap  items-center gap-1">
                                 {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.issues %}
                             </div>
                         </div>
@@ -57,7 +200,7 @@
                         </div>
                     {% endif %}
                 </section>
-                <footer class="flex flex-col gap-2 p-2">
+                <footer class="flex gap-2 p-2">
                     <!-- Link to entry -->
                     <a href="{% url 'diary_entry_detail' entry.study_id entry.id %}"
                     class="text-xs font-medium text-blue-600 hover:text-blue-500 dark:text-blue-100 dark:hover:text-blue-50">

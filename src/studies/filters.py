@@ -1,8 +1,10 @@
 from django.core.paginator import Paginator
 from django.db.models import Q
 
-from .models import DiaryEntry
+from .models import DiaryEntry, DiaryEntryAnalysis
 
+
+# -------- FILTER FOR ENTRY LIST PAGE -------- #
 
 ALLOWED_ENTRY_SORTS = {
 	"created_at",
@@ -100,4 +102,91 @@ def filter_diary_entries(request, study, run=None):
 		"displayed_entries_count": displayed_entries_count,
 		"total_filtered_entries_count": total_filtered_entries_count,
 		"total_study_entries_count": total_study_entries_count,
+	}
+
+
+# -------- FILTER FOR STUDY ANALYSIS WITHIN MACHINE ANALYSIS DEETS PAGE -------- #
+
+ALLOWED_ANALYSIS_ENTRY_SORTS = {
+	"entry__created_at",
+	"-entry__created_at",
+	"entry__participant_display_name",
+	"-entry__participant_display_name",
+	"sentiment_label",
+	"-sentiment_label",
+	"theme_label",
+	"-theme_label",
+	"issue_detected",
+	"-issue_detected",
+}
+
+def filter_analysis_entries(request, study, run):
+	q = request.GET.get("q", "").strip()
+	sentiment = request.GET.get("sentiment", "").strip()
+	theme = request.GET.get("theme", "").strip()
+	issue_detected = request.GET.get("issue_detected", "").strip()
+	issue_tag = request.GET.get("issue_tag", "").strip()
+	sort = request.GET.get("sort", "-entry__created_at")
+
+	entry_analyses = (
+		DiaryEntryAnalysis.objects
+		.filter(run=run, entry__study=study)
+		.select_related("entry", "entry__participant")
+	)
+
+	if q:
+		entry_analyses = entry_analyses.filter(
+			Q(entry__content__icontains=q)
+			| Q(entry__participant_display_name__icontains=q)
+			| Q(entry__participant_external_id__icontains=q)
+			| Q(entry__participant_email__icontains=q)
+			| Q(entry_summary__icontains=q)
+			| Q(sentiment_label__icontains=q)
+			| Q(theme_label__icontains=q)
+		)
+
+	if sentiment:
+		entry_analyses = entry_analyses.filter(sentiment_label=sentiment)
+
+	if theme:
+		entry_analyses = entry_analyses.filter(theme_label=theme)
+
+	if issue_detected == "yes":
+		entry_analyses = entry_analyses.filter(issue_detected=True)
+	elif issue_detected == "no":
+		entry_analyses = entry_analyses.filter(issue_detected=False)
+
+	if issue_tag:
+		matching_ids = [
+			entry_analysis.pk
+			for entry_analysis in entry_analyses
+			if issue_tag in (entry_analysis.issues or [])
+		]
+		entry_analyses = entry_analyses.filter(pk__in=matching_ids)
+
+	if sort not in ALLOWED_ANALYSIS_ENTRY_SORTS:
+		sort = "-entry__created_at"
+
+	entry_analyses = entry_analyses.order_by(sort)
+
+	total_filtered_entry_analyses_count = entry_analyses.count()
+	total_run_entry_analyses_count = (
+		DiaryEntryAnalysis.objects
+		.filter(run=run, entry__study=study)
+		.count()
+	)
+
+	return {
+		"entry_analyses": entry_analyses,
+
+		"q": q,
+		"sentiment": sentiment,
+		"theme": theme,
+		"issue_detected": issue_detected,
+		"issue_tag": issue_tag,
+		"sort": sort,
+
+		"displayed_entry_analyses_count": total_filtered_entry_analyses_count,
+		"total_filtered_entry_analyses_count": total_filtered_entry_analyses_count,
+		"total_run_entry_analyses_count": total_run_entry_analyses_count,
 	}

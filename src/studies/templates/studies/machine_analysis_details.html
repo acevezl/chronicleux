@@ -6,175 +6,147 @@
 
 {% block content %}
 
-<div class="sticky-top">
-		{% include "studies/partials/_header_study.html" %}
-		{% include "studies/partials/_menu_back_to_study.html" %}
-	</div>
+    <div class="sticky-top">
+        {% include "studies/partials/_header_study.html" %}
+        {% include "studies/partials/_menu_back_to_study.html" %}
+    </div>
 
-<div class="p-4">
+    <div class="p-4">
+        
+        {% include "studies/partials/_messages.html" %}
 
-    <details open class="group main-card mb-4">
+        <details open class="group main-card mb-4">
+            
+            <!-- CARD TITLE (I.E., SUMMARY) -->
+            <summary class="card-summary">
+                <div class="flex flex-col">
+                    <span class="card-summary-title">
+                        {% heroicon_outline "code-bracket-square"%}
+                        RUN-{{ run.id|stringformat:"03d" }}
+                    </span>
 
-        <!-- CARD TITLE (I.E., SUMMARY) -->
-		<summary class="card-summary">
-            <div class="flex flex-col">
-                <span class="card-summary-title">
-                    {% heroicon_outline "code-bracket-square"%}
-                    RUN-{{ run.id|stringformat:"03d" }}
+                    <!-- ANALYSIS DATE -->
+                    <p class="card-summary-subtitle ">
+                        {% heroicon_outline "calendar-days" class="h-4 w-4" %}
+                        {% if run.completed_at %}
+                            Completed on: {{ run.completed_at|date:"Y-m-d H:i" }}
+                            
+                            {% heroicon_outline "document-text" class="h-4 w-4" %}
+                            Entries Analyzed: {{ run.total_entries|default:"0" }}
+
+                        {% elif run.created_at %}
+                            Started on: {{ run.created_at|date:"Y-m-d H:i" }}
+                        {% else %}
+                            Date unavailable
+                        {% endif %}
+                    </p>
+
+                    <!-- RUN METHODS -->
+                    <p class="card-summary-subtitle ">
+                        {% heroicon_outline "face-smile" class="h-4 w-4" %}
+                        Sentiment Analysis Method: {{ run.methods.sentiment|upper|default:"—" }}
+
+                        {% heroicon_outline "tag" class="h-4 w-4" %}
+                        Theme Analysis Method: {{ run.methods.theme|upper|default:"—" }}
+                    </p>
+
+                </div>
+                <span class="card-summary-chevron">
+                    {% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
                 </span>
+            </summary>
 
-                <!-- ANALYSIS DATE -->
-                <p class="card-summary-subtitle ">
-                    {% heroicon_outline "calendar-days" class="h-4 w-4" %}
-                    {% if run.completed_at %}
-                        Completed on: {{ run.completed_at|date:"Y-m-d H:i" }}
+            <!-- KEY INSIGHTS -->
+            <div class="grid grid-cols-1 gap-4 p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <!-- DOMINANT SENTIMENT & DISTRIBUTION -->
+                    {% include "studies/partials/_distribution_sentiment.html" with dominant_sentiment=run.dominant_sentiment_label sentiment_distribution=run.sentiment_distribution study_id=study.id run_id=run.id%}
+                    
+                    <!-- DOMINANT THEME & DISTRIBUTION -->
+                    {% include "studies/partials/_distribution_theme.html" with dominant_theme=run.dominant_theme_label theme_distribution=run.theme_distribution study_id=study.id run_id=run.id%}
+
+                    <!-- ISSUE DISTRIBUTION -->
+                    {% include "studies/partials/_distribution_issues.html" with issue_distribution=run.recurring_issues study_id=study.id run_id=run.id%}
+
+                    <!-- ISSUE IMPACT MATRIX -->
+                    {% include "studies/partials/_issue_impact_matrix.html" with issue_impact_matrix=run.recurring_issues study_id=study.id run_id=run.id%}
+
+                </div>
+                <div class="grid grid-cols-1 gap-4">
+                    <!-- TOP SENTIMENT SIGNALS -->
+                    {% include "studies/partials/_top_sentiment_signals.html" with top_quotes=run.top_representative_quotes study_id=study.id run_id=run.id%}
+
+                </div>    
+            </div>
+
+            <!-- ANALYSIS BODY -->
+            <div class="p-4 bg-white dark:bg-gray-900">
+
+                <!-- SENTIMENT SCORE EVOLUTION OVER TIME -->
+                <div>
+                    <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+                        Sentiment Score Evolution Over Time
+                    </label>
                         
-                        {% heroicon_outline "document-text" class="h-4 w-4" %}
-                        Entries Analyzed: {{ run.total_entries|default:"0" }}
-
-                    {% elif run.created_at %}
-                        Started on: {{ run.created_at|date:"Y-m-d H:i" }}
-                    {% else %}
-                        Date unavailable
-                    {% endif %}
-                </p>
-
-                <!-- RUN METHODS -->
-                <p class="card-summary-subtitle ">
-                    {% heroicon_outline "face-smile" class="h-4 w-4" %}
-                    Sentiment Analysis Method: {{ run.methods.sentiment|upper|default:"—" }}
-
-                    {% heroicon_outline "tag" class="h-4 w-4" %}
-                    Theme Analysis Method: {{ run.methods.theme|upper|default:"—" }}
-                </p>
-
-            </div>
-            <span class="card-summary-chevron">
-                {% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
-            </span>
-        </summary>
-
-        <!-- KEY INSIGHTS -->
-        <div class="grid grid-cols-1 gap-4 p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                <!-- DOMINANT SENTIMENT & DISTRIBUTION -->
-                {% include "studies/partials/_distribution_sentiment.html" with dominant_sentiment=run.dominant_sentiment_label sentiment_distribution=run.sentiment_distribution study_id=study.id run_id=run.id%}
-                
-                <!-- DOMINANT THEME & DISTRIBUTION -->
-                {% include "studies/partials/_distribution_theme.html" with dominant_theme=run.dominant_theme_label theme_distribution=run.theme_distribution study_id=study.id run_id=run.id%}
-
-                <!-- ISSUE DISTRIBUTION -->
-                {% include "studies/partials/_distribution_issues.html" with issue_distribution=run.recurring_issues study_id=study.id run_id=run.id%}
-
-                <!-- ISSUE IMPACT MATRIX -->
-                {% include "studies/partials/_issue_impact_matrix.html" with issue_impact_matrix=run.recurring_issues study_id=study.id run_id=run.id%}
-
-            </div>
-            <div class="grid grid-cols-1 gap-4">
-                <!-- TOP SENTIMENT SIGNALS -->
-                {% include "studies/partials/_top_sentiment_signals.html" with top_quotes=run.top_representative_quotes study_id=study.id run_id=run.id%}
-
-            </div>    
-        </div>
-
-        <!-- ANALYSIS BODY -->
-        <div class="p-4 bg-white dark:bg-gray-900">
-
-            <!-- SENTIMENT SCORE EVOLUTION OVER TIME -->
-            <div>
-                <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
-                    Sentiment Score Evolution Over Time
-                </label>
-                    
-                {% include "studies/partials/_evolution_sentiment.html" with evolution=run.evolution_over_time run_id=run.id %}
-
-            </div>
-
-            <!-- SENTIMENT LABEL EVOLUTION OVER TIME -->
-            <div class="mt-2">
-
-                <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
-                    Sentiment Category Evolution Over Time
-                </label>
-                    
-                {% include "studies/partials/_evolution_sentiment_label.html" with evolution=run.evolution_over_time run_id=run.id %}
-
-            </div>
-
-            <!-- THEME + ISSUE EVOLUTION -->
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-2">
-
-                <!-- THEME EVOLUTION -->
-                <div>
-
-                    <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
-                        Theme Evolution
-                    </label>
-
-                    {% include "studies/partials/_evolution_theme.html" with evolution=run.evolution_over_time run=run %}
+                    {% include "studies/partials/_evolution_sentiment.html" with evolution=run.evolution_over_time run_id=run.id %}
 
                 </div>
 
-                <!-- ISSUE EVOLUTION -->
-                <div>
-                    <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
-                        Issue Detection Over Time
-                    </label>
+                <!-- SENTIMENT LABEL EVOLUTION OVER TIME -->
+                <div class="mt-2">
 
-                    {% include "studies/partials/_evolution_issues.html" with evolution=run.evolution_over_time run=run %}
+                    <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+                        Sentiment Category Evolution Over Time
+                    </label>
+                        
+                    {% include "studies/partials/_evolution_sentiment_label.html" with evolution=run.evolution_over_time run_id=run.id %}
+
                 </div>
 
-            </div>
+                <!-- THEME + ISSUE EVOLUTION -->
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-2">
 
-            <!-- EVIDENCE TRAIL -->
-            <div>
-                <label class="block text-lg font-medium text-gray-700 dark:text-gray-200 mt-2">
-                    Evidence Trail
-                </label>
+                    <!-- THEME EVOLUTION -->
+                    <div>
 
-                <div class="mt-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 overflow-hidden">
-                    <div class="border-b border-gray-200 dark:border-gray-600 px-4 py-3 bg-gray-50 dark:bg-gray-800">
-                        <div class="flex flex-wrap gap-2">
-                            <a
-                                href="{% url 'entries' study.pk %}?analysis_run={{ run.pk }}"
-                                class="rounded-sm px-3 py-1 text-xs font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
-                            >
-                                All analyzed entries
-                            </a>
+                        <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+                            Theme Evolution
+                        </label>
 
-                            <a
-                                href="{% url 'entries' study.pk %}?analysis_run={{ run.pk }}&sentiment=positive"
-                                class="rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                            >
-                                Positive sentiment
-                            </a>
+                        {% include "studies/partials/_evolution_theme.html" with evolution=run.evolution_over_time run=run %}
 
-                            <a
-                                href="{% url 'entries' study.pk %}?analysis_run={{ run.pk }}&sentiment=negative"
-                                class="rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                            >
-                                Negative sentiment
-                            </a>
+                    </div>
 
-                            <a
-                                href="{% url 'entries' study.pk %}?analysis_run={{ run.pk }}&has_issue=true"
-                                class="rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                            >
-                                Detected issues
-                            </a>
+                    <!-- ISSUE EVOLUTION -->
+                    <div>
+                        <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+                            Issue Detection Over Time
+                        </label>
+
+                        {% include "studies/partials/_evolution_issues.html" with evolution=run.evolution_over_time run=run %}
+                    </div>
+
+                </div>
+
+                <!-- EVIDENCE TRAIL -->
+                <div>
+                    <label class="block text-lg font-medium text-gray-700 dark:text-gray-200 mt-2">
+                        Evidence Trail
+                    </label>
+
+                    <div class="mt-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 overflow-hidden">
+                        
+                        <div class="" id="analysis-entries-panel">
+                            {% include "studies/partials/_entries_with_analysis.html" with entry_analyses=entry_analyses study=study run=run %}
                         </div>
-                    </div>
-                    <div class="p-4" id="analysis-entries-panel">
-                        {% include "studies/partials/_entries_with_analysis.html" with entry_analyses=entry_analyses study=study run=run %}
-                    </div>
 
+                    </div>
+                    
                 </div>
-                
             </div>
-        </div>
-    </details>
+        </details>
 
-</div>
+    </div>
 
 {% endblock %}

@@ -5,10 +5,12 @@
 
 {% block content %}
     
-	<div class="sticky-top">
+    <div class="sticky-top">
     {% include "studies/partials/_header_studies.html" %}
     </div>
 
+    <div class="p-4">
     {% include "studies/partials/_studies.html" with study=study %}
+    </div>
 
 {% endblock %}

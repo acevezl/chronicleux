@@ -1,190 +1,188 @@
 {% load heroicons %}
 {% load formatters %}
 
-<div class="px-4 mt-4">
-	<details open class="group main-card">
+<details open class="group main-card">
 
-		<!-- CARD TITLE (I.E., SUMMARY) -->
-		<summary class="card-summary">
-			<div class="flex flex-col">
-				<span class="card-summary-title">
-					{% heroicon_outline "cpu-chip" %}
-					Machine Analysis Runs
-				</span>
-
-				<p class="card-summary-subtitle">
-					Previous machine-generated analyses for this study, including sentiment, theme detection and traceable results.
-				</p>
-			</div>
-
-			<span class="card-summary-chevron">
-				{% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
+	<!-- CARD TITLE (I.E., SUMMARY) -->
+	<summary class="card-summary">
+		<div class="flex flex-col">
+			<span class="card-summary-title">
+				{% heroicon_outline "cpu-chip" %}
+				Machine Analysis Runs
 			</span>
-		</summary>
 
-		<!-- ANALYSIS RUNS -->
-		<div class="p-4 bg-white dark:bg-gray-900">
-			{% if analysis_runs %}
-				<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
-					{% for run in analysis_runs %}
-
-						<!-- ANALYSIS RUN CARD -->
-						<article class="h-full flex flex-col rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 overflow-hidden">
-
-							<!-- RUN HEADER -->
-							<header class="shrink-0 p-2 border-b border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900">
-								<div class="flex items-start justify-between gap-2">
-									<div class="flex flex-col">
-										<span class="card-summary-title">
-											{% heroicon_outline "code-bracket-square"%}
-											RUN-{{ run.id|stringformat:"03d" }}
-										</span>
-
-										<!-- ANALYSIS DATE -->
-										<p class="xs-label p-1">
-											{% heroicon_outline "calendar-days" class="h-4 w-4" %}
-											{% if run.completed_at %}
-												Completed on: {{ run.completed_at|date:"Y-m-d H:i" }}
-
-											{% elif run.created_at %}
-												Started on: {{ run.created_at|date:"Y-m-d H:i" }}
-											{% else %}
-												Date unavailable
-											{% endif %}
-										</p>
-									</div>
-
-									{% if run.status %}
-										<span class="run-{{ run.status }}">
-											{{ run.status }}
-										</span>
-									{% endif %}
-								</div>
-							</header>
-
-							<!-- RUN BODY -->
-							<section class="flex-1 p-2 space-y-2">
-
-								<!-- METHODS -->
-								<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-
-									<!-- SENTIMENT METHOD -->
-									<div class="flex flex-col gap-2 card-border p-2">
-										<div class="xs-label uppercase">
-											{% heroicon_outline "face-smile" class="h-4 w-4" %}
-											Sentiment Method
-										</div>
-
-										<span class="badge">
-											{{ run.methods.sentiment|humanize_enum|upper|default:"—" }}
-										</span>
-									</div>
-
-									<!-- THEME METHOD -->
-									<div class="flex flex-col gap-2 card-border p-2">
-										<div class="xs-label uppercase">
-											{% heroicon_outline "tag" class="h-4 w-4" %}
-											Theme Method
-										</div>
-
-										<div class="badge">
-											{{ run.methods.theme|humanize_enum|upper|default:"—" }}
-										</div>
-									</div>
-
-								</div>
-
-								<!-- KEY RESULTS -->
-								<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-
-									<!-- DOMINANT SENTIMENT -->
-									<div class="flex flex-col gap-2 card-border p-2">
-										<div class="xs-label uppercase">
-											{% heroicon_outline "arrow-trending-up" class="h-4 w-4" %}
-											Dominant Sentiment
-										</div>
-
-										<div>
-											{% include "studies/partials/_badge_sentiment.html" with sentiment=run.dominant_sentiment_label %}
-										</div>
-									</div>
-
-									<!-- DOMINANT THEMES -->
-									<div class="flex flex-col gap-2 card-border p-2">
-										<div class="xs-label uppercase">
-											{% heroicon_outline "rectangle-group" class="h-4 w-4" %}
-											Theme Keywords
-										</div>
-
-										<div>
-											{% include "studies/partials/_badge_theme_labels.html" with themes=run.dominant_theme_label %}
-										</div>
-									</div>
-
-								</div>
-								
-								<div class="grid grid-cols-1 gap-2">
-
-									<!-- RECURRING ISSUES -->
-									<div class="flex flex-col gap-2 card-border p-2">
-										<div class="xs-label uppercase">
-											{% heroicon_outline "exclamation-triangle" class="h-4 w-4" %}
-											Detected Issues
-										</div>
-
-										<div>
-											{% include "studies/partials/_badge_issue_tags.html" with issues=run.recurring_issues|extract_labels %}
-										</div>
-									</div>
-
-								</div>
-
-							</section>
-
-							<!-- RUN ACTIONS -->
-							<footer class="shrink-0 p-2 border-t border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900">
-								{% if run.status == "COMPLETED" %}
-								<a
-									href="{% url 'machine_analysis_details' run.study_id run.pk %}"
-									class="inline-flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
-								>
-									{% heroicon_outline "chart-bar-square" class="h-4 w-4" %}
-									View analysis details
-								</a>
-								{% else %}
-									<span class="xs-label py-2">
-									Details not available because analysis status is {{run.status}}
-									</span>
-								{% endif %}
-							</footer>
-
-						</article>
-
-					{% endfor %}
-				</div>
-			{% else %}
-
-				<!-- EMPTY STATE -->
-				<div class="rounded-sm border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
-					<div class="flex items-start gap-3">
-						<div class="mt-0.5 text-gray-400 dark:text-gray-500">
-							{% heroicon_outline "cpu-chip" class="h-5 w-5" %}
-						</div>
-
-						<div>
-							<div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-								No machine analysis runs yet.
-							</div>
-
-							<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-								Once machine analysis is executed, each run will appear here with its methods, dominant sentiment and detected themes.
-							</p>
-						</div>
-					</div>
-				</div>
-
-			{% endif %}
+			<p class="card-summary-subtitle">
+				Previous machine-generated analyses for this study, including sentiment, theme detection and traceable results.
+			</p>
 		</div>
 
-	</details>
-</div>
+		<span class="card-summary-chevron">
+			{% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
+		</span>
+	</summary>
+
+	<!-- ANALYSIS RUNS -->
+	<div class="p-4 bg-white dark:bg-gray-900">
+		{% if analysis_runs %}
+			<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+				{% for run in analysis_runs %}
+
+					<!-- ANALYSIS RUN CARD -->
+					<article class="h-full flex flex-col rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 overflow-hidden">
+
+						<!-- RUN HEADER -->
+						<header class="shrink-0 p-2 border-b border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900">
+							<div class="flex items-start justify-between gap-2">
+								<div class="flex flex-col">
+									<span class="card-summary-title">
+										{% heroicon_outline "code-bracket-square"%}
+										RUN-{{ run.id|stringformat:"03d" }}
+									</span>
+
+									<!-- ANALYSIS DATE -->
+									<p class="xs-label p-1">
+										{% heroicon_outline "calendar-days" class="h-4 w-4" %}
+										{% if run.completed_at %}
+											Completed on: {{ run.completed_at|date:"Y-m-d H:i" }}
+
+										{% elif run.created_at %}
+											Started on: {{ run.created_at|date:"Y-m-d H:i" }}
+										{% else %}
+											Date unavailable
+										{% endif %}
+									</p>
+								</div>
+
+								{% if run.status %}
+									<span class="run-{{ run.status }}">
+										{{ run.status }}
+									</span>
+								{% endif %}
+							</div>
+						</header>
+
+						<!-- RUN BODY -->
+						<section class="flex-1 p-2 space-y-2">
+
+							<!-- METHODS -->
+							<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+								<!-- SENTIMENT METHOD -->
+								<div class="flex flex-col gap-2 card-border p-2">
+									<div class="xs-label uppercase">
+										{% heroicon_outline "face-smile" class="h-4 w-4" %}
+										Sentiment Method
+									</div>
+
+									<span class="badge">
+										{{ run.methods.sentiment|humanize_enum|upper|default:"—" }}
+									</span>
+								</div>
+
+								<!-- THEME METHOD -->
+								<div class="flex flex-col gap-2 card-border p-2">
+									<div class="xs-label uppercase">
+										{% heroicon_outline "tag" class="h-4 w-4" %}
+										Theme Method
+									</div>
+
+									<div class="badge">
+										{{ run.methods.theme|humanize_enum|upper|default:"—" }}
+									</div>
+								</div>
+
+							</div>
+
+							<!-- KEY RESULTS -->
+							<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+								<!-- DOMINANT SENTIMENT -->
+								<div class="flex flex-col gap-2 card-border p-2">
+									<div class="xs-label uppercase">
+										{% heroicon_outline "arrow-trending-up" class="h-4 w-4" %}
+										Dominant Sentiment
+									</div>
+
+									<div>
+										{% include "studies/partials/_badge_sentiment.html" with sentiment=run.dominant_sentiment_label %}
+									</div>
+								</div>
+
+								<!-- DOMINANT THEMES -->
+								<div class="flex flex-col gap-2 card-border p-2">
+									<div class="xs-label uppercase">
+										{% heroicon_outline "rectangle-group" class="h-4 w-4" %}
+										Theme Keywords
+									</div>
+
+									<div>
+										{% include "studies/partials/_badge_theme_labels.html" with themes=run.dominant_theme_label %}
+									</div>
+								</div>
+
+							</div>
+							
+							<div class="grid grid-cols-1 gap-2">
+
+								<!-- RECURRING ISSUES -->
+								<div class="flex flex-col gap-2 card-border p-2">
+									<div class="xs-label uppercase">
+										{% heroicon_outline "exclamation-triangle" class="h-4 w-4" %}
+										Detected Issues
+									</div>
+
+									<div>
+										{% include "studies/partials/_badge_issue_tags.html" with issues=run.recurring_issues|extract_labels %}
+									</div>
+								</div>
+
+							</div>
+
+						</section>
+
+						<!-- RUN ACTIONS -->
+						<footer class="shrink-0 p-2 border-t border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900">
+							{% if run.status == "COMPLETED" %}
+							<a
+								href="{% url 'machine_analysis_details' run.study_id run.pk %}"
+								class="inline-flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
+							>
+								{% heroicon_outline "chart-bar-square" class="h-4 w-4" %}
+								View analysis details
+							</a>
+							{% else %}
+								<span class="xs-label py-2">
+								Details not available because analysis status is {{run.status}}
+								</span>
+							{% endif %}
+						</footer>
+
+					</article>
+
+				{% endfor %}
+			</div>
+		{% else %}
+
+			<!-- EMPTY STATE -->
+			<div class="rounded-sm border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+				<div class="flex items-start gap-3">
+					<div class="mt-0.5 text-gray-400 dark:text-gray-500">
+						{% heroicon_outline "cpu-chip" class="h-5 w-5" %}
+					</div>
+
+					<div>
+						<div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+							No machine analysis runs yet.
+						</div>
+
+						<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+							Once machine analysis is executed, each run will appear here with its methods, dominant sentiment and detected themes.
+						</p>
+					</div>
+				</div>
+			</div>
+
+		{% endif %}
+	</div>
+
+</details>

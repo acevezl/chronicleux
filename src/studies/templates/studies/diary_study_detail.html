@@ -10,10 +10,12 @@
 		{% include "studies/partials/_menu_study_actions.html" %}
 	</div>
 
+	<div class="flex flex-col p-4 gap-4">
 	{% include "studies/partials/_study_details.html" with study=study %}
 
 	{% if is_evaluator %}
 		{% include "studies/partials/_analysis_runs_study_level.html" with analysis_runs=analysis_runs %}
 	{% endif %}
+	</div>
 
 {% endblock %}

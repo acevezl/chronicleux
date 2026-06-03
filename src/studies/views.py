@@ -15,7 +15,7 @@ from django.utils.dateparse import parse_datetime
 
 from studies.services.analysis_runner import run_study_analysis
 
-from .filters import filter_diary_entries
+from .filters import filter_diary_entries, filter_analysis_entries
 from .forms import StudyForm, DiaryEntryForm
 from .models import  DiaryEntry, SentimentCategory, DiaryEntrySource, MembershipRole, Study, StudyMembership, StudyAnalysisRun, DiaryEntryAnalysis
 
@@ -238,64 +238,6 @@ def import_entries(request, pk):
 	})
 
 
-# ------------------------ #
-# MACHINE ANALYSIS DETAILS #
-# ------------------------ #
-@login_required
-def machine_analysis_details (request, study_pk, run_pk):
-	study = get_object_or_404(Study, pk=study_pk)
-	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
-
-	diary_entry_analyses = (
-		DiaryEntryAnalysis.objects
-		.filter(run=run)
-		.select_related("entry", "entry__participant")
-	)
-
-	is_evaluator = StudyMembership.objects.filter(
-		study=study,
-		user=request.user,
-		role=MembershipRole.EVALUATOR
-	).exists()
-
-	context = {
-		"study": study,
-		"run": run,
-		"entry_analyses": diary_entry_analyses,
-		"is_evaluator": is_evaluator
-	}
-
-	return render (request, "studies/machine_analysis_details.html", context)
-
-
-# -------------------------------- #
-# MACHINE ANALYSIS ENTRIES PARTIAL #
-# -------------------------------- #
-
-@login_required
-def machine_analysis_entries_partial(request, study_pk, run_pk):
-	study = get_object_or_404(Study, pk=study_pk)
-	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
-
-	if not user_can_evaluate_study(request.user, study):
-		return HttpResponseForbidden()
-
-	context = filter_diary_entries(request, study, run=run)
-	context["study"] = study
-	context["run"] = run
-	context["diary_entries_filter_url"] = reverse(
-		"machine_analysis_entries_partial",
-		args=[study.pk, run.pk],
-	)
-
-	context["is_evaluator"] = StudyMembership.objects.filter(
-		study=study,
-		user=request.user,
-		role=MembershipRole.EVALUATOR
-	).exists()
-
-	return render(request, "studies/partials/_entries.html", context)
-
 # ---------------------------- #
 # MANAGE EVALUATORS (OF STUDY) #
 # ---------------------------- #
@@ -508,6 +450,62 @@ def run_machine_analysis(request, pk):
 		run_pk=study_analysis_run.pk,
 	)
 
+
+# ------------------------ #
+# MACHINE ANALYSIS DETAILS #
+# ------------------------ #
+@login_required
+def machine_analysis_details(request, study_pk, run_pk):
+	study = get_object_or_404(Study, pk=study_pk)
+	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
+
+	if not user_can_evaluate_study(request.user, study):
+		return HttpResponseForbidden()
+
+	context = filter_analysis_entries(request, study, run)
+
+	context.update({
+		"study": study,
+		"run": run,
+		"machine_analysis_entries_filter_url": reverse(
+			"machine_analysis_entries_partial",
+			args=[study.pk, run.pk],
+		),
+	})
+
+	return render(
+		request,
+		"studies/machine_analysis_details.html",
+		context
+	)
+
+# -------------------------------- #
+# MACHINE ANALYSIS ENTRIES PARTIAL #
+# -------------------------------- #
+@login_required
+def machine_analysis_entries_partial(request, study_pk, run_pk):
+	study = get_object_or_404(Study, pk=study_pk)
+	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
+
+	if not user_can_evaluate_study(request.user, study):
+		return HttpResponseForbidden()
+
+	context = filter_analysis_entries(request, study, run)
+
+	context.update({
+		"study": study,
+		"run": run,
+		"machine_analysis_entries_filter_url": reverse(
+			"machine_analysis_entries_partial",
+			args=[study.pk, run.pk],
+		),
+	})
+
+	return render(
+		request,
+		"studies/partials/_entries_with_analysis.html",
+		context
+	)
 
 # ----------------- #
 # STUDIES (LIST OF) #

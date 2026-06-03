@@ -1,132 +1,131 @@
-<div class="px-4 mt-4">
-  <div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden">
 
-	  <div class="px-6 py-4 bg-white dark:bg-gray-900">
-		<form method="get" class="flex flex-wrap gap-3">
-		  <input
-			type="text"
-			name="q"
-			placeholder="Search title..."
-			value="{{ request.GET.q }}"
-			class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
-		  >
+<div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden">
 
-		  <input
-			type="text"
-			name="owner"
-			placeholder="Owner"
-			value="{{ request.GET.owner }}"
-			class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-40 dark:text-white dark:border-gray-500"
-		  >
+	<div class="px-6 py-4 bg-white dark:bg-gray-900">
+	<form method="get" class="flex flex-wrap gap-3">
+		<input
+		type="text"
+		name="q"
+		placeholder="Search title..."
+		value="{{ request.GET.q }}"
+		class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
+		>
 
-		  <select name="status" class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-gray-200 dark:border-gray-500">
-			<option value="">All Statuses</option>
-			<option value="PLANNING">Not started (Planning)</option>
-			<option value="COLLECTING">Collecting diary entries</option>
-			<option value="ANALYZING">Analyzing diary entries</option>
-			<option value="COMPLETED">Completed</option>
-		  </select>
+		<input
+		type="text"
+		name="owner"
+		placeholder="Owner"
+		value="{{ request.GET.owner }}"
+		class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-40 dark:text-white dark:border-gray-500"
+		>
 
-		  <button
-			type="submit"
-			class="button-FILTER">
-			Filter
-		  </button>
+		<select name="status" class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-gray-200 dark:border-gray-500">
+		<option value="">All Statuses</option>
+		<option value="PLANNING">Not started (Planning)</option>
+		<option value="COLLECTING">Collecting diary entries</option>
+		<option value="ANALYZING">Analyzing diary entries</option>
+		<option value="COMPLETED">Completed</option>
+		</select>
 
-		  {% if request.GET.q or request.GET.owner or request.GET.status %}
-		  <a
-			href="{% url 'studies' %}"
-			class="button-FILTER-CLEAR"
-		  >
-			Clear Filter
-		  </a>
-		  {% endif %}
-		</form>
-	  </div>
+		<button
+		type="submit"
+		class="button-FILTER">
+		Filter
+		</button>
 
-	  {% if studies %}
-		<div class="overflow-x-auto">
-		  <table class="w-full table-auto text-sm">
-			<thead class="bg-gray-100 dark:bg-gray-700 dark:text-gray-200 text-gray-600">
-			  <tr class="border-b border-t border-gray-200 dark:border-gray-600">
+		{% if request.GET.q or request.GET.owner or request.GET.status %}
+		<a
+		href="{% url 'studies' %}"
+		class="button-FILTER-CLEAR"
+		>
+		Clear Filter
+		</a>
+		{% endif %}
+	</form>
+	</div>
 
-				<th class="text-left px-4 py-3 font-medium">
-				  <a
-					href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'title' %}-title{% else %}title{% endif %}"
-					class="hover:underline"
-				  >
-					Title
-					{% if sort == "title" %}↑{% elif sort == "-title" %}↓{% endif %}
-				  </a>
-				</th>
+	{% if studies %}
+	<div class="overflow-x-auto">
+		<table class="w-full table-auto text-sm">
+		<thead class="bg-gray-100 dark:bg-gray-700 dark:text-gray-200 text-gray-600">
+			<tr class="border-b border-t border-gray-200 dark:border-gray-600">
 
-				<th class="text-left px-4 py-3 font-medium">
-				  <a
-					href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'created_at' %}-created_at{% else %}created_at{% endif %}"
-					class="hover:underline"
-				  >
-					Created
-					{% if sort == "created_at" %}↑{% elif sort == "-created_at" %}↓{% endif %}
-				  </a>
-				</th>
+			<th class="text-left px-4 py-3 font-medium">
+				<a
+				href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'title' %}-title{% else %}title{% endif %}"
+				class="hover:underline"
+				>
+				Title
+				{% if sort == "title" %}↑{% elif sort == "-title" %}↓{% endif %}
+				</a>
+			</th>
 
-				<th class="text-left px-4 py-3 font-medium">
-				  <a
-					href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'status' %}-status{% else %}status{% endif %}"
-					class="hover:underline"
-				  >
-					Status
-					{% if sort == "status" %}↑{% elif sort == "-status" %}↓{% endif %}
-				  </a>
-				</th>
+			<th class="text-left px-4 py-3 font-medium">
+				<a
+				href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'created_at' %}-created_at{% else %}created_at{% endif %}"
+				class="hover:underline"
+				>
+				Created
+				{% if sort == "created_at" %}↑{% elif sort == "-created_at" %}↓{% endif %}
+				</a>
+			</th>
 
-				<th class="text-left px-4 py-3 font-medium">
-				  <a
-					href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'owner__username' %}-owner__username{% else %}owner__username{% endif %}"
-					class="hover:underline"
-				  >
-					Owner
-					{% if sort == "owner__username" %}↑{% elif sort == "-owner__username" %}↓{% endif %}
-				  </a>
-				</th>
+			<th class="text-left px-4 py-3 font-medium">
+				<a
+				href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'status' %}-status{% else %}status{% endif %}"
+				class="hover:underline"
+				>
+				Status
+				{% if sort == "status" %}↑{% elif sort == "-status" %}↓{% endif %}
+				</a>
+			</th>
 
-			  </tr>
-			</thead>
+			<th class="text-left px-4 py-3 font-medium">
+				<a
+				href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'owner__username' %}-owner__username{% else %}owner__username{% endif %}"
+				class="hover:underline"
+				>
+				Owner
+				{% if sort == "owner__username" %}↑{% elif sort == "-owner__username" %}↓{% endif %}
+				</a>
+			</th>
 
-			<tbody class="divide-y divide-gray-200 dark:divide-gray-600 text-gray-600 dark:text-gray-200">
-			  {% for study in studies %}
-				<tr class="hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 transition-colors">
-				  <td class="px-4 py-3">
-					<a href="{% url 'diary_study_detail' study.id %}" class="hover:text-fuchsia-950 dark:hover:text-gray-50 hover:underline">
-					  {{ study.title }}
-					</a>
-				  </td>
+			</tr>
+		</thead>
 
-				  <td class="px-4 py-3">
-					{{ study.created_at|date:"Y-m-d" }}
-				  </td>
+		<tbody class="divide-y divide-gray-200 dark:divide-gray-600 text-gray-600 dark:text-gray-200">
+			{% for study in studies %}
+			<tr class="hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 transition-colors">
+				<td class="px-4 py-3">
+				<a href="{% url 'diary_study_detail' study.id %}" class="hover:text-fuchsia-950 dark:hover:text-gray-50 hover:underline">
+					{{ study.title }}
+				</a>
+				</td>
 
-				  <td class="px-4 py-3">
-					{% include "studies/partials/_badge_status.html" with status_value=study.status status_label=study.get_status_display %}
-				  </td>
+				<td class="px-4 py-3">
+				{{ study.created_at|date:"Y-m-d" }}
+				</td>
 
-				  <td class="px-4 py-3">
-					{{ study.owner.username|capfirst }}
-				  </td>
-				</tr>
-			  {% endfor %}
-			</tbody>
-		  </table>
+				<td class="px-4 py-3">
+				{% include "studies/partials/_badge_status.html" with status_value=study.status status_label=study.get_status_display %}
+				</td>
 
-		  {% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params %}
+				<td class="px-4 py-3">
+				{{ study.owner.username|capfirst }}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+		</table>
 
-		</div>
-	  {% else %}
-		<div class="px-6 py-6">
-		  <p class="text-gray-500 italic">No studies found.</p>
-		</div>
-	  {% endif %}
+		{% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params %}
 
 	</div>
-  </div>
+	{% else %}
+	<div class="px-6 py-6">
+		<p class="text-gray-500 italic">No studies found.</p>
+	</div>
+	{% endif %}
+
 </div>
+
