@@ -11,6 +11,7 @@
     </div>
 
     <div class="p-4" id="diary-entries-panel">
+    {% include "studies/partials/_messages.html" %}
     {% include "studies/partials/_entries.html" with study=study diary_entries=diary_entries %}
     </div>
 
