@@ -53,7 +53,7 @@ ISSUE_KEYWORDS = {
 		"unresponsive", "timeout", "timed out",
 	],
 
-	"usability": [
+	"friction": [
 		"hard", "difficult", "awkward", "annoying", "frustrating",
 		"frustration", "tedious", "cumbersome", "clunky", "painful",
 		"too many steps", "too much work", "hard to use", "difficult to use",
