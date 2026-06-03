@@ -2,10 +2,12 @@
 # Given a method name like "vader" or "tfidf_nmf", the registry can be used to look up the corresponding function that performs the analysis.
 
 from studies.services.nlp.sentiment.vader import VaderSentimentAnalyzer
+from studies.services.nlp.sentiment.bert import BertSentimentAnalyzer
 from studies.services.nlp.themes.tfidf_nmf import TfidfNmfThemeExtractor
 
 SENTIMENT_ANALYZERS = {
     "vader": VaderSentimentAnalyzer,
+    "bert": BertSentimentAnalyzer
     # Note to self: Add future sentiment analyzers here
 }
 

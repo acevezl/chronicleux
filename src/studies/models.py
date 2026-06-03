@@ -66,9 +66,9 @@ class AnalysisRunStatus(models.TextChoices):
 # Used at the Study Level to label average sentiment score
 SENTIMENT_SCORE_THRESHOLDS = [
     (-1.0, -0.7, SentimentCategory.VERY_NEGATIVE),
-    (-0.7, -0.3, SentimentCategory.NEGATIVE),
-    (-0.3, 0.3, SentimentCategory.NEUTRAL),
-    (0.3, 0.7, SentimentCategory.POSITIVE),
+    (-0.7, -0.2, SentimentCategory.NEGATIVE),
+    (-0.2, 0.2, SentimentCategory.NEUTRAL),
+    (0.2, 0.7, SentimentCategory.POSITIVE),
     (0.7, 1.0, SentimentCategory.VERY_POSITIVE),
 ]
 
@@ -118,40 +118,6 @@ class Study(models.Model):
         help_text="The analysis run selected as the preferred interpretation for this study.",
     )
 
-    # # Output of the last successful study analysis run
-
-    # # Model and version
-    # analysis_model = models.CharField(max_length=100)
-    # analysis_version = models.CharField(max_length=50)
-
-    # # Analyzed time
-    # analyzed_at = models.DateTimeField(null=True, blank=True) 
-    # # analyzed_at === completed_at on the study analysis run
-
-    # # Sentiment / Opinion Analysis
-    # average_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
-    # average_sentiment_score = models.FloatField(null=True, blank=True)
-    # dominant_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
-    # dominant_sentiment_score = models.FloatField(null=True, blank=True)
-    # sentiment_distribution = models.JSONField(default=dict, blank=True)
-    
-    # # Theme / Topic Analysis
-    # dominant_theme_label = models.CharField(max_length=255, blank=True, null=True)
-    # dominant_theme_weight = models.FloatField(null=True, blank=True)
-    # theme_distribution = models.JSONField(default=dict, blank=True)
-
-    # # Issues
-    # recurring_issues = models.JSONField(default=list, blank=True)
-    
-    # # Evolution of Sentiment, Theme, and Issues over time
-    # evolution_over_time = models.JSONField(default=list, blank=True)
-
-    # # Top quotes
-    # top_representative_quotes = models.JSONField(default=list, blank=True)
-    
-    # total_entries = models.PositiveIntegerField(default=0)
-    # total_themes = models.PositiveIntegerField(default=0)
-
     class Meta:
         ordering = ["-created_at"]
         verbose_name = "Study"
@@ -187,22 +153,6 @@ class Study(models.Model):
         if self.data_collection_end and now > self.data_collection_end:
             return False
         return True
-
-    # # Map score ranges to sentiment category labels
-    # @staticmethod
-    # def map_sentiment_to_category(score: float | None) -> str | None:
-    #     if score is None:
-    #         return None
-    #     if score <= -0.6:
-    #         return SentimentCategory.VERY_NEGATIVE
-    #     elif score <= -0.2:
-    #         return SentimentCategory.NEGATIVE
-    #     elif score < 0.2:
-    #         return SentimentCategory.NEUTRAL
-    #     elif score < 0.6:
-    #         return SentimentCategory.POSITIVE
-    #     else:
-    #         return SentimentCategory.VERY_POSITIVE
 
     def __str__(self) -> str:
         return f"{self.title} [{self.get_status_display()}]"
