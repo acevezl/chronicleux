@@ -3,17 +3,18 @@
 
 from studies.services.nlp.sentiment.vader import VaderSentimentAnalyzer
 from studies.services.nlp.sentiment.bert import BertSentimentAnalyzer
+
 from studies.services.nlp.themes.tfidf_nmf import TfidfNmfThemeExtractor
+from studies.services.nlp.themes.tfidf_lda import TfidfLdaThemeExtractor
 
 SENTIMENT_ANALYZERS = {
     "vader": VaderSentimentAnalyzer,
-    "bert": BertSentimentAnalyzer
-    # Note to self: Add future sentiment analyzers here
+    "bert": BertSentimentAnalyzer,
 }
 
 THEME_EXTRACTORS = {
     "tfidf_nmf": TfidfNmfThemeExtractor,
-    # Note to self: Add future theme analyzers here
+    "tfidf_lda": TfidfLdaThemeExtractor,
 }
 
 # Note to self, how do we allow users to add their own custom analyzers? 
