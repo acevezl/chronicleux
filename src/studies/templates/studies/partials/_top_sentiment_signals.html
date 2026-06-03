@@ -34,7 +34,7 @@
                     </div>
 
                     {% if top_quotes.positive.sentiment_label %}
-                        {% include "studies/partials/_sentiment_badge.html" with sentiment=top_quotes.positive.sentiment_label %}
+                        {% include "studies/partials/_badge_sentiment.html" with sentiment=top_quotes.positive.sentiment_label %}
                     {% endif %}
 
                 </div>
@@ -94,7 +94,7 @@
                     </div>
 
                     {% if top_quotes.negative.sentiment_label %}
-                        {% include "studies/partials/_sentiment_badge.html" with sentiment=top_quotes.negative.sentiment_label %}
+                        {% include "studies/partials/_badge_sentiment.html" with sentiment=top_quotes.negative.sentiment_label %}
                     {% endif %}
                 </div>
 

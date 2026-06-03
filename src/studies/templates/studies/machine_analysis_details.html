@@ -16,7 +16,7 @@
         </span>
 
         <!-- STUDY META DATA -->
-        <div class="flex md:grid-cols-2 gap-6">
+        <div class="flex md:grid-cols-2 gap-4">
             <div class="top-subtitle">
             Owner: {{ study.owner.username|capfirst }}
             </div>
@@ -36,7 +36,7 @@
             >
                 {% heroicon_outline "folder-open" class="h-4 w-4" %}
                 {% heroicon_outline "arrow-left" class="h-4 w-4" %}
-                Back to Study
+                Return to Study
             </a>
 		</div>
 	</div>
@@ -120,13 +120,13 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                 <!-- DOMINANT SENTIMENT & DISTRIBUTION -->
-                {% include "studies/partials/_sentiment_distribution.html" with dominant_sentiment=run.dominant_sentiment_label sentiment_distribution=run.sentiment_distribution study_id=study.id run_id=run.id%}
+                {% include "studies/partials/_distribution_sentiment.html" with dominant_sentiment=run.dominant_sentiment_label sentiment_distribution=run.sentiment_distribution study_id=study.id run_id=run.id%}
                 
                 <!-- DOMINANT THEME & DISTRIBUTION -->
-                {% include "studies/partials/_theme_distribution.html" with dominant_theme=run.dominant_theme_label theme_distribution=run.theme_distribution study_id=study.id run_id=run.id%}
+                {% include "studies/partials/_distribution_theme.html" with dominant_theme=run.dominant_theme_label theme_distribution=run.theme_distribution study_id=study.id run_id=run.id%}
 
                 <!-- ISSUE DISTRIBUTION -->
-                {% include "studies/partials/_issue_distribution.html" with issue_distribution=run.recurring_issues study_id=study.id run_id=run.id%}
+                {% include "studies/partials/_distribution_issues.html" with issue_distribution=run.recurring_issues study_id=study.id run_id=run.id%}
 
                 <!-- ISSUE IMPACT MATRIX -->
                 {% include "studies/partials/_issue_impact_matrix.html" with issue_impact_matrix=run.recurring_issues study_id=study.id run_id=run.id%}
@@ -148,7 +148,7 @@
                     Sentiment Score Evolution Over Time
                 </label>
                     
-                {% include "studies/partials/_sentiment_evolution.html" with evolution=run.evolution_over_time run_id=run.id %}
+                {% include "studies/partials/_evolution_sentiment.html" with evolution=run.evolution_over_time run_id=run.id %}
 
             </div>
 
@@ -159,12 +159,12 @@
                     Sentiment Category Evolution Over Time
                 </label>
                     
-                {% include "studies/partials/_sentiment_label_evolution.html" with evolution=run.evolution_over_time run_id=run.id %}
+                {% include "studies/partials/_evolution_sentiment_label.html" with evolution=run.evolution_over_time run_id=run.id %}
 
             </div>
 
             <!-- THEME + ISSUE EVOLUTION -->
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-2">
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-2">
 
                 <!-- THEME EVOLUTION -->
                 <div>
@@ -173,7 +173,7 @@
                         Theme Evolution
                     </label>
 
-                    {% include "studies/partials/_theme_evolution.html" with evolution=run.evolution_over_time run=run %}
+                    {% include "studies/partials/_evolution_theme.html" with evolution=run.evolution_over_time run=run %}
 
                 </div>
 
@@ -183,7 +183,7 @@
                         Issue Detection Over Time
                     </label>
 
-                    {% include "studies/partials/_issue_evolution.html" with evolution=run.evolution_over_time run=run %}
+                    {% include "studies/partials/_evolution_issues.html" with evolution=run.evolution_over_time run=run %}
                 </div>
 
             </div>
@@ -198,28 +198,28 @@
                     <div class="border-b border-gray-200 dark:border-gray-600 px-4 py-3 bg-gray-50 dark:bg-gray-800">
                         <div class="flex flex-wrap gap-2">
                             <a
-                                href="{% url 'study_entries' study.pk %}?analysis_run={{ run.pk }}"
+                                href="{% url 'entries' study.pk %}?analysis_run={{ run.pk }}"
                                 class="rounded-sm px-3 py-1 text-xs font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
                             >
                                 All analyzed entries
                             </a>
 
                             <a
-                                href="{% url 'study_entries' study.pk %}?analysis_run={{ run.pk }}&sentiment=positive"
+                                href="{% url 'entries' study.pk %}?analysis_run={{ run.pk }}&sentiment=positive"
                                 class="rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                             >
                                 Positive sentiment
                             </a>
 
                             <a
-                                href="{% url 'study_entries' study.pk %}?analysis_run={{ run.pk }}&sentiment=negative"
+                                href="{% url 'entries' study.pk %}?analysis_run={{ run.pk }}&sentiment=negative"
                                 class="rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                             >
                                 Negative sentiment
                             </a>
 
                             <a
-                                href="{% url 'study_entries' study.pk %}?analysis_run={{ run.pk }}&has_issue=true"
+                                href="{% url 'entries' study.pk %}?analysis_run={{ run.pk }}&has_issue=true"
                                 class="rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
                             >
                                 Detected issues
@@ -228,7 +228,7 @@
                     </div>
 
                     <div class="" id="diary-entries-panel">
-                        {% include "studies/partials/_diary_entries.html" with study=study %}
+                        {% include "studies/partials/_entries.html" with study=study %}
                     </div>
                 </div>
             </div>

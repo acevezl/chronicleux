@@ -62,11 +62,11 @@ def create_diary_entry(request, study_id):
 	return render(request, "studies/create_diary_entry.html", context)
 
 
-# ------------ #
-# CREATE STUDY #
-# ------------ #
+# ------------------ #
+# CREATE DIARY STUDY #
+# ------------------ #
 @login_required
-def create_study(request):
+def create_diary_study(request):
 	if request.method == "POST":
 		form = StudyForm(request.POST)
 		if form.is_valid():
@@ -87,7 +87,7 @@ def create_study(request):
 			return redirect("diary_study_detail", pk=study.pk)
 	else:
 		form = StudyForm()
-	return render(request, "studies/create_study.html", {"form": form})
+	return render(request, "studies/create_diary_study.html", {"form": form})
 
 
 # ------------------ #
@@ -144,29 +144,28 @@ def diary_entry_detail(request, study_pk, entry_pk):
 		study=study,
 	)
 
-	diary_entry_analysis = (
+	selected_run = (
 		DiaryEntryAnalysis.objects
 		.filter(entry=entry)
 		.first()
 	)
 
-	print (diary_entry_analysis)
 	return render(
 		request,
 		"studies/diary_entry_detail.html",
 		{
 			"study": study,
 			"entry": entry,
-			"selected_run": diary_entry_analysis,
+			"selected_run": selected_run,
 		},
 	)
 
 
-# ---------- #
-# EDIT STUDY #
-# ---------- #
+# ---------------- #
+# EDIT DIARY STUDY #
+# ---------------- #
 @login_required
-def edit_study(request, pk):
+def edit_diary_study(request, pk):
 	study = get_object_or_404(Study, pk=pk)
 
 	if request.method == "POST":
@@ -178,7 +177,7 @@ def edit_study(request, pk):
 	else:
 		form = StudyForm(instance=study)
 
-	return render(request, "studies/edit_study.html", {
+	return render(request, "studies/edit_diary_study.html", {
 		"study": study,
 		"form": form,
 	})
@@ -263,9 +262,9 @@ def machine_analysis_details (request, study_pk, run_pk):
 	return render (request, "studies/machine_analysis_details.html", context)
 
 
-# ------------------------------- #
-# MACHINE ANALYSIS ETRIES PARTIAL #
-# ------------------------------- #
+# -------------------------------- #
+# MACHINE ANALYSIS ENTRIES PARTIAL #
+# -------------------------------- #
 
 @login_required
 def machine_analysis_entries_partial(request, study_pk, run_pk):
@@ -283,7 +282,13 @@ def machine_analysis_entries_partial(request, study_pk, run_pk):
 		args=[study.pk, run.pk],
 	)
 
-	return render(request, "studies/partials/_diary_entries.html", context)
+	context["is_evaluator"] = StudyMembership.objects.filter(
+		study=study,
+		user=request.user,
+		role=MembershipRole.EVALUATOR
+	).exists()
+
+	return render(request, "studies/partials/_entries.html", context)
 
 # ---------------------------- #
 # MANAGE EVALUATORS (OF STUDY) #
@@ -555,15 +560,11 @@ def studies(request):
 
 	return render(request, "studies/diary_study_list.html", context)
 
-
-
-
-
 # ----------------------- #
-# STUDY ENTRIES (LIST OF) #
+# DIARY ENTRIES (LIST OF) #
 # ----------------------- #
 @login_required
-def study_entries(request, pk):
+def entries(request, pk):
 	study = get_object_or_404(Study, pk=pk)
 
 	if not user_can_evaluate_study(request.user, study):
@@ -576,7 +577,13 @@ def study_entries(request, pk):
 		args=[study.pk],
 	)
 
-	return render(request, "studies/diary_entries.html", context)
+	context["is_evaluator"] = StudyMembership.objects.filter(
+		study=study,
+		user=request.user,
+		role=MembershipRole.EVALUATOR
+	).exists()
+
+	return render(request, "studies/diary_entry_list.html", context)
 
 # @login_required
 # def study_entries(request, pk):
@@ -654,7 +661,7 @@ def study_entries(request, pk):
 # 		"diary_entries_filter_url": reverse("diary_entries_partial", args=[study.pk]),
 # 	}
 
-# 	return render(request, "studies/diary_entries.html", context)
+# 	return render(request, "studies/diary_entry_list.html", context)
 
 
 # --------------------- #
@@ -670,7 +677,7 @@ def study_entries_partial(request, study_pk):
 	# If the user opens or refeshes the partial URL directly,
 	# send them to the full page instead. No looky looky for you Mr or Mrs...
 	if request.headers.get("HX-Request") != "true":
-		url = reverse("study_entries", args=[study.pk])
+		url = reverse("entries", args=[study.pk])
 		querystring = request.GET.urlencode()
 
 		if querystring:
@@ -687,12 +694,12 @@ def study_entries_partial(request, study_pk):
 
 	response = render(
 		request,
-		"studies/partials/_diary_entries.html",
+		"studies/partials/_entries.html",
 		context,
 	)
 
 	# Push the clean full-page URL into the browser, not the partial URL.
-	full_page_url = reverse("study_entries", args=[study.pk])
+	full_page_url = reverse("entries", args=[study.pk])
 	querystring = request.GET.urlencode()
 
 	if querystring:

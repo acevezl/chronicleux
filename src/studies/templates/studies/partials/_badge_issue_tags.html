@@ -1,11 +1,11 @@
 {% load formatters %}
 <div class="flex flex-wrap gap-2">
 	{% for issue in issues|split_csv %}
-		<span class="issue-tag">
+		<span class="badge-ISSUE">
 			{{ issue }}
 		</span>
 	{% empty %}
-		<span class="non-issue-tag">
+		<span class="badge-NONE">
 			None
 		</span>
 	{% endfor %}

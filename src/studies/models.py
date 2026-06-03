@@ -65,11 +65,11 @@ class AnalysisRunStatus(models.TextChoices):
 # SENTIMENT SCORE THRESHOLDS
 # Used at the Study Level to label average sentiment score
 SENTIMENT_SCORE_THRESHOLDS = [
-    (-1.0, -0.6, SentimentCategory.VERY_NEGATIVE),
-    (-0.6, -0.2, SentimentCategory.NEGATIVE),
-    (-0.2, 0.2, SentimentCategory.NEUTRAL),
-    (0.2, 0.6, SentimentCategory.POSITIVE),
-    (0.6, 1.0, SentimentCategory.VERY_POSITIVE),
+    (-1.0, -0.7, SentimentCategory.VERY_NEGATIVE),
+    (-0.7, -0.3, SentimentCategory.NEGATIVE),
+    (-0.3, 0.3, SentimentCategory.NEUTRAL),
+    (0.3, 0.7, SentimentCategory.POSITIVE),
+    (0.7, 1.0, SentimentCategory.VERY_POSITIVE),
 ]
 
 
@@ -109,7 +109,7 @@ class Study(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     # Selected Analysis Run
-    selected_run = models.ForeignKey(
+    selected_study_run = models.ForeignKey(
         "StudyAnalysisRun",
         on_delete=models.SET_NULL,
         null=True,
@@ -188,21 +188,21 @@ class Study(models.Model):
             return False
         return True
 
-    # Map score ranges to sentiment category labels
-    @staticmethod
-    def map_sentiment_to_category(score: float | None) -> str | None:
-        if score is None:
-            return None
-        if score <= -0.6:
-            return SentimentCategory.VERY_NEGATIVE
-        elif score <= -0.2:
-            return SentimentCategory.NEGATIVE
-        elif score < 0.2:
-            return SentimentCategory.NEUTRAL
-        elif score < 0.6:
-            return SentimentCategory.POSITIVE
-        else:
-            return SentimentCategory.VERY_POSITIVE
+    # # Map score ranges to sentiment category labels
+    # @staticmethod
+    # def map_sentiment_to_category(score: float | None) -> str | None:
+    #     if score is None:
+    #         return None
+    #     if score <= -0.6:
+    #         return SentimentCategory.VERY_NEGATIVE
+    #     elif score <= -0.2:
+    #         return SentimentCategory.NEGATIVE
+    #     elif score < 0.2:
+    #         return SentimentCategory.NEUTRAL
+    #     elif score < 0.6:
+    #         return SentimentCategory.POSITIVE
+    #     else:
+    #         return SentimentCategory.VERY_POSITIVE
 
     def __str__(self) -> str:
         return f"{self.title} [{self.get_status_display()}]"
@@ -299,6 +299,16 @@ class DiaryEntry(models.Model):
         blank=True,
     )
 
+    # Default / Selected Machine Analysis
+    selected_entry_run = models.ForeignKey(
+        "DiaryEntryAnalysis",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text="The selected/default analysis for this diary entry.",
+    )
+
     # These two attributes are needed for external entries imported into ChronicleUX
     participant_external_id = models.CharField(max_length=255, blank=True)
     participant_display_name = models.CharField(max_length=255, blank=True)
@@ -316,9 +326,9 @@ class DiaryEntry(models.Model):
     content = models.TextField()  # unstructured narrative
     created_at = models.DateTimeField(default=timezone.now)
 
-    # # After each analysis run, these fields are updated
-    # # (i.e., they show the last analysis results for each entry)
-    # # This is the inferred signal from the model
+    # # After the first analysis run or after the user selects a different Analysis Run as the default
+    # # these fields are updated to show the sentiment, theme, and issues encountered.
+    # # This helps show the inferred machine signals
     # machine_sentiment_score = models.FloatField(null=True, blank=True)
     # machine_sentiment_label = models.CharField(
     #     max_length=20,
@@ -339,26 +349,26 @@ class DiaryEntry(models.Model):
     # analysis_version = models.CharField(max_length=50, blank=True)
     # analyzed_at = models.DateTimeField(null=True, blank=True)
 
-    @staticmethod
-    def map_sentiment_to_category(score: float | None) -> str | None:
-        if score is None:
-            return None
+    # @staticmethod
+    # def map_sentiment_to_category(score: float | None) -> str | None:
+    #     if score is None:
+    #         return None
 
-        for index, (min_score, max_score, category) in enumerate(SENTIMENT_SCORE_THRESHOLDS):
-            is_last_range = index == len(SENTIMENT_SCORE_THRESHOLDS) - 1
+    #     for index, (min_score, max_score, category) in enumerate(SENTIMENT_SCORE_THRESHOLDS):
+    #         is_last_range = index == len(SENTIMENT_SCORE_THRESHOLDS) - 1
 
-            if is_last_range:
-                if min_score <= score <= max_score:
-                    return category
-            else:
-                if min_score <= score < max_score:
-                    return category
+    #         if is_last_range:
+    #             if min_score <= score <= max_score:
+    #                 return category
+    #         else:
+    #             if min_score <= score < max_score:
+    #                 return category
 
-        return None
+    #     return None
 
-    def set_sentiment(self, score: float | None) -> None:
-        self.sentiment = score
-        self.sentiment_category = self.map_sentiment_to_category(score)
+    # def set_sentiment(self, score: float | None) -> None:
+    #     self.sentiment = score
+    #     self.sentiment_category = self.map_sentiment_to_category(score)
 
     class Meta:
         ordering = ["-created_at"]
@@ -532,8 +542,7 @@ class StudyAnalysisRun(models.Model):
     # start and end times
     started_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True) 
-    # completed_at === analyzed_at on the study when caching the latest run
-
+    
     # Study-level outputs
 
     # Sentiment / Opinion Analysis

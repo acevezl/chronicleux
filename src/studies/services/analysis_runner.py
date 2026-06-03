@@ -198,7 +198,6 @@ def build_recurring_issues(entry_results: list[dict]) -> list[dict]:
 	total_issue_entries = 0
 
 	negative_labels = {"VERY_NEGATIVE", "NEGATIVE"}
-	print(entry_results[0])
 	for result in entry_results:
 		tags = result.get("analysis_issue_tags") or []
 
@@ -449,7 +448,7 @@ def run_study_analysis(study_id: int) -> StudyAnalysisRun:
 
 				entry_summary = make_entry_summary(normalized_content)
 				
-				DiaryEntryAnalysis.objects.create(
+				selected_entry_run = DiaryEntryAnalysis.objects.create(
 					run=run,
 					entry=entry,
 						
@@ -463,41 +462,52 @@ def run_study_analysis(study_id: int) -> StudyAnalysisRun:
 					
 					issue_detected=bool(issue_tags),
 					issues=issue_tags,
+
+					methods = study_analysis_result.methods,
+					metadata = study_analysis_result.metadata,
 						
 					entry_summary=entry_summary,
 					analyzed_at=now,
 					raw_response=entry_analysis_result_data
 				)
-
-				entry.machine_sentiment_score = sentiment_score
-				entry.machine_sentiment_label = sentiment_label
 				
-				entry.machine_theme_weight = theme_weight
-				entry.machine_theme_label = theme_label
-				
-				entry.analysis_issue_detected = bool(issue_tags)
-				entry.analysis_issue_tags = issue_tags
-				
-				entry.entry_summary = entry_summary
-				
-				entry.analysis_model = run.analysis_model
-				entry.analysis_version = run.analysis_version
-				entry.analyzed_at = now
+				entry.selected_entry_run = selected_entry_run
 
 				entry.save(
 					update_fields=[
-						"machine_sentiment_score",
-						"machine_sentiment_label",
-						"machine_theme_weight",
-						"machine_theme_label",
-						"analysis_issue_detected",
-						"analysis_issue_tags",
-						"entry_summary",
-						"analysis_model",
-						"analysis_version",
-						"analyzed_at",
+						"selected_entry_run"
 					]
 				)
+
+				# entry.machine_sentiment_score = sentiment_score
+				# entry.machine_sentiment_label = sentiment_label
+				
+				# entry.machine_theme_weight = theme_weight
+				# entry.machine_theme_label = theme_label
+				
+				# entry.analysis_issue_detected = bool(issue_tags)
+				# entry.analysis_issue_tags = issue_tags
+				
+				# entry.entry_summary = entry_summary
+				
+				# entry.analysis_model = run.analysis_model
+				# entry.analysis_version = run.analysis_version
+				# entry.analyzed_at = now
+
+				# entry.save(
+				# 	update_fields=[
+				# 		"machine_sentiment_score",
+				# 		"machine_sentiment_label",
+				# 		"machine_theme_weight",
+				# 		"machine_theme_label",
+				# 		"analysis_issue_detected",
+				# 		"analysis_issue_tags",
+				# 		"entry_summary",
+				# 		"analysis_model",
+				# 		"analysis_version",
+				# 		"analyzed_at",
+				# 	]
+				# )
 
 				result = {
 					"sentiment_score": sentiment_score,
@@ -517,36 +527,36 @@ def run_study_analysis(study_id: int) -> StudyAnalysisRun:
 
 			now = timezone.now()
 
-			study.average_sentiment_label = run.average_sentiment_label = study_analysis_result.average_sentiment_label
-			study.average_sentiment_score = run.average_sentiment_score = (
+			run.average_sentiment_label = study_analysis_result.average_sentiment_label
+			run.average_sentiment_score = (
 				round(study_analysis_result.average_sentiment_score, 4)
 				if study_analysis_result.average_sentiment_score is not None
 				else None
 			)
-			study.dominant_sentiment_label = run.dominant_sentiment_label = study_analysis_result.dominant_sentiment_label
-			study.dominant_sentiment_score = run.dominant_sentiment_score = (
+			run.dominant_sentiment_label = study_analysis_result.dominant_sentiment_label
+			run.dominant_sentiment_score = (
 				round(study_analysis_result.dominant_sentiment_score, 4)
 				if study_analysis_result.dominant_sentiment_score is not None
 				else None
 			)
-			study.sentiment_distribution = run.sentiment_distribution = build_sentiment_distribution(entry_results)
+			run.sentiment_distribution = build_sentiment_distribution(entry_results)
 
-			study.dominant_theme_label = run.dominant_theme_label = study_analysis_result.dominant_theme_label
-			study.dominant_theme_weight = run.dominant_theme_weight = (
+			run.dominant_theme_label = study_analysis_result.dominant_theme_label
+			run.dominant_theme_weight = (
 				round(study_analysis_result.dominant_theme_weight, 4)
 				if study_analysis_result.dominant_theme_weight is not None
 				else None
 			)
-			study.theme_distribution = run.theme_distribution = build_recurring_themes(entry_results)
+			run.theme_distribution = build_recurring_themes(entry_results)
 
-			study.recurring_issues = run.recurring_issues = build_recurring_issues(entry_results)
+			run.recurring_issues = build_recurring_issues(entry_results)
 
-			study.evolution_over_time = run.evolution_over_time = build_evolution_over_time(entries_with_results)
+			run.evolution_over_time = build_evolution_over_time(entries_with_results)
 
-			study.top_representative_quotes = run.top_representative_quotes = build_top_sentiment_entries(entries_with_results)
+			run.top_representative_quotes = build_top_sentiment_entries(entries_with_results)
 
-			study.total_entries = run.total_entries = study_analysis_result.total_entries
-			study.total_themes = run.total_themes = study_analysis_result.total_themes
+			run.total_entries = study_analysis_result.total_entries
+			run.total_themes = study_analysis_result.total_themes
 
 			run.entry_analysis_results = study_analysis_result_data["entry_analysis_results"]
 			run.methods = study_analysis_result.methods
@@ -581,36 +591,45 @@ def run_study_analysis(study_id: int) -> StudyAnalysisRun:
 				]
 			)
 
-			study.analysis_model = run.analysis_model
-			study.analysis_version = run.analysis_version
-			study.analyzed_at = now
+			study.selected_study_run = run
 			study.status = StudyStatus.HUMAN_ANALYSIS
-
 			study.save(
 				update_fields=[
-					"analysis_model",
-					"analysis_version",
-					"analyzed_at",
+					"selected_study_run",
 					"status",
-
-					"average_sentiment_label",
-					"average_sentiment_score",
-					"dominant_sentiment_label",
-					"dominant_sentiment_score",
-					"sentiment_distribution",
-
-					"dominant_theme_label",
-					"dominant_theme_weight",
-					"theme_distribution",
-
-					"recurring_issues",
-					"evolution_over_time", 
-					"top_representative_quotes", 
-
-					"total_entries",
-					"total_themes",
 				]
 			)
+
+			# study.analysis_model = run.analysis_model
+			# study.analysis_version = run.analysis_version
+			# study.analyzed_at = now
+			
+
+			# study.save(
+			# 	update_fields=[
+			# 		"analysis_model",
+			# 		"analysis_version",
+			# 		"analyzed_at",
+			# 		"status",
+
+			# 		"average_sentiment_label",
+			# 		"average_sentiment_score",
+			# 		"dominant_sentiment_label",
+			# 		"dominant_sentiment_score",
+			# 		"sentiment_distribution",
+
+			# 		"dominant_theme_label",
+			# 		"dominant_theme_weight",
+			# 		"theme_distribution",
+
+			# 		"recurring_issues",
+			# 		"evolution_over_time", 
+			# 		"top_representative_quotes", 
+
+			# 		"total_entries",
+			# 		"total_themes",
+			# 	]
+			# )
 
 		return run
 

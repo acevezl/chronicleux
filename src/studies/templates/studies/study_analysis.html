@@ -22,7 +22,7 @@
       <div>
         <span class="text-xl text-fuchsia-700 dark:text-gray-200">{{ study.title }}</span>
 
-        <div class="flex md:grid-cols-2 gap-6">
+        <div class="flex md:grid-cols-2 gap-4">
           <div>
             <div class="mt-1 text-sm text-gray-900 dark:text-gray-200">
               Owner: {{ study.owner.username }}
@@ -41,12 +41,12 @@
             href="{% url 'diary_study_detail' study.pk %}"
             class="rounded-sm px-4 py-2 text-sm font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
           >
-            Back to Study Details
+            Return to Study Details
           </a>
 
           {% if is_evaluator %}
           <a
-            href="{% url 'study_entries' study.pk %}"
+            href="{% url 'entries' study.pk %}"
             class="button-PRIMARY"
           >
             View Diary Entries
@@ -57,14 +57,14 @@
             href="{% url 'studies' %}"
             class="button-TERTIARY"
           >
-            Back to Dashboard
+            Return to Dashboard
           </a>
         </div>
       </div>
     </div>
 
     <!-- ANALYSIS SUMMARY -->
-    <div class="lg:grid lg:grid-cols-3 lg:gap-12 p-6">
+    <div class="lg:grid lg:grid-cols-3 lg:gap-12 p-4">
       
       <!-- LEFT COLUMN -->
       <div class="col-span-2 space-y-6">
@@ -121,7 +121,7 @@
 
       <!-- RIGHT COLUMN -->
       <div class="lg:col-span-1 pt-4 lg:pt-0">
-        <div class="grid md:grid-cols-4 sm:grid-cols-2 lg:grid-cols-1 gap-6">
+        <div class="grid md:grid-cols-4 sm:grid-cols-2 lg:grid-cols-1 gap-4">
 
           <!-- OVERALL SENTIMENT -->
           <div>
@@ -196,11 +196,11 @@
     </div>
 
     <!-- FOOTER ACTIONS -->
-    <div class="p-6 bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600">
+    <div class="p-4 bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600">
       <div class="flex gap-3">
         {% if is_evaluator %}
         <a
-          href="{% url 'study_entries' study.pk %}"
+          href="{% url 'entries' study.pk %}"
           class="rounded-sm px-4 py-2 text-sm font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
         >
           View Diary Entries
@@ -227,7 +227,7 @@
           href="{% url 'diary_study_detail' study.pk %}"
           class="button-TERTIARY"
         >
-          Back to Study Details
+          Return to Study Details
         </a>
       </div>
     </div>

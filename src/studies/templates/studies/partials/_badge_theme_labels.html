@@ -1,0 +1,10 @@
+{% load formatters %}
+<div class="flex flex-wrap gap-2">
+	<span class="badge-{% if themes %}THEME{% else %}NONE{% endif %} text-nowrap">
+	{% for theme in themes|split_csv %}
+			{{ theme|capfirst }}{% if not forloop.last %} · {% endif %}
+	{% empty %}
+			None
+	{% endfor %}
+	</span>
+</div>

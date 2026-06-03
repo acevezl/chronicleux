@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Study · ChronicleUX{% endblock %}
+
+{% block content %}
+
+<div class="sticky-top">
+	{% include "studies/partials/_header_study.html" with study=study%}
+	{% include "studies/partials/_menu_back_to_study.html" with study=study %}
+</div>
+
+<div class="mt-6 grid grid-cols-1 gap-4">
+	<div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden ">
+		
+		<div class="px-6 py-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+			<span class="text-xl text-fuchsia-700 dark:text-gray-200">{{ study.title }}</span>
+			
+			<!-- META DATA -->
+			<div class="flex md:grid-cols-2 gap-4">
+				<div>
+					<div class="mt-1 text-sm text-gray-900 dark:text-gray-200">
+						Owner: {{ study.owner.username }}
+					</div>
+				</div>
+
+				<div>
+					<div class="mt-1 text-sm text-gray-900 dark:text-gray-200">
+						Created on: {{ study.created_at|date:"Y-m-d H:i" }}
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- STUDY DATA -->
+		<div class="p-4">
+			<form method="post" class="space-y-6">
+				{% csrf_token %}
+
+				<!-- TITLE -->
+				<div>
+					<label for="{{ form.title.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+						Title
+					</label>
+					{% if form.title.help_text %}
+							<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+							{{ form.title.help_text }}
+							</p>
+					{% endif %}
+					{{ form.title }}
+					{% if form.title.errors %}
+						<p class="mt-1 text-sm text-red-600">{{ form.title.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+				<!-- GOAL -->
+				<div>
+					<label for="{{ form.goal.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+						Study Goal
+					</label>
+					{% if form.goal.help_text %}
+							<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+							{{ form.goal.help_text }}
+							</p>
+					{% endif %}
+					{{ form.goal }}
+					{% if form.goal.errors %}
+						<p class="mt-1 text-sm text-red-600">{{ form.goal.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+				<!-- DESCRIPTION -->
+				<div>
+					<label for="{{ form.description.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+						Description
+					</label>
+					{% if form.description.help_text %}
+							<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+							{{ form.description.help_text }}
+							</p>
+					{% endif %}
+					{{ form.description }}
+					{% if form.description.errors %}
+						<p class="mt-1 text-sm text-red-600">{{ form.description.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+				<!-- HYPOTHESES -->
+				<div>
+					<label for="{{ form.hypotheses.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+						Hypotheses
+					</label>
+					{% if form.hypotheses.help_text %}
+							<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+							{{ form.hypotheses.help_text }}
+							</p>
+					{% endif %}
+					{{ form.hypotheses }}
+					{% if form.hypotheses.errors %}
+						<p class="mt-1 text-sm text-red-600">{{ form.hypotheses.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+				<!-- PARTICIPANT INSTURCTIONS -->
+				<div>
+					<label for="{{ form.participant_instructions.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+						Participant Instructions
+					</label>
+					{% if form.participant_instructions.help_text %}
+							<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+							{{ form.participant_instructions.help_text }}
+							</p>
+					{% endif %}
+					{{ form.participant_instructions }}
+					{% if form.participant_instructions.errors %}
+						<p class="mt-1 text-sm text-red-600">{{ form.participant_instructions.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+				<!-- CONTEXT -->
+				<div>
+					<label for="{{ form.context.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+						Entries Context
+					</label>
+					{% if form.context.help_text %}
+							<p class="mt-1 text-sm text-gray-500 dark:text-gray-100">
+							{{ form.context.help_text }}
+							</p>
+					{% endif %}
+					{{ form.context }}
+					{% if form.context.errors %}
+						<p class="mt-1 text-sm text-red-600">{{ form.context.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					
+					<!-- STATUS -->
+					<div>
+						<label for="{{ form.status.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+							Status
+						</label>
+						{{ form.status }}
+						{% if form.status.errors %}
+							<p class="mt-1 text-sm text-red-600">{{ form.status.errors|join:", " }}</p>
+						{% endif %}
+					</div>
+
+					<!-- FREQUENCY -->
+					<div>
+						<label for="{{ form.entry_frequency.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+							Entry frequency
+						</label>
+						{{ form.entry_frequency }}
+						{% if form.entry_frequency.errors %}
+							<p class="mt-1 text-sm text-red-600">{{ form.entry_frequency.errors|join:", " }}</p>
+						{% endif %}
+					</div>
+				
+				</div>
+
+				<!-- START AND END DATES -->
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div>
+						<label for="{{ form.data_collection_start.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+							Data collection start
+						</label>
+						{{ form.data_collection_start }}
+						{% if form.data_collection_start.errors %}
+							<p class="mt-1 text-sm text-red-600">{{ form.data_collection_start.errors|join:", " }}</p>
+						{% endif %}
+					</div>
+
+					<div>
+						<label for="{{ form.data_collection_end.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+							Data collection end
+						</label>
+						{{ form.data_collection_end }}
+						{% if form.data_collection_end.errors %}
+							<p class="mt-1 text-sm text-red-600">{{ form.data_collection_end.errors|join:", " }}</p>
+						{% endif %}
+					</div>
+				</div>
+
+				<!-- TAGS -->
+				<div>
+					<label for="tags-entry" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+							Tags
+					</label>
+
+					{% if form.tags.help_text %}
+							<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+							{{ form.tags.help_text }}
+							</p>
+					{% endif %}
+
+					<input
+							id="tags-entry"
+							type="text"
+							class="text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700 dark:text-gray-200"
+							placeholder="{{ form.tags.field.widget.attrs.placeholder }}"
+							data-role="tags-entry"
+					>
+
+					{{ form.tags.as_hidden }}
+
+					<div data-role="tags-container" class="flex flex-wrap gap-2 mt-2"></div>
+
+					{% if form.tags.errors %}
+							<p class="mt-1 text-sm text-red-600">{{ form.tags.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+				{% if form.non_field_errors %}
+					<div class="rounded-md bg-red-50 p-4 text-sm text-red-700">
+						{{ form.non_field_errors }}
+					</div>
+				{% endif %}
+
+				<div class="flex justify-end gap-3 pt-4">
+					
+					<button
+						type="submit"
+						class="button-PRIMARY"
+					>
+						Save Changes
+					</button>
+
+					<a
+						href="{% url 'diary_study_detail' study.id %}"
+						class="button-TERTIARY"
+					>
+						Discard changes
+					</a>
+				
+				</div>
+
+			</form>
+		</div>
+	</div>
+</div>
+
+
+
+<script>
+		document.addEventListener("DOMContentLoaded", () => {
+		const entryInput = document.querySelector('[data-role="tags-entry"]');
+		const hiddenInput = document.querySelector('input[name="tags"]');
+		const container = document.querySelector('[data-role="tags-container"]');
+
+		if (!entryInput || !hiddenInput || !container) return;
+
+		let tags = hiddenInput.value
+				? hiddenInput.value.split(",").map(tag => tag.trim()).filter(Boolean)
+				: [];
+
+		function syncHiddenInput() {
+				hiddenInput.value = tags.join(", ");
+		}
+
+		function renderTags() {
+				container.innerHTML = "";
+
+				tags.forEach((tag, index) => {
+				const tagEl = document.createElement("span");
+				tagEl.className = "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs text-fuchsia-700 border border-fuchsia-700";
+
+				const textEl = document.createElement("span");
+				textEl.textContent = tag;
+
+				const buttonEl = document.createElement("button");
+				buttonEl.type = "button";
+				buttonEl.className = "text-fuchsia-700 font-bold cursor-pointer";
+				buttonEl.setAttribute("aria-label", `Remove ${tag}`);
+				buttonEl.textContent = "×";
+				buttonEl.addEventListener("click", () => {
+						tags.splice(index, 1);
+						syncHiddenInput();
+						renderTags();
+				});
+
+				tagEl.appendChild(textEl);
+				tagEl.appendChild(buttonEl);
+				container.appendChild(tagEl);
+				});
+		}
+
+		function addTag(rawValue) {
+				const tag = rawValue.trim().replace(/,+$/, "");
+				if (!tag) return;
+				if (tags.includes(tag)) return;
+
+				tags.push(tag);
+				syncHiddenInput();
+				renderTags();
+				entryInput.value = "";
+		}
+
+		entryInput.addEventListener("keydown", (event) => {
+				if (event.key === ",") {
+				event.preventDefault();
+				addTag(entryInput.value);
+				}
+		});
+
+		entryInput.addEventListener("blur", () => {
+				addTag(entryInput.value);
+		});
+
+		syncHiddenInput();
+		renderTags();
+		});
+</script>
+
+{% endblock %}

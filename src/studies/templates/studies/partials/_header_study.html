@@ -3,12 +3,12 @@
 
         <!-- STUDY TITLE -->
         <span class="top-title">
-            {% heroicon_outline "folder-open" %}
+            {% heroicon_outline "book-open" %}
             {{study.title}}
         </span>
 
         <!-- STUDY META DATA -->
-        <div class="flex md:grid-cols-2 gap-6">
+        <div class="flex md:grid-cols-2 gap-4">
             <div class="top-subtitle">
             Owner: {{ study.owner.username|capfirst }}
             </div>
@@ -19,9 +19,5 @@
         </div>
 
     </div>
-
-    {% if actions_menu_template %}
-		{% include actions_menu_template with study=study is_evaluator=is_evaluator %}
-	{% endif %}
 
 </div>

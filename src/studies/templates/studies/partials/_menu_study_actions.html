@@ -5,7 +5,7 @@
 
 		{% if study.entries.count > 0 %}
 			<a
-				href="{% url 'study_entries' study.pk %}"
+				href="{% url 'entries' study.pk %}"
 				class="button-PRIMARY"
 			>
 				{% heroicon_outline "document-text" class="h-4 w-4" %}
@@ -36,7 +36,7 @@
 		{% endif %}
 
 		<a
-			href="{% url 'edit_study' study.pk %}"
+			href="{% url 'edit_diary_study' study.pk %}"
 			class="button-TERTIARY"
 		>
 			{% heroicon_outline "pencil-square" class="h-4 w-4" %}
@@ -73,8 +73,9 @@
 			href="{% url 'studies' %}"
 			class="button-TERTIARY"
 		>
+			{% heroicon_outline "queue-list" class="h-4 w-4" %}
 			{% heroicon_outline "arrow-left" class="h-4 w-4" %}
-			Back to Studies
+			Return to Studies
 		</a>
 
 	</div>

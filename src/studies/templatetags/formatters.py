@@ -72,6 +72,19 @@ def humanize_enum(value):
 	return str(value).replace("_", " ").capitalize()
 
 @register.filter
+def humanize_csv(value):
+	if not value:
+		return "None"
+
+	items = [
+		item.strip().title()
+		for item in str(value).split(",")
+		if item.strip()
+	]
+
+	return " · ".join(items) if items else "None"
+
+@register.filter
 def split_csv(value):
 	if not value:
 		return []

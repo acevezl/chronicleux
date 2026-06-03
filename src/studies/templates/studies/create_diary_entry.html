@@ -15,16 +15,16 @@
 
 <div class="mt-6 grid grid-cols-1 gap-4">
   <div class="bg-white border border-gray-200 rounded-sm overflow-hidden">
-    <div class="border-b border-gray-200 bg-gray-50 p-6">
+    <div class="border-b border-gray-200 bg-gray-50 p-4">
       <span class="text-xl text-fuchsia-700 dark:text-gray-200">Diary Entry</span>
-      <div class="flex md:grid-cols-2 gap-6">
+      <div class="flex md:grid-cols-2 gap-4">
         <span class="mt-1 text-sm text-gray-900">
           Submit a new entry for <span class="font-medium">{{ study.title }}</span>.
         </span>
       </div>
     </div>
 
-    <div class="p-6">
+    <div class="p-4">
       <form method="post" class="space-y-6">
         {% csrf_token %}
 
@@ -81,7 +81,7 @@
             href="{% url'diary_study_detail' study.id %}"
             class="button-TERTIARY"
           >
-            Back to Study
+            Return to Study
           </a>
         </div>
       </form>

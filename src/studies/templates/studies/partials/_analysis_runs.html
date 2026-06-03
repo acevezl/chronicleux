@@ -23,7 +23,7 @@
 		</summary>
 
 		<!-- ANALYSIS RUNS -->
-		<div class="p-6 bg-white dark:bg-gray-900">
+		<div class="p-4 bg-white dark:bg-gray-900">
 			{% if analysis_runs %}
 				<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 					{% for run in analysis_runs %}
@@ -108,7 +108,7 @@
 
 										<div class="mt-2">
 											{% if run.dominant_sentiment_label %}
-												{% include "studies/partials/_sentiment_badge.html" with sentiment=run.dominant_sentiment_label %}
+												{% include "studies/partials/_badge_sentiment.html" with sentiment=run.dominant_sentiment_label %}
 											{% else %}
 												<span class="text-sm text-gray-500 dark:text-gray-400">
 													—
@@ -126,7 +126,7 @@
 
 										<div class="mt-2">
 											{% if run.dominant_theme_label %}
-												{% include "studies/partials/_theme_labels.html" with themes=run.dominant_theme_label %}
+												{% include "studies/partials/_badge_theme_labels.html" with themes=run.dominant_theme_label %}
 											{% else %}
 												<span class="text-sm text-gray-500 dark:text-gray-400">
 													—
@@ -157,7 +157,7 @@
 			{% else %}
 
 				<!-- EMPTY STATE -->
-				<div class="rounded-sm border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-6">
+				<div class="rounded-sm border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
 					<div class="flex items-start gap-3">
 						<div class="mt-0.5 text-gray-400 dark:text-gray-500">
 							{% heroicon_outline "cpu-chip" class="h-5 w-5" %}

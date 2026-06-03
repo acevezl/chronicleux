@@ -15,7 +15,7 @@
         </span>
 
         <!-- STUDY META DATA -->
-        <div class="flex md:grid-cols-2 gap-6">
+        <div class="flex md:grid-cols-2 gap-4">
             <div class="top-subtitle">
             Owner: {{ study.owner.username|capfirst }}
             </div>
@@ -35,7 +35,7 @@
             >
                 {% heroicon_outline "folder-open" class="h-4 w-4" %}
                 {% heroicon_outline "arrow-left" class="h-4 w-4" %}
-                Back to Study
+                Return to Study
             </a>
 		</div>
 	</div>
@@ -61,7 +61,7 @@
         </summary>
 
         <!-- CARD DETAILS -->
-        <div class="p-6">
+        <div class="p-4">
             {% if messages %}
             <div class="mb-4 space-y-4">
                 {% for message in messages %}

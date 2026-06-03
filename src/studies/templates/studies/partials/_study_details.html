@@ -25,7 +25,7 @@
 		</summary>
 
 		<!-- STUDY DATA -->
-		<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+		<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4">
 
 			<!-- MAIN STUDY CONTENT -->
 			<div class="lg:col-span-2 grid grid-cols-1 xl:grid-cols-2 gap-4">
@@ -104,7 +104,7 @@
 
 					<div class="mt-2 text-sm">
 						{% if study.dominant_sentiment_label %}
-							{% include "studies/partials/_sentiment_badge.html" with sentiment=study.dominant_sentiment_label %}
+							{% include "studies/partials/_badge_sentiment.html" with sentiment=study.dominant_sentiment_label %}
 						{% else %}
 							<span class="inline-flex items-center rounded-full bg-gray-200 gap-1 px-2 py-1 text-xs font-medium text-gray-800 inset-ring inset-ring-gray-500/10 border border-gray-800">
 								{% heroicon_outline "ellipsis-horizontal-circle" class="h-4 w-4" %}
@@ -122,7 +122,7 @@
 					</div>
 
 					<div class="mt-2 text-sm">
-						{% include "studies/partials/_status_badge.html" with status_value=study.status status_label=study.get_status_display %}
+						{% include "studies/partials/_badge_status.html" with status_value=study.status status_label=study.get_status_display %}
 					</div>
 				</div>
 

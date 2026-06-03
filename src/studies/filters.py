@@ -11,8 +11,12 @@ ALLOWED_ENTRY_SORTS = {
 	"-participant_display_name",
 	"sentiment_self_report",
 	"-sentiment_self_report",
-	"machine_sentiment_label",
-	"-machine_sentiment_label",
+	"selected_entry_run__sentiment_label",
+	"-selected_entry_run__sentiment_label",
+	"selected_entry_run__theme_label",
+	"-selected_entry_run__theme_label",
+	"selected_entry_run__issues",
+	"-selected_entry_run__issues",
 }
 
 
@@ -30,7 +34,7 @@ def filter_diary_entries(request, study, run=None):
 	entries = (
 		DiaryEntry.objects
 		.filter(study=study)
-		.select_related("participant")
+		.select_related("participant", "selected_entry_run")
 	)
 
 	# General search
@@ -41,11 +45,11 @@ def filter_diary_entries(request, study, run=None):
 			| Q(participant_external_id__icontains=q)
 			| Q(participant_email__icontains=q)
 			| Q(source__icontains=q)
+			| Q(content__icontains=q)
 			| Q(sentiment_self_report__icontains=q)
-			| Q(machine_sentiment_label__icontains=q)
-			| Q(machine_theme_label__icontains=q)
-			| Q(entry_summary__icontains=q)
-			| Q(analysis_issue_tags__icontains=q)
+			| Q(selected_entry_run__sentiment_label__icontains=q)
+			| Q(selected_entry_run__theme_label__icontains=q)
+			| Q(selected_entry_run__issues__icontains=q)
 		)
 
 	# Participant search
@@ -73,21 +77,11 @@ def filter_diary_entries(request, study, run=None):
 
 	# Latest machine sentiment cached on DiaryEntry
 	if detected_sentiment:
-		entries = entries.filter(machine_sentiment_label=detected_sentiment)
+		entries = entries.filter(selected_entry_run__sentiment_label=detected_sentiment)
 
 	# Latest machine theme cached on DiaryEntry
 	if theme:
-		entries = entries.filter(machine_theme_label=theme)
-
-	# Latest issue detection cached on DiaryEntry
-	if issue == "true":
-		entries = entries.filter(analysis_issue_detected=True)
-
-	elif issue == "false":
-		entries = entries.filter(
-			Q(analysis_issue_detected=False)
-			| Q(analysis_issue_detected__isnull=True)
-		)
+		entries = entries.filter(selected_entry_run__theme_label=theme)
 
 	# Sorting
 	if sort not in ALLOWED_ENTRY_SORTS:
@@ -95,16 +89,39 @@ def filter_diary_entries(request, study, run=None):
 
 	entries = entries.order_by(sort)
 
+	# Latest issue detection cached on DiaryEntry
+	if issue:
+		entries = [
+			entry for entry in entries
+			if entry.selected_entry_run
+			and issue in (entry.selected_entry_run.issues or [])
+		]
+
 	# Theme dropdown options
 	theme_options = (
 		DiaryEntry.objects
 		.filter(study=study)
-		.exclude(machine_theme_label__isnull=True)
-		.exclude(machine_theme_label="")
-		.order_by("machine_theme_label")
-		.values_list("machine_theme_label", flat=True)
+		.exclude(selected_entry_run__theme_label__isnull=True)
+		.exclude(selected_entry_run__theme_label="")
+		.order_by("selected_entry_run__theme_label")
+		.values_list("selected_entry_run__theme_label", flat=True)
 		.distinct()
 	)
+
+	# Issue dropdown options
+	issue_values = (
+		DiaryEntry.objects
+		.filter(study=study)
+		.exclude(selected_entry_run__issues__isnull=True)
+		.values_list("selected_entry_run__issues", flat=True)
+	)
+
+	issue_options = sorted({
+		issue
+		for issues in issue_values
+		for issue in issues
+		if issue
+	})
 
 	# Pagination
 	paginator = Paginator(entries, 10)
@@ -116,7 +133,7 @@ def filter_diary_entries(request, study, run=None):
 	page_params.pop("sort", None)
 
 	# Display # enrties out of total
-	displayed_entries_count = page_obj.object_list.count()
+	displayed_entries_count = len(page_obj.object_list)
 	total_filtered_entries_count = paginator.count
 	total_study_entries_count = (
 		DiaryEntry.objects
@@ -141,6 +158,8 @@ def filter_diary_entries(request, study, run=None):
 		"theme_options": theme_options,
 		
 		"issue": issue,
+		"issue_options": issue_options,
+
 		"sort": sort,
 
 		"displayed_entries_count": displayed_entries_count,

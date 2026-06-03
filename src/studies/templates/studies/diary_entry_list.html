@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ study.title }} · ChronicleUX{% endblock %}
+
+{% block content %}
+
+    <div class="sticky-top">
+    {% include "studies/partials/_header_study.html" with study=study %}
+    {% include "studies/partials/_menu_entry_list_actions.html" with study=study is_evaluator=is_evaluator %}
+    </div>
+
+    <div id="diary-entries-panel">
+    {% include "studies/partials/_entries.html" with study=study diary_entries=diary_entries %}
+    </div>
+
+{% endblock %}

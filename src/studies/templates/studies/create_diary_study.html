@@ -15,7 +15,7 @@
 		</span>
 
 		<!-- SUBTITLE -->
-		<div class="flex md:grid-cols-2 gap-6">
+		<div class="flex md:grid-cols-2 gap-4">
 			<div class="top-subtitle">
 			Use the form below to define the protocol for your new diary study.
 			</div>
@@ -23,22 +23,15 @@
 
 	</div>
 
-	<div class="px-4 py-2 bg-gray-100 dark:bg-gray-900">
-		<div class="flex flex-wrap items-center gap-2">
-			<a href="{% url 'studies' %}" class="button-TERTIARY">
-			{% heroicon_outline "queue-list" class="h-4 w-4" %}
-			{% heroicon_outline "arrow-left" class="h-4 w-4" %}
-			Go Back to My Studies
-			</a>
-		</div>
-	</div>
+	{% include "studies/partials/_menu_back_to_studies.html" %}
+
 </div>
 
 <div class="px-4 mt-4">
   <div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden">
 	
 	<!-- STUDY DATA -->
-	<div class="p-6">
+	<div class="p-4">
 
 	  <form method="post" class="space-y-6">
 		{% csrf_token %}
@@ -139,7 +132,7 @@
 		  {% endif %}
 		</div>
 
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 		  
 			<!-- STATUS -->
 			<div>
@@ -166,7 +159,7 @@
 		</div>
 
 		<!-- START AND END DATES -->
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 		  <div>
 			<label for="{{ form.data_collection_start.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
 			  Data collection start
