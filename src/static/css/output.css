@@ -415,8 +415,17 @@
   .h-96 {
     height: calc(var(--spacing) * 96);
   }
+  .h-auto {
+    height: auto;
+  }
   .h-full {
     height: 100%;
+  }
+  .h-min {
+    height: min-content;
+  }
+  .max-h-min {
+    max-height: min-content;
   }
   .min-h-screen {
     min-height: 100vh;
@@ -708,6 +717,9 @@
   }
   .stroke-white {
     stroke: var(--color-white);
+  }
+  .p-1 {
+    padding: calc(var(--spacing) * 1);
   }
   .p-2 {
     padding: calc(var(--spacing) * 2);
@@ -1755,8 +1767,7 @@
     color: var(--color-sky-500);
   }
   .badge {
-    display: inline-flex;
-    align-items: center;
+    width: min-content;
     border-radius: calc(infinity * 1px);
     background-color: var(--color-gray-50);
     padding-inline: calc(var(--spacing) * 2);
@@ -2151,6 +2162,19 @@
     --tw-font-weight: var(--font-weight-medium);
     font-weight: var(--font-weight-medium);
     text-wrap: nowrap;
+  }
+  .card-border {
+    border-radius: var(--radius-sm);
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+    border-color: var(--color-gray-200);
+    background-color: var(--color-white);
+    @media (prefers-color-scheme: dark) {
+      border-color: var(--color-gray-600);
+    }
+    @media (prefers-color-scheme: dark) {
+      background-color: var(--color-gray-900);
+    }
   }
 }
 @property --tw-rotate-x {

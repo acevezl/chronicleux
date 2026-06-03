@@ -100,3 +100,20 @@ def split_csv(value):
 		for item in value.replace("\n", ",").split(",")
 		if item.strip()
 	]
+
+@register.filter
+def extract_labels(value):
+	if not value:
+		return ""
+
+	labels = []
+
+	for item in value:
+		if isinstance(item, dict):
+			label = item.get("label")
+			if label:
+				labels.append(str(label))
+		else:
+			labels.append(str(item))
+
+	return ", ".join(labels)

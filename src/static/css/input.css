@@ -82,7 +82,7 @@
 	}
 
 	.badge {
-		@apply text-nowrap inline-flex items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-600;
+		@apply w-min text-nowrap rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-600;
 	}
 
 	.button-PRIMARY {
@@ -163,6 +163,10 @@
 
 	th {
 		@apply text-left px-4 py-3 font-medium text-xs text-nowrap
+	}
+
+	.card-border {
+		@apply rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900
 	}
 
 }

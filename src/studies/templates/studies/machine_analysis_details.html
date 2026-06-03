@@ -13,29 +13,27 @@
 
 <div class="p-4">
 
-    <details closed class="group main-card mb-4">
+    <details open class="group main-card mb-4">
 
         <!-- CARD TITLE (I.E., SUMMARY) -->
 		<summary class="card-summary">
             <div class="flex flex-col">
                 <span class="card-summary-title">
-                    {% heroicon_outline "cpu-chip" %}
-                    Machine Analysis, Study Level
+                    {% heroicon_outline "code-bracket-square"%}
+                    RUN-{{ run.id|stringformat:"03d" }}
                 </span>
 
                 <!-- ANALYSIS DATE -->
                 <p class="card-summary-subtitle ">
-                    {% heroicon_outline "code-bracket-square" class="h-4 w-4" %}
-                    RUN-{{ run.id|stringformat:"03d" }}
-
-                    {% heroicon_outline "document-text" class="h-4 w-4" %}
-                    Entries Analyzed: {{ run.total_entries|default:"0" }}
-
                     {% heroicon_outline "calendar-days" class="h-4 w-4" %}
                     {% if run.completed_at %}
-                        Completed on {{ run.completed_at|date:"Y-m-d H:i" }}
+                        Completed on: {{ run.completed_at|date:"Y-m-d H:i" }}
+                        
+                        {% heroicon_outline "document-text" class="h-4 w-4" %}
+                        Entries Analyzed: {{ run.total_entries|default:"0" }}
+
                     {% elif run.created_at %}
-                        Started on {{ run.created_at|date:"Y-m-d H:i" }}
+                        Started on: {{ run.created_at|date:"Y-m-d H:i" }}
                     {% else %}
                         Date unavailable
                     {% endif %}
@@ -167,60 +165,16 @@
                             </a>
                         </div>
                     </div>
+                    <div class="p-4" id="analysis-entries-panel">
+                        {% include "studies/partials/_entries_with_analysis.html" with entry_analyses=entry_analyses study=study run=run %}
+                    </div>
 
                 </div>
+                
             </div>
-
-        </div>
-
-    </details>
-
-    <details open class="group main-card" id="entry_analysis">
-
-        <!-- CARD TITLE (I.E., SUMMARY) -->
-		<summary class="card-summary">
-            <div class="flex flex-col">
-                <span class="card-summary-title">
-                    {% heroicon_outline "cpu-chip" %}
-                    Machine Analysis, Per-Entry Results
-                </span>
-
-                <!-- ANALYSIS DATE -->
-                <p class="card-summary-subtitle ">
-                    {% heroicon_outline "code-bracket-square" class="h-4 w-4" %}
-                    RUN-{{ run.id|stringformat:"03d" }}
-
-                    {% heroicon_outline "document-text" class="h-4 w-4" %}
-                    Entries Analyzed: {{ run.total_entries|default:"0" }}
-
-                    {% heroicon_outline "calendar-days" class="h-4 w-4" %}
-                    {% if run.completed_at %}
-                        Completed on {{ run.completed_at|date:"Y-m-d H:i" }}
-                    {% elif run.created_at %}
-                        Started on {{ run.created_at|date:"Y-m-d H:i" }}
-                    {% else %}
-                        Date unavailable
-                    {% endif %}
-                </p>
-
-                <!-- RUN METHODS -->
-                <p class="card-summary-subtitle ">
-                    {% heroicon_outline "face-smile" class="h-4 w-4" %}
-                    Sentiment Analysis Method: {{ run.methods.sentiment|upper|default:"—" }}
-
-                    {% heroicon_outline "tag" class="h-4 w-4" %}
-                    Theme Analysis Method: {{ run.methods.theme|upper|default:"—" }}
-                </p>
-
-            </div>
-            <span class="card-summary-chevron">
-                {% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
-            </span>
-        </summary>
-        <div class="p-4" id="analysis-entries-panel">
-            {% include "studies/partials/_analysis_entries.html" with entry_analyses=entry_analyses study=study run=run %}
         </div>
     </details>
+
 </div>
 
 {% endblock %}

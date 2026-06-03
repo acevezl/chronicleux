@@ -144,11 +144,16 @@ def diary_entry_detail(request, study_pk, entry_pk):
 		study=study,
 	)
 
-	selected_run = (
+	# Pick up all the different analyses that exist for this entry
+	entry_runs = (
 		DiaryEntryAnalysis.objects
+		.select_related("run", "entry")
 		.filter(entry=entry)
-		.first()
+		.order_by("-analyzed_at")
 	)
+
+	# Pick up the default / selected run for this entry
+	selected_run = entry.selected_entry_run
 
 	return render(
 		request,

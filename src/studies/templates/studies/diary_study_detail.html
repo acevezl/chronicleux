@@ -13,7 +13,7 @@
 	{% include "studies/partials/_study_details.html" with study=study %}
 
 	{% if is_evaluator %}
-		{% include "studies/partials/_analysis_runs.html" with analysis_runs=analysis_runs %}
+		{% include "studies/partials/_analysis_runs_study_level.html" with analysis_runs=analysis_runs %}
 	{% endif %}
 
 {% endblock %}
