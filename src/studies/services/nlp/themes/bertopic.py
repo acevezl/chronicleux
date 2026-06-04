@@ -1,13 +1,16 @@
 from bertopic import BERTopic
+from sklearn.feature_extraction.text import CountVectorizer
 
 from studies.services.nlp.contracts import BaseThemeExtractor, ThemeResult
 
+
 MODEL_NAME = "BERTopic"
+
 
 class BertopicThemeExtractor(BaseThemeExtractor):
 
     method_name = "bertopic"
-    
+
     def __init__(self, num_keywords: int = 8):
         self.num_keywords = num_keywords
 
@@ -24,7 +27,14 @@ class BertopicThemeExtractor(BaseThemeExtractor):
         original_indices = [item[0] for item in valid_items]
         valid_documents = [item[1] for item in valid_items]
 
+        vectorizer_model = CountVectorizer(
+            ngram_range=(1, 2),
+            min_df=2,
+            max_df=0.85,
+        )
+
         topic_model = BERTopic(
+            vectorizer_model=vectorizer_model,
             language="english",
             calculate_probabilities=True,
             verbose=False,
@@ -42,6 +52,7 @@ class BertopicThemeExtractor(BaseThemeExtractor):
 
         for topic_id in topic_ids:
             topic_terms = topic_model.get_topic(topic_id) or []
+
             keywords = [
                 term
                 for term, _weight in topic_terms[:self.num_keywords]
@@ -61,6 +72,9 @@ class BertopicThemeExtractor(BaseThemeExtractor):
                         "model": MODEL_NAME,
                         "language": "english",
                         "num_keywords": len(keywords),
+                        "ngram_range": [1, 2],
+                        "min_df": 2,
+                        "max_df": 0.85,
                     },
                 )
             )
@@ -86,7 +100,9 @@ class BertopicThemeExtractor(BaseThemeExtractor):
             if probabilities is not None:
                 try:
                     topic_position = topic_ids.index(topic_id)
-                    topic_weight = float(probabilities[valid_document_index][topic_position])
+                    topic_weight = float(
+                        probabilities[valid_document_index][topic_position]
+                    )
                 except Exception:
                     topic_weight = None
 
