@@ -2,7 +2,7 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 from studies.services.nlp.contracts import BaseSentimentAnalyzer, SentimentResult
 from studies.services.nlp.sentiment._thresholds import map_sentiment_score_to_label
 
-MODEL_NAME = "vader"
+METHOD = "vader"
 
 class VaderSentimentAnalyzer(BaseSentimentAnalyzer):
 
@@ -18,7 +18,7 @@ class VaderSentimentAnalyzer(BaseSentimentAnalyzer):
         return SentimentResult(
             score=compound,
             label=label,
-            method=MODEL_NAME,
+            method=METHOD,
             metadata={
                 "negative": scores["neg"],
                 "neutral": scores["neu"],
