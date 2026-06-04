@@ -28,7 +28,8 @@ class BertopicThemeExtractor(BaseThemeExtractor):
         valid_documents = [item[1] for item in valid_items]
 
         vectorizer_model = CountVectorizer(
-            ngram_range=(1, 2),
+            stop_words="english",
+            ngram_range=(2, 3),
             min_df=2,
             max_df=0.85,
         )
@@ -72,7 +73,8 @@ class BertopicThemeExtractor(BaseThemeExtractor):
                         "model": MODEL_NAME,
                         "language": "english",
                         "num_keywords": len(keywords),
-                        "ngram_range": [1, 2],
+                        "stop_words": "english",
+                        "ngram_range": [2, 3],
                         "min_df": 2,
                         "max_df": 0.85,
                     },
