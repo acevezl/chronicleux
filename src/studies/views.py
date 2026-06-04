@@ -153,11 +153,6 @@ def diary_entry_detail(request, study_pk, entry_pk):
 	# Pick up all the different analyses that exist for this entry
 	entry_runs = DiaryEntryAnalysis.objects.filter(entry=entry)
 
-	print("ENTRY ID:", entry.pk)
-	print("SELECTED ENTRY RUN ID:", entry.selected_entry_run_id)
-	print("ENTRY RUNS COUNT:", entry_runs.count())
-	print("ENTRY RUN IDS:", list(entry_runs.values_list("id", flat=True)))
-
 	# Pick up the default / selected run for this entry
 	selected_run = entry.selected_entry_run
 
