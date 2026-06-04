@@ -1,6 +1,12 @@
 {% load heroicons %}
 {% load formatters %}
 
+{% for run in analysis_runs %}
+	{% if run.status == "QUEUED" or run.status == "RUNNING" %}
+		<meta http-equiv="refresh" content="5">
+	{% endif %}
+{% endfor %}
+
 <details open class="group main-card">
 
 	<!-- CARD TITLE (I.E., SUMMARY) -->
@@ -46,7 +52,7 @@
 											Completed on: {{ run.completed_at|date:"Y-m-d H:i" }}
 
 										{% elif run.created_at %}
-											Started on: {{ run.created_at|date:"Y-m-d H:i" }}
+											Started on: {{ run.started_at|date:"Y-m-d H:i" }}
 										{% else %}
 											Date unavailable
 										{% endif %}
@@ -151,9 +157,17 @@
 								View analysis details
 							</a>
 							{% else %}
-								<span class="xs-label py-2">
-								Details not available because analysis status is {{run.status}}
-								</span>
+								<div class="flex flex-col gap-1">
+									<span class="xs-label py-2">
+										Details not available because analysis status is {{ run.status }}
+									</span>
+
+									{% if run.status == "FAILED" and run.error_message %}
+										<span class="xs-label text-red-700 dark:text-red-300">
+											{{ run.error_message }}
+										</span>
+									{% endif %}
+								</div>
 							{% endif %}
 						</footer>
 

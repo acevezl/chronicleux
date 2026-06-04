@@ -380,20 +380,48 @@ def build_top_sentiment_entries(entries_with_results: list[tuple]) -> dict:
 	}
 
 #-------------------------------#
-# Main analysis runner function #
+# Create queued analysis run     #
 #-------------------------------#
-def run_study_analysis(study_id: int, sentiment_method="vader", theme_method="tfidf_nmf") -> StudyAnalysisRun:
+def create_study_analysis_run(
+	study_id: int,
+	sentiment_method="vader",
+	theme_method="tfidf_nmf",
+) -> StudyAnalysisRun:
 	study = Study.objects.get(pk=study_id)
 
 	run = StudyAnalysisRun.objects.create(
 		study=study,
-		status=AnalysisRunStatus.RUNNING,
+		status=AnalysisRunStatus.QUEUED,
 		analysis_model=f"{sentiment_method}_{theme_method}",
 		analysis_version="v3",
+		methods={
+			"sentiment": sentiment_method,
+			"theme": theme_method,
+		},
 	)
 
 	study.status = StudyStatus.MACHINE_ANALYSIS
 	study.save(update_fields=["status"])
+
+	return run
+
+
+#-------------------------------#
+# Process existing analysis run  #
+#-------------------------------#
+def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
+	run = StudyAnalysisRun.objects.select_related("study").get(pk=run_id)
+	study = run.study
+
+	if run.status == AnalysisRunStatus.COMPLETED:
+		return run
+
+	sentiment_method = run.methods.get("sentiment", "vader")
+	theme_method = run.methods.get("theme", "tfidf_nmf")
+
+	run.status = AnalysisRunStatus.RUNNING
+	run.error_message = ""
+	run.save(update_fields=["status", "error_message"])
 
 	entry_results = []
 	entries_with_results = []
@@ -401,6 +429,7 @@ def run_study_analysis(study_id: int, sentiment_method="vader", theme_method="tf
 	try:
 		with transaction.atomic():
 			entries = list(study.entries.all().order_by("created_at"))
+
 			entries_by_id = {
 				entry.id: entry
 				for entry in entries
@@ -429,8 +458,9 @@ def run_study_analysis(study_id: int, sentiment_method="vader", theme_method="tf
 				sentiment_label = None
 
 				if entry_analysis_result.sentiment:
-					if entry_analysis_result.sentiment is not None:
+					if entry_analysis_result.sentiment.score is not None:
 						sentiment_score = round(entry_analysis_result.sentiment.score, 4)
+
 					sentiment_label = entry_analysis_result.sentiment.label
 
 				theme_weight = None
@@ -438,57 +468,51 @@ def run_study_analysis(study_id: int, sentiment_method="vader", theme_method="tf
 
 				if entry_analysis_result.theme:
 					if entry_analysis_result.theme.weight is not None:
-						theme_weight = round(entry_analysis_result.theme.weight, 4) 
+						theme_weight = round(entry_analysis_result.theme.weight, 4)
+
 					theme_label = entry_analysis_result.theme.label
-				
+
 				normalized_content = normalize_entry_text(entry.content)
 				issue_tags = detect_issue_tags(normalized_content)
-
 				entry_summary = make_entry_summary(normalized_content)
-				
-				
+
 				selected_entry_run = DiaryEntryAnalysis.objects.create(
 					run=run,
 					entry=entry,
-						
+
 					sentiment_score=sentiment_score,
 					sentiment_label=sentiment_label,
 					raw_sentiment_result=asdict(entry_analysis_result.sentiment) if entry_analysis_result.sentiment else {},
-						
-					theme_weight= theme_weight,
+
+					theme_weight=theme_weight,
 					theme_label=theme_label,
 					raw_theme_result=asdict(entry_analysis_result.theme) if entry_analysis_result.theme else {},
-					
+
 					issue_detected=bool(issue_tags),
 					issues=issue_tags,
 
-					methods = study_analysis_result.methods,
-					metadata = study_analysis_result.metadata,
-						
+					methods=study_analysis_result.methods,
+					metadata=study_analysis_result.metadata,
+
 					entry_summary=entry_summary,
 					analyzed_at=now,
-					raw_response=entry_analysis_result_data
+					raw_response=entry_analysis_result_data,
 				)
-				
-				entry.selected_entry_run = selected_entry_run
 
-				entry.save(
-					update_fields=[
-						"selected_entry_run"
-					]
-				)
+				entry.selected_entry_run = selected_entry_run
+				entry.save(update_fields=["selected_entry_run"])
 
 				result = {
 					"sentiment_score": sentiment_score,
-					"sentiment_label":sentiment_label,
-						
+					"sentiment_label": sentiment_label,
+
 					"theme_weight": theme_weight,
 					"theme_label": theme_label,
-					
+
 					"analysis_issue_detected": bool(issue_tags),
 					"analysis_issue_tags": issue_tags,
 
-					"entry_summary": entry_summary
+					"entry_summary": entry_summary,
 				}
 
 				entry_results.append(result)
@@ -502,12 +526,14 @@ def run_study_analysis(study_id: int, sentiment_method="vader", theme_method="tf
 				if study_analysis_result.average_sentiment_score is not None
 				else None
 			)
+
 			run.dominant_sentiment_label = study_analysis_result.dominant_sentiment_label
 			run.dominant_sentiment_score = (
 				round(study_analysis_result.dominant_sentiment_score, 4)
 				if study_analysis_result.dominant_sentiment_score is not None
 				else None
 			)
+
 			run.sentiment_distribution = build_sentiment_distribution(entry_results)
 
 			run.dominant_theme_label = study_analysis_result.dominant_theme_label
@@ -516,12 +542,10 @@ def run_study_analysis(study_id: int, sentiment_method="vader", theme_method="tf
 				if study_analysis_result.dominant_theme_weight is not None
 				else None
 			)
+
 			run.theme_distribution = build_recurring_themes(entry_results)
-
 			run.recurring_issues = build_recurring_issues(entry_results)
-
 			run.evolution_over_time = build_evolution_over_time(entries_with_results)
-
 			run.top_representative_quotes = build_top_sentiment_entries(entries_with_results)
 
 			run.total_entries = study_analysis_result.total_entries
@@ -547,8 +571,8 @@ def run_study_analysis(study_id: int, sentiment_method="vader", theme_method="tf
 					"theme_distribution",
 
 					"recurring_issues",
-					"evolution_over_time", 
-					"top_representative_quotes", 
+					"evolution_over_time",
+					"top_representative_quotes",
 
 					"entry_analysis_results",
 					"total_entries",
@@ -576,4 +600,22 @@ def run_study_analysis(study_id: int, sentiment_method="vader", theme_method="tf
 		run.error_message = str(e)
 		run.completed_at = timezone.now()
 		run.save(update_fields=["status", "error_message", "completed_at"])
+
 		raise
+
+
+#-------------------------------#
+# Backward-compatible sync call  #
+#-------------------------------#
+def run_study_analysis(
+	study_id: int,
+	sentiment_method="vader",
+	theme_method="tfidf_nmf",
+) -> StudyAnalysisRun:
+	run = create_study_analysis_run(
+		study_id=study_id,
+		sentiment_method=sentiment_method,
+		theme_method=theme_method,
+	)
+
+	return process_study_analysis_run(run.pk)

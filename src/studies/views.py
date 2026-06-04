@@ -13,13 +13,15 @@ from django.views.decorators.http import require_POST
 from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 
-from studies.services.analysis_runner import run_study_analysis
 from studies.services.nlp.registry import (
     get_available_sentiment_methods,
     get_available_theme_methods,
     get_available_sentiment_method_values,
     get_available_theme_method_values,
 )
+
+from studies.services.analysis_runner import create_study_analysis_run
+from studies.services.analysis_tasks import queue_study_analysis_run
 
 from .filters import filter_diary_entries, filter_analysis_entries
 from .forms import StudyForm, DiaryEntryForm
@@ -439,50 +441,48 @@ def select_analysis_methods(request, pk):
 @login_required
 @require_POST
 def run_machine_analysis(request, pk):
-    study = get_object_or_404(Study, pk=pk)
+	study = get_object_or_404(Study, pk=pk)
 
-    if study.owner != request.user:
-        return HttpResponseForbidden()
+	if study.owner != request.user:
+		return HttpResponseForbidden()
 
-    if not study.entries.exists():
-        messages.warning(
-            request,
-            "Cannot run machine analysis: No diary entries found in the study."
-        )
-        return redirect("diary_study_detail", pk=study.pk)
+	if not study.entries.exists():
+		messages.warning(
+			request,
+			"Cannot run machine analysis: No diary entries found in the study."
+		)
+		return redirect("diary_study_detail", pk=study.pk)
 
-    sentiment_method = request.POST.get("sentiment_method", "vader")
-    theme_method = request.POST.get("theme_method", "tfidf_nmf")
+	sentiment_method = request.POST.get("sentiment_method", "vader")
+	theme_method = request.POST.get("theme_method", "tfidf_nmf")
 
-    if sentiment_method not in get_available_sentiment_method_values():
-        messages.error(request, "Invalid sentiment analysis method.")
-        return redirect("select_analysis_methods", pk=study.pk)
+	if sentiment_method not in get_available_sentiment_method_values():
+		messages.error(request, "Invalid sentiment analysis method.")
+		return redirect("select_analysis_methods", pk=study.pk)
 
-    if theme_method not in get_available_theme_method_values():
-        messages.error(request, "Invalid thematic analysis method.")
-        return redirect("select_analysis_methods", pk=study.pk)
+	if theme_method not in get_available_theme_method_values():
+		messages.error(request, "Invalid thematic analysis method.")
+		return redirect("select_analysis_methods", pk=study.pk)
 
-    try:
-        study_analysis_run = run_study_analysis(
-            study_id=study.pk,
-            sentiment_method=sentiment_method,
-            theme_method=theme_method,
-        )
+	try:
+		study_analysis_run = create_study_analysis_run(
+			study_id=study.pk,
+			sentiment_method=sentiment_method,
+			theme_method=theme_method,
+		)
 
-    except Exception as e:
-        messages.error(request, f"Machine analysis failed: {e}")
-        return redirect("diary_study_detail", pk=study.pk)
+		queue_study_analysis_run(study_analysis_run.pk)
 
-    messages.success(
-        request,
-        f"Machine analysis completed successfully. Run ID: {study_analysis_run.pk}"
-    )
+	except Exception as e:
+		messages.error(request, f"Machine analysis could not be queued: {e}")
+		return redirect("diary_study_detail", pk=study.pk)
 
-    return redirect(
-        "machine_analysis_details",
-        study_pk=study.pk,
-        run_pk=study_analysis_run.pk,
-    )
+	messages.success(
+		request,
+		f"Machine analysis queued successfully. Run ID: {study_analysis_run.pk}"
+	)
+
+	return redirect("diary_study_detail", pk=study.pk)
 
 
 # ------------------------ #
