@@ -23,7 +23,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 items-center gap-4">
             {% for entry_analysis in entry_analyses %}
                 {% with run=entry_analysis.run %}
-                    <article class="card-border">
+                    <article class="card-border flex flex-col h-full">
                         
                         <!-- RUN HEADER -->
                         <header class="shrink-0 flex flex-col gap-2 p-2 border-b border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800">
@@ -107,16 +107,16 @@
                                     </span>
                                 </div>
 
-                                <div class="flex flex-nowrap items-end justify-center mb-2">
+                                <div class="flex flex-nowrap items-end justify-center p-2">
                                     <span class="xs-label flex flex-col gap-2 text-nowrap">
                                         THEME KEYWORDS
                                         {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.theme_label %}
                                     </span>
                                 </div>
 
-                                <div class="flex flex-nowrap items-end justify-center mb-2">
+                                <div class="flex flex-nowrap items-end justify-center p-2">
                                     <span class="badge-bigger">
-                                        Weight: {{ entry_analysis.theme_weight|floatformat:2 }}
+                                        Weight: {{ entry_analysis.theme_weight|floatformat:2|default:0.00 }}
                                     </span>
                                 </div>
                             </div>

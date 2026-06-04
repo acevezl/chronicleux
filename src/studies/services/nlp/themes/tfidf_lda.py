@@ -3,6 +3,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 from studies.services.nlp.contracts import BaseThemeExtractor, ThemeResult
 
+MODEL_NAME = "LatentDirichletAllocation"
 
 class TfidfLdaThemeExtractor(BaseThemeExtractor):
     method_name = "tfidf_lda"
@@ -30,7 +31,7 @@ class TfidfLdaThemeExtractor(BaseThemeExtractor):
             max_features=self.max_features,
             min_df=1,
             max_df=0.95,
-            ngram_range=(1, 2),
+            ngram_range=(2, 3),
         )
 
         matrix = vectorizer.fit_transform(valid_documents)
@@ -67,8 +68,13 @@ class TfidfLdaThemeExtractor(BaseThemeExtractor):
                 keywords=keywords,
                 method=self.method_name,
                 metadata={
+                    "model": MODEL_NAME,
+                    "language": "english",
                     "num_keywords": len(keywords),
-                    "model": "LatentDirichletAllocation",
+                    "stop_words": "english",
+                    "ngram_range": [2, 3],
+                    "min_df": 1,
+                    "max_df": 0.95,
                 },
             )
 
