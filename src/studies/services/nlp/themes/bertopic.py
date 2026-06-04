@@ -58,7 +58,7 @@ class BertopicThemeExtractor(BaseThemeExtractor):
                     keywords=keywords,
                     method=self.method_name,
                     metadata={
-                        "model": self.MODEL_NAME,
+                        "model": MODEL_NAME,
                         "language": "english",
                         "num_keywords": len(keywords),
                     },

@@ -8,6 +8,7 @@ from studies.services.nlp.sentiment.fivestar import StarRatingSentimentAnalyzer
 
 from studies.services.nlp.themes.tfidf_nmf import TfidfNmfThemeExtractor
 from studies.services.nlp.themes.tfidf_lda import TfidfLdaThemeExtractor
+from studies.services.nlp.themes.bertopic import BertopicThemeExtractor
 
 SENTIMENT_ANALYZERS = {
     "vader": {
@@ -47,7 +48,13 @@ THEME_EXTRACTORS = {
         "class": TfidfLdaThemeExtractor,
         "label": "TF-IDF + LDA",
         "description": "Extracts recurring themes using TF-IDF features and latent Dirichlet allocation.",
-        "long_description": "Use as TF-IDF + LDA a probabilistic topic-modeling comparison. Best for larger entry sets with enough repeated vocabulary.",
+        "long_description": "Use TF-IDF + LDA as a probabilistic topic-modeling comparison. Best for larger entry sets with enough repeated vocabulary.",
+    },
+    "bertopic": {
+        "class": BertopicThemeExtractor,
+        "label": "BERTopic",
+        "description": "Extracts semantic topics using transformer embeddings and c-TF-IDF.",
+        "long_description": "Use BERTopic when participants describe similar experiences using different words. Best for semantic themes beyond simple keyword overlap.",
     },
 }
 

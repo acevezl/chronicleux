@@ -429,14 +429,16 @@ def run_study_analysis(study_id: int, sentiment_method="vader", theme_method="tf
 				sentiment_label = None
 
 				if entry_analysis_result.sentiment:
-					sentiment_score = round(entry_analysis_result.sentiment.score, 4)
+					if entry_analysis_result.sentiment is not None:
+						sentiment_score = round(entry_analysis_result.sentiment.score, 4)
 					sentiment_label = entry_analysis_result.sentiment.label
 
 				theme_weight = None
 				theme_label = None
 
 				if entry_analysis_result.theme:
-					theme_weight = round(entry_analysis_result.theme.weight, 4)    
+					if entry_analysis_result.theme.weight is not None:
+						theme_weight = round(entry_analysis_result.theme.weight, 4) 
 					theme_label = entry_analysis_result.theme.label
 				
 				normalized_content = normalize_entry_text(entry.content)
@@ -444,17 +446,18 @@ def run_study_analysis(study_id: int, sentiment_method="vader", theme_method="tf
 
 				entry_summary = make_entry_summary(normalized_content)
 				
+				
 				selected_entry_run = DiaryEntryAnalysis.objects.create(
 					run=run,
 					entry=entry,
 						
 					sentiment_score=sentiment_score,
 					sentiment_label=sentiment_label,
-					raw_sentiment_result=asdict(entry_analysis_result.sentiment),
+					raw_sentiment_result=asdict(entry_analysis_result.sentiment) if entry_analysis_result.sentiment else {},
 						
 					theme_weight= theme_weight,
 					theme_label=theme_label,
-					raw_theme_result=asdict(entry_analysis_result.theme),
+					raw_theme_result=asdict(entry_analysis_result.theme) if entry_analysis_result.theme else {},
 					
 					issue_detected=bool(issue_tags),
 					issues=issue_tags,
