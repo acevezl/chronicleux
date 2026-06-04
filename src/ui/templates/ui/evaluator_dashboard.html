@@ -1,25 +1,136 @@
 {% extends "base.html" %}
+{% load heroicons %}
 
 {% block title %}Evaluator Dashboard · ChronicleUX{% endblock %}
 
 {% block content %}
 
-<div class="mt-2 md:flex md:items-center md:justify-between">
-	<div class="min-w-0 flex-1">
-		<h1 class="text-gray-900 sm:truncate text-3xl tracking-tight dark:text-white">
-			Evaluator Dashboard
-		</h1>
+<div class="sticky-top">
+	{% include "ui/partials/_header_evaluator_dashboard.html" %}
+</div>
 
-		<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
-			Welcome back. From here you can access your studies and analysis workflows.
+<section class="p-4 space-y-4">
+
+	<!-- DASHBOARD INTRO -->
+	<div class="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+		<p class="sm-label mb-1">Evaluator workspace</p>
+		<h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+			Welcome back
+		</h2>
+		<p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+			Review your studies, check machine analysis runs, and continue preparing studies that still need setup.
 		</p>
 	</div>
-</div>
 
-<div class="mt-6">
-	<a href="{% url 'studies' %}" class="button-PRIMARY">
-		View Studies
-	</a>
-</div>
+	<!-- DASHBOARD CARDS -->
+	<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+		<!-- MY STUDIES -->
+		<article class="flex flex-col justify-between rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+			<div class="flex items-start justify-between gap-3">
+				<div>
+					<p class="xs-label mb-1">Workspace</p>
+					<h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">
+						My Studies
+					</h3>
+				</div>
+
+				<div class="rounded-full bg-fuchsia-50 dark:bg-fuchsia-950 p-2 text-fuchsia-600 dark:text-fuchsia-300">
+					{% heroicon_outline "rectangle-stack" class="size-5" %}
+				</div>
+			</div>
+
+			<p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
+				View the studies you own or evaluate.
+			</p>
+
+			<div class="mt-4">
+				<a href="{% url 'studies' %}" class="button-PRIMARY">
+					View Studies
+				</a>
+			</div>
+		</article>
+
+		<!-- MY MACHINE ANALYSIS RUNS -->
+		<article class="flex flex-col justify-between rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+			<div class="flex items-start justify-between gap-3">
+				<div>
+					<p class="xs-label mb-1">Analysis</p>
+					<h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">
+						My Machine Analysis Runs
+					</h3>
+				</div>
+
+				<div class="rounded-full bg-indigo-50 dark:bg-indigo-950 p-2 text-indigo-600 dark:text-indigo-300">
+					{% heroicon_outline "cpu-chip" class="size-5" %}
+				</div>
+			</div>
+
+			<p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
+				Review machine-generated study analyses and compare previous runs.
+			</p>
+
+			<div class="mt-4">
+				<a href="{% url 'studies' %}" class="button-SECONDARY">
+					View Runs
+				</a>
+			</div>
+		</article>
+
+		<!-- STUDIES AWAITING REVIEW -->
+		<article class="flex flex-col justify-between rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+			<div class="flex items-start justify-between gap-3">
+				<div>
+					<p class="xs-label mb-1">Human Review</p>
+					<h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">
+						Studies Awaiting Review
+					</h3>
+				</div>
+
+				<div class="rounded-full bg-amber-50 dark:bg-amber-950 p-2 text-amber-600 dark:text-amber-300">
+					{% heroicon_outline "clipboard-document-check" class="size-5" %}
+				</div>
+			</div>
+
+			<p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
+				Continue studies where machine analysis is complete and evaluator review is next.
+			</p>
+
+			<div class="mt-4">
+				<a href="{% url 'studies' %}" class="button-SECONDARY">
+					Review Studies
+				</a>
+			</div>
+		</article>
+
+		<!-- STUDIES NEEDING SETUP -->
+		<article class="flex flex-col justify-between rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+			<div class="flex items-start justify-between gap-3">
+				<div>
+					<p class="xs-label mb-1">Setup</p>
+					<h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">
+						Studies Needing Setup
+					</h3>
+				</div>
+
+				<div class="rounded-full bg-emerald-50 dark:bg-emerald-950 p-2 text-emerald-600 dark:text-emerald-300">
+					{% heroicon_outline "wrench-screwdriver" class="size-5" %}
+				</div>
+			</div>
+
+			<p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
+				Finish draft studies before inviting participants or collecting entries.
+			</p>
+
+			<div class="mt-4">
+				<a href="{% url 'studies' %}" class="button-SECONDARY">
+					Finish Setup
+				</a>
+			</div>
+		</article>
+
+	</div>
+
+</section>
 
 {% endblock %}

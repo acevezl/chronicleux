@@ -18,8 +18,11 @@
     --color-red-800: oklch(44.4% 0.177 26.899);
     --color-amber-50: oklch(98.7% 0.022 95.277);
     --color-amber-200: oklch(92.4% 0.12 95.746);
+    --color-amber-300: oklch(87.9% 0.169 91.605);
+    --color-amber-600: oklch(66.6% 0.179 58.318);
     --color-amber-700: oklch(55.5% 0.163 48.998);
     --color-amber-800: oklch(47.3% 0.137 46.201);
+    --color-amber-950: oklch(27.9% 0.077 45.635);
     --color-yellow-200: oklch(94.5% 0.129 101.54);
     --color-green-50: oklch(98.2% 0.018 155.826);
     --color-green-100: oklch(96.2% 0.044 156.743);
@@ -28,6 +31,10 @@
     --color-green-600: oklch(62.7% 0.194 149.214);
     --color-green-700: oklch(52.7% 0.154 150.069);
     --color-green-800: oklch(44.8% 0.119 151.328);
+    --color-emerald-50: oklch(97.9% 0.021 166.113);
+    --color-emerald-300: oklch(84.5% 0.143 164.978);
+    --color-emerald-600: oklch(59.6% 0.145 163.225);
+    --color-emerald-950: oklch(26.2% 0.051 172.552);
     --color-sky-100: oklch(95.1% 0.026 236.824);
     --color-sky-500: oklch(68.5% 0.169 237.323);
     --color-sky-800: oklch(44.3% 0.11 240.79);
@@ -36,10 +43,19 @@
     --color-blue-500: oklch(62.3% 0.214 259.815);
     --color-blue-600: oklch(54.6% 0.245 262.881);
     --color-blue-800: oklch(42.4% 0.199 265.638);
+    --color-indigo-50: oklch(96.2% 0.018 272.314);
     --color-indigo-300: oklch(78.5% 0.115 274.713);
     --color-indigo-400: oklch(67.3% 0.182 276.935);
     --color-indigo-600: oklch(51.1% 0.262 276.966);
     --color-indigo-700: oklch(45.7% 0.24 277.023);
+    --color-indigo-950: oklch(25.7% 0.09 281.288);
+    --color-purple-50: oklch(97.7% 0.014 308.299);
+    --color-purple-300: oklch(82.7% 0.119 306.383);
+    --color-purple-600: oklch(55.8% 0.288 302.321);
+    --color-purple-950: oklch(29.1% 0.149 302.717);
+    --color-fuchsia-50: oklch(97.7% 0.017 320.058);
+    --color-fuchsia-300: oklch(83.3% 0.145 321.434);
+    --color-fuchsia-600: oklch(59.1% 0.293 322.896);
     --color-fuchsia-700: oklch(51.8% 0.253 323.949);
     --color-fuchsia-800: oklch(45.2% 0.211 324.591);
     --color-fuchsia-950: oklch(29.3% 0.136 325.661);
@@ -71,6 +87,8 @@
     --text-xs--line-height: calc(1 / 0.75);
     --text-sm: 0.875rem;
     --text-sm--line-height: calc(1.25 / 0.875);
+    --text-base: 1rem;
+    --text-base--line-height: calc(1.5 / 1);
     --text-lg: 1.125rem;
     --text-lg--line-height: calc(1.75 / 1.125);
     --text-xl: 1.25rem;
@@ -383,6 +401,10 @@
   .inline-flex {
     display: inline-flex;
   }
+  .size-5 {
+    width: calc(var(--spacing) * 5);
+    height: calc(var(--spacing) * 5);
+  }
   .size-6 {
     width: calc(var(--spacing) * 6);
     height: calc(var(--spacing) * 6);
@@ -675,6 +697,15 @@
   .border-sky-800 {
     border-color: var(--color-sky-800);
   }
+  .bg-amber-50 {
+    background-color: var(--color-amber-50);
+  }
+  .bg-emerald-50 {
+    background-color: var(--color-emerald-50);
+  }
+  .bg-fuchsia-50 {
+    background-color: var(--color-fuchsia-50);
+  }
   .bg-fuchsia-800 {
     background-color: var(--color-fuchsia-800);
   }
@@ -701,6 +732,12 @@
   }
   .bg-green-100 {
     background-color: var(--color-green-100);
+  }
+  .bg-indigo-50 {
+    background-color: var(--color-indigo-50);
+  }
+  .bg-purple-50 {
+    background-color: var(--color-purple-50);
   }
   .bg-red-50 {
     background-color: var(--color-red-50);
@@ -803,6 +840,10 @@
     font-size: var(--text-3xl);
     line-height: var(--tw-leading, var(--text-3xl--line-height));
   }
+  .text-base {
+    font-size: var(--text-base);
+    line-height: var(--tw-leading, var(--text-base--line-height));
+  }
   .text-lg {
     font-size: var(--text-lg);
     line-height: var(--tw-leading, var(--text-lg--line-height));
@@ -856,8 +897,17 @@
   .whitespace-pre-line {
     white-space: pre-line;
   }
+  .text-amber-600 {
+    color: var(--color-amber-600);
+  }
   .text-blue-600 {
     color: var(--color-blue-600);
+  }
+  .text-emerald-600 {
+    color: var(--color-emerald-600);
+  }
+  .text-fuchsia-600 {
+    color: var(--color-fuchsia-600);
   }
   .text-fuchsia-700 {
     color: var(--color-fuchsia-700);
@@ -891,6 +941,9 @@
   }
   .text-indigo-600 {
     color: var(--color-indigo-600);
+  }
+  .text-purple-600 {
+    color: var(--color-purple-600);
   }
   .text-red-600 {
     color: var(--color-red-600);
@@ -1256,6 +1309,11 @@
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
+  .xl\:grid-cols-4 {
+    @media (width >= 80rem) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
   .xl\:pl-72 {
     @media (width >= 80rem) {
       padding-left: calc(var(--spacing) * 72);
@@ -1302,6 +1360,21 @@
       }
     }
   }
+  .dark\:bg-amber-950 {
+    @media (prefers-color-scheme: dark) {
+      background-color: var(--color-amber-950);
+    }
+  }
+  .dark\:bg-emerald-950 {
+    @media (prefers-color-scheme: dark) {
+      background-color: var(--color-emerald-950);
+    }
+  }
+  .dark\:bg-fuchsia-950 {
+    @media (prefers-color-scheme: dark) {
+      background-color: var(--color-fuchsia-950);
+    }
+  }
   .dark\:bg-gray-400 {
     @media (prefers-color-scheme: dark) {
       background-color: var(--color-gray-400);
@@ -1327,6 +1400,16 @@
       background-color: var(--color-gray-900);
     }
   }
+  .dark\:bg-indigo-950 {
+    @media (prefers-color-scheme: dark) {
+      background-color: var(--color-indigo-950);
+    }
+  }
+  .dark\:bg-purple-950 {
+    @media (prefers-color-scheme: dark) {
+      background-color: var(--color-purple-950);
+    }
+  }
   .dark\:bg-white\/5 {
     @media (prefers-color-scheme: dark) {
       background-color: color-mix(in srgb, #fff 5%, transparent);
@@ -1343,9 +1426,24 @@
       }
     }
   }
+  .dark\:text-amber-300 {
+    @media (prefers-color-scheme: dark) {
+      color: var(--color-amber-300);
+    }
+  }
   .dark\:text-blue-100 {
     @media (prefers-color-scheme: dark) {
       color: var(--color-blue-100);
+    }
+  }
+  .dark\:text-emerald-300 {
+    @media (prefers-color-scheme: dark) {
+      color: var(--color-emerald-300);
+    }
+  }
+  .dark\:text-fuchsia-300 {
+    @media (prefers-color-scheme: dark) {
+      color: var(--color-fuchsia-300);
     }
   }
   .dark\:text-gray-100 {
@@ -1383,9 +1481,19 @@
       color: var(--color-gray-900);
     }
   }
+  .dark\:text-indigo-300 {
+    @media (prefers-color-scheme: dark) {
+      color: var(--color-indigo-300);
+    }
+  }
   .dark\:text-indigo-400 {
     @media (prefers-color-scheme: dark) {
       color: var(--color-indigo-400);
+    }
+  }
+  .dark\:text-purple-300 {
+    @media (prefers-color-scheme: dark) {
+      color: var(--color-purple-300);
     }
   }
   .dark\:text-red-300 {
