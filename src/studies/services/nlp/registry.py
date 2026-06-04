@@ -3,6 +3,7 @@
 
 from studies.services.nlp.sentiment.vader import VaderSentimentAnalyzer
 from studies.services.nlp.sentiment.bert import BertSentimentAnalyzer
+from studies.services.nlp.sentiment.roberta import RobertaSentimentAnalyzer
 
 from studies.services.nlp.themes.tfidf_nmf import TfidfNmfThemeExtractor
 from studies.services.nlp.themes.tfidf_lda import TfidfLdaThemeExtractor
@@ -10,6 +11,7 @@ from studies.services.nlp.themes.tfidf_lda import TfidfLdaThemeExtractor
 SENTIMENT_ANALYZERS = {
     "vader": VaderSentimentAnalyzer,
     "bert": BertSentimentAnalyzer,
+    "roberta": RobertaSentimentAnalyzer,
 }
 
 THEME_EXTRACTORS = {
