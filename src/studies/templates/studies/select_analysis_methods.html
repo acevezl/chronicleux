@@ -10,7 +10,7 @@
 		{% include "studies/partials/_menu_back_to_study.html" with study=study %}
 	</div>
 
-	<div class="p-4">
+	<div class="px-4 py-6">
 		{% include "studies/partials/_messages.html" %}
 
 		<details open class="group main-card">
@@ -45,56 +45,90 @@
 					{% csrf_token %}
 
 					<!-- METHODS -->
-					<div class="grid grid-cols-1 gap-4">
+					<div class="grid grid-cols-1 gap-8">
 
-						<!-- SENTIMENT METHOD -->
-						<div class="w-auto">
-							<label
-								for="sentiment_method"
-								class="block text-lg font-medium text-gray-700 dark:text-gray-200"
-							>
+						<!-- SENTIMENT METHODS -->
+						<div>
+							<h2 class="block text-lg font-medium text-gray-700 dark:text-gray-200">
 								Sentiment analysis
-							</label>
+							</h2>
 
 							<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
 								Method used to classify the sentiment of each diary entry.
 							</p>
 
-							<select
-								id="sentiment_method"
-								name="sentiment_method"
-								class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
-								required
-							>
+							<div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
 								{% for method in sentiment_methods %}
-									<option value="{{ method.value }}">{{ method.label }}</option>
+									<label class="cursor-pointer rounded-sm border border-gray-200 dark:border-gray-600 p-4 hover:bg-gray-50 dark:hover:bg-gray-800">
+										<div class="flex items-start gap-3">
+											<input
+												type="radio"
+												name="sentiment_method"
+												value="{{ method.value }}"
+												class="mt-1"
+												{% if forloop.first %}checked{% endif %}
+												required
+											>
+
+											<div class="flex flex-col gap-2">
+												<p class="sm-label">
+													<strong>{{ method.label }}</strong>
+												</p>
+
+												<p class="sm-label">
+													{{ method.description }}
+												</p>
+
+												<p class="xs-label">
+													{{ method.long_description }}
+												</p>
+											</div>
+										</div>
+									</label>
 								{% endfor %}
-							</select>
+							</div>
 						</div>
 
-						<!-- THEME METHOD -->
+						<!-- THEME METHODS -->
 						<div>
-							<label
-								for="theme_method"
-								class="block text-lg font-medium text-gray-700 dark:text-gray-200"
-							>
+							<h2 class="block text-lg font-medium text-gray-700 dark:text-gray-200">
 								Thematic analysis
-							</label>
+							</h2>
 
 							<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
 								Method used to extract recurring themes across diary entries.
 							</p>
 
-							<select
-								id="theme_method"
-								name="theme_method"
-                                class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
-								required
-							>
+							<div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
 								{% for method in theme_methods %}
-									<option value="{{ method.value }}">{{ method.label|upper }}</option>
+									<label class="cursor-pointer rounded-sm border border-gray-200 dark:border-gray-600 p-4 hover:bg-gray-50 dark:hover:bg-gray-800">
+										<div class="flex items-start gap-3">
+											<input
+												type="radio"
+												name="theme_method"
+												value="{{ method.value }}"
+												class="mt-1"
+												{% if forloop.first %}checked{% endif %}
+												required
+											>
+
+											<div class="flex flex-col gap-2">
+												<p class="sm-label">
+													<strong>{{ method.label }}</strong>
+												</p>
+
+												<p class="sm-label">
+													{{ method.description }}
+												</p>
+
+												<p class="xs-label">
+													{{ method.long_description }}
+												</p>
+											</div>
+										</div>
+									</label>
 								{% endfor %}
-							</select>
+							</div>
 						</div>
 
 					</div>

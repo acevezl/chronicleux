@@ -122,6 +122,8 @@ def build_study_analysis_result(study_id: int, entry_analysis_results: list[Entr
                 )
         
     dominant_sentiment_score = None
+    dominant_sentiment_scores = []
+
     if dominant_sentiment_label:
         dominant_sentiment_scores = [
             result.sentiment.score
@@ -152,16 +154,25 @@ def build_study_analysis_result(study_id: int, entry_analysis_results: list[Entr
             theme_distribution, 
             key=theme_distribution.get,
             )
-        
-    dominant_theme_weights = []
-    if dominant_theme_label:
-        for result in entry_analysis_results:
-            if result.theme and result.theme.label == dominant_theme_label:
-                theme_weight = result.metadata.get("theme_weight")
-                if theme_weight is not None:
-                    dominant_theme_weights.append(theme_weight)
-
+    
     dominant_theme_weight = None
+    dominant_theme_weights = []
+
+    if dominant_theme_label:
+        dominant_theme_weights = [
+            result.theme.weight
+            for result in entry_analysis_results
+            if (
+                result.theme
+                and result.theme.label == dominant_theme_label
+                and result.theme.weight is not None
+            )
+        ]
+
+        if dominant_theme_weights:
+            dominant_theme_weight = (
+                sum(dominant_theme_weights) / len(dominant_theme_weights)
+            )
 
     return StudyAnalysisResult(
         study_id=study_id,

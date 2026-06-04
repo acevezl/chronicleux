@@ -1,18 +1,15 @@
 <div class="group main-card">
     <div class="card-summary">
         <div class="card-summary-title">
-            {% heroicon_outline "arrow-trending-up" %}
-            Dominant Sentiment
+            {% heroicon_outline "face-smile" %}
+            Average Sentiment
         </div>
 
         <div class="card-summary-subtitle">
-        {% if dominant_sentiment %}
-            {% include "studies/partials/_badge_sentiment.html" with sentiment=dominant_sentiment %}
-        {% else %}
-            <span class="text-sm text-gray-500 dark:text-gray-400">
-                —
+            {% include "studies/partials/_badge_sentiment.html" with sentiment=run.average_sentiment_label %}
+            <span class="badge">
+                {{ run.average_sentiment_score }}
             </span>
-        {% endif %}
         </div>
     </div>
 
@@ -25,6 +22,20 @@
         </div>
     </div>
     {% endif %}
+
+    <div class="flex w-ful justify-center gap-2 p-2 mt-4">
+        <div class="xs-label">
+            {% heroicon_outline "arrow-trending-up" %}
+            Dominant Sentiment
+        </div>
+
+        <div class="xs-label">
+            {% include "studies/partials/_badge_sentiment.html" with sentiment=dominant_sentiment %}
+            <span class="badge">
+                {{ run.dominant_sentiment_score }}
+            </span>
+        </div>
+    </div>
 </div>
 
 <script>

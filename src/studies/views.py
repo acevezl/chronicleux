@@ -17,6 +17,8 @@ from studies.services.analysis_runner import run_study_analysis
 from studies.services.nlp.registry import (
     get_available_sentiment_methods,
     get_available_theme_methods,
+    get_available_sentiment_method_values,
+    get_available_theme_method_values,
 )
 
 from .filters import filter_diary_entries, filter_analysis_entries
@@ -427,25 +429,10 @@ def select_analysis_methods(request, pk):
     if study.owner != request.user:
         return HttpResponseForbidden()
 
-    sentiment_methods = get_available_sentiment_methods()
-    theme_methods = get_available_theme_methods()
-
     context = {
         "study": study,
-        "sentiment_methods": [
-            {
-                "value": method,
-                "label": method.replace("_", " ").title(),
-            }
-            for method in sentiment_methods
-        ],
-        "theme_methods": [
-            {
-                "value": method,
-                "label": method.replace("_", " ").title(),
-            }
-            for method in theme_methods
-        ],
+        "sentiment_methods": get_available_sentiment_methods(),
+        "theme_methods": get_available_theme_methods(),
     }
 
     return render(request, "studies/select_analysis_methods.html", context)
@@ -472,11 +459,11 @@ def run_machine_analysis(request, pk):
     sentiment_method = request.POST.get("sentiment_method", "vader")
     theme_method = request.POST.get("theme_method", "tfidf_nmf")
 
-    if sentiment_method not in get_available_sentiment_methods():
+    if sentiment_method not in get_available_sentiment_method_values():
         messages.error(request, "Invalid sentiment analysis method.")
         return redirect("select_analysis_methods", pk=study.pk)
 
-    if theme_method not in get_available_theme_methods():
+    if theme_method not in get_available_theme_method_values():
         messages.error(request, "Invalid thematic analysis method.")
         return redirect("select_analysis_methods", pk=study.pk)
 

@@ -4,9 +4,7 @@ from studies.models import SentimentCategory
 from studies.services.nlp.contracts import BaseSentimentAnalyzer, SentimentResult
 from studies.services.nlp.sentiment._thresholds import map_sentiment_score_to_label
 
-
 MODEL_NAME = "cardiffnlp/twitter-roberta-base-sentiment-latest"
-
 
 class RobertaSentimentAnalyzer(BaseSentimentAnalyzer):
     method_name = "roberta"
