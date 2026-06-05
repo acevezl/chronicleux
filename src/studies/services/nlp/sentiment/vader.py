@@ -1,5 +1,5 @@
 from nltk.sentiment import SentimentIntensityAnalyzer
-from studies.services.nlp.contracts import BaseSentimentAnalyzer, SentimentResult
+from studies.services.contracts import BaseSentimentAnalyzer, SentimentResult
 from studies.services.nlp.sentiment._thresholds import map_sentiment_score_to_label
 
 

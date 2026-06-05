@@ -1,7 +1,7 @@
 from bertopic import BERTopic
 from sklearn.feature_extraction.text import CountVectorizer
 
-from studies.services.nlp.contracts import BaseThemeExtractor, ThemeResult
+from studies.services.contracts import BaseThemeExtractor, ThemeResult
 
 
 MODEL_NAME = "BERTopic"

@@ -6,7 +6,7 @@
 
 from collections import Counter
 
-from studies.services.nlp.contracts import EntryAnalysisResult, StudyAnalysisResult, SentimentResult, ThemeResult
+from studies.services.contracts import EntryAnalysisResult, StudyAnalysisResult, SentimentResult, ThemeResult
 from studies.services.nlp.registry import get_sentiment_analyzer, get_theme_extractor
 from studies.models import SentimentCategory, SENTIMENT_SCORE_THRESHOLDS
 

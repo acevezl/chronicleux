@@ -4,7 +4,7 @@
 from transformers import pipeline
 
 from studies.models import SentimentCategory
-from studies.services.nlp.contracts import BaseSentimentAnalyzer, SentimentResult
+from studies.services.contracts import BaseSentimentAnalyzer, SentimentResult
 
 
 MODEL_NAME = "nlptown/bert-base-multilingual-uncased-sentiment"

@@ -4,7 +4,7 @@
 from transformers import pipeline
 
 from studies.models import SentimentCategory
-from studies.services.nlp.contracts import BaseSentimentAnalyzer, SentimentResult
+from studies.services.contracts import BaseSentimentAnalyzer, SentimentResult
 from studies.services.nlp.sentiment._thresholds import map_sentiment_score_to_label
 
 MODEL_NAME = "distilbert/distilbert-base-uncased-finetuned-sst-2-english"

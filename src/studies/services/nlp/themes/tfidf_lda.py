@@ -1,7 +1,7 @@
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from studies.services.nlp.contracts import BaseThemeExtractor, ThemeResult
+from studies.services.contracts import BaseThemeExtractor, ThemeResult
 
 MODEL_NAME = "LatentDirichletAllocation"
 
