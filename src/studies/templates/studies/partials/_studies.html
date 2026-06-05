@@ -126,31 +126,37 @@
 					</header>
 
 					<!-- CARD BODY -->
-					<section class="flex-1 p-3 space-y-2">
-						<div class="flex items-center justify-baseline gap-2 xs-label">
-							{% heroicon_outline "flag" class="h-4 w-4 shrink-0" %}
-							<span>Goal: {{ study.goal|capfirst }}</span>
+					<section class="flex-1 p-4 space-y-2">
+						<div class="flex items-start gap-2 xs-label">
+							<span>{% heroicon_outline "flag" class="h-4 w-4 shrink-0" %}</span>
+							<span class="w-10">Goal: </span>
+							<span class="flex-1">{{ study.goal|capfirst }}</span>
+						</div>
+
+						<div class="flex justify-between">
+							<div class="flex items-center gap-2 xs-label">
+								<span>{% heroicon_outline "user-circle" class="h-4 w-4 shrink-0" %}</span>
+								<span class="w-10">Owner: </span>
+								<span>{{ study.owner.username|capfirst }}</span>
+							</div>
+
+							<div class="flex items-center gap-2 xs-label">
+								<span>{% heroicon_outline "calendar-days" class="h-4 w-4 shrink-0" %}</span>
+								<span class="w-10">Created: </span>
+								<span>{{ study.created_at|date:"Y-m-d" }}</span>
+							</div>
 						</div>
 
 						<div class="flex items-center gap-2 xs-label">
-							{% heroicon_outline "user-circle" class="h-4 w-4 shrink-0" %}
-							<span>Owner: {{ study.owner.username|capfirst }}</span>
-						</div>
-
-						<div class="flex items-center gap-2 xs-label">
-							{% heroicon_outline "calendar-days" class="h-4 w-4 shrink-0" %}
-							<span>Created: {{ study.created_at|date:"Y-m-d" }}</span>
-						</div>
-
-						<div class="flex items-center gap-2 xs-label">
-							{% heroicon_outline "signal" class="h-4 w-4 shrink-0" %}
-							Status {% include "studies/partials/_badge_status.html" with status_value=study.status status_label=study.get_status_display %}
+							<span>{% heroicon_outline "signal" class="h-4 w-4 shrink-0" %}</span>
+							<span class="w-10">Status:</span>
+							<span>{% include "studies/partials/_badge_status.html" with status_value=study.status status_label=study.get_status_display %}</span>
 						</div>
 
 					</section>
 
 					<!-- CARD ACTIONS -->
-					<footer class="shrink-0 p-3 border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+					<footer class="shrink-0 p-3 border-t border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800">
 						<div class="flex flex-wrap gap-2">
 
 							<a
@@ -175,9 +181,9 @@
 				</article>
 
 			{% endfor %}
+			
 		</div>
-
-		{% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params %}
+		
 	{% else %}
 		<div class="rounded-sm border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-6">
 			<div class="flex items-start gap-3">

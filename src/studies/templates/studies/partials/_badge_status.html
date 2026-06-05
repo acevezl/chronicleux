@@ -1,3 +1,26 @@
-<span class="inline-flex items-center rounded-full gap-1 px-3 py-1 text-xs font-medium status-cell-{{ status_value }}">
-  {{ status_label }}
-</span>
+{% load heroicons %}
+
+{% if status_value in "PLANNING COLLECTING MACHINE_ANALYSIS HUMAN_ANALYSIS COMPLETED" %}
+	<span class="status-cell-{{ status_value }}">
+
+		{% if status_value == "PLANNING" %}
+			{% heroicon_outline "pencil-square" class="h-4 w-4 shrink-0" %}
+		{% elif status_value == "COLLECTING" %}
+			{% heroicon_outline "inbox-arrow-down" class="h-4 w-4 shrink-0" %}
+		{% elif status_value == "MACHINE_ANALYSIS" %}
+			{% heroicon_outline "cpu-chip" class="h-4 w-4 shrink-0" %}
+		{% elif status_value == "HUMAN_ANALYSIS" %}
+			{% heroicon_outline "user-group" class="h-4 w-4 shrink-0" %}
+		{% elif status_value == "COMPLETED" %}
+			{% heroicon_outline "check-badge" class="h-4 w-4 shrink-0" %}
+		{% endif %}
+
+		{{ status_label|default:status_value }}
+
+	</span>
+{% else %}
+	<span class="status-cell-UNKNOWN">
+		{% heroicon_outline "question-mark-circle" class="h-4 w-4 shrink-0" %}
+		{{ status_label|default:status_value|default:"Unknown" }}
+	</span>
+{% endif %}
