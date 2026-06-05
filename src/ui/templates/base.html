@@ -1,200 +1,230 @@
 <!doctype html>
 <html>
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{% block title %}ChronicleUX{% endblock %}</title>
-    {% load static%}
-    <link href="{% static 'css/app.css' %}" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/output.css' %}">
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
-    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>{% block title %}ChronicleUX{% endblock %}</title>
+	{% load static%}
+	<link href="{% static 'css/app.css' %}" rel="stylesheet">
+	<link rel="stylesheet" href="{% static 'css/output.css' %}">
+	<script src="https://cdn.jsdelivr.net/npm/@tailwindplus/elements@1" type="module"></script>
+	<script src="https://unpkg.com/htmx.org@2.0.4"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
 
   <body class="h-full bg-white dark:bg-gray-900">
-    <!-- Static sidebar for mobile -->
-    <el-dialog>
-      <dialog id="sidebar" class="backdrop:bg-transparent lg:hidden">
-        <el-dialog-backdrop class="fixed inset-0 bg-gray-900/80 transition-opacity duration-300 ease-linear data-closed:opacity-0"></el-dialog-backdrop>
+	<!-- Static sidebar for mobile -->
+	<el-dialog>
+	  <dialog id="sidebar" class="backdrop:bg-transparent lg:hidden">
+		<el-dialog-backdrop class="fixed inset-0 bg-gray-900/80 transition-opacity duration-300 ease-linear data-closed:opacity-0"></el-dialog-backdrop>
 
-        <div tabindex="0" class="fixed inset-0 flex focus:outline-none">
-          <el-dialog-panel class="group/dialog-panel relative mr-16 flex w-full max-w-xs flex-1 transform transition duration-300 ease-in-out data-closed:-translate-x-full">
-            <div class="absolute top-0 left-full flex px-3 py-5 duration-300 ease-in-out group-data-closed/dialog-panel:opacity-0">
-              <button type="button" command="close" commandfor="sidebar" class="-m-2.5 p-2.5 bg-gray-950 hover:bg-slate-600 cursor-pointer">
-                <span class="sr-only">Close sidebar</span>
-                {% heroicon_outline "chevron-left" class="stroke-white" %}
-              </button>
-            </div>
+		<div tabindex="0" class="fixed inset-0 flex focus:outline-none">
+		  <el-dialog-panel class="group/dialog-panel relative mr-16 flex w-full max-w-xs flex-1 transform transition duration-300 ease-in-out data-closed:-translate-x-full">
+			<div class="absolute top-0 left-full flex px-3 py-5 duration-300 ease-in-out group-data-closed/dialog-panel:opacity-0">
+			  <button type="button" command="close" commandfor="sidebar" class="-m-2.5 p-2.5 bg-gray-950 hover:bg-slate-600 cursor-pointer">
+				<span class="sr-only">Close sidebar</span>
+				{% heroicon_outline "chevron-left" class="stroke-white" %}
+			  </button>
+			</div>
 
-            <div class="relative flex grow flex-col gap-y-5 overflow-y-auto bg-white dark:border-r dark:border-gray-600 dark:bg-gray-900 dark:ring dark:ring-white/10 dark:before:pointer-events-none dark:before:absolute dark:before:inset-0 dark:before:bg-black/10">
-              <div class="flex flex-col border-b border-gray-200 bg-white px-6 py-4 dark:bg-gray-800 dark:border-gray-600">
-                <span class="text-3xl font-serif text-fuchsia-950 dark:text-gray-300" >ChronicleUX</span>
-                <span class="text-sm dark:text-gray-400">A Diary Study Research Platform</span>
-              </div>
-              <nav class="flex flex-1 flex-col">
-                <ul role="list" class="flex flex-1 flex-col gap-y-7">
-                  <li>
-                    <ul role="list" class=" space-y-1 p-4">
-                      <li>
-                        <!-- Current: "bg-gray-50 dark:bg-white/5 text-fuchsia-700 dark:text-white", Default: "text-gray-700 dark:text-gray-400 hover:text-fuchsia-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5" -->
-                        <a href="{% url 'evaluator_dashboard' %}" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold bg-gray-100 text-fuchsia-700 dark:bg-gray-500 dark:text-white">
-                          {% heroicon_outline "academic-cap" %}
-                          Evaluator Dashboard
-                        </a>
-                      </li>
-                      <li>
-                        <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
-                          {% heroicon_outline "user-group" %}
-                          Participant Dashboard
-                        </a>
-                      </li>
-                      <li>
-                        <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
-                          {% heroicon_outline "calendar" %}
-                          Calendar
-                        </a>
-                      </li>
-                      <li>
-                        <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
-                          {% heroicon_outline "chart-pie" %}
-                          Reports
-                        </a>
-                      </li>
-                    </ul>
-                  </li>
-                  <li class="mt-auto">
-                    <ul role="list" class="flex flex-1 flex-col relative bg-gray-50 border-t dark:bg-gray-800 dark:border-gray-600 border-gray-200 p-4">
-                      <li>
-                        <a href="{% url 'admin:index' %}" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
-                          {% heroicon_outline "cog-6-tooth" %}
-                          Admin
-                        </a>
-                      </li>
-                      <li>
-                        <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
-                          <span class="inline-flex size-6 items-center justify-center rounded-full bg-gray-500 outline -outline-offset-1 outline-black/5 dark:bg-gray-400 dark:outline-white/10">
-                            <span class="font-medium text-white dark:text-gray-900">{{user_initials}}</span>
-                          </span>
-                          {{ user.first_name }} {{ user.last_name }}
-                        </a>
-                      </li>
-                      <li>
-                        <form method="post" action="{% url 'logout' %}">
-                          {% csrf_token %}
-                          <button
-                            type="submit"
-                            class="w-full cursor-pointer group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
-                          >
-                            {% heroicon_outline "power" %}
-                            Sign out
-                          </button>
-                        </form>
-                      </li>
-                    </ul>
-                  </li>
-                </ul>
-              </nav>
-            </div>
-          </el-dialog-panel>
-        </div>
-      </dialog>
-    </el-dialog>
-    <!-- Static sidebar for mobile -->
+			<div class="relative flex grow flex-col gap-y-5 overflow-y-auto bg-white dark:border-r dark:border-gray-600 dark:bg-gray-900 dark:ring dark:ring-white/10 dark:before:pointer-events-none dark:before:absolute dark:before:inset-0 dark:before:bg-black/10">
+			  <div class="flex flex-col border-b border-gray-200 bg-white px-6 py-4 dark:bg-gray-800 dark:border-gray-600">
+				<span class="text-3xl font-serif text-fuchsia-950 dark:text-gray-300" >ChronicleUX</span>
+				<span class="text-sm dark:text-gray-400">A Diary Study Research Platform</span>
+			  </div>
+			  <nav class="flex flex-1 flex-col">
+				<ul role="list" class="flex flex-1 flex-col gap-y-7">
+				  <li>
+					<ul role="list" class=" space-y-1 p-4">
+					  <li>
+						<a
+						  href="{% url 'evaluator_dashboard' %}"
+						  class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold
+						  {% if request.resolver_match.url_name == 'evaluator_dashboard' %}
+							bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-950 dark:text-fuchsia-200
+						  {% else %}
+							text-gray-700 hover:bg-gray-100 hover:text-fuchsia-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white
+						  {% endif %}"
+						>
+						  {% heroicon_outline "academic-cap" %}
+						  Evaluator Dashboard
+						</a>
+					  </li>
+					  <li>
+						<a
+						  href="{% url 'participant_dashboard' %}"
+						  class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold
+						  {% if request.resolver_match.url_name == 'participant_dashboard' %}
+							bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-950 dark:text-fuchsia-200
+						  {% else %}
+							text-gray-700 hover:bg-gray-100 hover:text-fuchsia-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white
+						  {% endif %}"
+						>
+						  {% heroicon_outline "user-group" %}
+						  Participant Dashboard
+						</a>
+					  </li>
+					  {% comment %} <li>
+						<a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
+						  {% heroicon_outline "calendar" %}
+						  Calendar
+						</a>
+					  </li>
+					  <li>
+						<a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
+						  {% heroicon_outline "chart-pie" %}
+						  Reports
+						</a>
+					  </li> {% endcomment %}
+					</ul>
+				  </li>
+				  <li class="mt-auto">
+					<ul role="list" class="flex flex-1 flex-col relative bg-gray-50 border-t dark:bg-gray-800 dark:border-gray-600 border-gray-200 p-4">
+					  <li>
+						<a href="{% url 'admin:index' %}" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
+						  {% heroicon_outline "cog-6-tooth" %}
+						  Admin
+						</a>
+					  </li>
+					  <li>
+						<a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
+						  <span class="inline-flex size-6 items-center justify-center rounded-full bg-gray-500 outline -outline-offset-1 outline-black/5 dark:bg-gray-400 dark:outline-white/10">
+							<span class="font-medium text-white dark:text-gray-900">{{user_initials}}</span>
+						  </span>
+						  {{ user.first_name }} {{ user.last_name }}
+						</a>
+					  </li>
+					  <li>
+						<form method="post" action="{% url 'logout' %}">
+						  {% csrf_token %}
+						  <button
+							type="submit"
+							class="w-full cursor-pointer group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
+						  >
+							{% heroicon_outline "power" %}
+							Sign out
+						  </button>
+						</form>
+					  </li>
+					</ul>
+				  </li>
+				</ul>
+			  </nav>
+			</div>
+		  </el-dialog-panel>
+		</div>
+	  </dialog>
+	</el-dialog>
+	<!-- Static sidebar for mobile -->
 
-    <!-- Static sidebar for desktop -->
-    <div class="hidden dark:bg-gray-900 lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-      <!-- Sidebar component, swap this element with another sidebar if you like -->
-      <div class="flex flex-col border-r border-b border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-600 px-6 py-4">
-        <span class="text-3xl font-serif text-fuchsia-950 dark:text-gray-300">ChronicleUX</span>
-        <span class="text-sm text-gray-600 dark:text-gray-400">A Diary Study Research Platform</span>
-      </div>
-      <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-900">
-        <nav class="flex flex-1 flex-col">
-          <ul role="list" class="flex flex-1 flex-col gap-y-7">
-            <li>
-              <ul role="list" class=" space-y-1 p-4">
-                <li>
-                  <!-- Current: "bg-gray-50 dark:bg-white/5 text-fuchsia-700 dark:text-white", Default: "text-gray-700 dark:text-gray-400 hover:text-fuchsia-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5" -->
-                  <a href="{% url 'evaluator_dashboard' %}" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold bg-gray-100 text-fuchsia-700 dark:bg-gray-500 dark:text-white">
-                    {% heroicon_outline "academic-cap" %}
-                    Evaluator Dashboard
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
-                    {% heroicon_outline "user-group" %}
-                    Participant Dashboard
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
-                    {% heroicon_outline "calendar" %}
-                    Calendar
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
-                    {% heroicon_outline "chart-pie" %}
-                    Reports
-                  </a>
-                </li>
-              </ul>
-            </li>
-            <li class="mt-auto">
-              <ul role="list" class="flex flex-1 flex-col relative bg-gray-50 border-t dark:bg-gray-800 dark:border-gray-600 border-gray-200 p-4">
-                <li>
-                  <a href="{% url 'admin:index' %}" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
-                    {% heroicon_outline "cog-6-tooth" %}
-                    Admin
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
-                    <span class="inline-flex size-6 items-center justify-center rounded-full bg-gray-500 outline -outline-offset-1 outline-black/5 dark:bg-gray-400 dark:outline-white/10">
-                      <span class="font-medium text-white dark:text-gray-900">{{user_initials}}</span>
-                    </span>
-                    {{ user.first_name }} {{ user.last_name }}
-                  </a>
-                </li>
-                <li>
-                  <form method="post" action="{% url 'logout' %}">
-                    {% csrf_token %}
-                    <button
-                      type="submit"
-                      class="w-full cursor-pointer group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
-                    >
-                      {% heroicon_outline "power" %}
-                      Sign out
-                    </button>
-                  </form>
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </nav>
-      </div>
-    </div>
+	<!-- Static sidebar for desktop -->
+	<div class="hidden dark:bg-gray-900 lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
+	  <!-- Sidebar component, swap this element with another sidebar if you like -->
+	  <div class="flex flex-col border-r border-b border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-600 px-6 py-4">
+		<span class="text-3xl font-serif text-fuchsia-950 dark:text-gray-300">ChronicleUX</span>
+		<span class="text-sm text-gray-600 dark:text-gray-400">A Diary Study Research Platform</span>
+	  </div>
+	  <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-900">
+		<nav class="flex flex-1 flex-col">
+		  <ul role="list" class="flex flex-1 flex-col gap-y-7">
+			<li>
+			  <ul role="list" class=" space-y-1 p-4">
+				<li>
+				  <a
+					href="{% url 'evaluator_dashboard' %}"
+					class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold
+					{% if request.resolver_match.url_name == 'evaluator_dashboard' %}
+					  bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-950 dark:text-fuchsia-200
+					{% else %}
+					  text-gray-700 hover:bg-gray-100 hover:text-fuchsia-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white
+					{% endif %}"
+				  >
+					{% heroicon_outline "academic-cap" %}
+					Evaluator Dashboard
+				  </a>
+				</li>
+				<li>
+					<a
+						href="{% url 'participant_dashboard' %}"
+						class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold
+						{% if request.resolver_match.url_name == 'participant_dashboard' %}
+						bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-950 dark:text-fuchsia-200
+						{% else %}
+						text-gray-700 hover:bg-gray-100 hover:text-fuchsia-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white
+						{% endif %}"
+					>
+						{% heroicon_outline "user-group" %}
+						Participant Dashboard
+					</a>
+				</li>
+				{% comment %} <li>
+				  <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
+					{% heroicon_outline "calendar" %}
+					Calendar
+				  </a>
+				</li>
+				<li>
+				  <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
+					{% heroicon_outline "chart-pie" %}
+					Reports
+				  </a>
+				</li> {% endcomment %}
+			  </ul>
+			</li>
+			<li class="mt-auto">
+			  <ul role="list" class="flex flex-1 flex-col relative bg-gray-50 border-t dark:bg-gray-800 dark:border-gray-600 border-gray-200 p-4">
+				<li>
+				  <a href="{% url 'admin:index' %}" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
+					{% heroicon_outline "cog-6-tooth" %}
+					Admin
+				  </a>
+				</li>
+				<li>
+				  <a href="#" class="group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white">
+					<span class="inline-flex size-6 items-center justify-center rounded-full bg-gray-500 outline -outline-offset-1 outline-black/5 dark:bg-gray-400 dark:outline-white/10">
+					  <span class="font-medium text-white dark:text-gray-900">{{user_initials}}</span>
+					</span>
+					{{ user.first_name }} {{ user.last_name }}
+				  </a>
+				</li>
+				<li>
+				  <form method="post" action="{% url 'logout' %}">
+					{% csrf_token %}
+					<button
+					  type="submit"
+					  class="w-full cursor-pointer group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
+					>
+					  {% heroicon_outline "power" %}
+					  Sign out
+					</button>
+				  </form>
+				</li>
+			  </ul>
+			</li>
+		  </ul>
+		</nav>
+	  </div>
+	</div>
 
-    <div class="lg:pl-72 xl:pl-72">
-      <div class="lg:hidden sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-xs sm:gap-x-6 sm:px-6 lg:px-8 dark:border-white/10 dark:bg-gray-900 dark:shadow-none">
-        <button type="button" command="show-modal" commandfor="sidebar" class="-m-2.5 p-2.5 text-gray-700 hover:text-gray-900 lg:hidden dark:text-gray-400 dark:hover:text-white">
-          <span class="sr-only">Open sidebar</span>
-          {% heroicon_outline "bars-3" %}
-        </button>
-        <!-- Separator -->
-        <div aria-hidden="true" class="h-6 w-px bg-gray-200 lg:hidden dark:bg-white/10"></div>
-        <div class="flex flex-col py-4 lg:hidden">
-          <span class="text-2xl font-serif text-fuchsia-950 dark:text-gray-300">ChronicleUX</span>
-          <span class="text-xs dark:text-gray-400">A Diary Study Research Platform</span>
-        </div>
-      </div>
+	<div class="lg:pl-72 xl:pl-72">
+	  <div class="lg:hidden sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-xs sm:gap-x-6 sm:px-6 lg:px-8 dark:border-white/10 dark:bg-gray-900 dark:shadow-none">
+		<button type="button" command="show-modal" commandfor="sidebar" class="-m-2.5 p-2.5 text-gray-700 hover:text-gray-900 lg:hidden dark:text-gray-400 dark:hover:text-white">
+		  <span class="sr-only">Open sidebar</span>
+		  {% heroicon_outline "bars-3" %}
+		</button>
+		<!-- Separator -->
+		<div aria-hidden="true" class="h-6 w-px bg-gray-200 lg:hidden dark:bg-white/10"></div>
+		<div class="flex flex-col py-4 lg:hidden">
+		  <span class="text-2xl font-serif text-fuchsia-950 dark:text-gray-300">ChronicleUX</span>
+		  <span class="text-xs dark:text-gray-400">A Diary Study Research Platform</span>
+		</div>
+	  </div>
 
-      <main class="m-auto">
-          {% block content %}
+	  <main class="m-auto">
+		  {% block content %}
 
-          {% endblock %}
-      </main>
-    </div>
+		  {% endblock %}
+	  </main>
+	</div>
   </body>
 </html>

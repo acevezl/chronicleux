@@ -9,23 +9,23 @@ from studies.models import MembershipRole, StudyMembership
 # HOME
 @login_required
 def home(request):
-	is_evaluator = StudyMembership.objects.filter(
-		user=request.user,
-		role=MembershipRole.EVALUATOR,
-	).exists()
+	# is_evaluator = StudyMembership.objects.filter(
+	# 	user=request.user,
+	# 	role=MembershipRole.EVALUATOR,
+	# ).exists()
 
-	is_participant = StudyMembership.objects.filter(
-		user=request.user,
-		role=MembershipRole.PARTICIPANT,
-	).exists()
+	# is_participant = StudyMembership.objects.filter(
+	# 	user=request.user,
+	# 	role=MembershipRole.PARTICIPANT,
+	# ).exists()
 
-	if is_evaluator:
-		return redirect("evaluator_dashboard")
+	# if is_evaluator:
+	# 	return redirect("evaluator_dashboard")
 
-	if is_participant:
-		return redirect("participant_dashboard")
+	# if is_participant:
+	# 	return redirect("participant_dashboard")
 
-	return redirect("studies")
+	return render(request, "/")
 
 @login_required
 def evaluator_dashboard(request):
