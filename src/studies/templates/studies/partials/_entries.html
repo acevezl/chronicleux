@@ -127,7 +127,7 @@
 <div class="overflow-x-auto">
     {% if diary_entries %}
     
-        {% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params displayed_entries_count=displayed_entries_count total_filtered_entries_count=total_filtered_entries_count total_study_entries_count=total_study_entries_count%}    
+       {% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params displayed_entries=displayed_entries_count total_filtered_entries=total_filtered_entries_count total_entries=total_study_entries_count%}    
 
         <table class="w-full table-auto text-sm">
             <thead class="bg-gray-100 dark:bg-gray-700 dark:text-gray-200 text-gray-600">
@@ -257,7 +257,7 @@
             </tbody>
         </table>
 
-        {% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params %}
+        {% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params displayed_entries=displayed_entries_count total_filtered_entries=total_filtered_entries_count total_entries=total_study_entries_count%}    
         
     {% else %}
         <div class="p-8 text-center">

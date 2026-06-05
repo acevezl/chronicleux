@@ -1,0 +1,280 @@
+{% load heroicons %}
+{% load formatters %}
+
+{% for run in analysis_runs %}
+	{% if run.status == "QUEUED" or run.status == "RUNNING" %}
+		<meta http-equiv="refresh" content="5">
+	{% endif %}
+{% endfor %}
+
+<div open class="group main-card">
+	<!-- FILTERS -->
+	<div class="px-6 py-4 bg-gray-100 dark:bg-gray-900">
+		<form
+			method="get"
+			hx-get="{{ analysis_runs_filter_url }}"
+			hx-target="#analysis-runs-container"
+			hx-swap="innerHTML"
+			hx-push-url="true"
+        	hx-trigger="submit, change delay:100ms from:select, change delay:500ms from:input, keyup changed delay:500ms from:input"
+			class="flex flex-wrap gap-3"
+		>
+			<input
+				type="text"
+				name="q"
+				placeholder="Search by text..."
+				value="{{ request.GET.q }}"
+				class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-72 dark:text-white dark:border-gray-500"
+			>
+
+			<select
+				name="status"
+				class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-44 dark:text-white dark:border-gray-500 dark:bg-gray-900"
+			>
+				<option value="">All statuses</option>
+				{% for value, label in status_choices %}
+					<option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>
+						{{ label }}
+					</option>
+				{% endfor %}
+			</select>
+
+			<select
+				name="sentiment_method"
+				class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-48 dark:text-white dark:border-gray-500 dark:bg-gray-900"
+			>
+				<option value="">All sentiment methods</option>
+				<option value="vader" {% if request.GET.sentiment_method == "vader" %}selected{% endif %}>
+					VADER
+				</option>
+				<option value="bert" {% if request.GET.sentiment_method == "bert" %}selected{% endif %}>
+					BERT
+				</option>
+			</select>
+
+			<select
+				name="theme_method"
+				class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-48 dark:text-white dark:border-gray-500 dark:bg-gray-900"
+			>
+				<option value="">All theme methods</option>
+				<option value="tfidf_nmf" {% if request.GET.theme_method == "tfidf_nmf" %}selected{% endif %}>
+					TF-IDF + NMF
+				</option>
+				<option value="bertopic" {% if request.GET.theme_method == "bertopic" %}selected{% endif %}>
+					BERTopic
+				</option>
+			</select>
+
+			<button
+				type="submit"
+				class="button-FILTER">
+				Filter
+			</button>
+
+			{% if request.GET.q or request.GET.status or request.GET.sentiment_method or request.GET.theme_method %}
+				<a
+					href="{% url 'analysis_runs' %}"
+					hx-get="{{ analysis_runs_filter_url }}"
+					hx-target="#analysis-runs-container"
+					hx-swap="innerHTML"
+					class="button-FILTER-CLEAR"
+				>
+					Clear Filter
+				</a>
+			{% endif %}
+		</form>
+	</div>
+
+	<!-- ANALYSIS RUNS -->
+	<div class="overflow-x-auto">
+		{% if analysis_runs %}
+			{% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params displayed_entries=displayed_entries_count total_filtered_entries=total_filtered_entries_count total_entries=total_study_entries_count%}    
+			
+			<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
+				{% for run in analysis_runs %}
+
+					<!-- ANALYSIS RUN CARD -->
+					<article class="h-full flex flex-col rounded-sm border border-gray-200 dark:border-gray-600 overflow-hidden">
+
+						<!-- RUN HEADER -->
+						<header class="shrink-0 border-b border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800">
+							
+							<div class="border-b border-gray-200 bg-gray-200">
+								<span class="card-summary-subtitle">
+									{% heroicon_outline "book-open"%}
+									Study: {{ run.study.title|capfirst}}
+								</span>
+							</div>
+							
+							<div class="flex items-start justify-between gap-2 p-2">
+								<div class="flex flex-col">
+
+									<span class="card-summary-title">
+										{% heroicon_outline "code-bracket-square"%}
+										RUN-{{ run.id|stringformat:"03d" }}
+									</span>
+
+									<!-- CREATOR -->
+									<span class="xs-label p-1">
+										{% heroicon_outline "academic-cap" class="h-4 w-4" %}
+										{% if run.created_by %}
+											Executed by: {{ run.created_by.username|capfirst }}
+										{% endif %}
+									</span>
+
+									<!-- ANALYSIS DATE -->
+									<span class="xs-label p-1">
+										{% heroicon_outline "calendar-days" class="h-4 w-4" %}
+										{% if run.completed_at %}
+											Completed on: {{ run.completed_at|date:"Y-m-d H:i" }}
+
+										{% elif run.created_at %}
+											Started on: {{ run.started_at|date:"Y-m-d H:i" }}
+										{% else %}
+											Date unavailable
+										{% endif %}
+									</span>
+										
+								</div>
+
+								{% if run.status %}
+									<span class="run-{{ run.status }}">
+										{{ run.status }}
+									</span>
+								{% endif %}
+							</div>
+						</header>
+
+						<!-- RUN BODY -->
+						<section class="flex-1 p-2 space-y-2 bg-white dark:bg-gray-400">
+
+							<!-- METHODS -->
+							<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+								<!-- SENTIMENT METHOD -->
+								<div class="flex flex-col gap-2 card-border p-2">
+									<div class="xs-label uppercase">
+										{% heroicon_outline "face-smile" class="h-4 w-4" %}
+										Sentiment Method
+									</div>
+
+									<span class="badge-bigger">
+										{{ run.methods.sentiment|humanize_enum|upper|default:"—" }}
+									</span>
+								</div>
+
+								<!-- THEME METHOD -->
+								<div class="flex flex-col gap-2 card-border p-2">
+									<div class="xs-label uppercase">
+										{% heroicon_outline "tag" class="h-4 w-4" %}
+										Theme Method
+									</div>
+
+									<div class="badge-bigger">
+										{{ run.methods.theme|humanize_enum|upper|default:"—" }}
+									</div>
+								</div>
+
+							</div>
+
+							<!-- KEY RESULTS -->
+							<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+								<!-- DOMINANT SENTIMENT -->
+								<div class="flex flex-col gap-2 card-border p-2">
+									<div class="xs-label uppercase">
+										{% heroicon_outline "arrow-trending-up" class="h-4 w-4" %}
+										Dominant Sentiment
+									</div>
+
+									<div>
+										{% include "studies/partials/_badge_sentiment.html" with sentiment=run.dominant_sentiment_label %}
+									</div>
+								</div>
+
+								<!-- DOMINANT THEMES -->
+								<div class="flex flex-col gap-2 card-border p-2">
+									<div class="xs-label uppercase">
+										{% heroicon_outline "rectangle-group" class="h-4 w-4" %}
+										Theme Keywords
+									</div>
+
+									<div class="flex flex-wrap gap-2">
+										{% include "studies/partials/_badge_theme_labels.html" with themes=run.dominant_theme_label %}
+									</div>
+								</div>
+
+							</div>
+							
+							<div class="grid grid-cols-1 gap-2">
+
+								<!-- RECURRING ISSUES -->
+								<div class="flex flex-col gap-2 card-border p-2">
+									<div class="xs-label uppercase">
+										{% heroicon_outline "exclamation-triangle" class="h-4 w-4" %}
+										Detected Issues
+									</div>
+
+									<div class="flex flex-wrap gap-2">
+										{% include "studies/partials/_badge_issue_tags.html" with issues=run.recurring_issues|extract_labels %}
+									</div>
+								</div>
+
+							</div>
+
+						</section>
+
+						<!-- RUN ACTIONS -->
+						<footer class="shrink-0 p-2 border-t border-gray-200 dark:border-gray-600 bg-gray-200 dark:bg-gray-800">
+							{% if run.status == "COMPLETED" %}
+							<a
+								href="{% url 'machine_analysis_details' run.study_id run.pk %}"
+								class="inline-flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
+							>
+								{% heroicon_outline "chart-bar-square" class="h-4 w-4" %}
+								View analysis details
+							</a>
+							{% else %}
+								<div class="flex flex-col gap-1">
+									<span class="xs-label py-2">
+										Details not available because analysis status is {{ run.status }}
+									</span>
+
+									{% if run.status == "FAILED" and run.error_message %}
+										<span class="xs-label text-red-700 dark:text-red-300">
+											{{ run.error_message }}
+										</span>
+									{% endif %}
+								</div>
+							{% endif %}
+						</footer>
+
+					</article>
+
+				{% endfor %}
+			</div>
+		{% else %}
+
+			<!-- EMPTY STATE -->
+			<div class="rounded-sm border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+				<div class="flex items-start gap-3">
+					<div class="mt-0.5 text-gray-400 dark:text-gray-500">
+						{% heroicon_outline "cpu-chip" class="h-5 w-5" %}
+					</div>
+
+					<div>
+						<div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+							No machine analyses found.
+						</div>
+
+						<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+							If mathced, analyses will be displayed here.
+						</p>
+					</div>
+				</div>
+			</div>
+
+		{% endif %}
+	</div>
+
+</div>

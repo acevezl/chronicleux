@@ -4,17 +4,17 @@
 		<div>
 			Showing
 			<span class="font-medium text-gray-700 dark:text-gray-200">
-				{{ displayed_entries_count }}
+				{{ displayed_entries }}
 			</span>
 			of
 			<span class="font-medium text-gray-700 dark:text-gray-200">
-				{{ total_filtered_entries_count }}
+				{{ total_filtered_entries }}
 			</span>
 			matching entries
 
-			{% if total_filtered_entries_count != total_study_entries_count %}
+			{% if total_filtered_entries != total_entries %}
 				<span class="text-gray-400">
-					(out of {{ total_study_entries_count }} total in the study)
+					(out of {{ total_entries }} total in the study)
 				</span>
 			{% endif %}
 		</div>

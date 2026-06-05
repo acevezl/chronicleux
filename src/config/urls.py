@@ -19,6 +19,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth.views import LogoutView
 from ui.views import home, evaluator_dashboard, participant_dashboard, signup
+from studies.views import analysis_runs, analysis_runs_partial
 
 
 urlpatterns = [
@@ -35,4 +36,8 @@ urlpatterns = [
     
     # Studies
     path("studies/", include("studies.urls")),
+
+    # Analyses
+    path("analysis-runs/", analysis_runs, name="analysis_runs"),
+    path("analysis-runs/partial/", analysis_runs_partial, name="analysis_runs_partial"),
 ]

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load heroicons %}
+
+{% block title %}My Analysis Runs · ChronicleUX{% endblock %}
+
+{% block content %}
+    
+    <div class="sticky-top">
+    {% include "studies/partials/_header_analysis_runs.html" %}
+    </div>
+
+    <div class="p-4">
+    {% include "studies/partials/_messages.html" %}
+        <div id="analysis-runs-container">
+        {% include "studies/partials/_analysis_runs.html" with study=study %}
+        </div>
+    </div>
+
+{% endblock %}

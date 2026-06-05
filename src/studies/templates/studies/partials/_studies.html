@@ -1,131 +1,202 @@
+{% load heroicons %}
+{% load formatters %}
 
-<div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden">
+<div class="main-card">
 
-	<div class="px-6 py-4 bg-white dark:bg-gray-900">
-	<form method="get" class="flex flex-wrap gap-3">
-		<input
-		type="text"
-		name="q"
-		placeholder="Search title..."
-		value="{{ request.GET.q }}"
-		class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
-		>
+	<!-- FILTERS -->
+	<div class="px-6 py-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600">
+		<form method="get" class="flex flex-wrap items-end gap-3">
 
-		<input
-		type="text"
-		name="owner"
-		placeholder="Owner"
-		value="{{ request.GET.owner }}"
-		class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-40 dark:text-white dark:border-gray-500"
-		>
+			<div class="flex flex-col gap-1">
+				<label class="xs-label">Search</label>
+				<input
+					type="text"
+					name="q"
+					placeholder="Search study title..."
+					value="{{ request.GET.q }}"
+					class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-64 dark:text-white dark:border-gray-500 dark:bg-gray-900"
+				>
+			</div>
 
-		<select name="status" class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-gray-200 dark:border-gray-500">
-		<option value="">All Statuses</option>
-		<option value="PLANNING">Not started (Planning)</option>
-		<option value="COLLECTING">Collecting diary entries</option>
-		<option value="ANALYZING">Analyzing diary entries</option>
-		<option value="COMPLETED">Completed</option>
-		</select>
+			<div class="flex flex-col gap-1">
+				<label class="xs-label">Owner</label>
+				<input
+					type="text"
+					name="owner"
+					placeholder="Owner username..."
+					value="{{ request.GET.owner }}"
+					class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-48 dark:text-white dark:border-gray-500 dark:bg-gray-900"
+				>
+			</div>
 
-		<button
-		type="submit"
-		class="button-FILTER">
-		Filter
-		</button>
+			<div class="flex flex-col gap-1">
+				<label class="xs-label">Status</label>
+				<select
+					name="status"
+					class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-gray-200 dark:border-gray-500 dark:bg-gray-900"
+				>
+					<option value="">All statuses</option>
+					{% for value, label in status_choices %}
+						<option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>
+							{{ label }}
+						</option>
+					{% endfor %}
+				</select>
+			</div>
 
-		{% if request.GET.q or request.GET.owner or request.GET.status %}
-		<a
-		href="{% url 'studies' %}"
-		class="button-FILTER-CLEAR"
-		>
-		Clear Filter
-		</a>
-		{% endif %}
-	</form>
+			<button type="submit" class="button-FILTER">
+				Filter
+			</button>
+
+			{% if request.GET.q or request.GET.owner or request.GET.status %}
+				<a href="{% url 'studies' %}" class="button-FILTER-CLEAR">
+					Clear Filter
+				</a>
+			{% endif %}
+
+		</form>
 	</div>
 
-	{% if studies %}
-	<div class="overflow-x-auto">
-		<table class="w-full table-auto text-sm">
-		<thead class="bg-gray-100 dark:bg-gray-700 dark:text-gray-200 text-gray-600">
-			<tr class="border-b border-t border-gray-200 dark:border-gray-600">
+	<!-- SORT BAR -->
+	<div class="px-6 py-3 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+		<div class="flex flex-wrap items-center justify-between gap-3">
 
-			<th class="text-left px-4 py-3 font-medium">
+			<p class="xs-label">
+				Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} studies
+			</p>
+
+			<div class="flex flex-wrap items-center gap-2">
+				<span class="xs-label">Sort by:</span>
+
 				<a
-				href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'title' %}-title{% else %}title{% endif %}"
-				class="hover:underline"
+					href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'title' %}-title{% else %}title{% endif %}"
+					class="button-FILTER"
 				>
-				Title
-				{% if sort == "title" %}↑{% elif sort == "-title" %}↓{% endif %}
+					Title
+					{% if sort == "title" %}↑{% elif sort == "-title" %}↓{% endif %}
 				</a>
-			</th>
 
-			<th class="text-left px-4 py-3 font-medium">
 				<a
-				href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'created_at' %}-created_at{% else %}created_at{% endif %}"
-				class="hover:underline"
+					href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'created_at' %}-created_at{% else %}created_at{% endif %}"
+					class="button-FILTER"
 				>
-				Created
-				{% if sort == "created_at" %}↑{% elif sort == "-created_at" %}↓{% endif %}
+					Created
+					{% if sort == "created_at" %}↑{% elif sort == "-created_at" %}↓{% endif %}
 				</a>
-			</th>
 
-			<th class="text-left px-4 py-3 font-medium">
 				<a
-				href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'status' %}-status{% else %}status{% endif %}"
-				class="hover:underline"
+					href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'status' %}-status{% else %}status{% endif %}"
+					class="button-FILTER"
 				>
-				Status
-				{% if sort == "status" %}↑{% elif sort == "-status" %}↓{% endif %}
+					Status
+					{% if sort == "status" %}↑{% elif sort == "-status" %}↓{% endif %}
 				</a>
-			</th>
 
-			<th class="text-left px-4 py-3 font-medium">
 				<a
-				href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'owner__username' %}-owner__username{% else %}owner__username{% endif %}"
-				class="hover:underline"
+					href="?{% if sort_params %}{{ sort_params.urlencode }}&{% endif %}sort={% if sort == 'owner__username' %}-owner__username{% else %}owner__username{% endif %}"
+					class="button-FILTER"
 				>
-				Owner
-				{% if sort == "owner__username" %}↑{% elif sort == "-owner__username" %}↓{% endif %}
+					Owner
+					{% if sort == "owner__username" %}↑{% elif sort == "-owner__username" %}↓{% endif %}
 				</a>
-			</th>
+			</div>
 
-			</tr>
-		</thead>
+		</div>
+	</div>
 
-		<tbody class="divide-y divide-gray-200 dark:divide-gray-600 text-gray-600 dark:text-gray-200">
+	<!-- STUDY CARDS -->
+	<div class="p-4 bg-white dark:bg-gray-900">
+		{% if studies %}
+		<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
 			{% for study in studies %}
-			<tr class="hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 transition-colors">
-				<td class="px-4 py-3">
-				<a href="{% url 'diary_study_detail' study.id %}" class="hover:text-fuchsia-950 dark:hover:text-gray-50 hover:underline">
-					{{ study.title }}
-				</a>
-				</td>
 
-				<td class="px-4 py-3">
-				{{ study.created_at|date:"Y-m-d" }}
-				</td>
+				<article class="h-full flex flex-col rounded-sm border border-gray-200 dark:border-gray-600 overflow-hidden bg-white dark:bg-gray-900">
 
-				<td class="px-4 py-3">
-				{% include "studies/partials/_badge_status.html" with status_value=study.status status_label=study.get_status_display %}
-				</td>
+					<!-- CARD HEADER -->
+					<header class="shrink-0 border-b border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800">
+						<div class="flex items-start justify-between gap-2 p-3">
 
-				<td class="px-4 py-3">
-				{{ study.owner.username|capfirst }}
-				</td>
-			</tr>
+							<span class="sm-label">
+								{% heroicon_outline "book-open" %}
+								{{ study.title}}
+							</span>
+							
+
+						</div>
+					</header>
+
+					<!-- CARD BODY -->
+					<section class="flex-1 p-3 space-y-2">
+						<div class="flex items-center justify-baseline gap-2 xs-label">
+							{% heroicon_outline "flag" class="h-4 w-4 shrink-0" %}
+							<span>Goal: {{ study.goal|capfirst }}</span>
+						</div>
+
+						<div class="flex items-center gap-2 xs-label">
+							{% heroicon_outline "user-circle" class="h-4 w-4 shrink-0" %}
+							<span>Owner: {{ study.owner.username|capfirst }}</span>
+						</div>
+
+						<div class="flex items-center gap-2 xs-label">
+							{% heroicon_outline "calendar-days" class="h-4 w-4 shrink-0" %}
+							<span>Created: {{ study.created_at|date:"Y-m-d" }}</span>
+						</div>
+
+						<div class="flex items-center gap-2 xs-label">
+							{% heroicon_outline "signal" class="h-4 w-4 shrink-0" %}
+							Status {% include "studies/partials/_badge_status.html" with status_value=study.status status_label=study.get_status_display %}
+						</div>
+
+					</section>
+
+					<!-- CARD ACTIONS -->
+					<footer class="shrink-0 p-3 border-t border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+						<div class="flex flex-wrap gap-2">
+
+							<a
+								href="{% url 'diary_study_detail' study.id %}"
+								class="inline-flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
+							>
+								{% heroicon_outline "arrow-right-circle" class="h-4 w-4" %}
+								View study
+							</a>
+
+							<a
+								href="{% url 'entries' study.id %}"
+								class="inline-flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-medium border border-gray-300 dark:border-gray-500 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700"
+							>
+								{% heroicon_outline "document-text" class="h-4 w-4" %}
+								Entries
+							</a>
+
+						</div>
+					</footer>
+
+				</article>
+
 			{% endfor %}
-		</tbody>
-		</table>
+		</div>
 
 		{% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params %}
-
-	</div>
 	{% else %}
-	<div class="px-6 py-6">
-		<p class="text-gray-500 italic">No studies found.</p>
-	</div>
+		<div class="rounded-sm border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-6">
+			<div class="flex items-start gap-3">
+				<div class="mt-0.5 text-gray-400 dark:text-gray-500">
+					{% heroicon_outline "book-open" class="h-5 w-5" %}
+				</div>
+
+				<div>
+					<div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+						No studies found.
+					</div>
+
+					<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+						Try changing your filters or create a new diary study.
+					</p>
+				</div>
+			</div>
+		</div>
 	{% endif %}
+	</div>
 
 </div>
-

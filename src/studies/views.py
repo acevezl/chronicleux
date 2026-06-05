@@ -25,7 +25,7 @@ from studies.services.analysis_tasks import queue_study_analysis_run
 
 from .filters import filter_diary_entries, filter_analysis_entries
 from .forms import StudyForm, DiaryEntryForm
-from .models import  DiaryEntry, SentimentCategory, DiaryEntrySource, MembershipRole, Study, StudyMembership, StudyAnalysisRun, DiaryEntryAnalysis
+from .models import  DiaryEntry, SentimentCategory, DiaryEntrySource, MembershipRole, Study, StudyMembership, StudyAnalysisRun, DiaryEntryAnalysis, AnalysisRunStatus, StudyStatus
 
 # ----------------------- VIEWS ----------------------- #
 
@@ -542,62 +542,268 @@ def machine_analysis_entries_partial(request, study_pk, run_pk):
 		context
 	)
 
+# ----------------------------- #
+# ANALYSIS RUNS (LIST OF)       #
+# ----------------------------- #
+@login_required
+def analysis_runs(request):
+
+    runs = StudyAnalysisRun.objects.select_related(
+        "study",
+        "created_by",
+    ).filter(
+        created_by=request.user
+    )
+
+    # Filtering
+    q = request.GET.get("q")
+    status = request.GET.get("status")
+    study = request.GET.get("study")
+    model = request.GET.get("model")
+    sentiment_method = request.GET.get("sentiment_method")
+    theme_method = request.GET.get("theme_method")
+
+    if q:
+        runs = runs.filter(
+            Q(study__title__icontains=q) |
+            Q(analysis_model__icontains=q) |
+            Q(analysis_version__icontains=q) |
+            Q(error_message__icontains=q)
+        )
+
+    if status:
+        runs = runs.filter(status=status)
+
+    if study:
+        runs = runs.filter(study__title__icontains=study)
+
+    if model:
+        runs = runs.filter(analysis_model__icontains=model)
+
+    if sentiment_method:
+        runs = runs.filter(methods__sentiment=sentiment_method)
+
+    if theme_method:
+        runs = runs.filter(methods__theme=theme_method)
+
+    # Sorting
+    sort = request.GET.get("sort", "-started_at")
+
+    allowed_sort_fields = [
+        "started_at",
+        "completed_at",
+        "status",
+        "study__title",
+        "analysis_model",
+        "analysis_version",
+        "total_entries",
+        "average_sentiment_score",
+    ]
+
+    if sort.lstrip("-") in allowed_sort_fields:
+        runs = runs.order_by(sort)
+    else:
+        sort = "-started_at"
+        runs = runs.order_by(sort)
+
+    # Pagination
+    paginator = Paginator(runs, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    sort_params = request.GET.copy()
+    sort_params.pop("sort", None)
+    sort_params.pop("page", None)
+
+    page_params = request.GET.copy()
+    page_params.pop("page", None)
+
+    context = {
+        "analysis_runs": page_obj,
+        "page_obj": page_obj,
+        "sort": sort,
+        "sort_params": sort_params,
+        "page_params": page_params,
+        "status_choices": AnalysisRunStatus.choices,
+        "analysis_runs_filter_url": reverse("analysis_runs_partial"),
+    }
+
+    return render(request, "studies/analysis_run_list.html", context)
+
+
+# ----------------------------- #
+# ANALYSIS RUNS PARTIAL         #
+# ----------------------------- #
+@login_required
+def analysis_runs_partial(request):
+
+    if request.headers.get("HX-Request") != "true":
+        url = reverse("analysis_runs")
+        querystring = request.GET.urlencode()
+
+        if querystring:
+            url = f"{url}?{querystring}"
+
+        return redirect(url)
+
+    runs = StudyAnalysisRun.objects.select_related(
+        "study",
+        "created_by",
+    ).filter(
+        created_by=request.user
+    )
+
+    # Filtering
+    q = request.GET.get("q")
+    status = request.GET.get("status")
+    study = request.GET.get("study")
+    model = request.GET.get("model")
+    sentiment_method = request.GET.get("sentiment_method")
+    theme_method = request.GET.get("theme_method")
+
+    if q:
+        runs = runs.filter(
+            Q(study__title__icontains=q) |
+            Q(analysis_model__icontains=q) |
+            Q(analysis_version__icontains=q) |
+            Q(error_message__icontains=q)
+        )
+
+    if status:
+        runs = runs.filter(status=status)
+
+    if study:
+        runs = runs.filter(study__title__icontains=study)
+
+    if model:
+        runs = runs.filter(analysis_model__icontains=model)
+
+    if sentiment_method:
+        runs = runs.filter(methods__sentiment=sentiment_method)
+
+    if theme_method:
+        runs = runs.filter(methods__theme=theme_method)
+
+    # Sorting
+    sort = request.GET.get("sort", "-started_at")
+
+    allowed_sort_fields = [
+        "started_at",
+        "completed_at",
+        "status",
+        "study__title",
+        "analysis_model",
+        "analysis_version",
+        "total_entries",
+        "average_sentiment_score",
+    ]
+
+    if sort.lstrip("-") in allowed_sort_fields:
+        runs = runs.order_by(sort)
+    else:
+        sort = "-started_at"
+        runs = runs.order_by(sort)
+
+    # Pagination
+    paginator = Paginator(runs, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    sort_params = request.GET.copy()
+    sort_params.pop("sort", None)
+    sort_params.pop("page", None)
+
+    page_params = request.GET.copy()
+    page_params.pop("page", None)
+
+    context = {
+        "analysis_runs": page_obj,
+        "page_obj": page_obj,
+        "sort": sort,
+        "sort_params": sort_params,
+        "page_params": page_params,
+        "status_choices": AnalysisRunStatus.choices,
+        "analysis_runs_filter_url": reverse("analysis_runs_partial"),
+    }
+
+    response = render(
+        request,
+        "studies/partials/_analysis_runs.html",
+        context,
+    )
+
+    full_page_url = reverse("analysis_runs")
+    querystring = request.GET.urlencode()
+
+    if querystring:
+        full_page_url = f"{full_page_url}?{querystring}"
+
+    response["HX-Push-Url"] = full_page_url
+
+    return response
+
 # ----------------- #
 # STUDIES (LIST OF) #
 # ----------------- #
 @login_required
 def studies(request):
 
-	studies = Study.objects.all()
+    studies = Study.objects.filter(
+        Q(owner=request.user) |
+        Q(memberships__user=request.user)
+    ).distinct()
 
-	# Filtering
-	q = request.GET.get("q")
-	owner = request.GET.get("owner")
-	status = request.GET.get("status")
+    # Filtering
+    q = request.GET.get("q")
+    owner = request.GET.get("owner")
+    status = request.GET.get("status")
 
-	if q:
-		studies = studies.filter(title__icontains=q)
+    if q:
+        studies = studies.filter(title__icontains=q)
 
-	if owner:
-		studies = studies.filter(owner__username__icontains=owner)
+    if owner:
+        studies = studies.filter(owner__username__icontains=owner)
 
-	if status:
-		studies = studies.filter(status=status)
+    if status:
+        studies = studies.filter(status=status)
 
-	# Sorting
-	sort = request.GET.get("sort", "-created_at")
+    # Sorting
+    sort = request.GET.get("sort", "-created_at")
 
-	allowed_sort_fields = [
-		"title",
-		"created_at",
-		"status",
-		"owner__username",
-	]
+    allowed_sort_fields = [
+        "title",
+        "created_at",
+        "status",
+        "owner__username",
+    ]
 
-	if sort.lstrip("-") not in allowed_sort_fields:
-		studies = studies.order_by(sort)
+    if sort.lstrip("-") in allowed_sort_fields:
+        studies = studies.order_by(sort)
+    else:
+        studies = studies.order_by("-created_at")
 
-	# Pagination
-	paginator = Paginator(studies, 10)  # 10 per page
-	page_number = request.GET.get("page")
-	page_obj = paginator.get_page(page_number)
+    # Pagination
+    paginator = Paginator(studies, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
 
-	sort_params = request.GET.copy()
-	sort_params.pop("sort", None)
-	sort_params.pop("page", None)
+    sort_params = request.GET.copy()
+    sort_params.pop("sort", None)
+    sort_params.pop("page", None)
 
-	page_params = request.GET.copy()
-	page_params.pop("page", None)
+    page_params = request.GET.copy()
+    page_params.pop("page", None)
 
-	context = {
-		"studies": page_obj,
-		"page_obj": page_obj,
-		"sort": sort,
-		"sort_params": sort_params,
-		"page_params": page_params,
-	}
+    context = {
+        "studies": page_obj,
+        "page_obj": page_obj,
+        "sort": sort,
+        "sort_params": sort_params,
+        "page_params": page_params,
+		"status_choices": StudyStatus.choices,
+    }
 
-	return render(request, "studies/diary_study_list.html", context)
+    return render(request, "studies/diary_study_list.html", context)
 
 # ----------------------- #
 # DIARY ENTRIES (LIST OF) #
