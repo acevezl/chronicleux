@@ -34,6 +34,14 @@
                                         RUN-{{ run.id|stringformat:"03d" }}
                                     </span>
 
+                                    <!-- CREATOR -->
+                                    <span class="xs-label p-1">
+                                        {% heroicon_outline "academic-cap" class="h-4 w-4" %}
+                                        {% if run.created_by %}
+                                            Executed by: {{ run.created_by.username|capfirst }}
+                                        {% endif %}
+                                    </span>
+
                                     <!-- ANALYSIS DATE -->
                                     <p class="xs-label p-1">
                                         {% heroicon_outline "calendar-days" class="h-4 w-4" %}
@@ -107,9 +115,11 @@
                                     </span>
                                 </div>
 
-                                <div class="flex flex-nowrap items-end justify-center p-2">
-                                    <span class="xs-label flex flex-col gap-2 text-nowrap">
+                                <div class="flex flex-col gap-2 px-2">
+                                    <span class="xs-label justify-center text-nowrap">
                                         THEME KEYWORDS
+                                    </span>
+                                    <span class="flex flex-wrap gap-2 justify-center">
                                         {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.theme_label %}
                                     </span>
                                 </div>
@@ -129,7 +139,7 @@
                                 </div>
 
                                 <div class="flex flex-nowrap items-end justify-center mb-2">
-                                    <span class="xs-label flex flex-col gap-2 text-nowrap">
+                                    <span class="flex flex-wrap gap-2 justify-center">
                                         {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.issues %}
                                     </span>
                                 </div>

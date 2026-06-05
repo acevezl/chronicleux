@@ -118,7 +118,15 @@
 	}
 
 	.run-COMPLETED {
-		@apply text-xs text-green-600 dark:text-green-400
+		@apply text-xs text-green-700 dark:text-green-500
+	}
+
+	.run-RUNNING {
+		@apply text-xs text-green-500 dark:text-green-200
+	}
+
+	.run-QUEUED {
+		@apply text-xs text-amber-500 dark:text-amber-200
 	}
 
 	.run-FAILED {

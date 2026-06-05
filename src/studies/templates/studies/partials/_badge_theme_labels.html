@@ -1,12 +1,10 @@
 {% load formatters %}
-<div class="flex flex-wrap justify-left gap-2">
-	{% for theme in themes|split_csv %}
-		<span class="badge-THEME text-nowrap">
-			{{ theme|capfirst }}
-		</span>
-	{% empty %}
-		<span class="badge-NONE text-nowrap">
-			None
-		</span>
-	{% endfor %}
-</div>
+{% for theme in themes|split_csv %}
+	<span class="badge-THEME text-nowrap">
+		{{ theme|capfirst }}
+	</span>
+{% empty %}
+	<span class="badge-NONE text-nowrap">
+		None
+	</span>
+{% endfor %}

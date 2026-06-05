@@ -469,6 +469,7 @@ def run_machine_analysis(request, pk):
 			study_id=study.pk,
 			sentiment_method=sentiment_method,
 			theme_method=theme_method,
+			user_id=request.user.id,
 		)
 
 		queue_study_analysis_run(study_analysis_run.pk)

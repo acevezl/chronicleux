@@ -45,8 +45,16 @@
 										RUN-{{ run.id|stringformat:"03d" }}
 									</span>
 
+									<!-- CREATOR -->
+									<span class="xs-label p-1">
+										{% heroicon_outline "academic-cap" class="h-4 w-4" %}
+										{% if run.created_by %}
+											Executed by: {{ run.created_by.username|capfirst }}
+										{% endif %}
+									</span>
+
 									<!-- ANALYSIS DATE -->
-									<p class="xs-label p-1">
+									<span class="xs-label p-1">
 										{% heroicon_outline "calendar-days" class="h-4 w-4" %}
 										{% if run.completed_at %}
 											Completed on: {{ run.completed_at|date:"Y-m-d H:i" }}
@@ -56,7 +64,8 @@
 										{% else %}
 											Date unavailable
 										{% endif %}
-									</p>
+									</span>
+										
 								</div>
 
 								{% if run.status %}
@@ -121,7 +130,7 @@
 										Theme Keywords
 									</div>
 
-									<div>
+									<div class="flex flex-wrap gap-2">
 										{% include "studies/partials/_badge_theme_labels.html" with themes=run.dominant_theme_label %}
 									</div>
 								</div>
@@ -137,7 +146,7 @@
 										Detected Issues
 									</div>
 
-									<div>
+									<div class="flex flex-wrap gap-2">
 										{% include "studies/partials/_badge_issue_tags.html" with issues=run.recurring_issues|extract_labels %}
 									</div>
 								</div>

@@ -429,12 +429,14 @@ class PromptResponse(models.Model):
 # Results of the full study analysis (i.e., all entries)
 class StudyAnalysisRun(models.Model):
 
+    # study
     study = models.ForeignKey(
         Study, 
         on_delete=models.CASCADE, 
         related_name="analysis_runs"
     )
 
+    # status
     status = models.CharField(
         max_length=20,
         choices=AnalysisRunStatus.choices,
@@ -448,6 +450,16 @@ class StudyAnalysisRun(models.Model):
     # start and end times
     started_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True) 
+
+    # study created by [user]
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_runs",
+        help_text="User who created this analysis run"
+    )
     
     # Study-level outputs
 

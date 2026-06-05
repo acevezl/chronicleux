@@ -384,6 +384,7 @@ def build_top_sentiment_entries(entries_with_results: list[tuple]) -> dict:
 #-------------------------------#
 def create_study_analysis_run(
 	study_id: int,
+	user_id: int | None = None,
 	sentiment_method="vader",
 	theme_method="tfidf_nmf",
 ) -> StudyAnalysisRun:
@@ -398,6 +399,7 @@ def create_study_analysis_run(
 			"sentiment": sentiment_method,
 			"theme": theme_method,
 		},
+		created_by_id=user_id
 	)
 
 	study.status = StudyStatus.MACHINE_ANALYSIS
@@ -609,6 +611,7 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 #-------------------------------#
 def run_study_analysis(
 	study_id: int,
+	user_id: int | None = None,
 	sentiment_method="vader",
 	theme_method="tfidf_nmf",
 ) -> StudyAnalysisRun:
@@ -616,6 +619,7 @@ def run_study_analysis(
 		study_id=study_id,
 		sentiment_method=sentiment_method,
 		theme_method=theme_method,
+		created_by_id=user_id,
 	)
 
 	return process_study_analysis_run(run.pk)
