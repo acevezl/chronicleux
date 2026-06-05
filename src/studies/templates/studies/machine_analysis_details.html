@@ -27,11 +27,11 @@
 
                     <!-- ANALYSIS DATE -->
                     <p class="card-summary-subtitle ">
-                        {% heroicon_outline "calendar-days" class="h-4 w-4" %}
+                        {% heroicon_outline "calendar-days" class="h-4 w-4 shrink-0" %}
                         {% if run.completed_at %}
                             Completed on: {{ run.completed_at|date:"Y-m-d H:i" }}
                             
-                            {% heroicon_outline "document-text" class="h-4 w-4" %}
+                            {% heroicon_outline "document-text" class="h-4 w-4 shrink-0" %}
                             Entries Analyzed: {{ run.total_entries|default:"0" }}
 
                         {% elif run.created_at %}
@@ -43,10 +43,10 @@
 
                     <!-- RUN METHODS -->
                     <p class="card-summary-subtitle ">
-                        {% heroicon_outline "face-smile" class="h-4 w-4" %}
+                        {% heroicon_outline "face-smile" class="h-4 w-4 shrink-0" %}
                         Sentiment Analysis Method: {{ run.methods.sentiment|upper|default:"—" }}
 
-                        {% heroicon_outline "tag" class="h-4 w-4" %}
+                        {% heroicon_outline "tag" class="h-4 w-4 shrink-0" %}
                         Theme Analysis Method: {{ run.methods.theme|upper|default:"—" }}
                     </p>
 

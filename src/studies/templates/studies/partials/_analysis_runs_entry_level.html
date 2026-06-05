@@ -36,7 +36,7 @@
 
                                     <!-- CREATOR -->
                                     <span class="xs-label p-1">
-                                        {% heroicon_outline "academic-cap" class="h-4 w-4" %}
+                                        {% heroicon_outline "academic-cap" class="h-4 w-4 shrink-0" %}
                                         {% if run.created_by %}
                                             Executed by: {{ run.created_by.username|capfirst }}
                                         {% endif %}
@@ -44,7 +44,7 @@
 
                                     <!-- ANALYSIS DATE -->
                                     <p class="xs-label p-1">
-                                        {% heroicon_outline "calendar-days" class="h-4 w-4" %}
+                                        {% heroicon_outline "calendar-days" class="h-4 w-4 shrink-0" %}
                                         {% if run.completed_at %}
                                             Completed on: {{ run.completed_at|date:"M d, Y H:i" }}
 
@@ -70,7 +70,7 @@
                             <div class="flex flex-col gap-2 card-border justify-between">
                                 <div class="flex flex-nowrap items-center justify-between p-2 bg-gray-100">
                                     <span class="sm-label uppercase">
-                                        {% heroicon_outline "face-smile" class="h-4 w-4" %}
+                                        {% heroicon_outline "face-smile" class="h-4 w-4 shrink-0" %}
                                         Sentiment Analysis
                                     </span>
                                     <span class="sm-label uppercase">
@@ -87,7 +87,7 @@
                                     </div>
                                     <div>
                                         <span class="xs-label py-3">
-                                            {% heroicon_outline "arrow-right" class="h-4 w-4" %}
+                                            {% heroicon_outline "arrow-right" class="h-4 w-4 shrink-0" %}
                                         </span>
                                     </div>
                                     <div class="flex flex-col gap-2 p-2">
@@ -107,7 +107,7 @@
                             <div class="flex flex-col gap-2 card-border justify-between">
                                 <div class="flex flex-nowrap items-center justify-between p-2 bg-gray-100">
                                     <span class="sm-label uppercase">
-                                        {% heroicon_outline "tag" class="h-4 w-4" %}
+                                        {% heroicon_outline "tag" class="h-4 w-4 shrink-0" %}
                                         Theme Analysis
                                     </span>
                                     <span class="sm-label uppercase">
@@ -133,7 +133,7 @@
                             <div class="flex flex-col gap-2 card-border justify-between">
                                 <div class="flex flex-nowrap items-center justify-between p-2 bg-gray-100">
                                     <span class="sm-label uppercase">
-                                        {% heroicon_outline "exclamation-triangle" class="h-4 w-4" %}
+                                        {% heroicon_outline "exclamation-triangle" class="h-4 w-4 shrink-0" %}
                                         Issues Detected
                                     </span>
                                 </div>

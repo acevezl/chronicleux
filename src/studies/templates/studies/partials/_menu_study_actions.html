@@ -8,7 +8,7 @@
 				href="{% url 'entries' study.pk %}"
 				class="button-PRIMARY"
 			>
-				{% heroicon_outline "document-text" class="h-4 w-4" %}
+				{% heroicon_outline "document-text" class="h-4 w-4 shrink-0" %}
 				View Entries
 			</a>
 		{% endif %}
@@ -18,7 +18,7 @@
 				href="{% url 'select_analysis_methods' study.pk %}"
 				class="button-SECONDARY"
 			>
-				{% heroicon_outline "sparkles" class="h-4 w-4" %}
+				{% heroicon_outline "sparkles" class="h-4 w-4 shrink-0" %}
 				Run machine analysis
 			</a>
 		{% endif %}
@@ -31,7 +31,7 @@
 			href="{% url 'edit_diary_study' study.pk %}"
 			class="button-TERTIARY"
 		>
-			{% heroicon_outline "pencil-square" class="h-4 w-4" %}
+			{% heroicon_outline "pencil-square" class="h-4 w-4 shrink-0" %}
 			Edit Study
 		</a>
 
@@ -40,7 +40,7 @@
 				href="{% url 'import_entries' study.pk %}"
 				class="button-TERTIARY"
 			>
-				{% heroicon_outline "arrow-up-on-square-stack" class="h-4 w-4" %}
+				{% heroicon_outline "arrow-up-on-square-stack" class="h-4 w-4 shrink-0" %}
 				Import Entries
 			</a>
 
@@ -48,7 +48,7 @@
 				href="{% url 'manage_participants' study.pk %}"
 				class="button-TERTIARY"
 			>
-				{% heroicon_outline "users" class="h-4 w-4" %}
+				{% heroicon_outline "users" class="h-4 w-4 shrink-0" %}
 				Manage Participants
 			</a>
 
@@ -56,7 +56,7 @@
 				href="{% url 'manage_evaluators' study.pk %}"
 				class="button-TERTIARY"
 			>
-				{% heroicon_outline "academic-cap" class="h-4 w-4" %}
+				{% heroicon_outline "academic-cap" class="h-4 w-4 shrink-0" %}
 				Manage Evaluators
 			</a>
 		{% endif %}
@@ -65,8 +65,8 @@
 			href="{% url 'studies' %}"
 			class="button-TERTIARY"
 		>
-			{% heroicon_outline "queue-list" class="h-4 w-4" %}
-			{% heroicon_outline "arrow-left" class="h-4 w-4" %}
+			{% heroicon_outline "queue-list" class="h-4 w-4 shrink-0" %}
+			{% heroicon_outline "arrow-left" class="h-4 w-4 shrink-0" %}
 			Return to Studies
 		</a>
 

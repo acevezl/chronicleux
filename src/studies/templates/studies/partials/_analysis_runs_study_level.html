@@ -47,7 +47,7 @@
 
 									<!-- CREATOR -->
 									<span class="xs-label p-1">
-										{% heroicon_outline "academic-cap" class="h-4 w-4" %}
+										{% heroicon_outline "academic-cap" class="h-4 w-4 shrink-0" %}
 										{% if run.created_by %}
 											Executed by: {{ run.created_by.username|capfirst }}
 										{% endif %}
@@ -55,7 +55,7 @@
 
 									<!-- ANALYSIS DATE -->
 									<span class="xs-label p-1">
-										{% heroicon_outline "calendar-days" class="h-4 w-4" %}
+										{% heroicon_outline "calendar-days" class="h-4 w-4 shrink-0" %}
 										{% if run.completed_at %}
 											Completed on: {{ run.completed_at|date:"Y-m-d H:i" }}
 
@@ -85,7 +85,7 @@
 								<!-- SENTIMENT METHOD -->
 								<div class="flex flex-col gap-2 card-border p-2">
 									<div class="xs-label uppercase">
-										{% heroicon_outline "face-smile" class="h-4 w-4" %}
+										{% heroicon_outline "face-smile" class="h-4 w-4 shrink-0" %}
 										Sentiment Method
 									</div>
 
@@ -97,7 +97,7 @@
 								<!-- THEME METHOD -->
 								<div class="flex flex-col gap-2 card-border p-2">
 									<div class="xs-label uppercase">
-										{% heroicon_outline "tag" class="h-4 w-4" %}
+										{% heroicon_outline "tag" class="h-4 w-4 shrink-0" %}
 										Theme Method
 									</div>
 
@@ -114,7 +114,7 @@
 								<!-- DOMINANT SENTIMENT -->
 								<div class="flex flex-col gap-2 card-border p-2">
 									<div class="xs-label uppercase">
-										{% heroicon_outline "arrow-trending-up" class="h-4 w-4" %}
+										{% heroicon_outline "arrow-trending-up" class="h-4 w-4 shrink-0" %}
 										Dominant Sentiment
 									</div>
 
@@ -126,7 +126,7 @@
 								<!-- DOMINANT THEMES -->
 								<div class="flex flex-col gap-2 card-border p-2">
 									<div class="xs-label uppercase">
-										{% heroicon_outline "rectangle-group" class="h-4 w-4" %}
+										{% heroicon_outline "rectangle-group" class="h-4 w-4 shrink-0" %}
 										Theme Keywords
 									</div>
 
@@ -142,7 +142,7 @@
 								<!-- RECURRING ISSUES -->
 								<div class="flex flex-col gap-2 card-border p-2">
 									<div class="xs-label uppercase">
-										{% heroicon_outline "exclamation-triangle" class="h-4 w-4" %}
+										{% heroicon_outline "exclamation-triangle" class="h-4 w-4 shrink-0" %}
 										Detected Issues
 									</div>
 
@@ -162,7 +162,7 @@
 								href="{% url 'machine_analysis_details' run.study_id run.pk %}"
 								class="inline-flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
 							>
-								{% heroicon_outline "chart-bar-square" class="h-4 w-4" %}
+								{% heroicon_outline "chart-bar-square" class="h-4 w-4 shrink-0" %}
 								View analysis details
 							</a>
 							{% else %}

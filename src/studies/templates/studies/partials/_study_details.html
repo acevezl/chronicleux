@@ -33,7 +33,7 @@
 			<!-- GOAL -->
 			<div class="xl:col-span-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
 				<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-					{% heroicon_outline "flag" class="h-4 w-4" %}
+					{% heroicon_outline "flag" class="h-4 w-4 shrink-0" %}
 					Study Goal
 				</div>
 
@@ -45,7 +45,7 @@
 			<!-- DESCRIPTION -->
 			<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
 				<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-					{% heroicon_outline "document-text" class="h-4 w-4" %}
+					{% heroicon_outline "document-text" class="h-4 w-4 shrink-0" %}
 					Description
 				</div>
 
@@ -57,7 +57,7 @@
 			<!-- HYPOTHESES -->
 			<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
 				<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-					{% heroicon_outline "light-bulb" class="h-4 w-4" %}
+					{% heroicon_outline "light-bulb" class="h-4 w-4 shrink-0" %}
 					Hypotheses
 				</div>
 
@@ -69,7 +69,7 @@
 			<!-- PARTICIPANT INSTRUCTIONS -->
 			<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
 				<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-					{% heroicon_outline "clipboard-document-list" class="h-4 w-4" %}
+					{% heroicon_outline "clipboard-document-list" class="h-4 w-4 shrink-0" %}
 					Participant Instructions
 				</div>
 
@@ -81,7 +81,7 @@
 			<!-- CONTEXT -->
 			<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
 				<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-					{% heroicon_outline "chat-bubble-left-right" class="h-4 w-4" %}
+					{% heroicon_outline "chat-bubble-left-right" class="h-4 w-4 shrink-0" %}
 					Entries Context
 				</div>
 
@@ -98,7 +98,7 @@
 			<!-- OVERALL SENTIMENT -->
 			<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
 				<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-					{% heroicon_outline "face-smile" class="h-4 w-4" %}
+					{% heroicon_outline "face-smile" class="h-4 w-4 shrink-0" %}
 					Overall Sentiment
 				</div>
 
@@ -107,7 +107,7 @@
 						{% include "studies/partials/_badge_sentiment.html" with sentiment=study.dominant_sentiment_label %}
 					{% else %}
 						<span class="inline-flex items-center rounded-full bg-gray-200 gap-1 px-2 py-1 text-xs font-medium text-gray-800 inset-ring inset-ring-gray-500/10 border border-gray-800">
-							{% heroicon_outline "ellipsis-horizontal-circle" class="h-4 w-4" %}
+							{% heroicon_outline "ellipsis-horizontal-circle" class="h-4 w-4 shrink-0" %}
 							Pending Analysis
 						</span>
 					{% endif %}
@@ -117,7 +117,7 @@
 			<!-- STATUS -->
 			<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
 				<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-					{% heroicon_outline "signal" class="h-4 w-4" %}
+					{% heroicon_outline "signal" class="h-4 w-4 shrink-0" %}
 					Status
 				</div>
 
@@ -129,7 +129,7 @@
 			<!-- ENTRY FREQUENCY -->
 			<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
 				<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-					{% heroicon_outline "arrow-path" class="h-4 w-4" %}
+					{% heroicon_outline "arrow-path" class="h-4 w-4 shrink-0" %}
 					Entry Frequency
 				</div>
 
@@ -141,7 +141,7 @@
 			<!-- COLLECTION PERIOD -->
 			<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
 				<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-					{% heroicon_outline "calendar-days" class="h-4 w-4" %}
+					{% heroicon_outline "calendar-days" class="h-4 w-4 shrink-0" %}
 					Collection Period
 				</div>
 
@@ -156,7 +156,7 @@
 			{% if tags_list %}
 				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
 					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-						{% heroicon_outline "tag" class="h-4 w-4" %}
+						{% heroicon_outline "tag" class="h-4 w-4 shrink-0" %}
 						Tags
 					</div>
 

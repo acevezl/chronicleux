@@ -15,7 +15,7 @@
 					type="submit"
 					class="button-SECONDARY"
 				>
-					{% heroicon_outline "sparkles" class="h-4 w-4" %}
+					{% heroicon_outline "sparkles" class="h-4 w-4 shrink-0" %}
 					Run Analysis
 				</button>
 			</form>
@@ -30,7 +30,7 @@
 				href="{% url 'import_entries' study.pk %}"
 				class="button-TERTIARY"
 			>
-				{% heroicon_outline "arrow-up-on-square-stack" class="h-4 w-4" %}
+				{% heroicon_outline "arrow-up-on-square-stack" class="h-4 w-4 shrink-0" %}
 				Import Entries
 			</a>
 		{% endif %}
@@ -39,8 +39,8 @@
 			href="{% url 'diary_study_detail' study.pk %}"
 			class="button-TERTIARY"
 		>
-			{% heroicon_outline "book-open" class="h-4 w-4" %}
-            {% heroicon_outline "arrow-left" class="h-4 w-4" %}
+			{% heroicon_outline "book-open" class="h-4 w-4 shrink-0" %}
+            {% heroicon_outline "arrow-left" class="h-4 w-4 shrink-0" %}
             Return to Study
 		</a>
 
