@@ -1,10 +1,10 @@
 {% load formatters %}
 {% for theme in themes|split_csv %}
-	<span class="badge-THEME text-nowrap">
+	<span class="badge-THEME text-center">
 		{{ theme|capfirst }}
 	</span>
 {% empty %}
-	<span class="badge-NONE text-nowrap">
+	<span class="badge-NONE">
 		None
 	</span>
 {% endfor %}

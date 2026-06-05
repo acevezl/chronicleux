@@ -36,7 +36,7 @@
     --color-emerald-600: oklch(59.6% 0.145 163.225);
     --color-emerald-950: oklch(26.2% 0.051 172.552);
     --color-sky-100: oklch(95.1% 0.026 236.824);
-    --color-sky-500: oklch(68.5% 0.169 237.323);
+    --color-sky-700: oklch(50% 0.134 242.749);
     --color-sky-800: oklch(44.3% 0.11 240.79);
     --color-blue-50: oklch(97% 0.014 254.604);
     --color-blue-100: oklch(93.2% 0.032 255.585);
@@ -520,6 +520,9 @@
   }
   .items-start {
     align-items: flex-start;
+  }
+  .justify-baseline {
+    justify-content: baseline;
   }
   .justify-between {
     justify-content: space-between;
@@ -1023,6 +1026,22 @@
       opacity: 0%;
     }
   }
+  .peer-checked\:bg-white {
+    &:is(:where(.peer):checked ~ *) {
+      background-color: var(--color-white);
+    }
+  }
+  .peer-checked\:text-fuchsia-700 {
+    &:is(:where(.peer):checked ~ *) {
+      color: var(--color-fuchsia-700);
+    }
+  }
+  .peer-checked\:shadow-sm {
+    &:is(:where(.peer):checked ~ *) {
+      --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
   .backdrop\:bg-transparent {
     &::backdrop {
       background-color: transparent;
@@ -1507,6 +1526,20 @@
       }
     }
   }
+  .dark\:peer-checked\:bg-gray-900 {
+    @media (prefers-color-scheme: dark) {
+      &:is(:where(.peer):checked ~ *) {
+        background-color: var(--color-gray-900);
+      }
+    }
+  }
+  .dark\:peer-checked\:text-fuchsia-300 {
+    @media (prefers-color-scheme: dark) {
+      &:is(:where(.peer):checked ~ *) {
+        color: var(--color-fuchsia-300);
+      }
+    }
+  }
   .dark\:before\:pointer-events-none {
     @media (prefers-color-scheme: dark) {
       &::before {
@@ -1707,7 +1740,7 @@
     }
   }
   .sentiment-VERY_NEGATIVE {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: calc(var(--spacing) * 1);
     border-radius: calc(infinity * 1px);
@@ -1718,7 +1751,6 @@
     line-height: var(--tw-leading, var(--text-xs--line-height));
     --tw-font-weight: var(--font-weight-medium);
     font-weight: var(--font-weight-medium);
-    text-wrap: nowrap;
     color: var(--color-red-700);
     --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
@@ -1726,7 +1758,7 @@
     --tw-ring-inset: inset;
   }
   .sentiment-NEGATIVE {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: calc(var(--spacing) * 1);
     border-radius: calc(infinity * 1px);
@@ -1737,7 +1769,6 @@
     line-height: var(--tw-leading, var(--text-xs--line-height));
     --tw-font-weight: var(--font-weight-medium);
     font-weight: var(--font-weight-medium);
-    text-wrap: nowrap;
     color: var(--color-red-700);
     --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
@@ -1745,7 +1776,7 @@
     --tw-ring-inset: inset;
   }
   .sentiment-NEUTRAL {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: calc(var(--spacing) * 1);
     border-radius: calc(infinity * 1px);
@@ -1756,7 +1787,6 @@
     line-height: var(--tw-leading, var(--text-xs--line-height));
     --tw-font-weight: var(--font-weight-medium);
     font-weight: var(--font-weight-medium);
-    text-wrap: nowrap;
     color: var(--color-amber-700);
     --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
@@ -1764,7 +1794,7 @@
     --tw-ring-inset: inset;
   }
   .sentiment-POSITIVE {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: calc(var(--spacing) * 1);
     border-radius: calc(infinity * 1px);
@@ -1775,7 +1805,6 @@
     line-height: var(--tw-leading, var(--text-xs--line-height));
     --tw-font-weight: var(--font-weight-medium);
     font-weight: var(--font-weight-medium);
-    text-wrap: nowrap;
     color: var(--color-green-700);
     --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
@@ -1783,7 +1812,7 @@
     --tw-ring-inset: inset;
   }
   .sentiment-VERY_POSITIVE {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: calc(var(--spacing) * 1);
     border-radius: calc(infinity * 1px);
@@ -1794,7 +1823,6 @@
     line-height: var(--tw-leading, var(--text-xs--line-height));
     --tw-font-weight: var(--font-weight-medium);
     font-weight: var(--font-weight-medium);
-    text-wrap: nowrap;
     color: var(--color-green-700);
     --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
@@ -1802,7 +1830,7 @@
     --tw-ring-inset: inset;
   }
   .sentiment-NONE, .badge-NONE {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: calc(var(--spacing) * 1);
     border-radius: calc(infinity * 1px);
@@ -1813,7 +1841,6 @@
     line-height: var(--tw-leading, var(--text-xs--line-height));
     --tw-font-weight: var(--font-weight-medium);
     font-weight: var(--font-weight-medium);
-    text-wrap: nowrap;
     color: var(--color-gray-600);
     --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
@@ -1821,7 +1848,8 @@
     --tw-ring-inset: inset;
   }
   .badge-ISSUE {
-    display: inline-flex;
+    display: flex;
+    align-items: center;
     gap: calc(var(--spacing) * 1);
     border-radius: calc(infinity * 1px);
     border-style: var(--tw-border-style);
@@ -1832,24 +1860,27 @@
     padding-block: calc(var(--spacing) * 1);
     font-size: var(--text-xs);
     line-height: var(--tw-leading, var(--text-xs--line-height));
-    text-wrap: nowrap;
     color: var(--color-red-500);
   }
   .badge-THEME {
-    display: inline-flex;
-    border-radius: calc(infinity * 1px);
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 1);
     border-style: var(--tw-border-style);
     border-width: 1px;
-    border-color: var(--color-sky-500);
+    border-color: var(--color-sky-700);
+    background-color: var(--color-sky-100);
     padding-inline: calc(var(--spacing) * 2);
     padding-block: calc(var(--spacing) * 1);
     font-size: var(--text-xs);
     line-height: var(--tw-leading, var(--text-xs--line-height));
-    text-wrap: nowrap;
-    color: var(--color-sky-500);
+    color: var(--color-sky-700);
   }
   .badge {
+    display: flex;
     width: min-content;
+    align-items: center;
+    gap: calc(var(--spacing) * 1);
     border-radius: calc(infinity * 1px);
     background-color: var(--color-gray-50);
     padding-inline: calc(var(--spacing) * 2);
@@ -1866,7 +1897,9 @@
     --tw-ring-inset: inset;
   }
   .badge-bigger {
-    width: min-content;
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 1);
     border-radius: calc(infinity * 1px);
     background-color: var(--color-gray-50);
     padding-inline: calc(var(--spacing) * 2);
@@ -2332,7 +2365,19 @@
     }
   }
   input, select {
-    background-color: var(--color-white);
+    margin-top: calc(var(--spacing) * 1);
+    border-radius: var(--radius-sm);
+    border-style: var(--tw-border-style);
+    border-width: 1px;
+    border-color: var(--color-gray-300);
+    padding-inline: calc(var(--spacing) * 2);
+    color: var(--color-gray-600);
+    &:focus {
+      --tw-ring-color: var(--color-gray-700);
+    }
+    @media (prefers-color-scheme: dark) {
+      color: var(--color-gray-200);
+    }
   }
 }
 @property --tw-rotate-x {

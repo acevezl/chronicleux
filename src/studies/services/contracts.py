@@ -109,15 +109,17 @@ class StudyAnalysisResult:
 # Example usage:
 # study_analysis = StudyAnalysisResult(
 # 	study_id=5,
-# 	dominant_study_sentiment_label="NEGATIVE",
+# 	average_sentiment_label="NEGATIVE",
 # 	average_study_sentiment_score=-0.32,
+# 	dominant_sentiment_label="NEGATIVE",
+# 	dominant_sentiment_score=-0.32,
 # 	study_sentiment_distribution={
 # 		"NEGATIVE": 2,
 # 		"POSITIVE": 1,
 # 	},
-# 	dominant_study_theme_label="login frustration",
-# 	average_study_theme_weight=0.77,
-# 	study_theme_distribution={
+# 	dominant_theme_label="login frustration",
+# 	dominant_theme_weight=0.77,
+# 	theme_distribution={
 # 		"login frustration": 2,
 # 		"interface clarity": 1,
 # 	},

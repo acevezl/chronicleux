@@ -34,43 +34,43 @@
 	}
 
 	.sentiment-VERY_NEGATIVE {
-		@apply text-nowrap inline-flex gap-1 items-center rounded-full bg-red-200 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-700;
+		@apply flex items-center gap-1 rounded-full bg-red-200 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-700;
 	}
 
 	.sentiment-NEGATIVE {
-		@apply text-nowrap inline-flex gap-1 items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-700;
+		@apply flex items-center gap-1 rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-700;
 	}
 
 	.sentiment-NEUTRAL {
-		@apply text-nowrap inline-flex gap-1 items-center rounded-full bg-amber-200 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-700;
+		@apply flex items-center gap-1 rounded-full bg-amber-200 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-700;
 	}
 
 	.sentiment-POSITIVE {
-		@apply text-nowrap inline-flex gap-1 items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700;
+		@apply flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700;
 	}
 
 	.sentiment-VERY_POSITIVE {
-		@apply text-nowrap inline-flex gap-1 items-center rounded-full bg-green-200 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700;
+		@apply flex items-center gap-1 rounded-full bg-green-200 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-700;
 	}
 
 	.sentiment-NONE, .badge-NONE {
-		@apply text-nowrap inline-flex gap-1 items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-600;
+		@apply flex gap-1 items-center rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-600;
 	}
 
 	.badge-ISSUE {
-		@apply text-nowrap inline-flex gap-1 border border-red-500 rounded-full px-2 py-1 text-xs text-red-500 bg-red-100
+		@apply flex items-center gap-1 border border-red-500 rounded-full px-2 py-1 text-xs text-red-500 bg-red-100
 	}
 
 	.badge-THEME {
-		@apply text-nowrap inline-flex border border-sky-500 rounded-full px-2 py-1 text-xs text-sky-500
+		@apply flex items-center gap-1 border border-sky-700 px-2 py-1 text-xs text-sky-700 bg-sky-100
 	}
 
 	.badge {
-		@apply w-min text-nowrap rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-600;
+		@apply flex text-nowrap items-center gap-1 w-min rounded-full bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-600;
 	}
 
 	.badge-bigger {
-		@apply w-min text-nowrap rounded-full bg-gray-50 px-2 py-1 text-sm font-bold text-gray-600 ring-1 ring-inset ring-gray-600;
+		@apply flex text-nowrap items-center gap-1 rounded-full bg-gray-50 px-2 py-1 text-sm font-bold text-gray-600 ring-1 ring-inset ring-gray-600;
 	}
 
 	.button-PRIMARY {
@@ -174,7 +174,7 @@
 	}
 
 	input, select {
-		@apply bg-white
+		@apply text-gray-600 dark:text-gray-200 mt-1 px-2 rounded-sm border border-gray-300 focus:ring-gray-700
 	}
 
 }

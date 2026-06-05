@@ -18,6 +18,7 @@ from studies.models import (
 )
 
 from studies.services.nlp.pipeline import analyze_study_entries
+from studies.services.llm.pipeline import analyze_study_entries_with_llm
 
 DEFAULT_THEME_COUNT = 3
 DEFAULT_THEME_TERMS = 6
@@ -387,18 +388,29 @@ def create_study_analysis_run(
 	user_id: int | None = None,
 	sentiment_method="vader",
 	theme_method="tfidf_nmf",
+	llm_provider: str | None = None,
+	llm_model: str | None = None,
 ) -> StudyAnalysisRun:
+	
 	study = Study.objects.get(pk=study_id)
+
+	is_llm_run = sentiment_method == "llm" or theme_method == "llm"
+
+	methods = {
+		"sentiment": sentiment_method,
+		"theme": theme_method,
+	}
+
+	if is_llm_run:
+		methods["provider"] = llm_provider
+		methods["model"] = llm_model
 
 	run = StudyAnalysisRun.objects.create(
 		study=study,
 		status=AnalysisRunStatus.QUEUED,
 		analysis_model=f"{sentiment_method}_{theme_method}",
 		analysis_version="v3",
-		methods={
-			"sentiment": sentiment_method,
-			"theme": theme_method,
-		},
+		methods=methods,
 		created_by_id=user_id
 	)
 
@@ -439,12 +451,29 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 
 			now = timezone.now()
 
-			study_analysis_result = analyze_study_entries(
-				study_id=study.id,
-				entries=entries,
-				sentiment_method=sentiment_method,
-				theme_method=theme_method,
-			)
+			is_llm_run = sentiment_method == "llm" or theme_method == "llm"
+
+			if is_llm_run:
+				llm_provider = run.methods.get("provider")
+				llm_model = run.methods.get("model")
+
+				if not llm_provider: 
+					raise RuntimeError("An LLM provider is required for LLM analysis")
+				
+				study_analysis_result = analyze_study_entries_with_llm(
+					study_id=study.id,
+					entries=entries,
+					provider=llm_provider,
+					model=llm_model,
+				)
+
+			else:
+				study_analysis_result = analyze_study_entries(
+					study_id=study.id,
+					entries=entries,
+					sentiment_method=sentiment_method,
+					theme_method=theme_method,
+				)
 
 			study_analysis_result_data = asdict(study_analysis_result)
 
@@ -614,12 +643,17 @@ def run_study_analysis(
 	user_id: int | None = None,
 	sentiment_method="vader",
 	theme_method="tfidf_nmf",
+	llm_provider: str | None = None,
+	llm_model: str | None = None,
 ) -> StudyAnalysisRun:
+	
 	run = create_study_analysis_run(
 		study_id=study_id,
+		user_id=user_id,
 		sentiment_method=sentiment_method,
 		theme_method=theme_method,
-		created_by_id=user_id,
+		llm_provider=llm_provider,
+		llm_model=llm_model,
 	)
 
 	return process_study_analysis_run(run.pk)

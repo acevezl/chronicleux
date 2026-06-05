@@ -20,6 +20,8 @@ from studies.services.nlp.registry import (
     get_available_theme_method_values,
 )
 
+from studies.services.llm.client import get_available_llm_providers, get_llm_model
+
 from studies.services.analysis_runner import create_study_analysis_run
 from studies.services.analysis_tasks import queue_study_analysis_run
 
@@ -430,6 +432,7 @@ def select_analysis_methods(request, pk):
         "study": study,
         "sentiment_methods": get_available_sentiment_methods(),
         "theme_methods": get_available_theme_methods(),
+		"llm_providers": get_available_llm_providers(),
     }
 
     return render(request, "studies/select_analysis_methods.html", context)
@@ -453,23 +456,59 @@ def run_machine_analysis(request, pk):
 		)
 		return redirect("diary_study_detail", pk=study.pk)
 
-	sentiment_method = request.POST.get("sentiment_method", "vader")
-	theme_method = request.POST.get("theme_method", "tfidf_nmf")
+	analysis_mode = request.POST.get("analysis_mode")
 
-	if sentiment_method not in get_available_sentiment_method_values():
-		messages.error(request, "Invalid sentiment analysis method.")
+	sentiment_method = None
+	theme_method = None
+	llm_provider = None
+	llm_model = None
+
+	if analysis_mode == "nlp":
+		sentiment_method = request.POST.get("sentiment_method")
+		theme_method = request.POST.get("theme_method")
+
+		if not sentiment_method or not theme_method:
+			messages.error(request, "Select both a sentiment method and a thematic analysis method.")
+			return redirect("select_analysis_methods", pk=study.pk)
+
+		if sentiment_method == "llm" or theme_method == "llm":
+			messages.error(request, "LLM methods cannot be selected in NLP mode.")
+			return redirect("select_analysis_methods", pk=study.pk)
+
+		if sentiment_method not in get_available_sentiment_method_values():
+			messages.error(request, "Invalid sentiment analysis method.")
+			return redirect("select_analysis_methods", pk=study.pk)
+
+		if theme_method not in get_available_theme_method_values():
+			messages.error(request, "Invalid thematic analysis method.")
+			return redirect("select_analysis_methods", pk=study.pk)
+
+	elif analysis_mode == "llm":
+		sentiment_method = "llm"
+		theme_method = "llm"
+
+		llm_provider = request.POST.get("llm_provider")
+		llm_model = (request.POST.get("llm_model") or "").strip() or None
+
+		if not llm_provider:
+			messages.error(request, "Select an LLM provider.")
+			return redirect("select_analysis_methods", pk=study.pk)
+		
+		if not llm_model:
+			llm_model = get_llm_model(llm_provider)
+
+	else:
+		messages.error(request, "Select a valid analysis mode.")
 		return redirect("select_analysis_methods", pk=study.pk)
-
-	if theme_method not in get_available_theme_method_values():
-		messages.error(request, "Invalid thematic analysis method.")
-		return redirect("select_analysis_methods", pk=study.pk)
-
+	
 	try:
 		study_analysis_run = create_study_analysis_run(
 			study_id=study.pk,
+			user_id=request.user.id,
 			sentiment_method=sentiment_method,
 			theme_method=theme_method,
-			user_id=request.user.id,
+			llm_provider=llm_provider,
+			llm_model=llm_model,
 		)
 
 		queue_study_analysis_run(study_analysis_run.pk)

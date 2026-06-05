@@ -1,92 +1,76 @@
-# This file defines the main NLP pipeline for analyzing study entries
+# This file defines the main LLM pipeline for analyzing study entries
 # Steps:
 # 1. Receive a study_id and list/query for entries to analyze
-# 2. For each entry, run sentiment analysis and theme extraction
-# 3. Return one StudyAnalysisResult containing all the entry-level results
+# 2. Explore study-level themes using an LLM and all entries (1ST PASS)
+# 3. Analyze each entry with an LLM to obtain sentiment and theme assignment (2ND PASS)
+# 4. Return one StudyAnalysisResult containing all the entry-level results
 
 ############################
-####### NLP PIPELINE #######
+####### LLM PIPELINE #######
 ############################
 
 from collections import Counter
 
-from studies.services.contracts import EntryAnalysisResult, StudyAnalysisResult, SentimentResult, ThemeResult
-from studies.services.nlp.registry import get_sentiment_analyzer, get_theme_extractor
+from studies.services.contracts import EntryAnalysisResult, StudyAnalysisResult, ThemeResult
+from studies.services.llm.entry_analyzer import analyze_entry_with_llm
+from studies.services.llm.theme_explorer import explore_themes_with_llm
 from studies.services.nlp.sentiment._thresholds import map_sentiment_score_to_label
 
 
-def analyze_study_entries(study_id: int, entries: list[dict], sentiment_method: str = "vader", theme_method: str = "tfidf_nmf") -> StudyAnalysisResult:
-    # First, ensure the entries are in list form
-    entry_list = list(entries)  
+def analyze_study_entries_with_llm(
+    study_id: int,
+    entries,
+    provider: str,
+    model: str | None = None,
+    max_themes: int = 8,
+) -> StudyAnalysisResult:
 
-    # Get the sentiment analyzer and the theme extractor from the params
-    sentiment_analyzer = get_sentiment_analyzer(sentiment_method)
-    theme_extractor = get_theme_extractor(theme_method)
+    entry_list = list(entries)
 
-    documents = [entry.content or "" for entry in entry_list]
+    if not entry_list:
+        raise RuntimeError("No diary entries available for LLM analysis.")
 
-    themes, assignments = theme_extractor.extract(documents)
+    # FIRST PASS: Explore shared study-level themes
+    themes = explore_themes_with_llm(
+        entries=entry_list,
+        provider=provider,
+        model=model,
+        max_themes=max_themes,
+    )
 
-    themes_by_id = {
-        theme.theme_id: theme
-        for theme in themes
-    }
+    if not themes:
+        raise RuntimeError("LLM theme exploration did not return any themes.")
 
-    assignments_by_document_index = {
-        assignment["document_index"]: assignment
-        for assignment in assignments
-    }
-
+    # SECOND PASS: Analyze each entry using the discovered theme catalog
     entry_analysis_results = []
 
-    for document_index, entry in enumerate(entry_list):
-        entry_text = entry.content or ""
-
-        sentiment_result = sentiment_analyzer.analyze(entry_text)
-
-        assignment = assignments_by_document_index.get(document_index)
-        theme_result = None
-        theme_weight = None
-
-        if assignment:
-            theme_id = assignment["theme_id"]
-            theme_result = themes_by_id.get(theme_id)
-            theme_weight = assignment.get("theme_weight")
-
-            if theme_result and theme_weight is not None:
-                theme_result = ThemeResult(
-                    theme_id = theme_result.theme_id,
-                    weight = theme_weight,
-                    label = theme_result.label,
-                    keywords = theme_result.keywords,
-                    method = theme_result.method,
-                    metadata= {
-                        **theme_result.metadata,
-                    },
-                )
-        
-        entry_analysis_result = EntryAnalysisResult(
-            entry_id=entry.id,
-            sentiment=sentiment_result,
-            theme=theme_result,
-            metadata={
-                "word_count": len(entry_text.split()),
-                "language": "en",
-            }
+    for entry in entry_list:
+        entry_analysis_result = analyze_entry_with_llm(
+            entry=entry,
+            theme_catalog=themes,
+            provider=provider,
+            model=model,
         )
 
         entry_analysis_results.append(entry_analysis_result)
-    
+
     return build_study_analysis_result(
         study_id=study_id,
         entry_analysis_results=entry_analysis_results,
         themes=themes,
-        sentiment_method=sentiment_method,
-        theme_method=theme_method,
+        provider=provider,
+        model=model,
     )
 
-def build_study_analysis_result(study_id: int, entry_analysis_results: list[EntryAnalysisResult], themes: list, sentiment_method: str, theme_method: str) -> StudyAnalysisResult:
-    
+
+def build_study_analysis_result(
+    study_id: int,
+    entry_analysis_results: list[EntryAnalysisResult],
+    themes: list[ThemeResult],
+    provider: str,
+    model: str | None = None,
+) -> StudyAnalysisResult:
+
     sentiment_labels = [
         result.sentiment.label
         for result in entry_analysis_results
@@ -110,14 +94,14 @@ def build_study_analysis_result(study_id: int, entry_analysis_results: list[Entr
         average_sentiment_label = map_sentiment_score_to_label(
             average_sentiment_score
         )
-        
+
     dominant_sentiment_label = None
     if sentiment_distribution:
         dominant_sentiment_label = max(
-                sentiment_distribution, 
-                key=sentiment_distribution.get,
-                )
-        
+            sentiment_distribution,
+            key=sentiment_distribution.get,
+        )
+
     dominant_sentiment_score = None
     dominant_sentiment_scores = []
 
@@ -143,15 +127,15 @@ def build_study_analysis_result(study_id: int, entry_analysis_results: list[Entr
         if result.theme and result.theme.label
     ]
 
-    theme_distribution = dict(Counter(theme_labels))  
+    theme_distribution = dict(Counter(theme_labels))
 
     dominant_theme_label = None
     if theme_distribution:
         dominant_theme_label = max(
-            theme_distribution, 
+            theme_distribution,
             key=theme_distribution.get,
-            )
-    
+        )
+
     dominant_theme_weight = None
     dominant_theme_weights = []
 
@@ -186,14 +170,18 @@ def build_study_analysis_result(study_id: int, entry_analysis_results: list[Entr
         theme_distribution=theme_distribution,
 
         entry_analysis_results=entry_analysis_results,
-        total_entries = len(entry_analysis_results),
-        total_themes = len(themes),
+        total_entries=len(entry_analysis_results),
+        total_themes=len(themes),
 
         methods={
-            "sentiment": sentiment_method,
-            "theme": theme_method,
+            "sentiment": "llm",
+            "theme": "llm",
+            "provider": provider,
+            "model": model,
         },
         metadata={
-            "pipeline": "v1",
-        }
+            "pipeline": "llm_v1",
+            "provider": provider,
+            "model": model,
+        },
     )

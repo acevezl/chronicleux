@@ -1,5 +1,3 @@
-# studies/services/nlp/llm_client.py
-
 import os
 from dataclasses import dataclass
 
@@ -10,6 +8,7 @@ from openai import OpenAI
 class LLMProvider:
     value: str
     label: str
+    description: str
     api_key_env: str
     default_model_env: str
     default_model: str
@@ -20,6 +19,7 @@ LLM_PROVIDERS = {
     "openai": LLMProvider(
         value="openai",
         label="OpenAI",
+        description="General-purpose LLM provider with strong instruction-following and reliable structured JSON output.",
         api_key_env="OPENAI_API_KEY",
         default_model_env="OPENAI_MODEL",
         default_model="gpt-4.1-mini",
@@ -27,6 +27,7 @@ LLM_PROVIDERS = {
     "groq": LLMProvider(
         value="groq",
         label="Groq",
+        description="Fast LLM provider useful for lower-latency analysis runs, especially during testing and iteration.",
         api_key_env="GROQ_API_KEY",
         default_model_env="GROQ_MODEL",
         default_model="llama-3.3-70b-versatile",
@@ -35,14 +36,16 @@ LLM_PROVIDERS = {
     "gemini": LLMProvider(
         value="gemini",
         label="Gemini",
+        description="Google LLM provider suitable for general language understanding and diary-entry interpretation.",
         api_key_env="GEMINI_API_KEY",
         default_model_env="GEMINI_MODEL",
-        default_model="gemini-2.0-flash",
+        default_model="gemini-3.1-flash-lite",
         base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
     ),
     "openrouter": LLMProvider(
         value="openrouter",
         label="OpenRouter",
+        description="Provider gateway that allows routing analysis through different supported models using one interface.",
         api_key_env="OPENROUTER_API_KEY",
         default_model_env="OPENROUTER_MODEL",
         default_model="openai/gpt-4o-mini",
@@ -57,6 +60,7 @@ def get_available_llm_providers() -> list[dict[str, str]]:
             "value": provider.value,
             "label": provider.label,
             "default_model": get_llm_model(provider.value),
+            "description": provider.description,
         }
         for provider in LLM_PROVIDERS.values()
     ]
