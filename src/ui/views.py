@@ -9,7 +9,7 @@ from studies.models import MembershipRole, StudyMembership
 # HOME
 @login_required
 def home(request):
-	return render(request, "/")
+    return render(request, "ui/home.html")
 
 @login_required
 def evaluator_dashboard(request):

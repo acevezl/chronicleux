@@ -6,7 +6,7 @@
 		{% if is_evaluator and study.entries.count > 0 %}
 			<form
 				method="post"
-				action="{% url 'run_machine_analysis' study.id %}"
+				action="{% url 'select_analysis_methods' study.id %}"
 				class="inline-flex"
 			>
 				{% csrf_token %}
