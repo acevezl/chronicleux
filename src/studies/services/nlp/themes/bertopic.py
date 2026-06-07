@@ -30,8 +30,8 @@ class BertopicThemeExtractor(BaseThemeExtractor):
         vectorizer_model = CountVectorizer(
             stop_words="english",
             ngram_range=(2, 3),
-            min_df=2,
-            max_df=0.85,
+            min_df=1,
+            max_df=1.0,
         )
 
         topic_model = BERTopic(

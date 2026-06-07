@@ -34,7 +34,7 @@ def format_theme_catalog(theme_catalog: list[ThemeResult]) -> str:
             }
         )
 
-    return json.dumps(formatted_themes, ensure_ascii=False, indent=2)
+    return json.dumps(formatted_themes, ensure_ascii=False, separators=(",", ":"))
 
 
 def build_entry_analyzer_prompt(entry, theme_catalog: list[ThemeResult]) -> str:

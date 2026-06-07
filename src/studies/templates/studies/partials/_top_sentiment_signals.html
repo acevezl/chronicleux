@@ -41,7 +41,7 @@
 
                 {% if top_quotes.positive %}
                     <p class="text-sm leading-6 text-gray-700 dark:text-gray-300">
-                        {{ top_quotes.positive.summary|default:top_quotes.positive.quote }}
+                        {{ top_quotes.positive.quote }}
                     </p>
 
                     <div class="mt-4 flex items-center justify-between gap-3">
@@ -100,7 +100,7 @@
 
                 {% if top_quotes.negative %}
                     <p class="text-sm leading-6 text-gray-700 dark:text-gray-300">
-                        {{ top_quotes.negative.summary|default:top_quotes.negative.quote }}
+                        {{ top_quotes.negative.quote }}
                     </p>
 
                     <div class="mt-4 flex items-center justify-between gap-3">

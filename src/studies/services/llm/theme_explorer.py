@@ -20,6 +20,15 @@ Do not invent issues or recommendations.
 Return only valid JSON.
 """.strip()
 
+MAX_THEME_ENTRY_CHARS = 1200
+
+def compact_text(text: str, max_chars: int = MAX_THEME_ENTRY_CHARS) -> str:
+    text = " ".join((text or "").split())
+
+    if len(text) <= max_chars:
+        return text
+
+    return text[:max_chars].rstrip() + "..."
 
 def format_entries_for_theme_exploration(entries) -> str:
     formatted_entries = []
@@ -28,11 +37,15 @@ def format_entries_for_theme_exploration(entries) -> str:
         formatted_entries.append(
             {
                 "entry_id": entry.id,
-                "text": entry.content,
+                "text": compact_text(entry.content),
             }
         )
 
-    return json.dumps(formatted_entries, ensure_ascii=False, indent=2)
+    return json.dumps(
+        formatted_entries,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
 
 
 def build_theme_explorer_prompt(entries, max_themes: int = 8) -> str:
