@@ -62,6 +62,14 @@ class AnalysisRunStatus(models.TextChoices):
     COMPLETED = "COMPLETED", "Completed"
     FAILED = "FAILED", "Failed"
 
+# CONFUSION MATRIX OUTCOME - FOR METRICS
+class ConfusionMatrixOutcome(models.TextChoices):
+    TRUE_POSITIVE = "TRUE_POSITIVE", "True Positive"
+    FALSE_POSITIVE = "FALSE_POSITIVE", "False Positive"
+    TRUE_NEGATIVE = "TRUE_NEGATIVE", "True Negative"
+    FALSE_NEGATIVE = "FALSE_NEGATIVE", "False Negative"
+    NOT_AVAILABLE = "NOT_AVAILABLE", "Not Available"
+
 # SENTIMENT SCORE THRESHOLDS
 # Used at the Study Level to label average sentiment score
 SENTIMENT_SCORE_THRESHOLDS = [
@@ -71,7 +79,6 @@ SENTIMENT_SCORE_THRESHOLDS = [
     (0.2, 0.7, SentimentCategory.POSITIVE),
     (0.7, 1.0, SentimentCategory.VERY_POSITIVE),
 ]
-
 
 # ----------------------- MODELS ----------------------- #
 
@@ -496,6 +503,30 @@ class StudyAnalysisRun(models.Model):
     # error message (if analysis failed)
     error_message = models.TextField(blank=True)
 
+
+    # Study-level metrics
+    # Vs. Participant GT
+    participant_sentiment_true_positives = models.PositiveIntegerField(default=0)
+    participant_sentiment_false_positives = models.PositiveIntegerField(default=0)
+    participant_sentiment_true_negatives = models.PositiveIntegerField(default=0)
+    participant_sentiment_false_negatives = models.PositiveIntegerField(default=0)
+
+    run_accuracy_v_participant = models.FloatField(null=True, blank=True)
+    run_precision_v_participant = models.FloatField(null=True, blank=True)
+    run_recall_v_participant = models.FloatField(null=True, blank=True)
+    run_f1_v_participant = models.FloatField(null=True, blank=True)
+
+    # Vs. Evaluator GT
+    evaluator_sentiment_true_positives = models.PositiveIntegerField(default=0)
+    evaluator_sentiment_false_positives = models.PositiveIntegerField(default=0)
+    evaluator_sentiment_true_negatives = models.PositiveIntegerField(default=0)
+    evaluator_sentiment_false_negatives = models.PositiveIntegerField(default=0)
+
+    run_accuracy_v_evaluator = models.FloatField(null=True, blank=True)
+    run_precision_v_evaluator = models.FloatField(null=True, blank=True)
+    run_recall_v_evaluator = models.FloatField(null=True, blank=True)
+    run_f1_v_evaluator = models.FloatField(null=True, blank=True)
+
     class Meta:
         ordering = ["-started_at"]
         verbose_name = "Study Analysis Run"
@@ -530,6 +561,41 @@ class DiaryEntryAnalysis(models.Model):
         blank=True,
     )
     raw_sentiment_result = models.JSONField(default=list, blank=True)
+
+    # Sentiment data for accuracy, precision, recall, and F1 metrics
+
+    # Participant GT
+    participant_sentiment_label = models.CharField(
+        max_length=20,
+        choices=SentimentCategory.choices,
+        null=True,
+        blank=True,
+    )
+
+    participant_confusion_matrix_outcome = models.CharField(
+        max_length=32,
+        choices=ConfusionMatrixOutcome.choices,
+        default=ConfusionMatrixOutcome.NOT_AVAILABLE
+    )
+
+    # Evaluator GT
+    evaluator_sentiment_label = models.CharField(
+        max_length=20,
+        choices=SentimentCategory.choices,
+        null=True,
+        blank=True,
+    )
+
+    evaluator_confusion_matrix_outcome = models.CharField(
+        max_length=32,
+        choices=ConfusionMatrixOutcome.choices,
+        default=ConfusionMatrixOutcome.NOT_AVAILABLE
+    )
+
+
+    
+
+
 
     # Thematic Analysis Outputs
     theme_weight = models.FloatField(null=True, blank=True)
