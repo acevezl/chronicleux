@@ -20,6 +20,8 @@ from studies.models import (
 from studies.services.nlp.pipeline import analyze_study_entries
 from studies.services.llm.pipeline import analyze_study_entries_with_llm
 
+from studies.services.nlp.sentiment._confusion_matrix import refresh_sentiment_confusion_matrix_for_run
+
 DEFAULT_THEME_COUNT = 3
 DEFAULT_THEME_TERMS = 6
 MAX_SUMMARY_LENGTH = 180
@@ -614,6 +616,9 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 					"completed_at",
 				]
 			)
+
+			# And safely refresh binary metrics
+			refresh_sentiment_confusion_matrix_for_run(run)
 
 			study.selected_study_run = run
 			study.status = StudyStatus.HUMAN_ANALYSIS

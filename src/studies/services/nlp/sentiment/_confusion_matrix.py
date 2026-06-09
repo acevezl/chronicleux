@@ -105,7 +105,7 @@ def calculate_metrics_from_outcomes (outcomes: list[str]) -> BinaryMetrics:
     )
 
 @transaction.atomic
-def update_sentiment_confusion_matrix_for_run (study_analysis_run):
+def refresh_sentiment_confusion_matrix_for_run (study_analysis_run):
 
     entry_analyses = (
         DiaryEntryAnalysis.objects
