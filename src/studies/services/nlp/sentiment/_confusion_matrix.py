@@ -66,19 +66,28 @@ def calculate_binary_metrics(
         true_negatives:int, false_negatives:int
         )->BinaryMetrics:
     
-    total = true_positives + false_positives + true_negatives + false_negatives
+    try: 
+        
+        total = true_positives + false_positives + true_negatives + false_negatives
 
-    # acc = (TP + TN) / TOTAL
-    accuracy = safe_divide (true_positives + true_negatives, total)
+        # acc = (TP + TN) / TOTAL
+        accuracy = safe_divide (true_positives + true_negatives, total)
 
-    # p = TP / (TP + FP)
-    precision = safe_divide (true_positives, true_positives + false_positives)
+        # p = TP / (TP + FP)
+        precision = safe_divide (true_positives, true_positives + false_positives)
 
-    # recall = TP / (TP + FN)
-    recall = safe_divide (true_positives, true_positives + false_negatives)
+        # recall = TP / (TP + FN)
+        recall = safe_divide (true_positives, true_positives + false_negatives)
 
-    # f1 = 2 x ( (precision x recall) / (precision + recall))
-    f1 = 2 * safe_divide (precision * recall, precision + recall)
+        # f1 = 2 x ( (precision x recall) / (precision + recall))
+        f1 = (
+            safe_divide(2 * precision * recall, precision + recall)
+            if precision is not None and recall is not None
+            else None
+        )
+
+    except Exception as e:
+        print (e)
 
     return BinaryMetrics (
         TPs = true_positives,

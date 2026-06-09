@@ -618,6 +618,7 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 			)
 
 			# And safely refresh binary metrics
+			print ("Refreshing metrics")
 			refresh_sentiment_confusion_matrix_for_run(run)
 
 			study.selected_study_run = run
