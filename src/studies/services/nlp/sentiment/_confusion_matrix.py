@@ -113,6 +113,61 @@ def calculate_metrics_from_outcomes (outcomes: list[str]) -> BinaryMetrics:
         false_negatives=FNs,
     )
 
+def get_category_confusion_matrix_outcome(
+        predicted_label: str | None,
+        reference_label: str | None,
+        target_label: str,
+) -> str:
+    if not predicted_label or not reference_label:
+        return ConfusionMatrixOutcome.NOT_AVAILABLE
+
+    predicted_is_target = predicted_label == target_label
+    reference_is_target = reference_label == target_label
+
+    if predicted_is_target and reference_is_target:
+        return ConfusionMatrixOutcome.TRUE_POSITIVE
+
+    if predicted_is_target and not reference_is_target:
+        return ConfusionMatrixOutcome.FALSE_POSITIVE
+
+    if not predicted_is_target and reference_is_target:
+        return ConfusionMatrixOutcome.FALSE_NEGATIVE
+
+    return ConfusionMatrixOutcome.TRUE_NEGATIVE
+
+
+def calculate_metrics_by_sentiment_category(
+        label_pairs: list[tuple[str | None, str | None]]
+) -> dict:
+    metrics_by_category = {}
+
+    for sentiment_category in SentimentCategory:
+        target_label = sentiment_category.value
+
+        category_outcomes = [
+            get_category_confusion_matrix_outcome(
+                predicted_label=predicted_label,
+                reference_label=reference_label,
+                target_label=target_label,
+            )
+            for predicted_label, reference_label in label_pairs
+        ]
+
+        category_metrics = calculate_metrics_from_outcomes(category_outcomes)
+
+        metrics_by_category[target_label] = {
+            "tp": category_metrics.TPs,
+            "fp": category_metrics.FPs,
+            "tn": category_metrics.TNs,
+            "fn": category_metrics.FNs,
+            "accuracy": category_metrics.accuracy,
+            "precision": category_metrics.precision,
+            "recall": category_metrics.recall,
+            "f1": category_metrics.f1,
+        }
+
+    return metrics_by_category
+
 @transaction.atomic
 def refresh_sentiment_confusion_matrix_for_run (study_analysis_run):
 
@@ -125,35 +180,32 @@ def refresh_sentiment_confusion_matrix_for_run (study_analysis_run):
     participant_outcomes = []
     evaluator_outcomes = []
 
+    participant_label_pairs = []
+    evaluator_label_pairs = []
+
     for entry_analysis in entry_analyses:
         machine_sentiment_label = entry_analysis.sentiment_label
 
+        participant_reference_label = entry_analysis.entry.sentiment_self_report
+        evaluator_reference_label = entry_analysis.evaluator_sentiment_label
+
         participant_outcome = get_confusion_matrix_outcome(
             predicted_label=machine_sentiment_label,
-            reference_label=entry_analysis.entry.sentiment_self_report
+            reference_label=participant_reference_label,
         )
 
         evaluator_outcome = get_confusion_matrix_outcome(
             predicted_label=machine_sentiment_label,
-            reference_label=entry_analysis.evaluator_sentiment_label
+            reference_label=evaluator_reference_label,
         )
 
         entry_analysis.participant_confusion_matrix_outcome = participant_outcome
         entry_analysis.evaluator_confusion_matrix_outcome = evaluator_outcome
 
-        ### NOTE TO SELF: REMOVE THIS LINE AFTER ANALYZING ALL STUDIES... 
-        # THIS FIXES THE GAP FOR OLD STUDIES
-        # ALSO --> MAKE SURE I ADDED IT TO analysis runner so future runs have this field
-        # THEN UPDATE THE LINE ABOVE AND DON'T PICK THE PARTICIPANT REFERENCE FROM THE ENTRY
-        # IMPORTANT IMPORTANT IMPORTANT IMPORTANT VERY IMPORTANT
-        entry_analysis.participant_sentiment_label = entry_analysis.entry.sentiment_self_report
-        ### DID I STUTTER??? I SAID IMPORTANT #FIXLATER
-
         entry_analysis.save(
             update_fields=[
                 "participant_confusion_matrix_outcome",
                 "evaluator_confusion_matrix_outcome",
-                "participant_sentiment_label", # ALSO REMOVE THIS LINE #FIXLATER
             ]
         )
 
@@ -161,6 +213,17 @@ def refresh_sentiment_confusion_matrix_for_run (study_analysis_run):
         participant_outcomes.append(participant_outcome)
         evaluator_outcomes.append(evaluator_outcome)
 
+        # And carry the pairs of machine sentiment vs reference
+        # participant
+        participant_label_pairs.append(
+            (machine_sentiment_label, participant_reference_label)
+        )
+        # evaluator
+        evaluator_label_pairs.append(
+            (machine_sentiment_label, evaluator_reference_label)
+        )
+
+    # Calculate metrics from all outcomes - Participant
     participant_metrics = calculate_metrics_from_outcomes (participant_outcomes)
 
     study_analysis_run.participant_sentiment_true_positives = participant_metrics.TPs
@@ -172,8 +235,16 @@ def refresh_sentiment_confusion_matrix_for_run (study_analysis_run):
     study_analysis_run.run_recall_v_participant = participant_metrics.recall
     study_analysis_run.run_f1_v_participant = participant_metrics.f1
 
+    # and for all categories
+    participant_metrics_by_category = calculate_metrics_by_sentiment_category(
+        participant_label_pairs
+    )
+
+    study_analysis_run.participant_sentiment_metrics_by_category = participant_metrics_by_category
+
+    # Calculate metrics from all outcomes - Evaluator
     evaluator_metrics = calculate_metrics_from_outcomes (evaluator_outcomes)
-    
+
     study_analysis_run.evaluator_sentiment_true_positives = evaluator_metrics.TPs
     study_analysis_run.evaluator_sentiment_false_positives = evaluator_metrics.FPs
     study_analysis_run.evaluator_sentiment_true_negatives = evaluator_metrics.TNs
@@ -183,6 +254,14 @@ def refresh_sentiment_confusion_matrix_for_run (study_analysis_run):
     study_analysis_run.run_recall_v_evaluator = evaluator_metrics.recall
     study_analysis_run.run_f1_v_evaluator = evaluator_metrics.f1
 
+    # and also for all categories - Evaluator
+    evaluator_metrics_by_category = calculate_metrics_by_sentiment_category(
+        evaluator_label_pairs
+    )
+
+    study_analysis_run.evaluator_sentiment_metrics_by_category = evaluator_metrics_by_category
+
+    # Now savesies
     study_analysis_run.save(
         update_fields=[
 
@@ -194,6 +273,7 @@ def refresh_sentiment_confusion_matrix_for_run (study_analysis_run):
             "run_precision_v_participant",
             "run_recall_v_participant",
             "run_f1_v_participant",
+            "participant_sentiment_metrics_by_category",
 
             "evaluator_sentiment_true_positives",
             "evaluator_sentiment_false_positives",
@@ -203,13 +283,16 @@ def refresh_sentiment_confusion_matrix_for_run (study_analysis_run):
             "run_precision_v_evaluator",
             "run_recall_v_evaluator",
             "run_f1_v_evaluator",
+            "evaluator_sentiment_metrics_by_category",
 
         ]
     )
 
     return {
         "participant": participant_metrics,
+        "participant_by_category": participant_metrics_by_category,
         "evaluator": evaluator_metrics,
+        "evaluator_by_category": evaluator_metrics_by_category,
     }
 
 
