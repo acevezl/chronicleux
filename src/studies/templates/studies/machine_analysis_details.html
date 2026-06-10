@@ -56,8 +56,35 @@
                 </span>
             </summary>
 
+            <div class="grid grid-cols-1 gap-4 p-4 bg-white dark:bg-gray-900">
+                <!-- ANALYSIS METRICS VS REF -->
+                {% include "studies/partials/_analysis_run_metrics.html" with run=run%}
+
+            </div>
+
+        </details>
+
+        <details open class="group main-card mb-4">
+            
+            <!-- CARD TITLE (I.E., SUMMARY) -->
+            <summary class="card-summary">
+                <div class="flex flex-col">
+                    <h3 class="card-summary-title">
+                        Study-level Overview
+                    </h3>
+
+                    <p class="card-summary-subtitle ">
+                        A high-level summary of the study's detected sentiment, recurring themes, reported issues, and their estimated impact across diary entries.
+                    </p>
+
+                </div>
+                <span class="card-summary-chevron">
+                    {% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
+                </span>
+            </summary>
+
             <!-- KEY INSIGHTS -->
-            <div class="grid grid-cols-1 gap-4 p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600">
+            <div class="grid grid-cols-1 gap-4 p-4 bg-white dark:bg-gray-900">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                     <!-- DOMINANT SENTIMENT & DISTRIBUTION -->
@@ -73,12 +100,28 @@
                     {% include "studies/partials/_issue_impact_matrix.html" with issue_impact_matrix=run.recurring_issues study_id=study.id run_id=run.id%}
 
                 </div>
-                <div class="grid grid-cols-1 gap-4">
-                    <!-- TOP SENTIMENT SIGNALS -->
-                    {% include "studies/partials/_top_sentiment_signals.html" with top_quotes=run.top_representative_quotes study_id=study.id run_id=run.id%}
-
-                </div>    
+                   
             </div>
+        </details>
+
+        <details open class="group main-card mb-4">
+            
+            <!-- CARD TITLE (I.E., SUMMARY) -->
+            <summary class="card-summary">
+                <div class="flex flex-col">
+                    <h3 class="card-summary-title">
+                        Evolution Over Time
+                    </h3>
+
+                    <p class="card-summary-subtitle ">
+                        Displays temporal changes in sentiment scores, sentiment categories, detected themes, and issue categories across the study period.
+                    </p>
+
+                </div>
+                <span class="card-summary-chevron">
+                    {% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
+                </span>
+            </summary>
 
             <!-- ANALYSIS BODY -->
             <div class="p-4 bg-white dark:bg-gray-900">
@@ -126,24 +169,48 @@
 
                         {% include "studies/partials/_evolution_issues.html" with evolution=run.evolution_over_time run=run %}
                     </div>
-
                 </div>
 
-                <!-- EVIDENCE TRAIL -->
-                <div>
-                    <label class="block text-lg font-medium text-gray-700 dark:text-gray-200 mt-2">
-                        Evidence Trail
+                <!-- TOP SENTIMENT SIGNALS -->
+                <div class="gap-4 mt-2">
+                    <label class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+                        Key Experience Moments
                     </label>
-
-                    <div class="mt-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 overflow-hidden">
-                        
-                        <div class="" id="analysis-entries-panel">
-                            {% include "studies/partials/_entries_with_analysis.html" with entry_analyses=entry_analyses study=study run=run %}
-                        </div>
-
-                    </div>
-                    
+                    {% include "studies/partials/_top_sentiment_signals.html" with top_quotes=run.top_representative_quotes study_id=study.id run_id=run.id%}
                 </div>
+
+            </div>
+        </details>
+
+        <details open class="group main-card mb-4">
+        
+            <!-- CARD TITLE (I.E., SUMMARY) -->
+            <summary class="card-summary">
+                <div class="flex flex-col">
+                    <h3 class="card-summary-title">
+                        Evidence Trail
+                    </h3>
+
+                    <p class="card-summary-subtitle ">
+                        Analyzed diary entries with their detected sentiment, themes, issue tags, and links back to the original entry.
+                    </p>
+
+                </div>
+                <span class="card-summary-chevron">
+                    {% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
+                </span>
+            </summary>
+
+            <div class="p-4 bg-white dark:bg-gray-900">
+                <!-- EVIDENCE TRAIL -->
+                <div class="mt-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 overflow-hidden">
+                    
+                    <div class="" id="analysis-entries-panel">
+                        {% include "studies/partials/_entries_with_analysis.html" with entry_analyses=entry_analyses study=study run=run %}
+                    </div>
+
+                </div>
+                    
             </div>
         </details>
 

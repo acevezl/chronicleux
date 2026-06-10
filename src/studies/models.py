@@ -271,7 +271,7 @@ class DiaryEntry(models.Model):
     participant_display_name = models.CharField(max_length=255, blank=True)
     participant_email = models.EmailField(blank=True)
 
-    # This is the sentiment ground truth
+    # This is the sentiment reference
     sentiment_self_report = models.CharField(
         max_length=20,
         choices=SentimentCategory.choices,
@@ -505,7 +505,7 @@ class StudyAnalysisRun(models.Model):
 
 
     # Study-level metrics
-    # Vs. Participant GT
+    # Vs. Participant Reference
     participant_sentiment_true_positives = models.PositiveIntegerField(default=0)
     participant_sentiment_false_positives = models.PositiveIntegerField(default=0)
     participant_sentiment_true_negatives = models.PositiveIntegerField(default=0)
@@ -516,7 +516,7 @@ class StudyAnalysisRun(models.Model):
     run_recall_v_participant = models.FloatField(null=True, blank=True)
     run_f1_v_participant = models.FloatField(null=True, blank=True)
 
-    # Vs. Evaluator GT
+    # Vs. Evaluator Reference
     evaluator_sentiment_true_positives = models.PositiveIntegerField(default=0)
     evaluator_sentiment_false_positives = models.PositiveIntegerField(default=0)
     evaluator_sentiment_true_negatives = models.PositiveIntegerField(default=0)
@@ -564,7 +564,7 @@ class DiaryEntryAnalysis(models.Model):
 
     # Sentiment data for accuracy, precision, recall, and F1 metrics
 
-    # Participant GT
+    # Participant Reference
     participant_sentiment_label = models.CharField(
         max_length=20,
         choices=SentimentCategory.choices,
@@ -578,7 +578,7 @@ class DiaryEntryAnalysis(models.Model):
         default=ConfusionMatrixOutcome.NOT_AVAILABLE
     )
 
-    # Evaluator GT
+    # Evaluator Reference
     evaluator_sentiment_label = models.CharField(
         max_length=20,
         choices=SentimentCategory.choices,

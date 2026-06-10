@@ -39,19 +39,19 @@ def get_confusion_matrix_outcome (
     if predicted_is_negative is None or reference_is_negative is None:
         return ConfusionMatrixOutcome.NOT_AVAILABLE
     
-    # If SENTIMENT is NEGATIVE on both prediction and GT, result is a True Positive.
+    # If SENTIMENT is NEGATIVE on both prediction and Reference, result is a True Positive.
     if predicted_is_negative and reference_is_negative:
         return ConfusionMatrixOutcome.TRUE_POSITIVE
     
-    # If SENTIMENT is NEGATIVE on prediction, but POSITIVE or NEUTRAL on GT, result is a False Positive.
+    # If SENTIMENT is NEGATIVE on prediction, but POSITIVE or NEUTRAL on Reference, result is a False Positive.
     if predicted_is_negative and not reference_is_negative:
         return ConfusionMatrixOutcome.FALSE_POSITIVE
     
-    # If SENTIMENT is POSITIVE or NEUTRAL on prediction, but NEGATIVE on GT, result is a False Negative
+    # If SENTIMENT is POSITIVE or NEUTRAL on prediction, but NEGATIVE on Reference, result is a False Negative
     if not predicted_is_negative and reference_is_negative:
         return ConfusionMatrixOutcome.FALSE_NEGATIVE
     
-    # If SENTIMENT is POSITIVE or NEUTRAL on both prediction and GT
+    # If SENTIMENT is POSITIVE or NEUTRAL on both prediction and Reference
     return ConfusionMatrixOutcome.TRUE_NEGATIVE
     
 
@@ -67,7 +67,7 @@ def calculate_binary_metrics(
         )->BinaryMetrics:
     
     try: 
-        
+
         total = true_positives + false_positives + true_negatives + false_negatives
 
         # acc = (TP + TN) / TOTAL
