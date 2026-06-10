@@ -5,7 +5,7 @@ from transformers import pipeline
 
 from studies.models import SentimentCategory
 from studies.services.contracts import BaseSentimentAnalyzer, SentimentResult
-from studies.services.nlp.sentiment._thresholds import map_sentiment_score_to_label
+from studies.services.nlp.sentiment._thresholds import binary_map_sentiment_score_to_label
 
 MODEL_NAME = "distilbert/distilbert-base-uncased-finetuned-sst-2-english"
 
@@ -45,7 +45,7 @@ class BertSentimentAnalyzer(BaseSentimentAnalyzer):
         else:
             sentiment_score = 0.0
 
-        label = map_sentiment_score_to_label(sentiment_score)
+        label = binary_map_sentiment_score_to_label(sentiment_score)
 
         return SentimentResult(
             score=sentiment_score,

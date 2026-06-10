@@ -80,6 +80,11 @@ SENTIMENT_SCORE_THRESHOLDS = [
     (0.7, 1.0, SentimentCategory.VERY_POSITIVE),
 ]
 
+BINARY_SENTIMENT_SCORE_THRESHOLDS = [
+    (-1.0, 0.0, SentimentCategory.NEGATIVE),
+    (0.0, 1.0, SentimentCategory.POSITIVE),
+]
+
 # ----------------------- MODELS ----------------------- #
 
 # STUDY MODEL
