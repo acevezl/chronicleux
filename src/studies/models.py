@@ -521,6 +521,15 @@ class StudyAnalysisRun(models.Model):
     run_recall_v_participant = models.FloatField(null=True, blank=True)
     run_f1_v_participant = models.FloatField(null=True, blank=True)
 
+    participant_sentiment_metrics_by_category = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text=(
+            "One-vs-rest TP, FP, TN, FN, accuracy, precision, recall, and F1 "
+            "per sentiment category against participant self-reported sentiment."
+        ),
+    )
+
     # Vs. Evaluator Reference
     evaluator_sentiment_true_positives = models.PositiveIntegerField(default=0)
     evaluator_sentiment_false_positives = models.PositiveIntegerField(default=0)
@@ -531,6 +540,15 @@ class StudyAnalysisRun(models.Model):
     run_precision_v_evaluator = models.FloatField(null=True, blank=True)
     run_recall_v_evaluator = models.FloatField(null=True, blank=True)
     run_f1_v_evaluator = models.FloatField(null=True, blank=True)
+
+    evaluator_sentiment_metrics_by_category = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text=(
+            "One-vs-rest TP, FP, TN, FN, accuracy, precision, recall, and F1 "
+            "per sentiment category against evaluator-reviewed sentiment."
+        ),
+    )
 
     class Meta:
         ordering = ["-started_at"]
