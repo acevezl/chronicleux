@@ -56,10 +56,26 @@
                 </span>
             </summary>
 
-            <div class="grid grid-cols-1 gap-4 p-4 bg-white dark:bg-gray-900">
-                <!-- ANALYSIS METRICS VS REF -->
-                {% include "studies/partials/_analysis_run_metrics.html" with run=run%}
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 p-4 bg-white dark:bg-gray-900">
+                <!-- ANALYSIS METRICS VS REF PARTICIPANT -->
+                <div class="grid col-span-1 gap-4">
+                {% include "studies/partials/_analysis_run_metrics_participant.html" with run=run%}
+                </div>
 
+                <!-- ANALYSIS METRICS VS REF EVALUATOR -->
+                <div class="grid col-span-1 gap-4">
+                {% include "studies/partials/_analysis_run_metrics_evaluator.html" with run=run%}
+                </div>
+
+                <!-- ANALYSIS METRICS VS REF PARTICIPANT PER CATEGORY -->
+                <div class="grid col-span-2 gap-4">
+                {% include "studies/partials/_analysis_run_metrics_per_category_participant.html" with run=run%}
+                </div>
+
+                <!-- ANALYSIS METRICS VS REF EVALUATOR PER CATEGORY -->
+                <div class="grid col-span-2 gap-4">
+                {% include "studies/partials/_analysis_run_metrics_per_category_evaluator.html" with run=run%}
+                </div>
             </div>
 
         </details>

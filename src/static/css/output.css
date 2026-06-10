@@ -44,6 +44,7 @@
     --color-emerald-300: oklch(84.5% 0.143 164.978);
     --color-emerald-600: oklch(59.6% 0.145 163.225);
     --color-emerald-950: oklch(26.2% 0.051 172.552);
+    --color-sky-50: oklch(97.7% 0.013 236.62);
     --color-sky-100: oklch(95.1% 0.026 236.824);
     --color-sky-700: oklch(50% 0.134 242.749);
     --color-sky-800: oklch(44.3% 0.11 240.79);
@@ -333,6 +334,15 @@
   .z-40 {
     z-index: 40;
   }
+  .col-span-1 {
+    grid-column: span 1 / span 1;
+  }
+  .col-span-2 {
+    grid-column: span 2 / span 2;
+  }
+  .row-span-2 {
+    grid-row: span 2 / span 2;
+  }
   .container {
     width: 100%;
     @media (width >= 40rem) {
@@ -410,6 +420,9 @@
   }
   .ml-2 {
     margin-left: calc(var(--spacing) * 2);
+  }
+  .ml-auto {
+    margin-left: auto;
   }
   .line-clamp-2 {
     overflow: hidden;
@@ -533,9 +546,6 @@
   .min-w-0 {
     min-width: calc(var(--spacing) * 0);
   }
-  .min-w-full {
-    min-width: 100%;
-  }
   .flex-1 {
     flex: 1;
   }
@@ -548,8 +558,11 @@
   .table-auto {
     table-layout: auto;
   }
-  .border-collapse {
-    border-collapse: collapse;
+  .-rotate-90 {
+    rotate: calc(90deg * -1);
+  }
+  .-rotate-180 {
+    rotate: calc(180deg * -1);
   }
   .transform {
     transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
@@ -563,8 +576,14 @@
   .grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .grid-cols-\[10rem_1fr_1fr\] {
-    grid-template-columns: 10rem 1fr 1fr;
+  .grid-cols-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .grid-cols-\[2\.5rem_5rem_minmax\(0\,1fr\)_minmax\(0\,1fr\)\] {
+    grid-template-columns: 2.5rem 5rem minmax(0,1fr) minmax(0,1fr);
+  }
+  .grid-cols-\[6rem_1fr_1fr\] {
+    grid-template-columns: 6rem 1fr 1fr;
   }
   .flex-col {
     flex-direction: column;
@@ -918,9 +937,6 @@
   .text-center {
     text-align: center;
   }
-  .text-left {
-    text-align: left;
-  }
   .text-right {
     text-align: right;
   }
@@ -1135,6 +1151,15 @@
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
+  .transition-transform {
+    transition-property: transform, translate, scale, rotate;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+  .duration-200 {
+    --tw-duration: 200ms;
+    transition-duration: 200ms;
+  }
   .duration-300 {
     --tw-duration: 300ms;
     transition-duration: 300ms;
@@ -1149,6 +1174,11 @@
   }
   .ring-inset {
     --tw-ring-inset: inset;
+  }
+  .group-open\/category\:rotate-0 {
+    &:is(:where(.group\/category):is([open], :popover-open, :open) *) {
+      rotate: 0deg;
+    }
   }
   .group-data-closed\/dialog-panel\:opacity-0 {
     &:is(:where(.group\/dialog-panel)[data-closed] *) {
@@ -2605,8 +2635,7 @@
     border-bottom-width: 1px;
     border-color: var(--color-gray-200);
     background-color: var(--color-gray-100);
-    padding-inline: calc(var(--spacing) * 6);
-    padding-block: calc(var(--spacing) * 4);
+    padding: calc(var(--spacing) * 4);
     @media (prefers-color-scheme: dark) {
       border-color: var(--color-gray-600);
     }
