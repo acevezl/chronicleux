@@ -4,14 +4,12 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 
-from django.core.exceptions import ValidationError, PermissionDenied
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.urls import reverse
-from django.utils.dateparse import parse_datetime
 
 from studies.services.nlp.registry import (
 	get_available_sentiment_methods,
@@ -25,10 +23,40 @@ from studies.services.llm.client import get_available_llm_providers, get_llm_mod
 from studies.services.analysis_runner import create_study_analysis_run
 from studies.services.analysis_tasks import queue_study_analysis_run
 
-from .filters import filter_diary_entries, filter_analysis_entries
+from .filters import (
+	filter_diary_entries, 
+	filter_analysis_entries, 
+	filter_canonical_themes, 
+	filter_canonical_issues,
+	)
+
 from .forms import StudyForm, DiaryEntryForm, CanonicalIssueForm, CanonicalThemeForm
-from .helpers import import_rows_into_study, parse_uploaded_file, user_can_evaluate_study, require_catalogue_manager
-from .models import  AnalysisRunStatus, DiaryEntry, DiaryEntryAnalysis, DiaryEntrySource, MembershipRole, SentimentCategory, Study, StudyMembership, StudyAnalysisRun, StudyStatus, CanonicalIssue, CanonicalTheme, ThemeAndIssueSource, ThemeAndIssueStatus
+
+from .models import (
+	AnalysisRunStatus, 
+	DiaryEntry, 
+	DiaryEntryAnalysis, 
+	DiaryEntrySource, 
+	MembershipRole, 
+	SentimentCategory, 
+	Study, 
+	StudyMembership, 
+	StudyAnalysisRun, 
+	StudyStatus, 
+	CanonicalIssue, 
+	CanonicalTheme, 
+	ThemeAndIssueSource, 
+	ThemeAndIssueStatus,
+)
+
+from .helpers import (
+	import_rows_into_study,
+	parse_uploaded_file,
+	user_can_evaluate_study,
+	require_catalogue_manager,
+	import_canonical_themes,
+	parse_uploaded_canonical_theme_file,
+)
 
 # ----------------------- VIEWS ----------------------- #
 
@@ -916,6 +944,7 @@ def study_entries_partial(request, study_pk):
 
 	return response
 
+
 # ------------------------------ #	
 # CANONICAL THEME CATALOGUE LIST #
 # ------------------------------ #
@@ -923,17 +952,61 @@ def study_entries_partial(request, study_pk):
 def canonical_theme_catalogue_list(request):
 	require_catalogue_manager(request.user)
 
-	themes = CanonicalTheme.objects.all().order_by("name")
+	context = filter_canonical_themes(request)
+
+	context.update({
+		"page_title": "Canonical Themes Catalogue",
+		"page_subtitle": "Manage the global catalogue of canonical themes used by analysis methods.",
+		"canonical_themes_filter_url": reverse("canonical_theme_catalogue_partial"),
+		"diary_entries_filter_url": reverse("canonical_theme_catalogue_partial"),
+	})
 
 	return render(
 		request,
 		"studies/catalogues/canonical_theme_list.html",
-		{
-			"page_title": "Canonical Themes Catalogue",
-			"page_subtitle": "Manage the global catalogue of canonical themes used by analysis methods.",
-			"themes": themes,
-		},
+		context,
 	)
+
+
+# -------------------------------- #
+# CANONICAL THEME CATALOGUE PARTIAL #
+# -------------------------------- #
+@login_required
+def canonical_theme_catalogue_partial(request):
+	require_catalogue_manager(request.user)
+
+	if request.headers.get("HX-Request") != "true":
+		url = reverse("canonical_theme_catalogue_list")
+		querystring = request.GET.urlencode()
+
+		if querystring:
+			url = f"{url}?{querystring}"
+
+		return redirect(url)
+
+	context = filter_canonical_themes(request)
+
+	context.update({
+		"canonical_themes_filter_url": reverse("canonical_theme_catalogue_partial"),
+		"diary_entries_filter_url": reverse("canonical_theme_catalogue_partial"),
+	})
+
+	response = render(
+		request,
+		"studies/catalogues/partials/_canonical_themes.html",
+		context,
+	)
+
+	full_page_url = reverse("canonical_theme_catalogue_list")
+	querystring = request.GET.urlencode()
+
+	if querystring:
+		full_page_url = f"{full_page_url}?{querystring}"
+
+	response["HX-Push-Url"] = full_page_url
+
+	return response
+
 
 # -----------------------#
 # CANONICAL THEME CREATE #
@@ -1030,6 +1103,47 @@ def canonical_theme_delete(request, theme_pk):
 		},
 	)
 
+
+# -----------------------#
+# CANONICAL THEME IMPORT #
+# -----------------------#
+@login_required
+def canonical_theme_import(request):
+	require_catalogue_manager(request.user)
+
+	if request.method == "POST":
+		uploaded_file = request.FILES.get("file")
+
+		try:
+			rows = parse_uploaded_canonical_theme_file(uploaded_file)
+			result = import_canonical_themes(rows, request.user)
+
+			messages.success(
+				request,
+				f"Imported canonical themes. "
+				f"Created: {result['created']}. "
+				f"Updated: {result['updated']}. "
+				f"Skipped: {result['skipped']}."
+			)
+
+			return redirect("canonical_theme_catalogue_list")
+
+		except ValueError as e:
+			messages.error(request, str(e))
+
+		except Exception as e:
+			messages.error(request, f"Theme import failed: {e}")
+
+	return render(
+		request,
+		"studies/catalogues/canonical_theme_import.html",
+		{
+			"page_title": "Import Canonical Themes",
+			"page_subtitle": "Import canonical themes into the global catalogue from a CSV file.",
+		},
+	)
+
+
 # ------------------------------ #
 # CANONICAL ISSUE CATALOGUE LIST #
 # ------------------------------ #
@@ -1037,17 +1151,61 @@ def canonical_theme_delete(request, theme_pk):
 def canonical_issue_catalogue_list(request):
 	require_catalogue_manager(request.user)
 
-	issues = CanonicalIssue.objects.all().order_by("name")
+	context = filter_canonical_issues(request)
+
+	context.update({
+		"page_title": "Canonical Issues Catalogue",
+		"page_subtitle": "Manage the global catalogue of canonical issues used by analysis methods.",
+		"canonical_issues_filter_url": reverse("canonical_issue_catalogue_partial"),
+		"diary_entries_filter_url": reverse("canonical_issue_catalogue_partial"),
+	})
 
 	return render(
 		request,
 		"studies/catalogues/canonical_issue_list.html",
-		{
-			"page_title": "Canonical Issues Catalogue",
-			"page_subtitle": "Manage the global catalogue of canonical issues used by analysis methods.",
-			"issues": issues,
-		},
+		context,
 	)
+
+
+# -------------------------------- #
+# CANONICAL ISSUE CATALOGUE PARTIAL #
+# -------------------------------- #
+@login_required
+def canonical_issue_catalogue_partial(request):
+	require_catalogue_manager(request.user)
+
+	if request.headers.get("HX-Request") != "true":
+		url = reverse("canonical_issue_catalogue_list")
+		querystring = request.GET.urlencode()
+
+		if querystring:
+			url = f"{url}?{querystring}"
+
+		return redirect(url)
+
+	context = filter_canonical_issues(request)
+
+	context.update({
+		"canonical_issues_filter_url": reverse("canonical_issue_catalogue_partial"),
+		"diary_entries_filter_url": reverse("canonical_issue_catalogue_partial"),
+	})
+
+	response = render(
+		request,
+		"studies/catalogues/partials/_canonical_issues.html",
+		context,
+	)
+
+	full_page_url = reverse("canonical_issue_catalogue_list")
+	querystring = request.GET.urlencode()
+
+	if querystring:
+		full_page_url = f"{full_page_url}?{querystring}"
+
+	response["HX-Push-Url"] = full_page_url
+
+	return response
+
 
 # -----------------------#
 # CANONICAL ISSUE CREATE #
@@ -1144,3 +1302,4 @@ def canonical_issue_delete(request, issue_pk):
 			"page_subtitle": "Confirm whether this issue should be removed from the global catalogue.",
 		},
 	)
+

@@ -20,160 +20,16 @@
 
             <a
                 href="{% url 'canonical_issue_create' %}"
-                class="button-FILTER h-10 inline-flex items-center"
+                class="button-SECONDARY h-10 inline-flex items-center"
             >
+                {% heroicon_outline "plus-circle" class="h-4 w-4 shrink-0" %}
                 Add Issue
             </a>
         </div>
 
-        <div class="overflow-x-auto">
-            {% if issues %}
-
-                <table class="w-full table-auto text-sm">
-                    <thead class="bg-gray-100 dark:bg-gray-700 dark:text-gray-200 text-gray-600">
-                        <tr class="border-b border-t border-gray-200 dark:border-gray-600">
-                            <th>Issue</th>
-                            <th>Description</th>
-                            <th>Aliases</th>
-                            <th>Source</th>
-                            <th>Status</th>
-                            <th>Examples</th>
-                            <th>Active</th>
-                            <th>Created</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-
-                    <tbody class="divide-y divide-gray-200 dark:divide-gray-600 text-gray-600 dark:text-gray-200">
-                        {% for issue in issues %}
-                            <tr class="hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 transition-colors">
-
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <span class="font-medium text-gray-900 dark:text-gray-100">
-                                        {{ issue.name }}
-                                    </span>
-                                </td>
-
-                                <td class="px-4 py-3 text-sm max-w-md">
-                                    {% if issue.description %}
-                                        <p class="line-clamp-2">
-                                            {{ issue.description }}
-                                        </p>
-                                    {% else %}
-                                        <span class="text-gray-400">—</span>
-                                    {% endif %}
-                                </td>
-
-                                <td class="px-4 py-3 text-sm max-w-md">
-                                    {% if issue.aliases %}
-                                        <div class="flex flex-wrap gap-2">
-                                            {% for alias in issue.aliases %}
-                                                <span class="badge">
-                                                    {{ alias }}
-                                                </span>
-                                            {% endfor %}
-                                        </div>
-                                    {% else %}
-                                        <span class="text-gray-400">—</span>
-                                    {% endif %}
-                                </td>
-
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    {% if issue.source %}
-                                        <span class="badge">
-                                            {{ issue.get_source_display }}
-                                        </span>
-                                    {% else %}
-                                        <span class="text-gray-400">—</span>
-                                    {% endif %}
-                                </td>
-
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    {% if issue.status %}
-                                        {% if issue.status == "APPROVED" %}
-                                            <span class="message-success">
-                                                {{ issue.get_status_display }}
-                                            </span>
-                                        {% elif issue.status == "REJECTED" %}
-                                            <span class="message-error">
-                                                {{ issue.get_status_display }}
-                                            </span>
-                                        {% else %}
-                                            <span class="message-default">
-                                                {{ issue.get_status_display }}
-                                            </span>
-                                        {% endif %}
-                                    {% else %}
-                                        <span class="text-gray-400">—</span>
-                                    {% endif %}
-                                </td>
-
-                                <td class="px-4 py-3 text-sm max-w-md">
-                                    {% if issue.examples %}
-                                        <p class="line-clamp-2">
-                                            {{ issue.examples }}
-                                        </p>
-                                    {% else %}
-                                        <span class="text-gray-400">—</span>
-                                    {% endif %}
-                                </td>
-
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    {% if issue.is_active %}
-                                        <span class="message-info">
-                                            Active
-                                        </span>
-                                    {% else %}
-                                        <span class="message-default">
-                                            Inactive
-                                        </span>
-                                    {% endif %}
-                                </td>
-
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    {{ issue.created_at|date:"M j, Y" }}<br>
-                                    <span class="text-xs text-gray-400">
-                                        {{ issue.created_at|date:"H:i" }}
-                                    </span>
-                                </td>
-
-                                <td class="whitespace-nowrap px-4 py-4 text-right text-sm font-medium">
-                                    <div class="flex justify-end gap-3">
-
-                                        <a
-                                            href="{% url 'canonical_issue_update' issue.pk %}"
-                                            class="dark:text-gray-400 hover:dark:text-white text-gray-700 hover:text-gray-500"
-                                            title="Edit canonical issue"
-                                        >
-                                            {% heroicon_outline "pencil-square" %}
-                                        </a>
-
-                                        <a
-                                            href="{% url 'canonical_issue_delete' issue.pk %}"
-                                            class="dark:text-gray-400 hover:dark:text-white text-gray-700 hover:text-red-500"
-                                            title="Delete canonical issue"
-                                        >
-                                            {% heroicon_outline "trash" %}
-                                        </a>
-
-                                    </div>
-                                </td>
-
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-
-            {% else %}
-                <div class="p-8 text-center">
-                    <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        No canonical issues found.
-                    </h2>
-                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                        Once created, canonical issues will appear here.
-                    </p>
-                </div>
-            {% endif %}
+        <!-- HTMX PANEL -->
+        <div id="entries-panel">
+            {% include "studies/catalogues/partials/_canonical_issues.html" %}
         </div>
 
     </div>

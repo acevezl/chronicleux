@@ -14,7 +14,7 @@
 
 			{% if total_filtered_entries != total_entries %}
 				<span class="text-gray-400">
-					(out of {{ total_entries }} total in the study)
+					(out of {{ total_entries }} total entries)
 				</span>
 			{% endif %}
 		</div>
@@ -26,7 +26,7 @@
 			<a
 				href="{{ diary_entries_filter_url }}?{% if page_params %}{{ page_params }}&{% endif %}page=1"
 				hx-get="{{ diary_entries_filter_url }}?{% if page_params %}{{ page_params }}&{% endif %}page=1"
-				hx-target="#diary-entries-panel"
+				hx-target="#entries-panel"
 				hx-swap="innerHTML"
 				hx-push-url="true"
 				class="button-PAGINATOR"
@@ -43,7 +43,7 @@
 			<a
 				href="{{ diary_entries_filter_url }}?{% if page_params %}{{ page_params }}&{% endif %}page={{ page_obj.previous_page_number }}"
 				hx-get="{{ diary_entries_filter_url }}?{% if page_params %}{{ page_params }}&{% endif %}page={{ page_obj.previous_page_number }}"
-				hx-target="#diary-entries-panel"
+				hx-target="#entries-panel"
 				hx-swap="innerHTML"
 				hx-push-url="true"
 				class="button-PAGINATOR"
@@ -64,7 +64,7 @@
 			<a
 				href="{{ diary_entries_filter_url }}?{% if page_params %}{{ page_params }}&{% endif %}page={{ page_obj.next_page_number }}"
 				hx-get="{{ diary_entries_filter_url }}?{% if page_params %}{{ page_params }}&{% endif %}page={{ page_obj.next_page_number }}"
-				hx-target="#diary-entries-panel"
+				hx-target="#entries-panel"
 				hx-swap="innerHTML"
 				hx-push-url="true"
 				class="button-PAGINATOR"
@@ -81,7 +81,7 @@
 			<a
 				href="{{ diary_entries_filter_url }}?{% if page_params %}{{ page_params }}&{% endif %}page={{ page_obj.paginator.num_pages }}"
 				hx-get="{{ diary_entries_filter_url }}?{% if page_params %}{{ page_params }}&{% endif %}page={{ page_obj.paginator.num_pages }}"
-				hx-target="#diary-entries-panel"
+				hx-target="#entries-panel"
 				hx-swap="innerHTML"
 				hx-push-url="true"
 				class="button-PAGINATOR"

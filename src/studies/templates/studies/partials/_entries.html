@@ -25,7 +25,7 @@
     <form
         method="get"
         hx-get="{{ diary_entries_filter_url }}"
-        hx-target="#diary-entries-panel"
+        hx-target="#entries-panel"
         hx-swap="innerHTML"
         hx-push-url="true"
         hx-trigger="submit, change delay:100ms from:select, change delay:500ms from:input, keyup changed delay:500ms from:input"
@@ -112,7 +112,7 @@
                 <a
                     href="{{ diary_entries_filter_url }}"
                     hx-get="{{ diary_entries_filter_url }}"
-                    hx-target="#diary-entries-panel"
+                    hx-target="#entries-panel"
                     hx-swap="innerHTML"
                     hx-push-url="true"
                     class="button-FILTER-CLEAR h-10 self-end inline-flex items-center"
@@ -137,7 +137,7 @@
                         <a
                             href="{{ diary_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == '-created_at' %}created_at{% else %}-created_at{% endif %}"
                             hx-get="{{ diary_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == '-created_at' %}created_at{% else %}-created_at{% endif %}"
-                            hx-target="#diary-entries-panel"
+                            hx-target="#entries-panel"
                             hx-swap="innerHTML"
                             hx-push-url="true"
                             class="hover:text-gray-900 dark:hover:text-white"
@@ -155,7 +155,7 @@
                         <a
                             href="{{ diary_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == '-participant_display_name' %}participant_display_name{% else %}-participant_display_name{% endif %}"
                             hx-get="{{ diary_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == '-participant_display_name' %}participant_display_name{% else %}-participant_display_name{% endif %}"
-                            hx-target="#diary-entries-panel"
+                            hx-target="#entries-panel"
                             hx-swap="innerHTML"
                             hx-push-url="true"
                             class="hover:text-gray-900 dark:hover:text-white"
@@ -169,7 +169,7 @@
                         <a
                             href="{{ diary_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == '-sentiment_self_report' %}sentiment_self_report{% else %}-sentiment_self_report{% endif %}"
                             hx-get="{{ diary_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == '-sentiment_self_report' %}sentiment_self_report{% else %}-sentiment_self_report{% endif %}"
-                            hx-target="#diary-entries-panel"
+                            hx-target="#entries-panel"
                             hx-swap="innerHTML"
                             hx-push-url="true"
                             class="hover:text-gray-900 dark:hover:text-white"
@@ -183,7 +183,7 @@
                         <a
                             href="{{ diary_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == '-issue_encountered' %}issue_encountered{% else %}-issue_encountered{% endif %}"
                             hx-get="{{ diary_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == '-issue_encountered' %}issue_encountered{% else %}-issue_encountered{% endif %}"
-                            hx-target="#diary-entries-panel"
+                            hx-target="#entries-panel"
                             hx-swap="innerHTML"
                             hx-push-url="true"
                             class="hover:text-gray-900 dark:hover:text-white"

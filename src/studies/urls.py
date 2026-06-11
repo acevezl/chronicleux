@@ -29,10 +29,13 @@ urlpatterns = [
     path("catalogues/canonical-themes/create/", views.canonical_theme_create, name="canonical_theme_create"),
     path("catalogues/canonical-themes/<int:theme_pk>/edit/", views.canonical_theme_update, name="canonical_theme_update"),
     path("catalogues/canonical-themes/<int:theme_pk>/delete/", views.canonical_theme_delete, name="canonical_theme_delete"),
+    path("catalogues/canonical-themes/import/", views.canonical_theme_import, name="canonical_theme_import"),
+    path("catalogues/canonical-themes/partial/", views.canonical_theme_catalogue_partial, name="canonical_theme_catalogue_partial"),
 
     # Canonical Issues
     path("catalogues/canonical-issues/", views.canonical_issue_catalogue_list, name="canonical_issue_catalogue_list"),
     path("catalogues/canonical-issues/create/", views.canonical_issue_create, name="canonical_issue_create"),
     path("catalogues/canonical-issues/<int:issue_pk>/edit/", views.canonical_issue_update, name="canonical_issue_update"),
     path("catalogues/canonical-issues/<int:issue_pk>/delete/", views.canonical_issue_delete, name="canonical_issue_delete"),
+    path("catalogues/canonical-issues/partial/", views.canonical_issue_catalogue_partial, name="canonical_issue_catalogue_partial"),
 ]

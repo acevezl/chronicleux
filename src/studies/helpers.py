@@ -3,7 +3,17 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.utils.dateparse import parse_datetime
 
-from .models import DiaryEntry, DiaryEntrySource, MembershipRole, SentimentCategory, StudyMembership
+from .models import (
+	CanonicalTheme,
+	CanonicalIssue,
+	DiaryEntry,
+	DiaryEntrySource,
+	MembershipRole,
+	SentimentCategory,
+	StudyMembership,
+	ThemeAndIssueSource,
+	ThemeAndIssueStatus,
+)
 
 User = get_user_model()
 VALID_SENTIMENTS = {choice[0] for choice in SentimentCategory.choices}
@@ -284,3 +294,184 @@ def parse_json(file):
 def require_catalogue_manager(user):
     if not user.is_staff:
         raise PermissionDenied("You do not have permission to manage canonical catalogues.")
+	
+
+# CATALOG IMPORT HELPERS ---
+
+VALID_THEME_AND_ISSUE_SOURCES = {choice[0] for choice in ThemeAndIssueSource.choices}
+VALID_THEME_AND_ISSUE_STATUSES = {choice[0] for choice in ThemeAndIssueStatus.choices}
+
+# CATALOG IMPORT HELPER: IMPORT CANONICAL THEMES
+@transaction.atomic
+def import_canonical_themes(rows, created_by_user):
+	created_count = 0
+	updated_count = 0
+	skipped_count = 0
+
+	for index, row in enumerate(rows, start=1):
+		try:
+			if not row.get("name"):
+				skipped_count += 1
+				continue
+
+			theme, created = create_canonical_theme_from_row(row, created_by_user)
+
+			if created:
+				created_count += 1
+			else:
+				updated_count += 1
+
+		except Exception as e:
+			raise ValueError(f"Row {index}: {e}")
+
+	return {
+		"created": created_count,
+		"updated": updated_count,
+		"skipped": skipped_count,
+	}
+
+
+# CATALOG IMPORT HELPER: CREATE CANONICAL THEME FROM DATA ROW
+def create_canonical_theme_from_row(row, created_by_user):
+	name = row.get("name")
+	if not name:
+		raise ValueError("Field `name` is required in a canonical theme.")
+
+	theme, created = CanonicalTheme.objects.update_or_create(
+		name=name,
+		defaults={
+			"description": row.get("description") or "",
+			"aliases": row.get("aliases") or [],
+			"examples": row.get("examples") or "",
+			"source": row.get("source") or ThemeAndIssueSource.EVALUATOR,
+			"status": row.get("status") or ThemeAndIssueStatus.APPROVED,
+			"is_active": row.get("is_active"),
+			"created_by": created_by_user,
+		},
+	)
+
+	return theme, created
+
+
+# CATALOG IMPORT HELPER: PARSE UPLOADED CANONICAL THEME FILE
+def parse_uploaded_canonical_theme_file(uploaded_file):
+	if uploaded_file is None:
+		raise ValueError("Please choose a CSV file to import.")
+
+	filename = uploaded_file.name.lower()
+
+	if filename.endswith(".csv"):
+		return parse_canonical_theme_csv(uploaded_file.file)
+
+	raise ValueError("Unsupported file type. Please upload a CSV file.")
+
+
+# CATALOG IMPORT HELPER: PARSE CANONICAL THEME CSV
+def parse_canonical_theme_csv(file):
+	import csv
+	from io import TextIOWrapper
+
+	text_file = TextIOWrapper(file, encoding="utf-8-sig", newline="")
+	reader = csv.DictReader(text_file)
+
+	if not reader.fieldnames:
+		raise ValueError("The CSV file is empty or missing a header row.")
+
+	required_columns = {"name"}
+	available_columns = {column.strip() for column in reader.fieldnames if column}
+	missing_columns = required_columns - available_columns
+
+	if missing_columns:
+		raise ValueError(
+			f"Missing required column(s): {', '.join(sorted(missing_columns))}."
+		)
+
+	rows = []
+	for row in reader:
+		rows.append(normalize_canonical_theme_row(row))
+
+	return rows
+
+
+# CATALOG IMPORT HELPER: NORMALIZE CANONICAL THEME ROW
+def normalize_canonical_theme_row(row):
+	return {
+		"name": normalize_str(row.get("name")),
+		"description": normalize_str(row.get("description")) or "",
+		"aliases": normalize_aliases(row.get("aliases")),
+		"examples": normalize_str(row.get("examples")) or "",
+		"source": normalize_theme_and_issue_source(row.get("source")),
+		"status": normalize_theme_and_issue_status(row.get("status")),
+		"is_active": normalize_optional_bool(row.get("is_active"), default=True),
+	}
+
+
+# CATALOG IMPORT HELPER: NORMALIZE ALIASES
+def normalize_aliases(value):
+	value = normalize_str(value)
+	if value is None:
+		return []
+
+	aliases = []
+
+	for alias in value.replace("\n", "|").split("|"):
+		clean_alias = alias.strip()
+
+		if clean_alias and clean_alias not in aliases:
+			aliases.append(clean_alias)
+
+	return aliases
+
+
+# CATALOG IMPORT HELPER: NORMALIZE THEME / ISSUE SOURCE
+def normalize_theme_and_issue_source(value):
+	value = normalize_str(value)
+
+	if value is None:
+		return ThemeAndIssueSource.EVALUATOR
+
+	value = value.upper()
+
+	if value not in VALID_THEME_AND_ISSUE_SOURCES:
+		raise ValueError(
+			f"Invalid source: {value}. "
+			f"Allowed values: {', '.join(sorted(VALID_THEME_AND_ISSUE_SOURCES))}"
+		)
+
+	return value
+
+
+# CATALOG IMPORT HELPER: NORMALIZE THEME / ISSUE STATUS
+def normalize_theme_and_issue_status(value):
+	value = normalize_str(value)
+
+	if value is None:
+		return ThemeAndIssueStatus.APPROVED
+
+	value = value.upper()
+
+	if value not in VALID_THEME_AND_ISSUE_STATUSES:
+		raise ValueError(
+			f"Invalid status: {value}. "
+			f"Allowed values: {', '.join(sorted(VALID_THEME_AND_ISSUE_STATUSES))}"
+		)
+
+	return value
+
+
+# CATALOG IMPORT HELPER: NORMALIZE OPTIONAL BOOLEAN
+def normalize_optional_bool(value, default=True):
+	value = normalize_str(value)
+
+	if value is None:
+		return default
+
+	value = value.lower()
+
+	if value in {"true", "1", "yes", "y"}:
+		return True
+
+	if value in {"false", "0", "no", "n"}:
+		return False
+
+	raise ValueError(f"Invalid boolean value: {value}")

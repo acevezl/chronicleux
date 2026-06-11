@@ -1,7 +1,7 @@
 from django.core.paginator import Paginator
 from django.db.models import Q
 
-from .models import DiaryEntry, DiaryEntryAnalysis
+from .models import DiaryEntry, DiaryEntryAnalysis, CanonicalTheme, CanonicalIssue, ThemeAndIssueSource, ThemeAndIssueStatus
 
 
 # -------- FILTER FOR ENTRY LIST PAGE -------- #
@@ -189,4 +189,178 @@ def filter_analysis_entries(request, study, run):
 		"displayed_entry_analyses_count": total_filtered_entry_analyses_count,
 		"total_filtered_entry_analyses_count": total_filtered_entry_analyses_count,
 		"total_run_entry_analyses_count": total_run_entry_analyses_count,
+	}
+
+
+# -------- FILTER FOR CANONICAL THEME CATALOGUE PAGE -------- #
+
+ALLOWED_CANONICAL_THEME_SORTS = {
+	"name",
+	"-name",
+	"source",
+	"-source",
+	"status",
+	"-status",
+	"is_active",
+	"-is_active",
+	"created_at",
+	"-created_at",
+	"updated_at",
+	"-updated_at",
+}
+
+def filter_canonical_themes(request):
+	q = request.GET.get("q", "").strip()
+	source = request.GET.get("source", "").strip()
+	status = request.GET.get("status", "").strip()
+	is_active = request.GET.get("is_active", "").strip()
+	sort = request.GET.get("sort", "name")
+
+	themes = CanonicalTheme.objects.all()
+
+	if q:
+		themes = themes.filter(
+			Q(name__icontains=q)
+			| Q(description__icontains=q)
+			| Q(examples__icontains=q)
+			| Q(aliases__icontains=q)
+		)
+
+	if source:
+		themes = themes.filter(source=source)
+
+	if status:
+		themes = themes.filter(status=status)
+
+	if is_active == "yes":
+		themes = themes.filter(is_active=True)
+	elif is_active == "no":
+		themes = themes.filter(is_active=False)
+
+	if sort not in ALLOWED_CANONICAL_THEME_SORTS:
+		sort = "name"
+
+	themes = themes.order_by(sort)
+
+	paginator = Paginator(themes, 10)
+	page_number = request.GET.get("page")
+	page_obj = paginator.get_page(page_number)
+
+	page_params = request.GET.copy()
+	page_params.pop("page", None)
+
+	sort_params = request.GET.copy()
+	sort_params.pop("page", None)
+	sort_params.pop("sort", None)
+
+	displayed_entries_count = len(page_obj.object_list)
+	total_filtered_entries_count = paginator.count
+	total_study_entries_count = CanonicalTheme.objects.count()
+
+	return {
+		"themes": page_obj.object_list,
+		"page_obj": page_obj,
+
+		"page_params": page_params.urlencode(),
+		"sort_params": sort_params.urlencode(),
+
+		"q": q,
+		"source": source,
+		"status": status,
+		"is_active": is_active,
+		"sort": sort,
+
+		"source_choices": ThemeAndIssueSource.choices,
+		"status_choices": ThemeAndIssueStatus.choices,
+
+		"displayed_entries_count": displayed_entries_count,
+		"total_filtered_entries_count": total_filtered_entries_count,
+		"total_study_entries_count": total_study_entries_count,
+	}
+
+
+# -------- FILTER FOR CANONICAL ISSUE CATALOGUE PAGE -------- #
+
+ALLOWED_CANONICAL_ISSUE_SORTS = {
+	"name",
+	"-name",
+	"source",
+	"-source",
+	"status",
+	"-status",
+	"is_active",
+	"-is_active",
+	"created_at",
+	"-created_at",
+	"updated_at",
+	"-updated_at",
+}
+
+def filter_canonical_issues(request):
+	q = request.GET.get("q", "").strip()
+	source = request.GET.get("source", "").strip()
+	status = request.GET.get("status", "").strip()
+	is_active = request.GET.get("is_active", "").strip()
+	sort = request.GET.get("sort", "name")
+
+	issues = CanonicalIssue.objects.all()
+
+	if q:
+		issues = issues.filter(
+			Q(name__icontains=q)
+			| Q(description__icontains=q)
+			| Q(examples__icontains=q)
+			| Q(aliases__icontains=q)
+		)
+
+	if source:
+		issues = issues.filter(source=source)
+
+	if status:
+		issues = issues.filter(status=status)
+
+	if is_active == "yes":
+		issues = issues.filter(is_active=True)
+	elif is_active == "no":
+		issues = issues.filter(is_active=False)
+
+	if sort not in ALLOWED_CANONICAL_ISSUE_SORTS:
+		sort = "name"
+
+	issues = issues.order_by(sort)
+
+	paginator = Paginator(issues, 10)
+	page_number = request.GET.get("page")
+	page_obj = paginator.get_page(page_number)
+
+	page_params = request.GET.copy()
+	page_params.pop("page", None)
+
+	sort_params = request.GET.copy()
+	sort_params.pop("page", None)
+	sort_params.pop("sort", None)
+
+	displayed_entries_count = len(page_obj.object_list)
+	total_filtered_entries_count = paginator.count
+	total_study_entries_count = CanonicalIssue.objects.count()
+
+	return {
+		"issues": page_obj.object_list,
+		"page_obj": page_obj,
+
+		"page_params": page_params.urlencode(),
+		"sort_params": sort_params.urlencode(),
+
+		"q": q,
+		"source": source,
+		"status": status,
+		"is_active": is_active,
+		"sort": sort,
+
+		"source_choices": ThemeAndIssueSource.choices,
+		"status_choices": ThemeAndIssueStatus.choices,
+
+		"displayed_entries_count": displayed_entries_count,
+		"total_filtered_entries_count": total_filtered_entries_count,
+		"total_study_entries_count": total_study_entries_count,
 	}

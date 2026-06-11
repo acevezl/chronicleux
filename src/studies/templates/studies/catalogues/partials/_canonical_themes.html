@@ -1,0 +1,264 @@
+{% load heroicons %}
+
+<!-- FILTERS -->
+<div class="px-6 py-4 bg-white dark:bg-gray-900">
+    <form
+        id="canonical-theme-filter-form"
+        method="get"
+        hx-get="{{ canonical_themes_filter_url }}"
+        hx-target="#entries-panel"
+        hx-swap="innerHTML"
+        hx-push-url="true"
+        hx-trigger="submit, change from:select, keyup changed delay:500ms from:input[name='q']"
+        class="space-y-3"
+    >
+
+        <div class="flex flex-wrap gap-3">
+
+            <div>
+                <label for="q" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Open search:
+                </label>
+                <input
+                    id="q"
+                    type="text"
+                    name="q"
+                    placeholder="Search themes..."
+                    value="{{ q }}"
+                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
+                >
+            </div>
+
+            <div>
+                <label for="source" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Source:
+                </label>
+                <select
+                    id="source"
+                    name="source"
+                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-48 dark:text-white dark:border-gray-500"
+                >
+                    <option value="">All sources</option>
+                    {% for value, label in source_choices %}
+                        <option value="{{ value }}" {% if source == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="status" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Status:
+                </label>
+                <select
+                    id="status"
+                    name="status"
+                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-48 dark:text-white dark:border-gray-500"
+                >
+                    <option value="">All statuses</option>
+                    {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if status == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label for="is_active" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                    Active:
+                </label>
+                <select
+                    id="is_active"
+                    name="is_active"
+                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-40 dark:text-white dark:border-gray-500"
+                >
+                    <option value="">All</option>
+                    <option value="yes" {% if is_active == "yes" %}selected{% endif %}>Active</option>
+                    <option value="no" {% if is_active == "no" %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+
+            <button type="submit" class="button-FILTER h-10 self-end">
+                Filter
+            </button>
+
+            {% if q or source or status or is_active %}
+                <button
+                    type="button"
+                    class="button-FILTER-CLEAR h-10 self-end inline-flex items-center"
+                    hx-get="{{ canonical_themes_filter_url }}"
+                    hx-target="#entries-panel"
+                    hx-swap="innerHTML"
+                    hx-push-url="{% url 'canonical_theme_catalogue_list' %}"
+                    onclick="
+                        const form = document.getElementById('canonical-theme-filter-form');
+                        form.querySelector('[name=q]').value = '';
+                        form.querySelector('[name=source]').value = '';
+                        form.querySelector('[name=status]').value = '';
+                        form.querySelector('[name=is_active]').value = '';
+                    "
+                >
+                    Clear Filter
+                </button>
+            {% endif %}
+
+        </div>
+
+    </form>
+</div>
+
+<div class="overflow-x-auto">
+    {% if themes %}
+
+        {% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params displayed_entries=displayed_entries_count total_filtered_entries=total_filtered_entries_count total_entries=total_study_entries_count %}
+
+        <table class="w-full table-auto text-sm">
+            <thead class="bg-gray-100 dark:bg-gray-700 dark:text-gray-200 text-gray-600">
+                <tr class="border-b border-t border-gray-200 dark:border-gray-600">
+                    <th>Theme</th>
+                    <th>Description</th>
+                    <th>Aliases</th>
+                    <th>Source</th>
+                    <th>Status</th>
+                    <th>Examples</th>
+                    <th>Active</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-600 text-gray-600 dark:text-gray-200">
+                {% for theme in themes %}
+                    <tr class="hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 transition-colors">
+
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            <span class="font-medium text-gray-900 dark:text-gray-100">
+                                {{ theme.name }}
+                            </span>
+                        </td>
+
+                        <td class="px-4 py-3 text-sm max-w-md">
+                            {% if theme.description %}
+                                <p class="line-clamp-2">
+                                    {{ theme.description }}
+                                </p>
+                            {% else %}
+                                <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="px-4 py-3 text-sm max-w-md">
+                            {% if theme.aliases %}
+                                <div class="flex flex-wrap gap-2">
+                                    {% for alias in theme.aliases %}
+                                        <span class="badge">
+                                            {{ alias }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            {% if theme.source %}
+                                <span class="badge">
+                                    {{ theme.get_source_display }}
+                                </span>
+                            {% else %}
+                                <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            {% if theme.status %}
+                                {% if theme.status == "APPROVED" %}
+                                    <span class="message-success">
+                                        {{ theme.get_status_display }}
+                                    </span>
+                                {% elif theme.status == "REJECTED" %}
+                                    <span class="message-error">
+                                        {{ theme.get_status_display }}
+                                    </span>
+                                {% else %}
+                                    <span class="message-default">
+                                        {{ theme.get_status_display }}
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="px-4 py-3 text-sm max-w-md">
+                            {% if theme.examples %}
+                                <p class="line-clamp-2">
+                                    {{ theme.examples }}
+                                </p>
+                            {% else %}
+                                <span class="text-gray-400">—</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            {% if theme.is_active %}
+                                <span class="message-info">
+                                    Active
+                                </span>
+                            {% else %}
+                                <span class="message-default">
+                                    Inactive
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="px-4 py-3 whitespace-nowrap">
+                            {{ theme.created_at|date:"M j, Y" }}<br>
+                            <span class="text-xs text-gray-400">
+                                {{ theme.created_at|date:"H:i" }}
+                            </span>
+                        </td>
+
+                        <td class="whitespace-nowrap px-4 py-4 text-right text-sm font-medium">
+                            <div class="flex justify-end gap-3">
+
+                                <a
+                                    href="{% url 'canonical_theme_update' theme.pk %}"
+                                    class="dark:text-gray-400 hover:dark:text-white text-gray-700 hover:text-gray-500"
+                                    title="Edit canonical theme"
+                                >
+                                    {% heroicon_outline "pencil-square" %}
+                                </a>
+
+                                <a
+                                    href="{% url 'canonical_theme_delete' theme.pk %}"
+                                    class="dark:text-gray-400 hover:dark:text-white text-gray-700 hover:text-red-500"
+                                    title="Delete canonical theme"
+                                >
+                                    {% heroicon_outline "trash" %}
+                                </a>
+
+                            </div>
+                        </td>
+
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params displayed_entries=displayed_entries_count total_filtered_entries=total_filtered_entries_count total_entries=total_study_entries_count %}
+
+    {% else %}
+        <div class="p-8 text-center">
+            <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                No canonical themes found.
+            </h2>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                Once created, canonical themes will appear here.
+            </p>
+        </div>
+    {% endif %}
+</div>
