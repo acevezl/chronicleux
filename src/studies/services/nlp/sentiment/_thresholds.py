@@ -1,4 +1,4 @@
-from studies.models import SentimentCategory, SENTIMENT_SCORE_THRESHOLDS, BINARY_SENTIMENT_SCORE_THRESHOLDS
+from studies.models import SentimentCategory, SENTIMENT_SCORE_THRESHOLDS, BinarySentimentCategory, BINARY_SENTIMENT_SCORE_THRESHOLDS
 
 def map_sentiment_score_to_label(score: float | None) -> str | None:
     if score is None:
@@ -26,9 +26,9 @@ def binary_map_sentiment_score_to_label(score: float | None) -> str | None:
             return label
 
     if score == 1.0:
-        return SentimentCategory.POSITIVE
+        return BinarySentimentCategory.NOT_NEGATIVE
 
     if score == -1.0:
-        return SentimentCategory.NEGATIVE
+        return BinarySentimentCategory.NEGATIVE
 
-    return SentimentCategory.NEUTRAL
+    return SentimentCategory.NOT_NEGATIVE

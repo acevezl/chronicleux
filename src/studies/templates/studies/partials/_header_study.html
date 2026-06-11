@@ -1,23 +1,20 @@
-<div>
-    <div class="px-4 pt-6 pb-4 border-b border-gray-200">
+<div class="px-4 pt-6 pb-4 border-b border-gray-200">
 
-        <!-- STUDY TITLE -->
-        <h1 class="top-title">
-            {% heroicon_outline "book-open" %}
-            {{study.title}}
-        </h1>
+    <!-- STUDY TITLE -->
+    <h1 class="top-title">
+        {% heroicon_outline "book-open" %}
+        {{study.title}}
+    </h1>
 
-        <!-- STUDY META DATA -->
-        <h2 class="flex md:grid-cols-2 gap-4">
-            <div class="top-subtitle">
-            Owner: {{ study.owner.username|capfirst }}
-            </div>
+    <!-- STUDY META DATA -->
+    <h2 class="flex md:grid-cols-2 gap-4">
+        <div class="top-subtitle">
+        Owner: {{ study.owner.username|capfirst }}
+        </div>
 
-            <div class="top-subtitle">
-            Created on: {{ study.created_at|date:"Y-m-d H:i" }}
-            </div>
-        </h2>
-
-    </div>
+        <div class="top-subtitle">
+        Created on: {{ study.created_at|date:"Y-m-d H:i" }}
+        </div>
+    </h2>
 
 </div>

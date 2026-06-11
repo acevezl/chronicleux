@@ -185,4 +185,32 @@
 		@apply text-gray-600 dark:text-gray-200 mt-1 px-2 rounded-sm border border-gray-300 focus:ring-gray-700
 	}
 
+	textarea {
+		@apply text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700
+	}
+
+	.form-checkbox {
+		@apply mt-1 h-4 w-4 rounded border-gray-300 text-gray-700 focus:ring-gray-700
+	}
+
+	.message-default {
+		@apply text-xs inline-flex gap-x-2 align-middle p-2 rounded-sm border dark:text-gray-500 bg-gray-100 border-gray-700 text-gray-700 
+	}
+
+	.message-error {
+		@apply text-xs inline-flex gap-x-2 align-middle p-2 rounded-sm border bg-red-100 border-red-800 text-red-800
+	}
+
+	.message-info {
+		@apply text-xs inline-flex gap-x-2 align-middle p-2 rounded-sm border bg-sky-100 border-sky-800 text-sky-800
+	}
+
+	.message-success {
+		@apply text-xs inline-flex gap-x-2 align-middle p-2 rounded-sm border bg-green-100 border-green-800 text-green-800
+	}
+
+	.message-warning {
+		@apply text-xs inline-flex gap-x-2 align-middle p-2 rounded-sm border bg-amber-100 border-amber-800 text-amber-800
+	}
+
 }

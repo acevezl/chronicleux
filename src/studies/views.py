@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
@@ -26,8 +26,9 @@ from studies.services.analysis_runner import create_study_analysis_run
 from studies.services.analysis_tasks import queue_study_analysis_run
 
 from .filters import filter_diary_entries, filter_analysis_entries
-from .forms import StudyForm, DiaryEntryForm
-from .models import  DiaryEntry, SentimentCategory, DiaryEntrySource, MembershipRole, Study, StudyMembership, StudyAnalysisRun, DiaryEntryAnalysis, AnalysisRunStatus, StudyStatus
+from .forms import StudyForm, DiaryEntryForm, CanonicalIssueForm, CanonicalThemeForm
+from .helpers import import_rows_into_study, parse_uploaded_file, user_can_evaluate_study, require_catalogue_manager
+from .models import  DiaryEntry, SentimentCategory, DiaryEntrySource, MembershipRole, Study, StudyMembership, StudyAnalysisRun, DiaryEntryAnalysis, AnalysisRunStatus, StudyStatus, CanonicalIssue, CanonicalTheme
 
 # ----------------------- VIEWS ----------------------- #
 
@@ -915,279 +916,216 @@ def study_entries_partial(request, study_pk):
 
 	return response
 
+# ------------------------------ #	
+# CANONICAL THEME CATALOGUE LIST #
+# ------------------------------ #
+@login_required
+def canonical_theme_catalogue_list(request):
+    require_catalogue_manager(request.user)
 
+    themes = CanonicalTheme.objects.all().order_by("name")
 
+    return render(
+        request,
+        "studies/catalogues/canonical_theme_list.html",
+        {
+			"page_title": "Canonical Themes Catalogue",
+			"page_subtitle": "Manage the global catalogue of canonical themes used by analysis methods.",
+            "themes": themes,
+        },
+    )
 
+# -----------------------#
+# CANONICAL THEME CREATE #
+# -----------------------#
+@login_required
+def canonical_theme_create(request):
+    require_catalogue_manager(request.user)
 
+    if request.method == "POST":
+        form = CanonicalThemeForm(request.POST)
 
-# ----------------------- HELPERS ----------------------- #
-# Thinking about moving these to helpers.py (-n-)... maybe in the future
+        if form.is_valid():
+            theme = form.save(commit=False)
+            theme.created_by = request.user
+            theme.save()
 
-# USER CAN EVALUATE STUDY?
-def user_can_evaluate_study(user, study):
-	"""
-	Returns True if the user can view/evaluate study entries and analysis.
+            messages.success(request, "Canonical theme created.")
+            return redirect("canonical_theme_catalogue_list")
+    else:
+        form = CanonicalThemeForm()
 
-	Allowed:
-	- Study owner
-	- Study members with evaluator role
+    return render(
+        request,
+        "studies/catalogues/canonical_theme_form.html",
+        {
+            "form": form,
+            "page_title": "Create Canonical Theme",
+			"page_subtitle": "Create and maintain reusable canonical themes for machine and evaluator analysis.",
+            "submit_label": "Create theme",
+        },
+    )
 
-	Not allowed:
-	- Participants
-	- Non authenticated users (obvs)
-	"""
+# -----------------------#
+# CANONICAL THEME UPDATE #
+# -----------------------#
+@login_required
+def canonical_theme_update(request, theme_pk):
+    require_catalogue_manager(request.user)
 
-	if not user or not user.is_authenticated:
-		return False
+    theme = get_object_or_404(CanonicalTheme, pk=theme_pk)
 
-	if study.owner_id == user.id:
-		return True
+    if request.method == "POST":
+        form = CanonicalThemeForm(request.POST, instance=theme)
 
-	return StudyMembership.objects.filter(
-		study=study,
-		user=user,
-		role=MembershipRole.EVALUATOR,
-	).exists()
+        if form.is_valid():
+            form.save()
 
-# IMPORT ENTRIES: IMPORT ROWS INTO STUDY
-@transaction.atomic
-def import_rows_into_study (study, rows):
-	created_count = 0
-	skipped_owner = 0
-	skipped_evaluator = 0
+            messages.success(request, "Canonical theme updated.")
+            return redirect("canonical_theme_catalogue_list")
+    else:
+        form = CanonicalThemeForm(instance=theme)
 
-	for index, row in enumerate(rows, start=1):
-		try:
-			# Ignore the rows if they were authored by the study owner or an evaluator
-			# B/c study owners and evaluators shall never write diary entries
-			if is_owner_row(study, row):
-				skipped_owner+=1
-				continue
+    return render(
+        request,
+        "studies/catalogues/canonical_theme_form.html",
+        {
+            "theme": theme,
+            "form": form,
+            "page_title": "Edit Canonical Theme",
+			"page_subtitle": "Update and maintain reusable canonical themes for machine and evaluator analysis.",
+            "submit_label": "Save theme",
+        },
+    )
 
-			if is_evaluator_row(study, row):
-				skipped_evaluator+=1
-				continue
+# -----------------------#
+# CANONICAL THEME DELETE #
+# -----------------------#
+@login_required
+def canonical_theme_delete(request, theme_pk):
+    require_catalogue_manager(request.user)
 
-			create_diary_entry_from_row(study, row)
-			created_count+=1
+    theme = get_object_or_404(CanonicalTheme, pk=theme_pk)
 
-		except Exception as e:
-			raise ValueError(f"Row {index}: {e}")
-	
-	return {
-		"created": created_count,
-		"skipped_owner": skipped_owner,
-		"skipped_evaluator": skipped_evaluator,
-	}
+    if request.method == "POST":
+        theme.delete()
 
-# IMPORT ENTRIES: CREATE DIARY ENTRY FROM DATA ROW
-def create_diary_entry_from_row(study, row):
-	participant = resolve_participant_for_study(study, row)
+        messages.success(request, "Canonical theme deleted.")
+        return redirect("canonical_theme_catalogue_list")
 
-	content = row.get("content")
-	if not content:
-		raise ValueError ("Field `content` is required in a diary entry")
-	
-	sentiment_self_report = row.get("sentiment_self_report")
-	if not sentiment_self_report:
-		raise ValueError ("Field `sentiment_self_report` is required in a diary entry")
-	
-	participant_display_name = row.get("participant_display_name")
-	if participant is None and not participant_display_name:
-		raise ValueError("Each entry must have either a resolvable ChronicleUX participant or a `participant_display_name`")
-	
-	created_at = parse_imported_datetime (row.get("created_at"))
+    return render(
+        request,
+        "studies/catalogues/canonical_theme_confirm_delete.html",
+        {
+            "theme": theme,
+			"page_title": "Delete Canonical Theme",
+			"page_subtitle": "Confirm whether this theme should be removed from the global catalogue.",
+        },
+    )
 
-	entry = DiaryEntry(
-		study=study,
-		participant=participant,
-		participant_display_name=participant_display_name or "",
-		participant_external_id=row.get("participant_external_id") or "",
-		participant_email=row.get("participant_email") or "",
-		content=content,
-		sentiment_self_report=sentiment_self_report,
-		issue_encountered=row.get("issue_encountered"),
-		created_at=created_at,
-		source=DiaryEntrySource.EXTERNAL,
-	)
+# ------------------------------ #
+# CANONICAL ISSUE CATALOGUE LIST #
+# ------------------------------ #
+@login_required
+def canonical_issue_catalogue_list(request):
+    require_catalogue_manager(request.user)
 
-	entry.full_clean()
-	entry.save()
+    issues = CanonicalIssue.objects.all().order_by("name")
 
-	return entry
+    return render(
+        request,
+        "studies/catalogues/canonical_issue_list.html",
+        {
+            "page_title": "Canonical Issues Catalogue",
+            "page_subtitle": "Manage the global catalogue of canonical issues used by analysis methods.",
+            "issues": issues,
+        },
+    )
 
-# ENTRY IMPORT HELPER: IS OWNER ROW
-def is_owner_row(study, row):
-	participant_email = row.get("participant_email")
-	participant_external_id = row.get("participant_external_id")
+# -----------------------#
+# CANONICAL ISSUE CREATE #
+# -----------------------#
+@login_required
+def canonical_issue_create(request):
+    require_catalogue_manager(request.user)
 
-	if participant_email and study.owner.email and participant_email.lower() == study.owner.email.lower():
-		return True
-	
-	if participant_external_id and participant_external_id == study.owner.username:
-		return True
-	
-	return False
+    if request.method == "POST":
+        form = CanonicalIssueForm(request.POST)
 
-# ENTRY IMPORT HELPER: IS EVALUATOR ROW
-def is_evaluator_row(study, row):
-	participant_email = row.get("participant_email")
-	participant_external_id = row.get("participant_external_id")
+        if form.is_valid():
+            issue = form.save(commit=False)
+            issue.created_by = request.user
+            issue.save()
 
-	evaluator_user = None
+            messages.success(request, "Canonical issue created.")
+            return redirect("canonical_issue_catalogue_list")
+    else:
+        form = CanonicalIssueForm()
 
-	if participant_email:
-		evaluator_user = User.objects.filter(email__iexact=participant_email).first()
+    return render(
+        request,
+        "studies/catalogues/canonical_issue_form.html",
+        {
+            "form": form,
+            "page_title": "Create Canonical Issue",
+            "page_subtitle": "Create and maintain reusable canonical issues for machine and evaluator analysis.",
+            "submit_label": "Create issue",
+        },
+    )
 
-	if evaluator_user is None and participant_external_id:
-		evaluator_user = User.objects.filter(username=participant_external_id).first()
+# -----------------------#
+# CANONICAL ISSUE UPDATE #
+# -----------------------#
+@login_required
+def canonical_issue_update(request, issue_pk):
+    require_catalogue_manager(request.user)
 
-	if evaluator_user is None:
-		return False
+    issue = get_object_or_404(CanonicalIssue, pk=issue_pk)
 
-	return StudyMembership.objects.filter(
-		study=study,
-		user=evaluator_user,
-		role=MembershipRole.EVALUATOR,
-	).exists()
+    if request.method == "POST":
+        form = CanonicalIssueForm(request.POST, instance=issue)
 
+        if form.is_valid():
+            form.save()
 
-# ENTRY IMPORT HELPER: RESOLVE PARTICIPANT FOR STUDY
-def resolve_participant_for_study(study, row):
-	participant_email = row.get("participant_email")
-	participant_external_id = row.get("participant_external_id")
+            messages.success(request, "Canonical issue updated.")
+            return redirect("canonical_issue_catalogue_list")
+    else:
+        form = CanonicalIssueForm(instance=issue)
 
-	participant_user = None
+    return render(
+        request,
+        "studies/catalogues/canonical_issue_form.html",
+        {
+            "issue": issue,
+            "form": form,
+            "page_title": "Edit Canonical Issue",
+            "page_subtitle": "Update and maintain reusable canonical issues for machine and evaluator analysis.",
+            "submit_label": "Save issue",
+        },
+    )
 
-	# If the entry has a participant e-mail or participant_external_id, see if they resolve to a user
-	if participant_email:
-		participant_user = User.objects.filter(email__iexact=participant_email).first()
-	
-	if participant_user is None and participant_external_id:
-		participant_user = User.objects.filter(username=participant_external_id).first()
-		
-	# If a user was found, validate if the user is actually a study participant
-	if participant_user:
-		is_participant_in_study = StudyMembership.objects.filter(
-			study=study,
-			user=participant_user,
-			role=MembershipRole.PARTICIPANT,
-		).exists()
+# -----------------------#
+# CANONICAL ISSUE DELETE #
+# -----------------------#
+@login_required
+def canonical_issue_delete(request, issue_pk):
+    require_catalogue_manager(request.user)
 
-		# If the user is not a participant in the study, make them a participant
-		if not is_participant_in_study:
-			StudyMembership.objects.create(
-				study=study,
-				user=participant_user,
-				role=MembershipRole.PARTICIPANT
-			)
+    issue = get_object_or_404(CanonicalIssue, pk=issue_pk)
 
-		return participant_user
-	
-	return None
+    if request.method == "POST":
+        issue.delete()
 
-# ENTRY IMPORT HELPER: PARSE IMPORTED DATETIME
-def parse_imported_datetime(value):
-	value = normalize_str(value)
-	if value is None:
-		return None
+        messages.success(request, "Canonical issue deleted.")
+        return redirect("canonical_issue_catalogue_list")
 
-	dt = parse_datetime(value)
-	if dt is None:
-		raise ValueError(
-			"Invalid created_at value. Use ISO 8601 format, for example "
-			"'2026-03-29T14:30:00Z'."
-		)
-
-	return dt
-
-# ENTRY IMPORT HELPER: PARSE UPLOADED FILE
-def parse_uploaded_file(uploaded_file):
-	filename = uploaded_file.name.lower()
-
-	if filename.endswith(".csv"):
-		return parse_csv(uploaded_file.file)
-
-	if filename.endswith(".json"):
-		return parse_json(uploaded_file.file)
-
-	raise ValueError("Unsupported file type. Please upload a CSV or JSON file.")
-
-# ENTRY IMPORT HELPER: NORMALISE SENTIMENT
-def normalize_sentiment(value):
-	value = normalize_str(value)
-	if value is None:
-		raise ValueError("sentiment_self_report is required.")
-	if value not in VALID_SENTIMENTS:
-		raise ValueError(
-			f"Invalid sentiment_self_report: {value}. "
-			f"Allowed values: {', '.join(VALID_SENTIMENTS)}"
-		)
-	return value
-
-# ENTRY IMPORT HELPER: NORMALIZE STRING
-def normalize_str(value):
-	if value is None:
-		return None
-	value = str(value).strip()
-	return value if value else None
-
-# ENTRY IMPORT HELPER: NORMALIZE BOOLEAN
-def normalize_bool(value):
-	if isinstance(value, bool):
-		return value
-
-	value = normalize_str(value)
-	if value is None:
-		raise ValueError("issue_encountered is required.")
-
-	value = value.lower()
-	if value in {"true", "1", "yes", "y"}:
-		return True
-	if value in {"false", "0", "no", "n"}:
-		return False
-
-	raise ValueError(f"Invalid boolean value: {value}")
-
-# ENTRY IMPORT HELPER: NORMALIZE ROW
-def normalize_row(row):
-	return {
-		"participant_external_id": normalize_str(row.get("participant_external_id")),
-		"participant_display_name": normalize_str(row.get("participant_display_name")),
-		"participant_email": normalize_str(row.get("participant_email")),
-		"sentiment_self_report": normalize_sentiment(row.get("sentiment_self_report")),
-		"issue_encountered": normalize_bool(row.get("issue_encountered")),
-		"content": normalize_str(row.get("content")),
-		"created_at": normalize_str(row.get("created_at")),
-	}
-
-# ENTRY IMPORT HELPER: PARSE CSV
-def parse_csv(file):
-	import csv
-	from io import TextIOWrapper
-
-	text_file = TextIOWrapper(file, encoding="utf-8", newline="")
-	reader = csv.DictReader(text_file)
-
-	rows = []
-	for row in reader:
-		rows.append(normalize_row(row))
-
-	return rows
-
-# ENTRY IMPORT HELPER: PARSE JSON
-def parse_json(file):
-	import json
-
-	data = json.load(file)
-
-	if not isinstance(data, list):
-		raise ValueError("JSON must be a list of entries.")
-
-	rows = []
-	for item in data:
-		if not isinstance(item, dict):
-			raise ValueError("Each JSON entry must be an object.")
-		rows.append(normalize_row(item))
-
-	return rows
+    return render(
+        request,
+        "studies/catalogues/canonical_issue_confirm_delete.html",
+        {
+            "issue": issue,
+            "page_title": "Delete Canonical Issue",
+            "page_subtitle": "Confirm whether this issue should be removed from the global catalogue.",
+        },
+    )

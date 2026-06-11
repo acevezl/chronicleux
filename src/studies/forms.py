@@ -1,6 +1,5 @@
 from django import forms
-from .models import Study
-from .models import DiaryEntry
+from .models import Study, DiaryEntry, CanonicalIssue, CanonicalTheme
 
 class StudyForm(forms.ModelForm):
     class Meta:
@@ -31,43 +30,43 @@ class StudyForm(forms.ModelForm):
 
         widgets = {
             "title": forms.TextInput(attrs={
-                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "w-full",
             }),
             "goal": forms.TextInput(attrs={
-                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "w-full",
             }),
             "description": forms.Textarea(attrs={
                 "rows": 4,
-                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "",
             }),
             "hypotheses": forms.Textarea(attrs={
                 "rows": 4,
-                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "",
             }),
             "status": forms.Select(attrs={
-                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "",
             }),
             "entry_frequency": forms.Select(attrs={
-                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "",
             }),
             "data_collection_start": forms.DateInput(attrs={
                 "type": "date",
-                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "",
             }),
             "data_collection_end": forms.DateInput(attrs={
                 "type": "date",
-                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "",
             }),
             "participant_instructions": forms.Textarea(attrs={
                 "rows": 4,
-                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "",
             }),
             "context": forms.Textarea(attrs={
                 "rows": 4,
-                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "",
             }),
             "tags": forms.TextInput(attrs={
-                "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                "class": "w-full",
                 "placeholder": "e.g. user experience, workflow analysis, engagement",
                 "data-role": "tags-input",
             })
@@ -90,18 +89,18 @@ class DiaryEntryForm(forms.ModelForm):
         widgets = {
             "sentiment_self_report": forms.Select(
                 attrs={
-                    "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                    "class": "",
                 }
             ),
             "issue_encountered": forms.CheckboxInput(
                 attrs={
-                    "class": "mt-1 h-4 w-4 rounded border-gray-300 text-gray-700 focus:ring-gray-700",
+                    "class": "form-checkbox",
                 }
             ),
             "content": forms.Textarea(
                 attrs={
                     "rows": 10,
-                    "class": "text-gray-600 dark:text-gray-200 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700",
+                    "class": "",
                     "placeholder": "Write about your experience...",
                 }
             ),
@@ -110,4 +109,85 @@ class DiaryEntryForm(forms.ModelForm):
             "sentiment_self_report": "Overall sentiment",
             "issue_encountered": "I encountered an issue",
             "content": "Diary entry",
+        }
+
+# CANONICAL THEME FORM
+class CanonicalThemeForm(forms.ModelForm):
+
+    class Meta:
+        model = CanonicalTheme
+        fields = [
+            "name",
+            "description",
+            "examples",
+            "is_active",
+        ]
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "w-full",
+                    "placeholder": "Example: Message organization",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "",
+                    "rows": 4,
+                    "placeholder": "Describe what this canonical theme means.",
+                }
+            ),
+            "examples": forms.Textarea(
+                attrs={
+                    "class": "",
+                    "rows": 4,
+                    "placeholder": "Optional examples of entries, phrases, or situations that belong to this theme.",
+                }
+            ),
+            "is_active": forms.CheckboxInput(
+                attrs={
+                    "class": "form-checkbox",
+                }
+            ),
+        }
+
+# CANONICAL ISSUE FORM
+class CanonicalIssueForm(forms.ModelForm):
+
+    class Meta:
+        model = CanonicalIssue
+        fields = [
+            "name",
+            "description",
+            "examples",
+            "is_active",
+        ]
+        help_texts = {
+            
+        }
+        widgets = {
+            "name": forms.TextInput(
+                attrs={
+                    "class": "w-full",
+                    "placeholder": "Example: Performance",
+                }
+            ),
+            "description": forms.Textarea(
+                attrs={
+                    "class": "",
+                    "rows": 4,
+                    "placeholder": "Describe what this canonical issue means.",
+                }
+            ),
+            "examples": forms.Textarea(
+                attrs={
+                    "class": "",
+                    "rows": 4,
+                    "placeholder": "Optional examples of entries, phrases, or situations that belong to this issue.",
+                }
+            ),
+            "is_active": forms.CheckboxInput(
+                attrs={
+                    "class": "form-checkbox",
+                }
+            ),
         }

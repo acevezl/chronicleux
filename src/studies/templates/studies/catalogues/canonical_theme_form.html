@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block title %}{{ page_title }} · ChronicleUX{% endblock %}
+
+{% block content %}
+
+<div class="sticky-top">
+	{% include "studies/partials/_header.html" with page_title=page_title page_subtitle=page_subtitle %}
+
+    <div class="px-4 py-2 bg-gray-100 dark:bg-gray-900">
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{% url 'canonical_theme_catalogue_list' %}" class="button-TERTIARY">
+            {% heroicon_outline "swatch" class="h-4 w-4 shrink-0" %}
+            {% heroicon_outline "arrow-left" class="h-4 w-4 shrink-0" %}
+            Return to Canonical Themes
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<div class="p-4">
+	{% include "studies/partials/_messages.html" %}
+
+	<div class="main-card">
+
+		<!-- CANONICAL THEME DATA -->
+		<div class="p-4">
+
+			<form method="post" class="space-y-6">
+				{% csrf_token %}
+
+				<!-- NAME -->
+				<div>
+					<label for="{{ form.name.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+						Name
+					</label>
+
+					{% if form.name.help_text %}
+						<p class="message-default my-2">
+							{% heroicon_outline "chat-bubble-oval-left" class="h-4 w-4"%}
+							{{ form.name.help_text }}
+						</p>
+					{% endif %}
+
+					{{ form.name }}
+
+					{% if form.name.errors %}
+						<p class="message-error my-2">{{ form.name.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+				<!-- DESCRIPTION -->
+				<div>
+					<label for="{{ form.description.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+						Description
+					</label>
+
+					{% if form.description.help_text %}
+						<p class="message-default my-2">
+							{% heroicon_outline "chat-bubble-oval-left" class="h-4 w-4"%}
+							{{ form.description.help_text }}
+						</p>
+					{% endif %}
+
+					{{ form.description }}
+
+					{% if form.description.errors %}
+						<p class="message-error my-2">{{ form.description.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+				<!-- EXAMPLES -->
+				<div>
+					<label for="{{ form.examples.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+						Examples
+					</label>
+
+					{% if form.examples.help_text %}
+						<p class="message-default my-2">
+							{% heroicon_outline "chat-bubble-oval-left" class="h-4 w-4"%}
+							{{ form.examples.help_text }}
+						</p>
+					{% endif %}
+
+					{{ form.examples }}
+
+					{% if form.examples.errors %}
+						<p class="message-error my-2">{{ form.examples.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+				<!-- ACTIVE -->
+				<div class="flex items-center gap-3">
+					{{ form.is_active }}
+
+					<label for="{{ form.is_active.id_for_label }}" class="text-lg font-medium text-gray-700 dark:text-gray-200">
+						Active
+					</label>
+
+					{% if form.is_active.errors %}
+						<p class="message-error my-2">{{ form.is_active.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+				{% if form.non_field_errors %}
+					<div class="message-error my-2">
+						{% heroicon_outline "exclamation-triangle" class="h-4 w-4"%}
+						{{ form.non_field_errors }}
+					</div>
+				{% endif %}
+
+				<div class="flex justify-end gap-3 pt-4">
+					<button type="submit" class="button-PRIMARY">
+						{{ submit_label }}
+					</button>
+
+					<a href="{% url 'canonical_theme_catalogue_list' %}" class="button-TERTIARY">
+						Cancel
+					</a>
+				</div>
+
+			</form>
+
+		</div>
+
+	</div>
+</div>
+
+{% endblock %}

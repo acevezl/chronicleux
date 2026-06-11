@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Delete Canonical Theme · ChronicleUX{% endblock %}
+
+{% block content %}
+
+<div class="sticky-top">
+	{% include "studies/partials/_header.html" with page_title=page_title page_subtitle=page_subtitle %}
+
+    <div class="px-4 py-2 bg-gray-100 dark:bg-gray-900">
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{% url 'canonical_theme_catalogue_list' %}" class="button-TERTIARY">
+            {% heroicon_outline "swatch" class="h-4 w-4 shrink-0" %}
+            {% heroicon_outline "arrow-left" class="h-4 w-4 shrink-0" %}
+            Return to Canonical Themes
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<div class="p-4">
+	{% include "studies/partials/_messages.html" %}
+
+	<div class="border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden">
+
+		<!-- DELETE CONFIRMATION -->
+		<div class="p-4">
+
+			<form method="post" class="space-y-6">
+				{% csrf_token %}
+
+				<div>
+					<h2 class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+						Are you sure?
+					</h2>
+
+					<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+						You are about to delete this canonical theme:
+					</p>
+
+					<div class="mt-4 rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+						<p class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+							Name: {{ theme.name }}
+						</p>
+
+						{% if theme.description %}
+							<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+								Description: {{ theme.description }}
+							</p>
+						{% else %}
+							<p class="mt-2 text-sm text-gray-400">
+								No description provided.
+							</p>
+						{% endif %}
+					</div>
+
+					<div class="message-warning my-2">
+                        {% heroicon_outline "exclamation-circle" class="h-4 w-4"%}
+						This action cannot be undone.
+                    </div>
+				</div>
+
+				<div class="flex justify-end gap-3 pt-4">
+					<button type="submit" class="button-PRIMARY">
+						Delete Theme
+					</button>
+
+					<a href="{% url 'canonical_theme_catalogue_list' %}" class="button-TERTIARY">
+						Cancel
+					</a>
+				</div>
+
+			</form>
+
+		</div>
+
+	</div>
+</div>
+
+{% endblock %}

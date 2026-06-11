@@ -1,0 +1,286 @@
+from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
+from django.db import transaction
+from django.utils.dateparse import parse_datetime
+
+from .models import DiaryEntry, DiaryEntrySource, MembershipRole, SentimentCategory, StudyMembership
+
+User = get_user_model()
+VALID_SENTIMENTS = {choice[0] for choice in SentimentCategory.choices}
+
+# ----------------------- HELPERS ----------------------- #
+
+# USER CAN EVALUATE STUDY?
+def user_can_evaluate_study(user, study):
+	"""
+	Returns True if the user can view/evaluate study entries and analysis.
+
+	Allowed:
+	- Study owner
+	- Study members with evaluator role
+
+	Not allowed:
+	- Participants
+	- Non authenticated users (obvs)
+	"""
+
+	if not user or not user.is_authenticated:
+		return False
+
+	if study.owner_id == user.id:
+		return True
+
+	return StudyMembership.objects.filter(
+		study=study,
+		user=user,
+		role=MembershipRole.EVALUATOR,
+	).exists()
+
+# IMPORT ENTRIES: IMPORT ROWS INTO STUDY
+@transaction.atomic
+def import_rows_into_study (study, rows):
+	created_count = 0
+	skipped_owner = 0
+	skipped_evaluator = 0
+
+	for index, row in enumerate(rows, start=1):
+		try:
+			# Ignore the rows if they were authored by the study owner or an evaluator
+			# B/c study owners and evaluators shall never write diary entries
+			if is_owner_row(study, row):
+				skipped_owner+=1
+				continue
+
+			if is_evaluator_row(study, row):
+				skipped_evaluator+=1
+				continue
+
+			create_diary_entry_from_row(study, row)
+			created_count+=1
+
+		except Exception as e:
+			raise ValueError(f"Row {index}: {e}")
+	
+	return {
+		"created": created_count,
+		"skipped_owner": skipped_owner,
+		"skipped_evaluator": skipped_evaluator,
+	}
+
+# IMPORT ENTRIES: CREATE DIARY ENTRY FROM DATA ROW
+def create_diary_entry_from_row(study, row):
+	participant = resolve_participant_for_study(study, row)
+
+	content = row.get("content")
+	if not content:
+		raise ValueError ("Field `content` is required in a diary entry")
+	
+	sentiment_self_report = row.get("sentiment_self_report")
+	if not sentiment_self_report:
+		raise ValueError ("Field `sentiment_self_report` is required in a diary entry")
+	
+	participant_display_name = row.get("participant_display_name")
+	if participant is None and not participant_display_name:
+		raise ValueError("Each entry must have either a resolvable ChronicleUX participant or a `participant_display_name`")
+	
+	created_at = parse_imported_datetime (row.get("created_at"))
+
+	entry = DiaryEntry(
+		study=study,
+		participant=participant,
+		participant_display_name=participant_display_name or "",
+		participant_external_id=row.get("participant_external_id") or "",
+		participant_email=row.get("participant_email") or "",
+		content=content,
+		sentiment_self_report=sentiment_self_report,
+		issue_encountered=row.get("issue_encountered"),
+		created_at=created_at,
+		source=DiaryEntrySource.EXTERNAL,
+	)
+
+	entry.full_clean()
+	entry.save()
+
+	return entry
+
+# ENTRY IMPORT HELPER: IS OWNER ROW
+def is_owner_row(study, row):
+	participant_email = row.get("participant_email")
+	participant_external_id = row.get("participant_external_id")
+
+	if participant_email and study.owner.email and participant_email.lower() == study.owner.email.lower():
+		return True
+	
+	if participant_external_id and participant_external_id == study.owner.username:
+		return True
+	
+	return False
+
+# ENTRY IMPORT HELPER: IS EVALUATOR ROW
+def is_evaluator_row(study, row):
+	participant_email = row.get("participant_email")
+	participant_external_id = row.get("participant_external_id")
+
+	evaluator_user = None
+
+	if participant_email:
+		evaluator_user = User.objects.filter(email__iexact=participant_email).first()
+
+	if evaluator_user is None and participant_external_id:
+		evaluator_user = User.objects.filter(username=participant_external_id).first()
+
+	if evaluator_user is None:
+		return False
+
+	return StudyMembership.objects.filter(
+		study=study,
+		user=evaluator_user,
+		role=MembershipRole.EVALUATOR,
+	).exists()
+
+
+# ENTRY IMPORT HELPER: RESOLVE PARTICIPANT FOR STUDY
+def resolve_participant_for_study(study, row):
+	participant_email = row.get("participant_email")
+	participant_external_id = row.get("participant_external_id")
+
+	participant_user = None
+
+	# If the entry has a participant e-mail or participant_external_id, see if they resolve to a user
+	if participant_email:
+		participant_user = User.objects.filter(email__iexact=participant_email).first()
+	
+	if participant_user is None and participant_external_id:
+		participant_user = User.objects.filter(username=participant_external_id).first()
+		
+	# If a user was found, validate if the user is actually a study participant
+	if participant_user:
+		is_participant_in_study = StudyMembership.objects.filter(
+			study=study,
+			user=participant_user,
+			role=MembershipRole.PARTICIPANT,
+		).exists()
+
+		# If the user is not a participant in the study, make them a participant
+		if not is_participant_in_study:
+			StudyMembership.objects.create(
+				study=study,
+				user=participant_user,
+				role=MembershipRole.PARTICIPANT
+			)
+
+		return participant_user
+	
+	return None
+
+# ENTRY IMPORT HELPER: PARSE IMPORTED DATETIME
+def parse_imported_datetime(value):
+	value = normalize_str(value)
+	if value is None:
+		return None
+
+	dt = parse_datetime(value)
+	if dt is None:
+		raise ValueError(
+			"Invalid created_at value. Use ISO 8601 format, for example "
+			"'2026-03-29T14:30:00Z'."
+		)
+
+	return dt
+
+# ENTRY IMPORT HELPER: PARSE UPLOADED FILE
+def parse_uploaded_file(uploaded_file):
+	filename = uploaded_file.name.lower()
+
+	if filename.endswith(".csv"):
+		return parse_csv(uploaded_file.file)
+
+	if filename.endswith(".json"):
+		return parse_json(uploaded_file.file)
+
+	raise ValueError("Unsupported file type. Please upload a CSV or JSON file.")
+
+# ENTRY IMPORT HELPER: NORMALISE SENTIMENT
+def normalize_sentiment(value):
+	value = normalize_str(value)
+	if value is None:
+		raise ValueError("sentiment_self_report is required.")
+	if value not in VALID_SENTIMENTS:
+		raise ValueError(
+			f"Invalid sentiment_self_report: {value}. "
+			f"Allowed values: {', '.join(VALID_SENTIMENTS)}"
+		)
+	return value
+
+# ENTRY IMPORT HELPER: NORMALIZE STRING
+def normalize_str(value):
+	if value is None:
+		return None
+	value = str(value).strip()
+	return value if value else None
+
+# ENTRY IMPORT HELPER: NORMALIZE BOOLEAN
+def normalize_bool(value):
+	if isinstance(value, bool):
+		return value
+
+	value = normalize_str(value)
+	if value is None:
+		raise ValueError("issue_encountered is required.")
+
+	value = value.lower()
+	if value in {"true", "1", "yes", "y"}:
+		return True
+	if value in {"false", "0", "no", "n"}:
+		return False
+
+	raise ValueError(f"Invalid boolean value: {value}")
+
+# ENTRY IMPORT HELPER: NORMALIZE ROW
+def normalize_row(row):
+	return {
+		"participant_external_id": normalize_str(row.get("participant_external_id")),
+		"participant_display_name": normalize_str(row.get("participant_display_name")),
+		"participant_email": normalize_str(row.get("participant_email")),
+		"sentiment_self_report": normalize_sentiment(row.get("sentiment_self_report")),
+		"issue_encountered": normalize_bool(row.get("issue_encountered")),
+		"content": normalize_str(row.get("content")),
+		"created_at": normalize_str(row.get("created_at")),
+	}
+
+# ENTRY IMPORT HELPER: PARSE CSV
+def parse_csv(file):
+	import csv
+	from io import TextIOWrapper
+
+	text_file = TextIOWrapper(file, encoding="utf-8", newline="")
+	reader = csv.DictReader(text_file)
+
+	rows = []
+	for row in reader:
+		rows.append(normalize_row(row))
+
+	return rows
+
+# ENTRY IMPORT HELPER: PARSE JSON
+def parse_json(file):
+	import json
+
+	data = json.load(file)
+
+	if not isinstance(data, list):
+		raise ValueError("JSON must be a list of entries.")
+
+	rows = []
+	for item in data:
+		if not isinstance(item, dict):
+			raise ValueError("Each JSON entry must be an object.")
+		rows.append(normalize_row(item))
+
+	return rows
+
+# CATALOGUE PERMISSION HELPER
+# Only users who are STAFF can manage Theme and Issue Catalogue
+def require_catalogue_manager(user):
+    if not user.is_staff:
+        raise PermissionDenied("You do not have permission to manage canonical catalogues.")

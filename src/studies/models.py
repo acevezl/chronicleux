@@ -50,10 +50,19 @@ class SentimentCategory(models.TextChoices):
     POSITIVE = "POSITIVE", "Positive"
     VERY_POSITIVE = "VERY_POSITIVE", "Very positive"
 
+
+# SENTIMENT CATEGORIES (I.E., SENTIMENT LABELS) FOR BER
+# Because BERT's gonna BERT... (i.e., it is binary)
+class BinarySentimentCategory(models.TextChoices):
+    NEGATIVE = "NEGATIVE", "Negative"
+    NOT_NEGATIVE = "NOT_NEGATIVE", "Not Negative"
+
+
 # DIARY ENTRY SOURCE ENUM
 class DiaryEntrySource(models.TextChoices):
     INTERNAL = "INTERNAL", "ChronicleUX submission"
     EXTERNAL = "EXTERNAL", "External submission imported into ChronicleUX"
+
 
 # ANALYSIS RUN STATUS
 class AnalysisRunStatus(models.TextChoices):
@@ -62,6 +71,7 @@ class AnalysisRunStatus(models.TextChoices):
     COMPLETED = "COMPLETED", "Completed"
     FAILED = "FAILED", "Failed"
 
+
 # CONFUSION MATRIX OUTCOME - FOR METRICS
 class ConfusionMatrixOutcome(models.TextChoices):
     TRUE_POSITIVE = "TRUE_POSITIVE", "True Positive"
@@ -69,6 +79,7 @@ class ConfusionMatrixOutcome(models.TextChoices):
     TRUE_NEGATIVE = "TRUE_NEGATIVE", "True Negative"
     FALSE_NEGATIVE = "FALSE_NEGATIVE", "False Negative"
     NOT_AVAILABLE = "NOT_AVAILABLE", "Not Available"
+
 
 # SENTIMENT SCORE THRESHOLDS
 # Used at the Study Level to label average sentiment score
@@ -80,6 +91,7 @@ SENTIMENT_SCORE_THRESHOLDS = [
     (0.7, 1.0, SentimentCategory.VERY_POSITIVE),
 ]
 
+# These one's are for binary methods, like BERT
 BINARY_SENTIMENT_SCORE_THRESHOLDS = [
     (-1.0, 0.0, SentimentCategory.NEGATIVE),
     (0.0, 1.0, SentimentCategory.POSITIVE),
@@ -481,13 +493,31 @@ class StudyAnalysisRun(models.Model):
     dominant_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
     dominant_sentiment_score = models.FloatField(null=True, blank=True)
     sentiment_distribution = models.JSONField(default=dict, blank=True)
+
+    # Canonical Themes identified in this run
+    canonical_themes = models.ManyToManyField(
+        "CanonicalTheme",
+        through="StudyAnalysisRunCanonicalTheme",
+        related_name="analysis_runs",
+        blank=True,
+    )
+
+    # Canonical Issues identified in this run
+    canonical_issues = models.ManyToManyField(
+        "CanonicalIssue",
+        through="StudyAnalysisRunCanonicalIssue",
+        related_name="analysis_runs",
+        blank=True,
+    )
     
-    # Theme / Topic Analysis
+    # Dominant Theme / Topic Analysis
     dominant_theme_label = models.CharField(max_length=255, blank=True, null=True)
     dominant_theme_weight = models.FloatField(null=True, blank=True)
+
+    # #fixlater This line will be replaced with canonical_themes
     theme_distribution = models.JSONField(default=dict, blank=True)
 
-    # Issues
+    # Issues #fixlater This line will be replaced with canonical_issues
     recurring_issues = models.JSONField(default=list, blank=True)
     
     # Evolution of Sentiment, Theme, and Issues over time
@@ -507,7 +537,6 @@ class StudyAnalysisRun(models.Model):
 
     # error message (if analysis failed)
     error_message = models.TextField(blank=True)
-
 
     # Study-level metrics
     # Vs. Participant Reference
@@ -615,11 +644,6 @@ class DiaryEntryAnalysis(models.Model):
         default=ConfusionMatrixOutcome.NOT_AVAILABLE
     )
 
-
-    
-
-
-
     # Thematic Analysis Outputs
     theme_weight = models.FloatField(null=True, blank=True)
     theme_label = models.CharField(max_length=255, blank=True, null=True)
@@ -628,6 +652,22 @@ class DiaryEntryAnalysis(models.Model):
     # Issues Identified
     issue_detected = models.BooleanField(default=False, blank=False)
     issues = models.JSONField(default=list, blank=True)
+
+    # Canonical Themes assigned to this entry analysis
+    canonical_themes = models.ManyToManyField(
+        "CanonicalTheme",
+        through="DiaryEntryAnalysisCanonicalTheme",
+        related_name="diary_entry_analyses",
+        blank=True,
+    )
+
+    # Canonical Issues assigned to this entry analysis
+    canonical_issues = models.ManyToManyField(
+        "CanonicalIssue",
+        through="DiaryEntryAnalysisCanonicalIssue",
+        related_name="diary_entry_analyses",
+        blank=True,
+    )
 
     methods = models.JSONField(default=dict, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
@@ -653,5 +693,267 @@ class DiaryEntryAnalysis(models.Model):
 
     def __str__(self) -> str:
         return f"DiaryEntryAnalysis {self.pk} · entry={self.entry_id} · run={self.run_id}"
+    
+
+# CANONICAL THEME
+# Global evaluator-defined theme catalog.
+class CanonicalTheme(models.Model):
+
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True)
+
+    examples = models.TextField(
+        blank=True,
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_canonical_themes",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+        indexes = [
+            models.Index(fields=["is_active"]),
+            models.Index(fields=["name"]),
+        ]
+        verbose_name = "Canonical Theme"
+        verbose_name_plural = "Canonical Themes"
+
+    def clean(self):
+        if self.name:
+            self.name = self.name.strip()
+
+        if not self.name:
+            raise ValidationError({"name": "Canonical theme name is required."})
+
+    def __str__(self) -> str:
+        return self.name
 
 
+# CANONICAL ISSUE
+# Global evaluator-defined usability issue catalog.
+class CanonicalIssue(models.Model):
+
+    name = models.CharField(max_length=255, unique=True)
+    description = models.TextField(blank=True)
+
+    examples = models.TextField(
+        blank=True,
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_canonical_issues",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+        indexes = [
+            models.Index(fields=["is_active"]),
+            models.Index(fields=["name"]),
+        ]
+        verbose_name = "Canonical Issue"
+        verbose_name_plural = "Canonical Issues"
+
+    def clean(self):
+        if self.name:
+            self.name = self.name.strip()
+
+        if not self.name:
+            raise ValidationError({"name": "Canonical issue name is required."})
+
+    def __str__(self) -> str:
+        return self.name
+    
+
+# DIARY ENTRY ANALYSIS CANONICAL THEME
+# Canonical themes assigned to an individual diary entry analysis.
+class DiaryEntryAnalysisCanonicalTheme(models.Model):
+
+    diary_entry_analysis = models.ForeignKey(
+        DiaryEntryAnalysis,
+        on_delete=models.CASCADE,
+        related_name="canonical_theme_assignments",
+    )
+
+    canonical_theme = models.ForeignKey(
+        CanonicalTheme,
+        on_delete=models.PROTECT,
+        related_name="entry_analysis_assignments",
+    )
+
+    confidence_score = models.FloatField(null=True, blank=True)
+    rationale = models.TextField(blank=True)
+
+    assigned_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_entry_canonical_themes",
+    )
+
+    assigned_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["canonical_theme__name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["diary_entry_analysis", "canonical_theme"],
+                name="unique_canonical_theme_per_entry_analysis",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["diary_entry_analysis"]),
+            models.Index(fields=["canonical_theme"]),
+        ]
+        verbose_name = "Diary Entry Analysis Canonical Theme"
+        verbose_name_plural = "Diary Entry Analysis Canonical Themes"
+
+    def __str__(self) -> str:
+        return f"{self.canonical_theme} · analysis={self.diary_entry_analysis_id}"
+
+
+# DIARY ENTRY ANALYSIS CANONICAL ISSUE
+# Canonical issues assigned to an individual diary entry analysis.
+class DiaryEntryAnalysisCanonicalIssue(models.Model):
+
+    diary_entry_analysis = models.ForeignKey(
+        DiaryEntryAnalysis,
+        on_delete=models.CASCADE,
+        related_name="canonical_issue_assignments",
+    )
+
+    canonical_issue = models.ForeignKey(
+        CanonicalIssue,
+        on_delete=models.PROTECT,
+        related_name="entry_analysis_assignments",
+    )
+
+    confidence_score = models.FloatField(null=True, blank=True)
+    rationale = models.TextField(blank=True)
+
+    assigned_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_entry_canonical_issues",
+    )
+
+    assigned_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["canonical_issue__name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["diary_entry_analysis", "canonical_issue"],
+                name="unique_canonical_issue_per_entry_analysis",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["diary_entry_analysis"]),
+            models.Index(fields=["canonical_issue"]),
+        ]
+        verbose_name = "Diary Entry Analysis Canonical Issue"
+        verbose_name_plural = "Diary Entry Analysis Canonical Issues"
+
+    def __str__(self) -> str:
+        return f"{self.canonical_issue} · analysis={self.diary_entry_analysis_id}"
+    
+
+# STUDY ANALYSIS RUN CANONICAL THEME
+# Canonical themes found across all diary entry analyses in a run.
+# So I don't have to recompute every time from the entries.
+class StudyAnalysisRunCanonicalTheme(models.Model):
+
+    run = models.ForeignKey(
+        StudyAnalysisRun,
+        on_delete=models.CASCADE,
+        related_name="canonical_theme_summaries",
+    )
+
+    canonical_theme = models.ForeignKey(
+        CanonicalTheme,
+        on_delete=models.PROTECT,
+        related_name="run_summaries",
+    )
+
+    entry_count = models.PositiveIntegerField(default=0)
+    average_confidence_score = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-entry_count", "canonical_theme__name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["run", "canonical_theme"],
+                name="unique_canonical_theme_per_run",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["run"]),
+            models.Index(fields=["canonical_theme"]),
+            models.Index(fields=["run", "entry_count"]),
+        ]
+        verbose_name = "Study Analysis Run Canonical Theme"
+        verbose_name_plural = "Study Analysis Run Canonical Themes"
+
+    def __str__(self) -> str:
+        return f"{self.canonical_theme} · run={self.run_id} · entries={self.entry_count}"
+
+
+# STUDY ANALYSIS RUN CANONICAL ISSUE
+# Canonical issues found across all diary entry analyses in a run.
+# So I don't have to recompute every time from the entries.
+class StudyAnalysisRunCanonicalIssue(models.Model):
+
+    run = models.ForeignKey(
+        StudyAnalysisRun,
+        on_delete=models.CASCADE,
+        related_name="canonical_issue_summaries",
+    )
+
+    canonical_issue = models.ForeignKey(
+        CanonicalIssue,
+        on_delete=models.PROTECT,
+        related_name="run_summaries",
+    )
+
+    entry_count = models.PositiveIntegerField(default=0)
+    average_confidence_score = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-entry_count", "canonical_issue__name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["run", "canonical_issue"],
+                name="unique_canonical_issue_per_run",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["run"]),
+            models.Index(fields=["canonical_issue"]),
+            models.Index(fields=["run", "entry_count"]),
+        ]
+        verbose_name = "Study Analysis Run Canonical Issue"
+        verbose_name_plural = "Study Analysis Run Canonical Issues"
+
+    def __str__(self) -> str:
+        return f"{self.canonical_issue} · run={self.run_id} · entries={self.entry_count}"

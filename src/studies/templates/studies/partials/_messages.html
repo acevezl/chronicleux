@@ -1,20 +1,19 @@
 {% if messages %}
 <div class="mb-4 space-y-4">
     {% for message in messages %}
-    <div class="flex gap-x-2 align-middle border dark:text-gray-5000 p-2 rounded-sm
-                {% if message.tags == 'error' %}bg-red-100 border-red-800 text-red-800
-                {% elif message.tags == 'success' %}bg-green-100 border-green-800 text-green-800
-                {% elif message.tags == 'info' %}bg-sky-100 border-sky-800 text-sky-800
-                {% else %}bg-gray-100 border-gray-700 text-gray-700 {% endif %}">
+    <div class="{% if message.tags == 'error' %}message-error
+                {% elif message.tags == 'success' %}message-success
+                {% elif message.tags == 'info' %}message-info
+                {% else %}message-default{% endif %}">
         
         {% if message.tags == 'error' %}
-            {% heroicon_outline "x-circle" %}
+            {% heroicon_outline "x-circle" class="h-4 w-4" %}
         {% elif message.tags == 'success' %}
-            {% heroicon_outline "check-circle" %}
+            {% heroicon_outline "check-circle" class="h-4 w-4" %}
         {% elif message.tags == 'info' %}
-            {% heroicon_outline "information-circle" %}
+            {% heroicon_outline "information-circle" class="h-4 w-4" %}
         {% else %}
-            {% heroicon_outline "chat-bubble-oval-left" %}
+            {% heroicon_outline "chat-bubble-oval-left" class="h-4 w-4" %}
         {% endif %}
 
         <span>{{ message }}</span>
