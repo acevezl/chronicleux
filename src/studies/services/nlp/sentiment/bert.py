@@ -24,7 +24,7 @@ class BertSentimentAnalyzer(BaseSentimentAnalyzer):
         if not cleaned_text.strip():
             return SentimentResult(
                 score=0.0,
-                label=SentimentCategory.NEUTRAL,
+                label=SentimentCategory.NOT_NEGATIVE,
                 method=self.method_name,
                 metadata={
                     "model": MODEL_NAME,

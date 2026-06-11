@@ -81,6 +81,19 @@ class ConfusionMatrixOutcome(models.TextChoices):
     NOT_AVAILABLE = "NOT_AVAILABLE", "Not Available"
 
 
+# THEME / ISSUE SOURCE ENUM
+class ThemeAndIssueSource(models.TextChoices):
+    EVALUATOR = "EVALUATOR", "Evaluator"
+    NLP = "NLP", "NLP Model"
+    LLM = "LLM", "LLM Model"
+
+
+class ThemeAndIssueStatus(models.TextChoices):
+    SUGGESTED = "SUGGESTED", "Suggested"
+    APPROVED = "APPROVED", "Approved"
+    REJECTED = "REJECTED", "Rejected"
+
+
 # SENTIMENT SCORE THRESHOLDS
 # Used at the Study Level to label average sentiment score
 SENTIMENT_SCORE_THRESHOLDS = [
@@ -93,8 +106,8 @@ SENTIMENT_SCORE_THRESHOLDS = [
 
 # These one's are for binary methods, like BERT
 BINARY_SENTIMENT_SCORE_THRESHOLDS = [
-    (-1.0, 0.0, SentimentCategory.NEGATIVE),
-    (0.0, 1.0, SentimentCategory.POSITIVE),
+    (-1.0, 0.0, BinarySentimentCategory.NEGATIVE),
+    (0.0, 1.0, BinarySentimentCategory.NOT_NEGATIVE),
 ]
 
 # ----------------------- MODELS ----------------------- #
@@ -701,8 +714,22 @@ class CanonicalTheme(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
+    aliases = models.JSONField(default=list, blank=True)
+    source = models.CharField(
+        max_length=20,
+        choices=ThemeAndIssueSource.choices,
+        null=True,
+        blank=True,
+    )
 
     examples = models.TextField(
+        blank=True,
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=ThemeAndIssueStatus.choices,
+        null=True,
         blank=True,
     )
 

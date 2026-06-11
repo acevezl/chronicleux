@@ -20,8 +20,8 @@ SENTIMENT_ANALYZERS = {
     "bert": {
         "class": BertSentimentAnalyzer,
         "label": "BERT",
-        "description": "Binary transformer sentiment classifier. Returns positive or negative with confidence.",
-        "long_description": "Use BERT for broad positive vs. negative classification with contextual language understanding. Best when neutral nuance is less important.",
+        "description": "Binary transformer sentiment classifier. Returns negative vs. non-negative with confidence.",
+        "long_description": "Use BERT for broad negative vs. non-negative classification with contextual language understanding. Best when neutral nuance is less important.",
     },
     "roberta": {
         "class": RobertaSentimentAnalyzer,
