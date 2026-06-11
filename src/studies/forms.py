@@ -114,11 +114,26 @@ class DiaryEntryForm(forms.ModelForm):
 # CANONICAL THEME FORM
 class CanonicalThemeForm(forms.ModelForm):
 
+    aliases = forms.CharField(
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                "class": "",
+                "rows": 3,
+                "placeholder": "Optional aliases, separated by commas or line breaks.",
+            }
+        ),
+        help_text="Alternative names or phrases that should map to this canonical theme.",
+    )
+
     class Meta:
         model = CanonicalTheme
         fields = [
             "name",
             "description",
+            "aliases",
+            "source",
+            "status",
             "examples",
             "is_active",
         ]
@@ -136,6 +151,16 @@ class CanonicalThemeForm(forms.ModelForm):
                     "placeholder": "Describe what this canonical theme means.",
                 }
             ),
+            "source": forms.Select(
+                attrs={
+                    "class": "",
+                }
+            ),
+            "status": forms.Select(
+                attrs={
+                    "class": "",
+                }
+            ),
             "examples": forms.Textarea(
                 attrs={
                     "class": "",
@@ -150,20 +175,53 @@ class CanonicalThemeForm(forms.ModelForm):
             ),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance and self.instance.pk and isinstance(self.instance.aliases, list):
+            self.initial["aliases"] = ", ".join(self.instance.aliases)
+
+    def clean_aliases(self):
+        aliases_raw = self.cleaned_data.get("aliases", "")
+
+        if not aliases_raw:
+            return []
+
+        aliases = []
+        for value in aliases_raw.replace("\n", ",").split(","):
+            alias = value.strip()
+            if alias and alias not in aliases:
+                aliases.append(alias)
+
+        return aliases
+
+
 # CANONICAL ISSUE FORM
 class CanonicalIssueForm(forms.ModelForm):
+
+    aliases = forms.CharField(
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                "class": "",
+                "rows": 3,
+                "placeholder": "Optional aliases, separated by commas or line breaks.",
+            }
+        ),
+        help_text="Alternative names or phrases that should map to this canonical issue.",
+    )
 
     class Meta:
         model = CanonicalIssue
         fields = [
             "name",
             "description",
+            "aliases",
+            "source",
+            "status",
             "examples",
             "is_active",
         ]
-        help_texts = {
-            
-        }
         widgets = {
             "name": forms.TextInput(
                 attrs={
@@ -176,6 +234,16 @@ class CanonicalIssueForm(forms.ModelForm):
                     "class": "",
                     "rows": 4,
                     "placeholder": "Describe what this canonical issue means.",
+                }
+            ),
+            "source": forms.Select(
+                attrs={
+                    "class": "",
+                }
+            ),
+            "status": forms.Select(
+                attrs={
+                    "class": "",
                 }
             ),
             "examples": forms.Textarea(
@@ -191,3 +259,23 @@ class CanonicalIssueForm(forms.ModelForm):
                 }
             ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance and self.instance.pk and isinstance(self.instance.aliases, list):
+            self.initial["aliases"] = ", ".join(self.instance.aliases)
+
+    def clean_aliases(self):
+        aliases_raw = self.cleaned_data.get("aliases", "")
+
+        if not aliases_raw:
+            return []
+
+        aliases = []
+        for value in aliases_raw.replace("\n", ",").split(","):
+            alias = value.strip()
+            if alias and alias not in aliases:
+                aliases.append(alias)
+
+        return aliases

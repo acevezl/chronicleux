@@ -14,10 +14,10 @@ from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 
 from studies.services.nlp.registry import (
-    get_available_sentiment_methods,
-    get_available_theme_methods,
-    get_available_sentiment_method_values,
-    get_available_theme_method_values,
+	get_available_sentiment_methods,
+	get_available_theme_methods,
+	get_available_sentiment_method_values,
+	get_available_theme_method_values,
 )
 
 from studies.services.llm.client import get_available_llm_providers, get_llm_model
@@ -28,7 +28,7 @@ from studies.services.analysis_tasks import queue_study_analysis_run
 from .filters import filter_diary_entries, filter_analysis_entries
 from .forms import StudyForm, DiaryEntryForm, CanonicalIssueForm, CanonicalThemeForm
 from .helpers import import_rows_into_study, parse_uploaded_file, user_can_evaluate_study, require_catalogue_manager
-from .models import  DiaryEntry, SentimentCategory, DiaryEntrySource, MembershipRole, Study, StudyMembership, StudyAnalysisRun, DiaryEntryAnalysis, AnalysisRunStatus, StudyStatus, CanonicalIssue, CanonicalTheme
+from .models import  AnalysisRunStatus, DiaryEntry, DiaryEntryAnalysis, DiaryEntrySource, MembershipRole, SentimentCategory, Study, StudyMembership, StudyAnalysisRun, StudyStatus, CanonicalIssue, CanonicalTheme, ThemeAndIssueSource, ThemeAndIssueStatus
 
 # ----------------------- VIEWS ----------------------- #
 
@@ -424,19 +424,19 @@ def manage_participants(request, pk):
 # ----------------------- #
 @login_required
 def select_analysis_methods(request, pk):
-    study = get_object_or_404(Study, pk=pk)
+	study = get_object_or_404(Study, pk=pk)
 
-    if study.owner != request.user:
-        return HttpResponseForbidden()
+	if study.owner != request.user:
+		return HttpResponseForbidden()
 
-    context = {
-        "study": study,
-        "sentiment_methods": get_available_sentiment_methods(),
-        "theme_methods": get_available_theme_methods(),
+	context = {
+		"study": study,
+		"sentiment_methods": get_available_sentiment_methods(),
+		"theme_methods": get_available_theme_methods(),
 		"llm_providers": get_available_llm_providers(),
-    }
+	}
 
-    return render(request, "studies/select_analysis_methods.html", context)
+	return render(request, "studies/select_analysis_methods.html", context)
 
 
 # -------------------- #
@@ -588,87 +588,87 @@ def machine_analysis_entries_partial(request, study_pk, run_pk):
 @login_required
 def analysis_runs(request):
 
-    runs = StudyAnalysisRun.objects.select_related(
-        "study",
-        "created_by",
-    ).filter(
-        created_by=request.user
-    )
+	runs = StudyAnalysisRun.objects.select_related(
+		"study",
+		"created_by",
+	).filter(
+		created_by=request.user
+	)
 
-    # Filtering
-    q = request.GET.get("q")
-    status = request.GET.get("status")
-    study = request.GET.get("study")
-    model = request.GET.get("model")
-    sentiment_method = request.GET.get("sentiment_method")
-    theme_method = request.GET.get("theme_method")
+	# Filtering
+	q = request.GET.get("q")
+	status = request.GET.get("status")
+	study = request.GET.get("study")
+	model = request.GET.get("model")
+	sentiment_method = request.GET.get("sentiment_method")
+	theme_method = request.GET.get("theme_method")
 
-    if q:
-        runs = runs.filter(
-            Q(study__title__icontains=q) |
-            Q(analysis_model__icontains=q) |
-            Q(analysis_version__icontains=q) |
-            Q(error_message__icontains=q)
-        )
+	if q:
+		runs = runs.filter(
+			Q(study__title__icontains=q) |
+			Q(analysis_model__icontains=q) |
+			Q(analysis_version__icontains=q) |
+			Q(error_message__icontains=q)
+		)
 
-    if status:
-        runs = runs.filter(status=status)
+	if status:
+		runs = runs.filter(status=status)
 
-    if study:
-        runs = runs.filter(study__title__icontains=study)
+	if study:
+		runs = runs.filter(study__title__icontains=study)
 
-    if model:
-        runs = runs.filter(analysis_model__icontains=model)
+	if model:
+		runs = runs.filter(analysis_model__icontains=model)
 
-    if sentiment_method:
-        runs = runs.filter(methods__sentiment=sentiment_method)
+	if sentiment_method:
+		runs = runs.filter(methods__sentiment=sentiment_method)
 
-    if theme_method:
-        runs = runs.filter(methods__theme=theme_method)
+	if theme_method:
+		runs = runs.filter(methods__theme=theme_method)
 
-    # Sorting
-    sort = request.GET.get("sort", "-started_at")
+	# Sorting
+	sort = request.GET.get("sort", "-started_at")
 
-    allowed_sort_fields = [
-        "started_at",
-        "completed_at",
-        "status",
-        "study__title",
-        "analysis_model",
-        "analysis_version",
-        "total_entries",
-        "average_sentiment_score",
-    ]
+	allowed_sort_fields = [
+		"started_at",
+		"completed_at",
+		"status",
+		"study__title",
+		"analysis_model",
+		"analysis_version",
+		"total_entries",
+		"average_sentiment_score",
+	]
 
-    if sort.lstrip("-") in allowed_sort_fields:
-        runs = runs.order_by(sort)
-    else:
-        sort = "-started_at"
-        runs = runs.order_by(sort)
+	if sort.lstrip("-") in allowed_sort_fields:
+		runs = runs.order_by(sort)
+	else:
+		sort = "-started_at"
+		runs = runs.order_by(sort)
 
-    # Pagination
-    paginator = Paginator(runs, 10)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
+	# Pagination
+	paginator = Paginator(runs, 10)
+	page_number = request.GET.get("page")
+	page_obj = paginator.get_page(page_number)
 
-    sort_params = request.GET.copy()
-    sort_params.pop("sort", None)
-    sort_params.pop("page", None)
+	sort_params = request.GET.copy()
+	sort_params.pop("sort", None)
+	sort_params.pop("page", None)
 
-    page_params = request.GET.copy()
-    page_params.pop("page", None)
+	page_params = request.GET.copy()
+	page_params.pop("page", None)
 
-    context = {
-        "analysis_runs": page_obj,
-        "page_obj": page_obj,
-        "sort": sort,
-        "sort_params": sort_params,
-        "page_params": page_params,
-        "status_choices": AnalysisRunStatus.choices,
-        "analysis_runs_filter_url": reverse("analysis_runs_partial"),
-    }
+	context = {
+		"analysis_runs": page_obj,
+		"page_obj": page_obj,
+		"sort": sort,
+		"sort_params": sort_params,
+		"page_params": page_params,
+		"status_choices": AnalysisRunStatus.choices,
+		"analysis_runs_filter_url": reverse("analysis_runs_partial"),
+	}
 
-    return render(request, "studies/analysis_run_list.html", context)
+	return render(request, "studies/analysis_run_list.html", context)
 
 
 # ----------------------------- #
@@ -677,110 +677,110 @@ def analysis_runs(request):
 @login_required
 def analysis_runs_partial(request):
 
-    if request.headers.get("HX-Request") != "true":
-        url = reverse("analysis_runs")
-        querystring = request.GET.urlencode()
+	if request.headers.get("HX-Request") != "true":
+		url = reverse("analysis_runs")
+		querystring = request.GET.urlencode()
 
-        if querystring:
-            url = f"{url}?{querystring}"
+		if querystring:
+			url = f"{url}?{querystring}"
 
-        return redirect(url)
+		return redirect(url)
 
-    runs = StudyAnalysisRun.objects.select_related(
-        "study",
-        "created_by",
-    ).filter(
-        created_by=request.user
-    )
+	runs = StudyAnalysisRun.objects.select_related(
+		"study",
+		"created_by",
+	).filter(
+		created_by=request.user
+	)
 
-    # Filtering
-    q = request.GET.get("q")
-    status = request.GET.get("status")
-    study = request.GET.get("study")
-    model = request.GET.get("model")
-    sentiment_method = request.GET.get("sentiment_method")
-    theme_method = request.GET.get("theme_method")
+	# Filtering
+	q = request.GET.get("q")
+	status = request.GET.get("status")
+	study = request.GET.get("study")
+	model = request.GET.get("model")
+	sentiment_method = request.GET.get("sentiment_method")
+	theme_method = request.GET.get("theme_method")
 
-    if q:
-        runs = runs.filter(
-            Q(study__title__icontains=q) |
-            Q(analysis_model__icontains=q) |
-            Q(analysis_version__icontains=q) |
-            Q(error_message__icontains=q)
-        )
+	if q:
+		runs = runs.filter(
+			Q(study__title__icontains=q) |
+			Q(analysis_model__icontains=q) |
+			Q(analysis_version__icontains=q) |
+			Q(error_message__icontains=q)
+		)
 
-    if status:
-        runs = runs.filter(status=status)
+	if status:
+		runs = runs.filter(status=status)
 
-    if study:
-        runs = runs.filter(study__title__icontains=study)
+	if study:
+		runs = runs.filter(study__title__icontains=study)
 
-    if model:
-        runs = runs.filter(analysis_model__icontains=model)
+	if model:
+		runs = runs.filter(analysis_model__icontains=model)
 
-    if sentiment_method:
-        runs = runs.filter(methods__sentiment=sentiment_method)
+	if sentiment_method:
+		runs = runs.filter(methods__sentiment=sentiment_method)
 
-    if theme_method:
-        runs = runs.filter(methods__theme=theme_method)
+	if theme_method:
+		runs = runs.filter(methods__theme=theme_method)
 
-    # Sorting
-    sort = request.GET.get("sort", "-started_at")
+	# Sorting
+	sort = request.GET.get("sort", "-started_at")
 
-    allowed_sort_fields = [
-        "started_at",
-        "completed_at",
-        "status",
-        "study__title",
-        "analysis_model",
-        "analysis_version",
-        "total_entries",
-        "average_sentiment_score",
-    ]
+	allowed_sort_fields = [
+		"started_at",
+		"completed_at",
+		"status",
+		"study__title",
+		"analysis_model",
+		"analysis_version",
+		"total_entries",
+		"average_sentiment_score",
+	]
 
-    if sort.lstrip("-") in allowed_sort_fields:
-        runs = runs.order_by(sort)
-    else:
-        sort = "-started_at"
-        runs = runs.order_by(sort)
+	if sort.lstrip("-") in allowed_sort_fields:
+		runs = runs.order_by(sort)
+	else:
+		sort = "-started_at"
+		runs = runs.order_by(sort)
 
-    # Pagination
-    paginator = Paginator(runs, 10)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
+	# Pagination
+	paginator = Paginator(runs, 10)
+	page_number = request.GET.get("page")
+	page_obj = paginator.get_page(page_number)
 
-    sort_params = request.GET.copy()
-    sort_params.pop("sort", None)
-    sort_params.pop("page", None)
+	sort_params = request.GET.copy()
+	sort_params.pop("sort", None)
+	sort_params.pop("page", None)
 
-    page_params = request.GET.copy()
-    page_params.pop("page", None)
+	page_params = request.GET.copy()
+	page_params.pop("page", None)
 
-    context = {
-        "analysis_runs": page_obj,
-        "page_obj": page_obj,
-        "sort": sort,
-        "sort_params": sort_params,
-        "page_params": page_params,
-        "status_choices": AnalysisRunStatus.choices,
-        "analysis_runs_filter_url": reverse("analysis_runs_partial"),
-    }
+	context = {
+		"analysis_runs": page_obj,
+		"page_obj": page_obj,
+		"sort": sort,
+		"sort_params": sort_params,
+		"page_params": page_params,
+		"status_choices": AnalysisRunStatus.choices,
+		"analysis_runs_filter_url": reverse("analysis_runs_partial"),
+	}
 
-    response = render(
-        request,
-        "studies/partials/_analysis_runs.html",
-        context,
-    )
+	response = render(
+		request,
+		"studies/partials/_analysis_runs.html",
+		context,
+	)
 
-    full_page_url = reverse("analysis_runs")
-    querystring = request.GET.urlencode()
+	full_page_url = reverse("analysis_runs")
+	querystring = request.GET.urlencode()
 
-    if querystring:
-        full_page_url = f"{full_page_url}?{querystring}"
+	if querystring:
+		full_page_url = f"{full_page_url}?{querystring}"
 
-    response["HX-Push-Url"] = full_page_url
+	response["HX-Push-Url"] = full_page_url
 
-    return response
+	return response
 
 # ----------------- #
 # STUDIES (LIST OF) #
@@ -788,62 +788,62 @@ def analysis_runs_partial(request):
 @login_required
 def studies(request):
 
-    studies = Study.objects.filter(
-        Q(owner=request.user) |
-        Q(memberships__user=request.user)
-    ).distinct()
+	studies = Study.objects.filter(
+		Q(owner=request.user) |
+		Q(memberships__user=request.user)
+	).distinct()
 
-    # Filtering
-    q = request.GET.get("q")
-    owner = request.GET.get("owner")
-    status = request.GET.get("status")
+	# Filtering
+	q = request.GET.get("q")
+	owner = request.GET.get("owner")
+	status = request.GET.get("status")
 
-    if q:
-        studies = studies.filter(title__icontains=q)
+	if q:
+		studies = studies.filter(title__icontains=q)
 
-    if owner:
-        studies = studies.filter(owner__username__icontains=owner)
+	if owner:
+		studies = studies.filter(owner__username__icontains=owner)
 
-    if status:
-        studies = studies.filter(status=status)
+	if status:
+		studies = studies.filter(status=status)
 
-    # Sorting
-    sort = request.GET.get("sort", "-created_at")
+	# Sorting
+	sort = request.GET.get("sort", "-created_at")
 
-    allowed_sort_fields = [
-        "title",
-        "created_at",
-        "status",
-        "owner__username",
-    ]
+	allowed_sort_fields = [
+		"title",
+		"created_at",
+		"status",
+		"owner__username",
+	]
 
-    if sort.lstrip("-") in allowed_sort_fields:
-        studies = studies.order_by(sort)
-    else:
-        studies = studies.order_by("-created_at")
+	if sort.lstrip("-") in allowed_sort_fields:
+		studies = studies.order_by(sort)
+	else:
+		studies = studies.order_by("-created_at")
 
-    # Pagination
-    paginator = Paginator(studies, 10)
-    page_number = request.GET.get("page")
-    page_obj = paginator.get_page(page_number)
+	# Pagination
+	paginator = Paginator(studies, 10)
+	page_number = request.GET.get("page")
+	page_obj = paginator.get_page(page_number)
 
-    sort_params = request.GET.copy()
-    sort_params.pop("sort", None)
-    sort_params.pop("page", None)
+	sort_params = request.GET.copy()
+	sort_params.pop("sort", None)
+	sort_params.pop("page", None)
 
-    page_params = request.GET.copy()
-    page_params.pop("page", None)
+	page_params = request.GET.copy()
+	page_params.pop("page", None)
 
-    context = {
-        "studies": page_obj,
-        "page_obj": page_obj,
-        "sort": sort,
-        "sort_params": sort_params,
-        "page_params": page_params,
+	context = {
+		"studies": page_obj,
+		"page_obj": page_obj,
+		"sort": sort,
+		"sort_params": sort_params,
+		"page_params": page_params,
 		"status_choices": StudyStatus.choices,
-    }
+	}
 
-    return render(request, "studies/diary_study_list.html", context)
+	return render(request, "studies/diary_study_list.html", context)
 
 # ----------------------- #
 # DIARY ENTRIES (LIST OF) #
@@ -921,211 +921,226 @@ def study_entries_partial(request, study_pk):
 # ------------------------------ #
 @login_required
 def canonical_theme_catalogue_list(request):
-    require_catalogue_manager(request.user)
+	require_catalogue_manager(request.user)
 
-    themes = CanonicalTheme.objects.all().order_by("name")
+	themes = CanonicalTheme.objects.all().order_by("name")
 
-    return render(
-        request,
-        "studies/catalogues/canonical_theme_list.html",
-        {
+	return render(
+		request,
+		"studies/catalogues/canonical_theme_list.html",
+		{
 			"page_title": "Canonical Themes Catalogue",
 			"page_subtitle": "Manage the global catalogue of canonical themes used by analysis methods.",
-            "themes": themes,
-        },
-    )
+			"themes": themes,
+		},
+	)
 
 # -----------------------#
 # CANONICAL THEME CREATE #
 # -----------------------#
 @login_required
 def canonical_theme_create(request):
-    require_catalogue_manager(request.user)
+	require_catalogue_manager(request.user)
 
-    if request.method == "POST":
-        form = CanonicalThemeForm(request.POST)
+	if request.method == "POST":
+		form = CanonicalThemeForm(request.POST)
 
-        if form.is_valid():
-            theme = form.save(commit=False)
-            theme.created_by = request.user
-            theme.save()
+		if form.is_valid():
+			theme = form.save(commit=False)
+			theme.created_by = request.user
 
-            messages.success(request, "Canonical theme created.")
-            return redirect("canonical_theme_catalogue_list")
-    else:
-        form = CanonicalThemeForm()
+			if not theme.source:
+				theme.source = ThemeAndIssueSource.EVALUATOR
 
-    return render(
-        request,
-        "studies/catalogues/canonical_theme_form.html",
-        {
-            "form": form,
-            "page_title": "Create Canonical Theme",
+			if not theme.status:
+				theme.status = ThemeAndIssueStatus.APPROVED
+
+			theme.save()
+
+			messages.success(request, "Canonical theme created.")
+			return redirect("canonical_theme_catalogue_list")
+	else:
+		form = CanonicalThemeForm()
+
+	return render(
+		request,
+		"studies/catalogues/canonical_theme_form.html",
+		{
+			"form": form,
+			"page_title": "Create Canonical Theme",
 			"page_subtitle": "Create and maintain reusable canonical themes for machine and evaluator analysis.",
-            "submit_label": "Create theme",
-        },
-    )
+			"submit_label": "Create theme",
+		},
+	)
 
 # -----------------------#
 # CANONICAL THEME UPDATE #
 # -----------------------#
 @login_required
 def canonical_theme_update(request, theme_pk):
-    require_catalogue_manager(request.user)
+	require_catalogue_manager(request.user)
 
-    theme = get_object_or_404(CanonicalTheme, pk=theme_pk)
+	theme = get_object_or_404(CanonicalTheme, pk=theme_pk)
 
-    if request.method == "POST":
-        form = CanonicalThemeForm(request.POST, instance=theme)
+	if request.method == "POST":
+		form = CanonicalThemeForm(request.POST, instance=theme)
 
-        if form.is_valid():
-            form.save()
+		if form.is_valid():
+			form.save()
 
-            messages.success(request, "Canonical theme updated.")
-            return redirect("canonical_theme_catalogue_list")
-    else:
-        form = CanonicalThemeForm(instance=theme)
+			messages.success(request, "Canonical theme updated.")
+			return redirect("canonical_theme_catalogue_list")
+	else:
+		form = CanonicalThemeForm(instance=theme)
 
-    return render(
-        request,
-        "studies/catalogues/canonical_theme_form.html",
-        {
-            "theme": theme,
-            "form": form,
-            "page_title": "Edit Canonical Theme",
+	return render(
+		request,
+		"studies/catalogues/canonical_theme_form.html",
+		{
+			"theme": theme,
+			"form": form,
+			"page_title": "Edit Canonical Theme",
 			"page_subtitle": "Update and maintain reusable canonical themes for machine and evaluator analysis.",
-            "submit_label": "Save theme",
-        },
-    )
+			"submit_label": "Save theme",
+		},
+	)
 
 # -----------------------#
 # CANONICAL THEME DELETE #
 # -----------------------#
 @login_required
 def canonical_theme_delete(request, theme_pk):
-    require_catalogue_manager(request.user)
+	require_catalogue_manager(request.user)
 
-    theme = get_object_or_404(CanonicalTheme, pk=theme_pk)
+	theme = get_object_or_404(CanonicalTheme, pk=theme_pk)
 
-    if request.method == "POST":
-        theme.delete()
+	if request.method == "POST":
+		theme.delete()
 
-        messages.success(request, "Canonical theme deleted.")
-        return redirect("canonical_theme_catalogue_list")
+		messages.success(request, "Canonical theme deleted.")
+		return redirect("canonical_theme_catalogue_list")
 
-    return render(
-        request,
-        "studies/catalogues/canonical_theme_confirm_delete.html",
-        {
-            "theme": theme,
+	return render(
+		request,
+		"studies/catalogues/canonical_theme_confirm_delete.html",
+		{
+			"theme": theme,
 			"page_title": "Delete Canonical Theme",
 			"page_subtitle": "Confirm whether this theme should be removed from the global catalogue.",
-        },
-    )
+		},
+	)
 
 # ------------------------------ #
 # CANONICAL ISSUE CATALOGUE LIST #
 # ------------------------------ #
 @login_required
 def canonical_issue_catalogue_list(request):
-    require_catalogue_manager(request.user)
+	require_catalogue_manager(request.user)
 
-    issues = CanonicalIssue.objects.all().order_by("name")
+	issues = CanonicalIssue.objects.all().order_by("name")
 
-    return render(
-        request,
-        "studies/catalogues/canonical_issue_list.html",
-        {
-            "page_title": "Canonical Issues Catalogue",
-            "page_subtitle": "Manage the global catalogue of canonical issues used by analysis methods.",
-            "issues": issues,
-        },
-    )
+	return render(
+		request,
+		"studies/catalogues/canonical_issue_list.html",
+		{
+			"page_title": "Canonical Issues Catalogue",
+			"page_subtitle": "Manage the global catalogue of canonical issues used by analysis methods.",
+			"issues": issues,
+		},
+	)
 
 # -----------------------#
 # CANONICAL ISSUE CREATE #
 # -----------------------#
 @login_required
 def canonical_issue_create(request):
-    require_catalogue_manager(request.user)
+	require_catalogue_manager(request.user)
 
-    if request.method == "POST":
-        form = CanonicalIssueForm(request.POST)
+	if request.method == "POST":
+		form = CanonicalIssueForm(request.POST)
 
-        if form.is_valid():
-            issue = form.save(commit=False)
-            issue.created_by = request.user
-            issue.save()
+		if form.is_valid():
+			issue = form.save(commit=False)
+			issue.created_by = request.user
 
-            messages.success(request, "Canonical issue created.")
-            return redirect("canonical_issue_catalogue_list")
-    else:
-        form = CanonicalIssueForm()
+			if not issue.source:
+				issue.source = ThemeAndIssueSource.EVALUATOR
 
-    return render(
-        request,
-        "studies/catalogues/canonical_issue_form.html",
-        {
-            "form": form,
-            "page_title": "Create Canonical Issue",
-            "page_subtitle": "Create and maintain reusable canonical issues for machine and evaluator analysis.",
-            "submit_label": "Create issue",
-        },
-    )
+			if not issue.status:
+				issue.status = ThemeAndIssueStatus.APPROVED
+
+			issue.save()
+
+			messages.success(request, "Canonical issue created.")
+			return redirect("canonical_issue_catalogue_list")
+		
+	else:
+		form = CanonicalIssueForm()
+
+	return render(
+		request,
+		"studies/catalogues/canonical_issue_form.html",
+		{
+			"form": form,
+			"page_title": "Create Canonical Issue",
+			"page_subtitle": "Create and maintain reusable canonical issues for machine and evaluator analysis.",
+			"submit_label": "Create issue",
+		},
+	)
 
 # -----------------------#
 # CANONICAL ISSUE UPDATE #
 # -----------------------#
 @login_required
 def canonical_issue_update(request, issue_pk):
-    require_catalogue_manager(request.user)
+	require_catalogue_manager(request.user)
 
-    issue = get_object_or_404(CanonicalIssue, pk=issue_pk)
+	issue = get_object_or_404(CanonicalIssue, pk=issue_pk)
 
-    if request.method == "POST":
-        form = CanonicalIssueForm(request.POST, instance=issue)
+	if request.method == "POST":
+		form = CanonicalIssueForm(request.POST, instance=issue)
 
-        if form.is_valid():
-            form.save()
+		if form.is_valid():
+			form.save()
 
-            messages.success(request, "Canonical issue updated.")
-            return redirect("canonical_issue_catalogue_list")
-    else:
-        form = CanonicalIssueForm(instance=issue)
+			messages.success(request, "Canonical issue updated.")
+			return redirect("canonical_issue_catalogue_list")
+	else:
+		form = CanonicalIssueForm(instance=issue)
 
-    return render(
-        request,
-        "studies/catalogues/canonical_issue_form.html",
-        {
-            "issue": issue,
-            "form": form,
-            "page_title": "Edit Canonical Issue",
-            "page_subtitle": "Update and maintain reusable canonical issues for machine and evaluator analysis.",
-            "submit_label": "Save issue",
-        },
-    )
+	return render(
+		request,
+		"studies/catalogues/canonical_issue_form.html",
+		{
+			"issue": issue,
+			"form": form,
+			"page_title": "Edit Canonical Issue",
+			"page_subtitle": "Update and maintain reusable canonical issues for machine and evaluator analysis.",
+			"submit_label": "Save issue",
+		},
+	)
 
 # -----------------------#
 # CANONICAL ISSUE DELETE #
 # -----------------------#
 @login_required
 def canonical_issue_delete(request, issue_pk):
-    require_catalogue_manager(request.user)
+	require_catalogue_manager(request.user)
 
-    issue = get_object_or_404(CanonicalIssue, pk=issue_pk)
+	issue = get_object_or_404(CanonicalIssue, pk=issue_pk)
 
-    if request.method == "POST":
-        issue.delete()
+	if request.method == "POST":
+		issue.delete()
 
-        messages.success(request, "Canonical issue deleted.")
-        return redirect("canonical_issue_catalogue_list")
+		messages.success(request, "Canonical issue deleted.")
+		return redirect("canonical_issue_catalogue_list")
 
-    return render(
-        request,
-        "studies/catalogues/canonical_issue_confirm_delete.html",
-        {
-            "issue": issue,
-            "page_title": "Delete Canonical Issue",
-            "page_subtitle": "Confirm whether this issue should be removed from the global catalogue.",
-        },
-    )
+	return render(
+		request,
+		"studies/catalogues/canonical_issue_confirm_delete.html",
+		{
+			"issue": issue,
+			"page_title": "Delete Canonical Issue",
+			"page_subtitle": "Confirm whether this issue should be removed from the global catalogue.",
+		},
+	)

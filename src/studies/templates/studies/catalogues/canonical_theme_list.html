@@ -32,29 +32,15 @@
                 <table class="w-full table-auto text-sm">
                     <thead class="bg-gray-100 dark:bg-gray-700 dark:text-gray-200 text-gray-600">
                         <tr class="border-b border-t border-gray-200 dark:border-gray-600">
-                            <th>
-                                Theme
-                            </th>
-
-                            <th>
-                                Description
-                            </th>
-
-                            <th>
-                                Examples
-                            </th>
-
-                            <th>
-                                Status
-                            </th>
-
-                            <th>
-                                Created
-                            </th>
-
-                            <th>
-                                Actions
-                            </th>
+                            <th>Theme</th>
+                            <th>Description</th>
+                            <th>Aliases</th>
+                            <th>Source</th>
+                            <th>Status</th>
+                            <th>Examples</th>
+                            <th>Active</th>
+                            <th>Created</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
 
@@ -79,6 +65,50 @@
                                 </td>
 
                                 <td class="px-4 py-3 text-sm max-w-md">
+                                    {% if theme.aliases %}
+                                        <div class="flex flex-wrap gap-2">
+                                            {% for alias in theme.aliases %}
+                                                <span class="badge">
+                                                    {{ alias }}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-gray-400">—</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    {% if theme.source %}
+                                        <span class="badge">
+                                            {{ theme.get_source_display }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-gray-400">—</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    {% if theme.status %}
+                                        {% if theme.status == "APPROVED" %}
+                                            <span class="message-success">
+                                                {{ theme.get_status_display }}
+                                            </span>
+                                        {% elif theme.status == "REJECTED" %}
+                                            <span class="message-error">
+                                                {{ theme.get_status_display }}
+                                            </span>
+                                        {% else %}
+                                            <span class="message-default">
+                                                {{ theme.get_status_display }}
+                                            </span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-gray-400">—</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="px-4 py-3 text-sm max-w-md">
                                     {% if theme.examples %}
                                         <p class="line-clamp-2">
                                             {{ theme.examples }}
@@ -90,11 +120,11 @@
 
                                 <td class="px-4 py-3 whitespace-nowrap">
                                     {% if theme.is_active %}
-                                        <span class="badge-POSITIVE">
+                                        <span class="message-info">
                                             Active
                                         </span>
                                     {% else %}
-                                        <span class="badge-NONE">
+                                        <span class="message-default">
                                             Inactive
                                         </span>
                                     {% endif %}

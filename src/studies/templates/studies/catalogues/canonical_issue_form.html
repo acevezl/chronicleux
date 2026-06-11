@@ -72,6 +72,55 @@
 					{% endif %}
 				</div>
 
+				<!-- ALIASES -->
+				<div>
+					<label for="{{ form.aliases.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+						Aliases
+					</label>
+
+					{% if form.aliases.help_text %}
+						<p class="message-default my-2">
+							{% heroicon_outline "chat-bubble-oval-left" class="h-4 w-4"%}
+							{{ form.aliases.help_text }}
+						</p>
+					{% endif %}
+
+					{{ form.aliases }}
+
+					{% if form.aliases.errors %}
+						<p class="message-error my-2">{{ form.aliases.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+				<!-- SOURCE AND STATUS -->
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+					<div>
+						<label for="{{ form.source.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+							Source
+						</label>
+
+						{{ form.source }}
+
+						{% if form.source.errors %}
+							<p class="message-error my-2">{{ form.source.errors|join:", " }}</p>
+						{% endif %}
+					</div>
+
+					<div>
+						<label for="{{ form.status.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+							Status
+						</label>
+
+						{{ form.status }}
+
+						{% if form.status.errors %}
+							<p class="message-error my-2">{{ form.status.errors|join:", " }}</p>
+						{% endif %}
+					</div>
+
+				</div>
+
 				<!-- EXAMPLES -->
 				<div>
 					<label for="{{ form.examples.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">

@@ -55,6 +55,30 @@
 								No description provided.
 							</p>
 						{% endif %}
+
+						{% if issue.aliases %}
+							<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+								Aliases: {{ issue.aliases|join:", " }}
+							</p>
+						{% endif %}
+
+						<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+							Source:
+							{% if issue.source %}
+								{{ issue.get_source_display }}
+							{% else %}
+								—
+							{% endif %}
+						</p>
+
+						<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+							Status:
+							{% if issue.status %}
+								{{ issue.get_status_display }}
+							{% else %}
+								—
+							{% endif %}
+						</p>
 					</div>
 
 					<div class="message-warning my-2">

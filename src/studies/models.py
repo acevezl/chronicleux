@@ -715,6 +715,7 @@ class CanonicalTheme(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
     aliases = models.JSONField(default=list, blank=True)
+
     source = models.CharField(
         max_length=20,
         choices=ThemeAndIssueSource.choices,
@@ -772,8 +773,23 @@ class CanonicalIssue(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
+    aliases = models.JSONField(default=list, blank=True)
+
+    source = models.CharField(
+        max_length=20,
+        choices=ThemeAndIssueSource.choices,
+        null=True,
+        blank=True,
+    )
 
     examples = models.TextField(
+        blank=True,
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=ThemeAndIssueStatus.choices,
+        null=True,
         blank=True,
     )
 
