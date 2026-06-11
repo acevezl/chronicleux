@@ -19,6 +19,14 @@
         <div class="card-summary">
 
             <a
+                href="{% url 'canonical_issue_import' %}"
+                class="button-PRIMARY h-10 inline-flex items-center"
+            >
+                {% heroicon_outline "arrow-up-tray" class="h-4 w-4 shrink-0" %}
+                Import Issues
+            </a>
+
+            <a
                 href="{% url 'canonical_issue_create' %}"
                 class="button-SECONDARY h-10 inline-flex items-center"
             >

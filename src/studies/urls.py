@@ -37,5 +37,6 @@ urlpatterns = [
     path("catalogues/canonical-issues/create/", views.canonical_issue_create, name="canonical_issue_create"),
     path("catalogues/canonical-issues/<int:issue_pk>/edit/", views.canonical_issue_update, name="canonical_issue_update"),
     path("catalogues/canonical-issues/<int:issue_pk>/delete/", views.canonical_issue_delete, name="canonical_issue_delete"),
+    path("catalogues/canonical-issues/import/", views.canonical_issue_import, name="canonical_issue_import"),
     path("catalogues/canonical-issues/partial/", views.canonical_issue_catalogue_partial, name="canonical_issue_catalogue_partial"),
 ]

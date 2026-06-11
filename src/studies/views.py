@@ -55,7 +55,9 @@ from .helpers import (
 	user_can_evaluate_study,
 	require_catalogue_manager,
 	import_canonical_themes,
+	import_canonical_issues,
 	parse_uploaded_canonical_theme_file,
+	parse_uploaded_canonical_issue_file,
 )
 
 # ----------------------- VIEWS ----------------------- #
@@ -1303,3 +1305,41 @@ def canonical_issue_delete(request, issue_pk):
 		},
 	)
 
+# -----------------------#
+# CANONICAL ISSUE IMPORT #
+# -----------------------#
+@login_required
+def canonical_issue_import(request):
+	require_catalogue_manager(request.user)
+
+	if request.method == "POST":
+		uploaded_file = request.FILES.get("file")
+
+		try:
+			rows = parse_uploaded_canonical_issue_file(uploaded_file)
+			result = import_canonical_issues(rows, request.user)
+
+			messages.success(
+				request,
+				f"Imported canonical issues. "
+				f"Created: {result['created']}. "
+				f"Updated: {result['updated']}. "
+				f"Skipped: {result['skipped']}."
+			)
+
+			return redirect("canonical_issue_catalogue_list")
+
+		except ValueError as e:
+			messages.error(request, str(e))
+
+		except Exception as e:
+			messages.error(request, f"Issue import failed: {e}")
+
+	return render(
+		request,
+		"studies/catalogues/canonical_issue_import.html",
+		{
+			"page_title": "Import Canonical Issues",
+			"page_subtitle": "Import canonical issues into the global catalogue from a CSV file.",
+		},
+	)

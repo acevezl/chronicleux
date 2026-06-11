@@ -330,7 +330,6 @@ def import_canonical_themes(rows, created_by_user):
 		"skipped": skipped_count,
 	}
 
-
 # CATALOG IMPORT HELPER: CREATE CANONICAL THEME FROM DATA ROW
 def create_canonical_theme_from_row(row, created_by_user):
 	name = row.get("name")
@@ -352,7 +351,6 @@ def create_canonical_theme_from_row(row, created_by_user):
 
 	return theme, created
 
-
 # CATALOG IMPORT HELPER: PARSE UPLOADED CANONICAL THEME FILE
 def parse_uploaded_canonical_theme_file(uploaded_file):
 	if uploaded_file is None:
@@ -364,7 +362,6 @@ def parse_uploaded_canonical_theme_file(uploaded_file):
 		return parse_canonical_theme_csv(uploaded_file.file)
 
 	raise ValueError("Unsupported file type. Please upload a CSV file.")
-
 
 # CATALOG IMPORT HELPER: PARSE CANONICAL THEME CSV
 def parse_canonical_theme_csv(file):
@@ -392,9 +389,109 @@ def parse_canonical_theme_csv(file):
 
 	return rows
 
+# CATALOG IMPORT HELPER: IMPORT CANONICAL ISSUES
+@transaction.atomic
+def import_canonical_issues(rows, created_by_user):
+	created_count = 0
+	updated_count = 0
+	skipped_count = 0
+
+	for index, row in enumerate(rows, start=1):
+		try:
+			if not row.get("name"):
+				skipped_count += 1
+				continue
+
+			issue, created = create_canonical_issue_from_row(row, created_by_user)
+
+			if created:
+				created_count += 1
+			else:
+				updated_count += 1
+
+		except Exception as e:
+			raise ValueError(f"Row {index}: {e}")
+
+	return {
+		"created": created_count,
+		"updated": updated_count,
+		"skipped": skipped_count,
+	}
+
+# CATALOG IMPORT HELPER: CREATE CANONICAL ISSUE FROM DATA ROW
+def create_canonical_issue_from_row(row, created_by_user):
+	name = row.get("name")
+	if not name:
+		raise ValueError("Field `name` is required in a canonical issue.")
+
+	issue, created = CanonicalIssue.objects.update_or_create(
+		name=name,
+		defaults={
+			"description": row.get("description") or "",
+			"aliases": row.get("aliases") or [],
+			"examples": row.get("examples") or "",
+			"source": row.get("source") or ThemeAndIssueSource.EVALUATOR,
+			"status": row.get("status") or ThemeAndIssueStatus.APPROVED,
+			"is_active": row.get("is_active"),
+			"created_by": created_by_user,
+		},
+	)
+
+	return issue, created
+
+# CATALOG IMPORT HELPER: PARSE UPLOADED CANONICAL ISSUE FILE
+def parse_uploaded_canonical_issue_file(uploaded_file):
+	if uploaded_file is None:
+		raise ValueError("Please choose a CSV file to import.")
+
+	filename = uploaded_file.name.lower()
+
+	if filename.endswith(".csv"):
+		return parse_canonical_issue_csv(uploaded_file.file)
+
+	raise ValueError("Unsupported file type. Please upload a CSV file.")
+
+# CATALOG IMPORT HELPER: PARSE CANONICAL ISSUE CSV
+def parse_canonical_issue_csv(file):
+	import csv
+	from io import TextIOWrapper
+
+	text_file = TextIOWrapper(file, encoding="utf-8-sig", newline="")
+	reader = csv.DictReader(text_file)
+
+	if not reader.fieldnames:
+		raise ValueError("The CSV file is empty or missing a header row.")
+
+	required_columns = {"name"}
+	available_columns = {column.strip() for column in reader.fieldnames if column}
+	missing_columns = required_columns - available_columns
+
+	if missing_columns:
+		raise ValueError(
+			f"Missing required column(s): {', '.join(sorted(missing_columns))}."
+		)
+
+	rows = []
+	for row in reader:
+		rows.append(normalize_canonical_issue_row(row))
+
+	return rows
 
 # CATALOG IMPORT HELPER: NORMALIZE CANONICAL THEME ROW
 def normalize_canonical_theme_row(row):
+	return {
+		"name": normalize_str(row.get("name")),
+		"description": normalize_str(row.get("description")) or "",
+		"aliases": normalize_aliases(row.get("aliases")),
+		"examples": normalize_str(row.get("examples")) or "",
+		"source": normalize_theme_and_issue_source(row.get("source")),
+		"status": normalize_theme_and_issue_status(row.get("status")),
+		"is_active": normalize_optional_bool(row.get("is_active"), default=True),
+	}
+
+
+# CATALOG IMPORT HELPER: NORMALIZE CANONICAL ISSUE ROW
+def normalize_canonical_issue_row(row):
 	return {
 		"name": normalize_str(row.get("name")),
 		"description": normalize_str(row.get("description")) or "",
