@@ -43,7 +43,7 @@
                     >
 
                     <span class="tab-menu-item-label">
-                        Negative Detection
+                        Negative Sentiment Detection Metrics
                     </span>
                 </label>
 
@@ -56,7 +56,7 @@
                     >
 
                     <span class="tab-menu-item-label">
-                        Sentiment Labels
+                        All Sentiments Detection Metrics
                     </span>
                 </label>
 
@@ -69,7 +69,7 @@
                     >
 
                     <span class="tab-menu-item-label">
-                        Dominant Findings
+                        Dominance Findings
                     </span>
                 </label>
 
@@ -106,68 +106,44 @@
         <div class="p-4">
 
             <section data-analysis-tab-panel="overview">
-                <div class="rounded-sm border border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        Overview
-                    </h3>
-                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                        Placeholder for analysis run details, selected machine methods, review progress, and high-level machine results.
-                    </p>
-                </div>
+                {% include "studies/partials/_analysis_overview.html" with run=run study=study %}
             </section>
 
             <section data-analysis-tab-panel="negative_detection" class="hidden">
-                <div class="rounded-sm border border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        Negative Detection
-                    </h3>
-                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                        Placeholder for binary negative sentiment metrics and confusion matrices.
-                    </p>
+                <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <!-- Participant -->
+                    {% include "studies/partials/_analysis_run_metrics_participant.html" with run=run%}
+
+                    <!-- Evaluator -->
+                    {% include "studies/partials/_analysis_run_metrics_evaluator.html" with run=run%}
                 </div>
             </section>
 
             <section data-analysis-tab-panel="sentiment_labels" class="hidden">
-                <div class="rounded-sm border border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        Sentiment Labels
-                    </h3>
-                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                        Placeholder for per-label sentiment classification metrics and multi-class confusion matrices.
-                    </p>
+                <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                    <!-- Participant -->
+                    {% include "studies/partials/_analysis_run_metrics_per_category_participant.html" with run=run study=study %}
+
+                    <!-- Evaluator -->
+                    {% include "studies/partials/_analysis_run_metrics_per_category_evaluator.html" with run=run study=study %}
                 </div>
             </section>
 
             <section data-analysis-tab-panel="dominant_findings" class="hidden">
-                <div class="rounded-sm border border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        Dominant Findings
-                    </h3>
-                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                        Placeholder for dominant sentiment, canonical themes, and canonical issues.
-                    </p>
-                </div>
+                {% include "studies/partials/_analysis_dominance_findings.html" with run=run study=study %}
             </section>
 
             <section data-analysis-tab-panel="evolution" class="hidden">
-                <div class="rounded-sm border border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        Evolution Over Time
-                    </h3>
-                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                        Placeholder for sentiment, theme, and issue evolution over time.
-                    </p>
-                </div>
+                {% include "studies/partials/_analysis_evolution_over_time.html" with run=run study=study %}
             </section>
 
             <section data-analysis-tab-panel="entries" class="hidden">
-                <div class="rounded-sm border border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
-                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        Entries
-                    </h3>
-                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                        Placeholder for entry review status, filters, and links to manually evaluate entries.
-                    </p>
+                <div class="mt-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 overflow-hidden">
+            
+                    <div class="" id="analysis-entries-panel">
+                        {% include "studies/partials/_entries_with_analysis.html" with entry_analyses=entry_analyses study=study run=run %}
+                    </div>
+
                 </div>
             </section>
 

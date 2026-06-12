@@ -1,29 +1,24 @@
 {% load heroicons %}
 {% load formatters %}
 
-<details class="group/category main-card mb-4">
+<section open class="group/category main-card mb-4">
 
-    <summary class="card-summary">
+    <header class="flex items-center justify-between gap-2 p-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div class="flex flex-col">
-            <h4 class="card-summary-title">
-            {% heroicon_outline "user-group" %}
-                Participant Sentiment Metrics by Category
+            <h4 class="flex items-center gap-2 font-semibold text-gray-900 dark:text-gray-100">
+                Sentiment Detection Metrics vs. Participant Reference
             </h4>
         </div>
-        <span class="ml-auto transition-transform duration-200 -rotate-180 group-open/category:rotate-0 cursor-pointer">
-            {% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
-        </span>
-    </summary>
+    </header>
 
     <div class="p-4">
-
-        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        <p class="text-sm text-gray-600 dark:text-gray-400">
             One-vs-rest sentiment classification metrics comparing machine-detected labels against participant self-reported labels.
         </p>
-
+        
         {% if run.participant_sentiment_metrics_by_category %}
 
-            <div class="grid grid-cols-1 xl:grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 gap-3 mt-4">
 
                 {% for category, metrics in run.participant_sentiment_metrics_by_category.items %}
 
@@ -174,4 +169,4 @@
 
     </div>
 
-</details>
+</section>

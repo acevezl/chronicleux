@@ -21,7 +21,7 @@
 		@apply inline-flex items-center rounded-full gap-1 px-3 py-1 text-xs font-medium  bg-amber-50 text-amber-800 border border-amber-800;
 	}
 
-	 .status-cell-HUMAN_ANALYSIS {
+	.status-cell-HUMAN_ANALYSIS {
 		@apply inline-flex items-center rounded-full gap-1 px-3 py-1 text-xs font-medium  bg-amber-50 text-amber-800 border border-amber-800;
 	}
 
@@ -154,11 +154,11 @@
 	}
 
 	.card-summary-title {
-		@apply inline-flex items-center gap-2 text-lg font-medium text-gray-900 dark:text-gray-100
+		@apply inline-flex items-center gap-2 font-semibold text-gray-900 dark:text-gray-100
 	}
 
 	.card-summary-subtitle {
-		@apply inline-flex items-center gap-2 mx-1 mt-1 text-sm text-gray-600 dark:text-gray-300
+		@apply inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300
 	}
 	
 	.card-summary-chevron {

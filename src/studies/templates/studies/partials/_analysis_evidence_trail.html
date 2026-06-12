@@ -1,0 +1,33 @@
+{% load heroicons %}
+{% load formatters %}
+
+<section open class="group/category main-card mb-4">
+            
+    <header class="flex items-center justify-between gap-2 p-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex flex-col">
+            
+            <h4 class="flex items-center gap-2 font-semibold text-gray-900 dark:text-gray-100">
+                Evidence Trail
+            </h4>
+
+            
+
+        </div>
+    </header>
+
+    <div class="p-4">
+        <p class="card-summary-subtitle ">
+            Analyzed diary entries with their detected sentiment, themes, issue tags, and links back to the original entry.
+        </p>
+        
+        <!-- EVIDENCE TRAIL -->
+        <div class="mt-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 overflow-hidden">
+            
+            <div class="" id="analysis-entries-panel">
+                {% include "studies/partials/_entries_with_analysis.html" with entry_analyses=entry_analyses study=study run=run %}
+            </div>
+
+        </div>
+            
+    </div>
+</header>

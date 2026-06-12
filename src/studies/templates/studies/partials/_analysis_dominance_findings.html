@@ -1,0 +1,40 @@
+{% load heroicons %}
+{% load formatters %}
+
+<section open class="group/category main-card mb-4">
+            
+    <header class="flex items-center justify-between gap-2 p-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex flex-col">
+            
+            <h4 class="flex items-center gap-2 font-semibold text-gray-900 dark:text-gray-100">
+                Study-level Overview
+            </h4>
+
+        </div>
+    </header>
+
+    <div class="p-4">
+        <p class="card-summary-subtitle">
+            A high-level summary of the study's detected sentiment, recurring themes, reported issues, and their estimated impact across diary entries.
+        </p>
+        <!-- KEY INSIGHTS -->
+        <div class="grid grid-cols-1 gap-4 p-4 bg-white dark:bg-gray-900">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                <!-- DOMINANT SENTIMENT & DISTRIBUTION -->
+                {% include "studies/partials/_distribution_sentiment.html" with dominant_sentiment=run.dominant_sentiment_label sentiment_distribution=run.sentiment_distribution study_id=study.id run_id=run.id%}
+                
+                <!-- DOMINANT THEME & DISTRIBUTION -->
+                {% include "studies/partials/_distribution_theme.html" with dominant_theme=run.dominant_theme_label theme_distribution=run.theme_distribution study_id=study.id run_id=run.id%}
+
+                <!-- ISSUE DISTRIBUTION -->
+                {% include "studies/partials/_distribution_issues.html" with issue_distribution=run.recurring_issues study_id=study.id run_id=run.id%}
+
+                <!-- ISSUE IMPACT MATRIX -->
+                {% include "studies/partials/_issue_impact_matrix.html" with issue_impact_matrix=run.recurring_issues study_id=study.id run_id=run.id%}
+
+            </div>
+                
+        </div>
+    </div>
+</section>

@@ -1,177 +1,185 @@
 {% load heroicons %}
 {% load formatters %}
 
-<details class="group/category main-card mb-4">
+<section open class="group/category main-card mb-4">
 
-    <summary class="card-summary">
+    <header class="flex items-center justify-between gap-2 p-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div class="flex flex-col">
-            <h4 class="card-summary-title">
-            {% heroicon_outline "chart-bar-square" %}
-            Evaluator Sentiment Metrics by Category
+            <h4 class="flex items-center gap-2 font-semibold text-gray-900 dark:text-gray-100">
+                Sentiment Detection Metrics vs. Evaluator Reference
             </h4>
         </div>
-        <span class="ml-auto transition-transform duration-200 -rotate-180 group-open/category:rotate-0 cursor-pointer">
-            {% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
-        </span>
-    </summary>
+    </header>
 
     <div class="p-4">
-
-        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        <p class="text-sm text-gray-600 dark:text-gray-400">
             One-vs-rest sentiment classification metrics comparing machine-detected labels against evaluator-assigned labels.
         </p>
 
-        {% if run.evaluator_sentiment_metrics_by_category %}
+        {% if run.run_accuracy_v_evaluator is not None and run.run_precision_v_evaluator is not None and run.run_recall_v_evaluator is not None and run.run_f1_v_evaluator is not None %}
+            
+            
 
-            <div class="grid grid-cols-1 xl:grid-cols-3 gap-3">
+            {% if run.evaluator_sentiment_metrics_by_category %}
 
-                {% for category, metrics in run.evaluator_sentiment_metrics_by_category.items %}
+                <div class="grid grid-cols-1 gap-3 mt-4">
 
-                    <article class="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
+                    {% for category, metrics in run.evaluator_sentiment_metrics_by_category.items %}
 
-                        <!-- CATEGORY HEADER -->
-                        <header class="px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                            <h5 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                {{ category|humanize_enum|upper }}
-                            </h5>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">
-                                Target label: {{ category|humanize_enum|upper  }} vs. all other sentiment labels
-                            </p>
-                        </header>
+                        <article class="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
 
-                        <div class="p-3">
+                            <!-- CATEGORY HEADER -->
+                            <header class="px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                                <h5 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                    {{ category|humanize_enum|upper }}
+                                </h5>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    Target label: {{ category|humanize_enum|upper  }} vs. all other sentiment labels
+                                </p>
+                            </header>
 
-                            <!-- METRIC SCORES -->
-                            <div class="grid grid-cols-4 gap-2 mb-3">
+                            <div class="p-3">
 
-                                <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2">
-                                    <span class="xs-label">Accuracy</span>
-                                    <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                        {% if metrics.accuracy is not None %}
-                                            {{ metrics.accuracy|floatformat:3 }}
-                                        {% else %}
-                                            —
-                                        {% endif %}
-                                    </p>
+                                <!-- METRIC SCORES -->
+                                <div class="grid grid-cols-4 gap-2 mb-3">
+
+                                    <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2">
+                                        <span class="xs-label">Accuracy</span>
+                                        <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                            {% if metrics.accuracy is not None %}
+                                                {{ metrics.accuracy|floatformat:3 }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </p>
+                                    </div>
+
+                                    <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2">
+                                        <span class="xs-label">Precision</span>
+                                        <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                            {% if metrics.precision is not None %}
+                                                {{ metrics.precision|floatformat:3 }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </p>
+                                    </div>
+
+                                    <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2">
+                                        <span class="xs-label">Recall</span>
+                                        <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                            {% if metrics.recall is not None %}
+                                                {{ metrics.recall|floatformat:3 }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </p>
+                                    </div>
+
+                                    <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2">
+                                        <span class="xs-label">F1</span>
+                                        <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                            {% if metrics.f1 is not None %}
+                                                {{ metrics.f1|floatformat:3 }}
+                                            {% else %}
+                                                —
+                                            {% endif %}
+                                        </p>
+                                    </div>
+
                                 </div>
 
-                                <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2">
-                                    <span class="xs-label">Precision</span>
-                                    <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                        {% if metrics.precision is not None %}
-                                            {{ metrics.precision|floatformat:3 }}
-                                        {% else %}
-                                            —
-                                        {% endif %}
-                                    </p>
-                                </div>
+                                <!-- COMPACT CONFUSION MATRIX -->
+                                <div class="rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
 
-                                <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2">
-                                    <span class="xs-label">Recall</span>
-                                    <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                        {% if metrics.recall is not None %}
-                                            {{ metrics.recall|floatformat:3 }}
-                                        {% else %}
-                                            —
-                                        {% endif %}
-                                    </p>
-                                </div>
+                                    <div class="grid grid-cols-[6rem_1fr_1fr] gap-1 p-2">
 
-                                <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2">
-                                    <span class="xs-label">F1</span>
-                                    <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
-                                        {% if metrics.f1 is not None %}
-                                            {{ metrics.f1|floatformat:3 }}
-                                        {% else %}
-                                            —
-                                        {% endif %}
-                                    </p>
+                                        <!-- COLUMN LABELS -->
+                                        <div></div>
+
+                                        <div class="flex flex-col items-center justify-center rounded-sm bg-gray-50 dark:bg-gray-800 px-2 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 text-center">
+                                            <span>Evaluator</span>
+                                            <span>{{ category|humanize_enum|upper  }}</span>
+                                        </div>
+
+                                        <div class="flex flex-col items-center justify-center rounded-sm bg-gray-50 dark:bg-gray-800 px-2 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 text-center">
+                                            <span>Evaluator</span>
+                                            <span>Other</span>
+                                        </div>
+
+                                        <!-- ROW: MACHINE TARGET -->
+                                        <div class="flex flex-col items-center justify-center rounded-sm bg-gray-50 dark:bg-gray-800 px-2 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 text-center">
+                                            <span>Detected</span>
+                                            <span>{{ category|humanize_enum|upper  }}</span>
+                                        </div>
+
+                                        <div class="rounded-sm border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20 p-2 text-center">
+                                            <span class="block xs-label">TP</span>
+                                            <span class="block text-lg font-semibold text-green-700 dark:text-green-300">
+                                                {{ metrics.tp|default:0 }}
+                                            </span>
+                                            <span class="block xs-label">({{ category|humanize_enum  }} sentiment correctly detected)</span>
+                                        </div>
+
+                                        <div class="rounded-sm border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 p-2 text-center">
+                                            <span class="block xs-label">FP</span>
+                                            <span class="block text-lg font-semibold text-red-700 dark:text-red-300">
+                                                {{ metrics.fp|default:0 }}
+                                            </span>
+                                            <span class="block xs-label">(False alarm)</span>
+                                        </div>
+
+                                        <!-- ROW: MACHINE OTHER -->
+                                        <div class="flex flex-col items-center justify-center rounded-sm bg-gray-50 dark:bg-gray-800 px-2 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 text-center">
+                                            <span>Detected</span>
+                                            <span>Other</span>
+                                        </div>
+
+                                        <div class="rounded-sm border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/20 p-2 text-center">
+                                            <span class="block xs-label">FN</span>
+                                            <span class="block text-lg font-semibold text-orange-700 dark:text-orange-300">
+                                                {{ metrics.fn|default:0 }}
+                                            </span>
+                                            <span class="block xs-label">(Missed {{ category|humanize_enum  }} sentiment)</span>
+                                        </div>
+
+                                        <div class="rounded-sm border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 p-2 text-center">
+                                            <span class="block xs-label">TN</span>
+                                            <span class="block text-lg font-semibold text-blue-700 dark:text-blue-300">
+                                                {{ metrics.tn|default:0 }}
+                                            </span>
+                                            <span class="block xs-label">(Correctly ignored)</span>
+                                        </div>
+
+                                    </div>
+
                                 </div>
 
                             </div>
 
-                            <!-- COMPACT CONFUSION MATRIX -->
-                            <div class="rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        </article>
 
-                                <div class="grid grid-cols-[6rem_1fr_1fr] gap-1 p-2">
+                    {% endfor %}
 
-                                    <!-- COLUMN LABELS -->
-                                    <div></div>
+                </div>
 
-                                    <div class="flex flex-col items-center justify-center rounded-sm bg-gray-50 dark:bg-gray-800 px-2 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 text-center">
-                                        <span>Evaluator</span>
-                                        <span>{{ category|humanize_enum|upper  }}</span>
-                                    </div>
+            {% else %}
 
-                                    <div class="flex flex-col items-center justify-center rounded-sm bg-gray-50 dark:bg-gray-800 px-2 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 text-center">
-                                        <span>Evaluator</span>
-                                        <span>Other</span>
-                                    </div>
+                <div class="rounded-md border border-gray-200 dark:border-gray-700 p-4 text-sm text-gray-600 dark:text-gray-400">
+                    No evaluator sentiment metrics by category are available for this run.
+                </div>
 
-                                    <!-- ROW: MACHINE TARGET -->
-                                    <div class="flex flex-col items-center justify-center rounded-sm bg-gray-50 dark:bg-gray-800 px-2 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 text-center">
-                                        <span>Detected</span>
-                                        <span>{{ category|humanize_enum|upper  }}</span>
-                                    </div>
-
-                                    <div class="rounded-sm border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20 p-2 text-center">
-                                        <span class="block xs-label">TP</span>
-                                        <span class="block text-lg font-semibold text-green-700 dark:text-green-300">
-                                            {{ metrics.tp|default:0 }}
-                                        </span>
-                                        <span class="block xs-label">({{ category|humanize_enum  }} sentiment correctly detected)</span>
-                                    </div>
-
-                                    <div class="rounded-sm border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 p-2 text-center">
-                                        <span class="block xs-label">FP</span>
-                                        <span class="block text-lg font-semibold text-red-700 dark:text-red-300">
-                                            {{ metrics.fp|default:0 }}
-                                        </span>
-                                        <span class="block xs-label">(False alarm)</span>
-                                    </div>
-
-                                    <!-- ROW: MACHINE OTHER -->
-                                    <div class="flex flex-col items-center justify-center rounded-sm bg-gray-50 dark:bg-gray-800 px-2 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 text-center">
-                                        <span>Detected</span>
-                                        <span>Other</span>
-                                    </div>
-
-                                    <div class="rounded-sm border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/20 p-2 text-center">
-                                        <span class="block xs-label">FN</span>
-                                        <span class="block text-lg font-semibold text-orange-700 dark:text-orange-300">
-                                            {{ metrics.fn|default:0 }}
-                                        </span>
-                                        <span class="block xs-label">(Missed {{ category|humanize_enum  }} sentiment)</span>
-                                    </div>
-
-                                    <div class="rounded-sm border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 p-2 text-center">
-                                        <span class="block xs-label">TN</span>
-                                        <span class="block text-lg font-semibold text-blue-700 dark:text-blue-300">
-                                            {{ metrics.tn|default:0 }}
-                                        </span>
-                                        <span class="block xs-label">(Correctly ignored)</span>
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </article>
-
-                {% endfor %}
-
-            </div>
+            {% endif %}
 
         {% else %}
-
-            <div class="rounded-md border border-gray-200 dark:border-gray-700 p-4 text-sm text-gray-600 dark:text-gray-400">
-                No evaluator sentiment metrics by category are available for this run.
+            <div class="rounded-sm border border-dashed border-gray-300 p-10 text-center dark:border-gray-600 mt-4">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <strong>Sentiment detection metrics of Machine Analysis vs. Evaluator Reference are not yet available. </strong>
+                    Once an evaluator performs a human analysis of the entries of this study, metrics will appear here.
+                </p>
             </div>
-
         {% endif %}
 
     </div>
 
-</details>
+</section>
