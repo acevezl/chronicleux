@@ -5,35 +5,39 @@
 
 {% block content %}
 
-<div class="mt-2 md:flex md:items-center md:justify-between">
-	<div class="min-w-0 flex-1">
-		<h3 class="text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight dark:text-white">
-			Log a New Entry
-		</h3>
-	</div>
+<div class="sticky-top">
+	{% include "studies/partials/_header.html" with study=study page_title_heroicon=page_title_heroicon page_title=page_title page_subtitle=page_subtitle%}
+	{% include "studies/partials/_menu_back_to_study.html" with study=study %}
 </div>
 
-<div class="mt-6 grid grid-cols-1 gap-4">
+<div class="p-4">
 	<div class="bg-white border border-gray-200 rounded-sm overflow-hidden">
-		<div class="border-b border-gray-200 bg-gray-50 p-4">
-			<span class="text-xl text-fuchsia-700 dark:text-gray-200">Diary Entry</span>
-			<div class="flex md:grid-cols-2 gap-4">
-				<span class="mt-1 text-sm text-gray-900">
-					Submit a new entry for <span class="font-medium">{{ study.title }}</span>.
+
+		<!-- CARD TITLE (I.E., SUMMARY) -->
+		<div class="card-summary">
+
+			<div class="flex flex-col">
+				<span class="card-summary-title">
+					{% heroicon_outline "document-text" %}
+					New Diary Entry
 				</span>
+
+				<p class="card-summary-subtitle">
+					Follow the instructions and context below to write your entry.
+				</p>
 			</div>
 		</div>
 
 		<div class="p-4">
-			<form method="post" class="space-y-6">
+			<form method="post" class="space-y-4">
 				{% csrf_token %}
 
 				{% if study.participant_instructions %}
 					<div>
-						<label class="block text-lg font-medium text-gray-700">
-							Participant Instructions
+						<label class="xs-label">
+							INSTRUCTIONS
 						</label>
-						<div class="mt-1 rounded-sm border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 whitespace-pre-line">
+						<div class="xs-label">
 							{{ study.participant_instructions }}
 						</div>
 					</div>
@@ -41,10 +45,10 @@
 
 				{% if study.context %}
 					<div>
-						<label class="block text-lg font-medium text-gray-700">
-							Entry Context
+						<label class="xs-label">
+							CONTEXT
 						</label>
-						<div class="mt-1 rounded-sm border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 whitespace-pre-line">
+						<div class="xs-label">
 							{{ study.context }}
 						</div>
 					</div>
@@ -78,7 +82,7 @@
 					</button>
 
 					<a
-						href="{% url'diary_study_detail' study.id %}"
+						href="{% url 'diary_study_detail' study.id %}"
 						class="button-TERTIARY"
 					>
 						Return to Study

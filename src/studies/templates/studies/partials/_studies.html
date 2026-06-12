@@ -4,7 +4,7 @@
 <div class="main-card">
 
 	<!-- FILTERS -->
-	<div class="px-6 py-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600">
+	<div class="flex items-end justify-between px-6 py-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600">
 		<form method="get" class="flex flex-wrap items-end gap-3">
 
 			<div class="flex flex-col gap-1">
@@ -55,6 +55,12 @@
 			{% endif %}
 
 		</form>
+
+		<a href="{% url 'create_diary_study' %}" class="button-PRIMARY">
+			{% heroicon_outline "plus" class="h-4 w-4 shrink-0" %}
+			Create New Study
+		</a>
+
 	</div>
 
 	<!-- SORT BAR -->

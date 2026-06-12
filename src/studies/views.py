@@ -10,6 +10,8 @@ from django.db.models import Q
 from django.http import HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.urls import reverse
+from django.utils import timezone
+from django.utils.formats import date_format
 
 from studies.services.nlp.registry import (
 	get_available_sentiment_methods,
@@ -60,14 +62,191 @@ from .helpers import (
 	parse_uploaded_canonical_issue_file,
 )
 
-# ----------------------- VIEWS ----------------------- #
+# ----------------------- STUDIES ----------------------- #
+
+# ------------------ #
+# CREATE DIARY STUDY #
+# ------------------ #
+@login_required
+def create_diary_study(request):
+	if request.method == "POST":
+		form = StudyForm(request.POST)
+		if form.is_valid():
+			study = form.save(commit=False)
+
+			# Makes study creator the owner by default
+			study.owner = request.user
+			study.save()
+
+			# The owner is an evaluator by default
+			StudyMembership.objects.get_or_create(
+				study = study,
+				user = request.user,
+				defaults={"role": MembershipRole.EVALUATOR}
+			)
+
+			messages.success(request, f"Study '{study.title}' created successfully by {study.owner}.")
+			return redirect("diary_study_detail", pk=study.pk)
+	else:
+		form = StudyForm()
+
+	context = {
+		"page_title_heroicon":"book-open",
+		"page_title":"Creating New Diary Study",
+		"page_subtitle":"Use the form below to define the protocol of your diary study.",
+		"form": form
+	}
+
+	return render(request, "studies/diary_study_create.html", context)
+
+# ------------------ #
+# DIARY STUDY DETAIL #
+# ------------------ #
+@login_required
+def diary_study_detail(request, pk):
+	study = get_object_or_404(Study, pk=pk)
+	tags_list = [tag.strip() for tag in study.tags.split(",") if tag.strip()] if study.tags else []
+
+	is_evaluator = StudyMembership.objects.filter(
+		study=study,
+		user=request.user,
+		role=MembershipRole.EVALUATOR
+	).exists()
+
+	diary_entries = DiaryEntry.objects.filter(
+		study=study
+	).select_related("participant").order_by("-created_at")
+
+	analysis_runs = StudyAnalysisRun.objects.filter(
+		study=study
+	).order_by("-started_at")
+
+	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
+
+	created_at = date_format(
+		timezone.localtime(study.created_at),
+		"j M Y, H:i"
+	)
+
+	context = {
+		"page_title_heroicon":"book-open",
+		"page_title":study.title,
+		"page_subtitle": f"Owner: {owner_name}, Created on: {created_at}",
+		"study": study,
+		"tags_list": tags_list,
+		"is_evaluator": is_evaluator,
+		"diary_entries": diary_entries,
+		"analysis_runs": analysis_runs,
+	}
+
+	return render(request, "studies/diary_study_detail.html", context)
+
+# ---------------- #
+# EDIT DIARY STUDY #
+# ---------------- #
+@login_required
+def edit_diary_study(request, pk):
+	study = get_object_or_404(Study, pk=pk)
+
+	if request.method == "POST":
+		form = StudyForm(request.POST, instance=study)
+		if form.is_valid():
+			form.save()
+			messages.success(request, f"Study '{study.title}' was updated successfully.")
+			return redirect("diary_study_detail", pk=study.pk)
+	else:
+		form = StudyForm(instance=study)
+
+	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
+
+	created_at = date_format(
+		timezone.localtime(study.created_at),
+		"j M Y, H:i"
+	)
+
+	context = {
+		"page_title_heroicon":"book-open",
+		"page_title":study.title,
+		"page_subtitle": f"Owner: {owner_name}, Created on: {created_at}",
+		"study": study,
+		"form": form,
+	}
+
+	return render(request, "studies/diary_study_edit.html", context)
+
+# ---------------- #
+# DIARY STUDY LIST #
+# ---------------- #
+@login_required
+def studies(request):
+	studies = Study.objects.filter(
+		Q(owner=request.user) |
+		Q(memberships__user=request.user)
+	).distinct()
+
+	# Filtering
+	q = request.GET.get("q")
+	owner = request.GET.get("owner")
+	status = request.GET.get("status")
+
+	if q:
+		studies = studies.filter(title__icontains=q)
+
+	if owner:
+		studies = studies.filter(owner__username__icontains=owner)
+
+	if status:
+		studies = studies.filter(status=status)
+
+	# Sorting
+	sort = request.GET.get("sort", "-created_at")
+
+	allowed_sort_fields = [
+		"title",
+		"created_at",
+		"status",
+		"owner__username",
+	]
+
+	if sort.lstrip("-") in allowed_sort_fields:
+		studies = studies.order_by(sort)
+	else:
+		studies = studies.order_by("-created_at")
+
+	# Pagination
+	paginator = Paginator(studies, 10)
+	page_number = request.GET.get("page")
+	page_obj = paginator.get_page(page_number)
+
+	sort_params = request.GET.copy()
+	sort_params.pop("sort", None)
+	sort_params.pop("page", None)
+
+	page_params = request.GET.copy()
+	page_params.pop("page", None)
+
+	context = {
+		"page_title_heroicon":"queue-list",
+		"page_title":"My Studies",
+		"page_subtitle":"Studies I own and studies I evaluate.",
+		"studies": page_obj,
+		"page_obj": page_obj,
+		"sort": sort,
+		"sort_params": sort_params,
+		"page_params": page_params,
+		"status_choices": StudyStatus.choices,
+	}
+
+	return render(request, "studies/diary_study_list.html", context)
+
+# ----------------------- ENTRIES ----------------------- #
 
 # ------------------ #
 # CREATE DIARY ENTRY #
 # ------------------ #
 @login_required
-def create_diary_entry(request, study_id):
-	study = get_object_or_404(Study, pk=study_id)
+def create_diary_entry(request, pk):
+	study = get_object_or_404(Study, pk=pk)
 
 	if request.method == "POST":
 		form = DiaryEntryForm(request.POST)
@@ -97,69 +276,97 @@ def create_diary_entry(request, study_id):
 		form = DiaryEntryForm()
 
 	context = {
+		"page_title_heroicon":"book-open",
+		"page_title": study.title,
+		"page_subtitle":"Write a new diary entry.",
 		"study": study,
-		"form": form,
+		"form": form
 	}
-	return render(request, "studies/create_diary_entry.html", context)
 
+	return render(request, "studies/diary_entry_create.html", context)
 
-# ------------------ #
-# CREATE DIARY STUDY #
-# ------------------ #
+# ---------------- #
+# DIARY ENTRY LIST #
+# ---------------- #
 @login_required
-def create_diary_study(request):
-	if request.method == "POST":
-		form = StudyForm(request.POST)
-		if form.is_valid():
-			study = form.save(commit=False)
-
-			# Makes study creator the owner by default
-			study.owner = request.user
-			study.save()
-
-			# The owner is an evaluator by default
-			StudyMembership.objects.get_or_create(
-				study = study,
-				user = request.user,
-				defaults={"role": MembershipRole.EVALUATOR}
-			)
-
-			messages.success(request, f"Study '{study.title}' created successfully by {study.owner}.")
-			return redirect("diary_study_detail", pk=study.pk)
-	else:
-		form = StudyForm()
-	return render(request, "studies/create_diary_study.html", {"form": form})
-
-
-# ------------------ #
-# DIARY STUDY DETAIL #
-# ------------------ #
-@login_required
-def diary_study_detail(request, pk):
+def entries(request, pk):
 	study = get_object_or_404(Study, pk=pk)
-	tags_list = [tag.strip() for tag in study.tags.split(",") if tag.strip()] if study.tags else []
 
-	is_evaluator = StudyMembership.objects.filter(
+	if not user_can_evaluate_study(request.user, study):
+		return HttpResponseForbidden()
+
+	context = filter_diary_entries(request, study)
+	context["study"] = study
+	context["diary_entries_filter_url"] = reverse(
+		"diary_entries_partial",
+		args=[study.pk],
+	)
+
+	context["is_evaluator"] = StudyMembership.objects.filter(
 		study=study,
 		user=request.user,
 		role=MembershipRole.EVALUATOR
 	).exists()
 
-	diary_entries = DiaryEntry.objects.filter(
-		study=study
-	).select_related("participant").order_by("-created_at")
+	context["page_title_heroicon"]="book-open"
+	context["page_title"]= study.title
 
-	analysis_runs = StudyAnalysisRun.objects.filter(
-		study=study
-	).order_by("-started_at")
+	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
 
-	return render(request, "studies/diary_study_detail.html", {
-		"study": study,
-		"tags_list": tags_list,
-		"is_evaluator": is_evaluator,
-		"diary_entries": diary_entries,
-		"analysis_runs": analysis_runs,
-	})
+	created_at = date_format(
+		timezone.localtime(study.created_at),
+		"j M Y, H:i"
+	)
+
+	context["page_subtitle"] = f"Owner: {owner_name}, Created on: {created_at}"
+
+	return render(request, "studies/diary_entry_list.html", context)
+
+
+# --------------------- #
+# STUDY ENTRIES PARTIAL #
+# --------------------- #
+@login_required
+def study_entries_partial(request, study_pk):
+	study = get_object_or_404(Study, pk=study_pk)
+
+	if not user_can_evaluate_study(request.user, study):
+		return HttpResponseForbidden()
+	
+	# If the user opens or refeshes the partial URL directly,
+	# send them to the full page instead. No looky looky for you Mr or Mrs...
+	if request.headers.get("HX-Request") != "true":
+		url = reverse("entries", args=[study.pk])
+		querystring = request.GET.urlencode()
+
+		if querystring:
+			url = f"{url}?{querystring}"
+
+		return redirect(url)
+
+	context = filter_diary_entries(request, study)
+	context["study"] = study
+	context["diary_entries_filter_url"] = reverse(
+		"diary_entries_partial",
+		args=[study.pk],
+	)
+
+	response = render(
+		request,
+		"studies/partials/_entries.html",
+		context,
+	)
+
+	# Push the clean full-page URL into the browser, not the partial URL.
+	full_page_url = reverse("entries", args=[study.pk])
+	querystring = request.GET.urlencode()
+
+	if querystring:
+		full_page_url = f"{full_page_url}?{querystring}"
+
+	response["HX-Push-Url"] = full_page_url
+
+	return response
 
 # ------------------ #
 # DIARY ENTRY DETAIL #
@@ -191,38 +398,28 @@ def diary_entry_detail(request, study_pk, entry_pk):
 	# Pick up the default / selected run for this entry
 	selected_run = entry.selected_entry_run
 
+	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
+
+	created_at = date_format(
+		timezone.localtime(study.created_at),
+		"j M Y, H:i"
+	)
+
+	context = {
+		"page_title_heroicon":"book-open",
+		"page_title":study.title,
+		"page_subtitle": f"Owner: {owner_name}, Created on: {created_at}",
+		"study": study,
+		"entry": entry,
+		"selected_run": selected_run,
+		"entry_runs": entry_runs,
+	}
+
 	return render(
 		request,
 		"studies/diary_entry_detail.html",
-		{
-			"study": study,
-			"entry": entry,
-			"selected_run": selected_run,
-			"entry_runs": entry_runs,
-		},
+		context
 	)
-
-
-# ---------------- #
-# EDIT DIARY STUDY #
-# ---------------- #
-@login_required
-def edit_diary_study(request, pk):
-	study = get_object_or_404(Study, pk=pk)
-
-	if request.method == "POST":
-		form = StudyForm(request.POST, instance=study)
-		if form.is_valid():
-			form.save()
-			messages.success(request, f"Study '{study.title}' was updated successfully.")
-			return redirect("diary_study_detail", pk=study.pk)
-	else:
-		form = StudyForm(instance=study)
-
-	return render(request, "studies/edit_diary_study.html", {
-		"study": study,
-		"form": form,
-	})
 
 # -------------- #
 # IMPORT ENTRIES #
@@ -241,8 +438,23 @@ def import_entries(request, pk):
 		user=request.user,
 		role=MembershipRole.EVALUATOR,
 	).exists()
+
 	if not is_evaluator:
 		return HttpResponseForbidden()
+	
+	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
+
+	created_at = date_format(
+		timezone.localtime(study.created_at),
+		"j M Y, H:i"
+	)
+
+	context = {
+		"page_title_heroicon":"book-open",
+		"page_title":study.title,
+		"page_subtitle": f"Owner: {owner_name}, Created on: {created_at}",
+		"study": study,
+	}
 
 	# If form was post-submitted
 	if request.method == "POST":
@@ -261,7 +473,7 @@ def import_entries(request, pk):
 					f"{result['skipped_evaluator']} evaluator rows."
 				)
 
-				return redirect("diary_study_detail", pk=study.pk)
+				return redirect("entries", pk=study.pk)
 			except ValueError as e:
 				messages.error(request, str(e))
 			except ValidationError as e:
@@ -269,9 +481,7 @@ def import_entries(request, pk):
 			except Exception as e:
 				messages.error(request, f"Import failed: {e}")
 
-	return render(request, "studies/import_entries.html", {
-		"study": study,
-	})
+	return render(request, "studies/import_entries.html", context)
 
 
 # ---------------------------- #
@@ -353,7 +563,17 @@ def manage_evaluators(request, pk):
 
 	available_users = available_users.order_by("username")[:25]
 
+	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
+
+	created_at = date_format(
+		timezone.localtime(study.created_at),
+		"j M Y, H:i"
+	)
+
 	context = {
+		"page_title_heroicon":"book-open",
+		"page_title":study.title,
+		"page_subtitle": f"Owner: {owner_name}, Created on: {created_at}",
 		"study": study,
 		"evaluator_memberships": evaluator_memberships,
 		"available_users": available_users,
@@ -440,7 +660,17 @@ def manage_participants(request, pk):
 
 	available_users = available_users.order_by("username")[:25]
 
+	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
+
+	created_at = date_format(
+		timezone.localtime(study.created_at),
+		"j M Y, H:i"
+	)
+
 	context = {
+		"page_title_heroicon":"book-open",
+		"page_title":study.title,
+		"page_subtitle": f"Owner: {owner_name}, Created on: {created_at}",
 		"study": study,
 		"participant_memberships": participant_memberships,
 		"available_users": available_users,
@@ -569,18 +799,29 @@ def machine_analysis_details(request, study_pk, run_pk):
 
 	context = filter_analysis_entries(request, study, run)
 
+	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
+
+	created_at = date_format(
+		timezone.localtime(study.created_at),
+		"j M Y, H:i"
+	)
+
 	context.update({
+		"page_title_heroicon":"book-open",
+		"page_title":study.title,
+		"page_subtitle": f"Owner: {owner_name}, Created on: {created_at}",
 		"study": study,
 		"run": run,
 		"machine_analysis_entries_filter_url": reverse(
 			"machine_analysis_entries_partial",
 			args=[study.pk, run.pk],
 		),
+		
 	})
 
 	return render(
 		request,
-		"studies/machine_analysis_details.html",
+		"studies/analysis_details.html",
 		context
 	)
 
@@ -812,140 +1053,6 @@ def analysis_runs_partial(request):
 
 	return response
 
-# ----------------- #
-# STUDIES (LIST OF) #
-# ----------------- #
-@login_required
-def studies(request):
-
-	studies = Study.objects.filter(
-		Q(owner=request.user) |
-		Q(memberships__user=request.user)
-	).distinct()
-
-	# Filtering
-	q = request.GET.get("q")
-	owner = request.GET.get("owner")
-	status = request.GET.get("status")
-
-	if q:
-		studies = studies.filter(title__icontains=q)
-
-	if owner:
-		studies = studies.filter(owner__username__icontains=owner)
-
-	if status:
-		studies = studies.filter(status=status)
-
-	# Sorting
-	sort = request.GET.get("sort", "-created_at")
-
-	allowed_sort_fields = [
-		"title",
-		"created_at",
-		"status",
-		"owner__username",
-	]
-
-	if sort.lstrip("-") in allowed_sort_fields:
-		studies = studies.order_by(sort)
-	else:
-		studies = studies.order_by("-created_at")
-
-	# Pagination
-	paginator = Paginator(studies, 10)
-	page_number = request.GET.get("page")
-	page_obj = paginator.get_page(page_number)
-
-	sort_params = request.GET.copy()
-	sort_params.pop("sort", None)
-	sort_params.pop("page", None)
-
-	page_params = request.GET.copy()
-	page_params.pop("page", None)
-
-	context = {
-		"studies": page_obj,
-		"page_obj": page_obj,
-		"sort": sort,
-		"sort_params": sort_params,
-		"page_params": page_params,
-		"status_choices": StudyStatus.choices,
-	}
-
-	return render(request, "studies/diary_study_list.html", context)
-
-# ----------------------- #
-# DIARY ENTRIES (LIST OF) #
-# ----------------------- #
-@login_required
-def entries(request, pk):
-	study = get_object_or_404(Study, pk=pk)
-
-	if not user_can_evaluate_study(request.user, study):
-		return HttpResponseForbidden()
-
-	context = filter_diary_entries(request, study)
-	context["study"] = study
-	context["diary_entries_filter_url"] = reverse(
-		"diary_entries_partial",
-		args=[study.pk],
-	)
-
-	context["is_evaluator"] = StudyMembership.objects.filter(
-		study=study,
-		user=request.user,
-		role=MembershipRole.EVALUATOR
-	).exists()
-
-	return render(request, "studies/diary_entry_list.html", context)
-
-
-# --------------------- #
-# STUDY ENTRIES PARTIAL #
-# --------------------- #
-@login_required
-def study_entries_partial(request, study_pk):
-	study = get_object_or_404(Study, pk=study_pk)
-
-	if not user_can_evaluate_study(request.user, study):
-		return HttpResponseForbidden()
-	
-	# If the user opens or refeshes the partial URL directly,
-	# send them to the full page instead. No looky looky for you Mr or Mrs...
-	if request.headers.get("HX-Request") != "true":
-		url = reverse("entries", args=[study.pk])
-		querystring = request.GET.urlencode()
-
-		if querystring:
-			url = f"{url}?{querystring}"
-
-		return redirect(url)
-
-	context = filter_diary_entries(request, study)
-	context["study"] = study
-	context["diary_entries_filter_url"] = reverse(
-		"diary_entries_partial",
-		args=[study.pk],
-	)
-
-	response = render(
-		request,
-		"studies/partials/_entries.html",
-		context,
-	)
-
-	# Push the clean full-page URL into the browser, not the partial URL.
-	full_page_url = reverse("entries", args=[study.pk])
-	querystring = request.GET.urlencode()
-
-	if querystring:
-		full_page_url = f"{full_page_url}?{querystring}"
-
-	response["HX-Push-Url"] = full_page_url
-
-	return response
-
 
 # ------------------------------ #	
 # CANONICAL THEME CATALOGUE LIST #
@@ -957,6 +1064,7 @@ def canonical_theme_catalogue_list(request):
 	context = filter_canonical_themes(request)
 
 	context.update({
+		"page_title_heroicon":"tag",
 		"page_title": "Canonical Themes Catalogue",
 		"page_subtitle": "Manage the global catalogue of canonical themes used by analysis methods.",
 		"canonical_themes_filter_url": reverse("canonical_theme_catalogue_partial"),

@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block title %}Machine Analysis Details · {{ study.title }} · ChronicleUX{% endblock %}
+
+{% block content %}
+
+<div class="sticky-top">
+    {% include "studies/partials/_header.html" with study=study page_title_heroicon=page_title_heroicon page_title=page_title page_subtitle=page_subtitle%}
+    {% include "studies/partials/_menu_analysis_actions.html" with study=study run=run %}
+</div>
+
+<div class="p-4">
+
+    <div class="main-card">
+
+        <!-- TAB MENU -->
+        <div class="tab-menu">
+
+            <div class="tab-menu-items">
+
+                <label class="tab-menu-item">
+                    <input
+                        type="radio"
+                        name="analysis_detail_tab"
+                        value="overview"
+                        class="peer sr-only"
+                        checked
+                    >
+
+                    <span class="tab-menu-item-label">
+                        Overview
+                    </span>
+                </label>
+
+                <label class="tab-menu-item">
+                    <input
+                        type="radio"
+                        name="analysis_detail_tab"
+                        value="negative_detection"
+                        class="peer sr-only"
+                    >
+
+                    <span class="tab-menu-item-label">
+                        Negative Detection
+                    </span>
+                </label>
+
+                <label class="tab-menu-item">
+                    <input
+                        type="radio"
+                        name="analysis_detail_tab"
+                        value="sentiment_labels"
+                        class="peer sr-only"
+                    >
+
+                    <span class="tab-menu-item-label">
+                        Sentiment Labels
+                    </span>
+                </label>
+
+                <label class="tab-menu-item">
+                    <input
+                        type="radio"
+                        name="analysis_detail_tab"
+                        value="dominant_findings"
+                        class="peer sr-only"
+                    >
+
+                    <span class="tab-menu-item-label">
+                        Dominant Findings
+                    </span>
+                </label>
+
+                <label class="tab-menu-item">
+                    <input
+                        type="radio"
+                        name="analysis_detail_tab"
+                        value="evolution"
+                        class="peer sr-only"
+                    >
+
+                    <span class="tab-menu-item-label">
+                        Evolution Over Time
+                    </span>
+                </label>
+
+                <label class="tab-menu-item">
+                    <input
+                        type="radio"
+                        name="analysis_detail_tab"
+                        value="entries"
+                        class="peer sr-only"
+                    >
+
+                    <span class="tab-menu-item-label">
+                        Entries
+                    </span>
+                </label>
+
+            </div>
+        </div>
+
+        <!-- TAB CONTENT -->
+        <div class="p-4">
+
+            <section data-analysis-tab-panel="overview">
+                <div class="rounded-sm border border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        Overview
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        Placeholder for analysis run details, selected machine methods, review progress, and high-level machine results.
+                    </p>
+                </div>
+            </section>
+
+            <section data-analysis-tab-panel="negative_detection" class="hidden">
+                <div class="rounded-sm border border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        Negative Detection
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        Placeholder for binary negative sentiment metrics and confusion matrices.
+                    </p>
+                </div>
+            </section>
+
+            <section data-analysis-tab-panel="sentiment_labels" class="hidden">
+                <div class="rounded-sm border border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        Sentiment Labels
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        Placeholder for per-label sentiment classification metrics and multi-class confusion matrices.
+                    </p>
+                </div>
+            </section>
+
+            <section data-analysis-tab-panel="dominant_findings" class="hidden">
+                <div class="rounded-sm border border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        Dominant Findings
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        Placeholder for dominant sentiment, canonical themes, and canonical issues.
+                    </p>
+                </div>
+            </section>
+
+            <section data-analysis-tab-panel="evolution" class="hidden">
+                <div class="rounded-sm border border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        Evolution Over Time
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        Placeholder for sentiment, theme, and issue evolution over time.
+                    </p>
+                </div>
+            </section>
+
+            <section data-analysis-tab-panel="entries" class="hidden">
+                <div class="rounded-sm border border-dashed border-gray-300 p-8 text-center dark:border-gray-600">
+                    <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        Entries
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        Placeholder for entry review status, filters, and links to manually evaluate entries.
+                    </p>
+                </div>
+            </section>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tabInputs = document.querySelectorAll("input[name='analysis_detail_tab']");
+        const tabPanels = document.querySelectorAll("[data-analysis-tab-panel]");
+
+        function updateAnalysisDetailTab() {
+            const selectedTab = document.querySelector("input[name='analysis_detail_tab']:checked").value;
+
+            tabPanels.forEach(function (panel) {
+                const isSelected = panel.dataset.analysisTabPanel === selectedTab;
+                panel.classList.toggle("hidden", !isSelected);
+            });
+        }
+
+        tabInputs.forEach(function (input) {
+            input.addEventListener("change", updateAnalysisDetailTab);
+        });
+
+        updateAnalysisDetailTab();
+    });
+</script>
+
+{% endblock %}

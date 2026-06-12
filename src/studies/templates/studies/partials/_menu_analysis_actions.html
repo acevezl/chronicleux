@@ -1,0 +1,44 @@
+{% load heroicons %}
+
+<div class="px-4 py-2 bg-gray-100 dark:bg-gray-900 border-t border-gray-200">
+	<div class="flex flex-wrap items-center gap-2">
+
+		<a
+			href="#"
+			class="button-PRIMARY"
+		>
+			{% heroicon_outline "document-text" class="h-4 w-4 shrink-0" %}
+			Entries Pending Manual Evaluation (XX)
+		</a>
+	
+		<a 
+			href="#"
+			class="button-SECONDARY"
+		>
+			{% heroicon_outline "chart-bar" class="h-4 w-4 shrink-0" %}
+			Refresh Metrics
+		</a>
+
+		<a 
+			href="#"
+			class="button-SECONDARY"
+		>
+			{% heroicon_outline "check-badge" class="h-4 w-4 shrink-0" %}
+			Mark Study Complete
+		</a>
+
+		<!-- SEPARATOR -->
+		<div class="mx-1 h-6 border-l border-gray-300 dark:border-gray-600"></div>
+
+
+		<a
+			href="{% url 'studies' %}"
+			class="button-TERTIARY"
+		>
+			{% heroicon_outline "queue-list" class="h-4 w-4 shrink-0" %}
+			{% heroicon_outline "arrow-left" class="h-4 w-4 shrink-0" %}
+			Return to Studies
+		</a>
+
+	</div>
+</div>

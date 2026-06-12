@@ -213,4 +213,19 @@
 		@apply text-xs inline-flex gap-x-2 align-middle p-2 rounded-sm border bg-amber-100 border-amber-800 text-amber-800
 	}
 
+	.tab-menu {
+		@apply border-b border-gray-200 bg-gray-100 px-4 py-2 dark:border-gray-700
+	}
+
+	.tab-menu-items {
+		@apply inline-flex flex-wrap p-1
+	}
+
+	.tab-menu-item {
+		@apply cursor-pointer
+	}
+
+	.tab-menu-item-label {
+		@apply inline-flex items-center rounded-md px-4 py-2 text-sm font-medium text-gray-600 hover:text-fuchsia-700 peer-checked:bg-white peer-checked:text-fuchsia-700 peer-checked:shadow-sm dark:text-gray-300 dark:hover:text-white dark:peer-checked:bg-gray-900 dark:peer-checked:text-fuchsia-300
+	}
 }

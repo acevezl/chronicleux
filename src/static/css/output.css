@@ -612,6 +612,9 @@
   .flex-wrap {
     flex-wrap: wrap;
   }
+  .items-baseline {
+    align-items: baseline;
+  }
   .items-center {
     align-items: center;
   }
@@ -2784,6 +2787,72 @@
     font-size: var(--text-xs);
     line-height: var(--tw-leading, var(--text-xs--line-height));
     color: var(--color-amber-800);
+  }
+  .tab-menu {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 1px;
+    border-color: var(--color-gray-200);
+    background-color: var(--color-gray-100);
+    padding-inline: calc(var(--spacing) * 4);
+    padding-block: calc(var(--spacing) * 2);
+    @media (prefers-color-scheme: dark) {
+      border-color: var(--color-gray-700);
+    }
+  }
+  .tab-menu-items {
+    display: inline-flex;
+    flex-wrap: wrap;
+    padding: calc(var(--spacing) * 1);
+  }
+  .tab-menu-item {
+    cursor: pointer;
+  }
+  .tab-menu-item-label {
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-md);
+    padding-inline: calc(var(--spacing) * 4);
+    padding-block: calc(var(--spacing) * 2);
+    font-size: var(--text-sm);
+    line-height: var(--tw-leading, var(--text-sm--line-height));
+    --tw-font-weight: var(--font-weight-medium);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-gray-600);
+    &:is(:where(.peer):checked ~ *) {
+      background-color: var(--color-white);
+    }
+    &:is(:where(.peer):checked ~ *) {
+      color: var(--color-fuchsia-700);
+    }
+    &:is(:where(.peer):checked ~ *) {
+      --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+      box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-fuchsia-700);
+      }
+    }
+    @media (prefers-color-scheme: dark) {
+      color: var(--color-gray-300);
+    }
+    @media (prefers-color-scheme: dark) {
+      &:is(:where(.peer):checked ~ *) {
+        background-color: var(--color-gray-900);
+      }
+    }
+    @media (prefers-color-scheme: dark) {
+      &:is(:where(.peer):checked ~ *) {
+        color: var(--color-fuchsia-300);
+      }
+    }
+    @media (prefers-color-scheme: dark) {
+      &:hover {
+        @media (hover: hover) {
+          color: var(--color-white);
+        }
+      }
+    }
   }
 }
 @property --tw-rotate-x {
