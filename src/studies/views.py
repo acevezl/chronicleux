@@ -1560,9 +1560,75 @@ def human_evaluation_queue_partial(request, study_pk, run_pk):
 	return response
 
 
-# ------------------------ #
-# EVALUATE ENTRY ANALYSIS  #
-# ------------------------ #
+# ------------------------- #
+# EVALUATE ENTRY ANALYSIS   #
+# ------------------------- #
 @login_required
 def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
-	return
+	study = get_object_or_404(Study, pk=study_pk)
+	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
+
+	if not user_can_evaluate_study(request.user, study):
+		return HttpResponseForbidden()
+
+	entry_analysis = get_object_or_404(
+		DiaryEntryAnalysis.objects.select_related(
+			"entry",
+			"entry__study",
+			"entry__participant",
+			"run",
+			"run__study",
+		).prefetch_related(
+			"evaluator_issues",
+		),
+		pk=analysis_pk,
+		run=run,
+	)
+
+	if request.method == "POST":
+		form = DiaryEntryManualEvaluationForm(
+			request.POST,
+			instance=entry_analysis,
+		)
+
+		if form.is_valid():
+			evaluated_analysis = form.save(commit=False)
+			evaluated_analysis.evaluated_by = request.user
+			evaluated_analysis.evaluated_at = timezone.now()
+			evaluated_analysis.save()
+			form.save_m2m()
+
+			messages.success(request, "Human evaluation saved.")
+
+			return redirect(
+				"human_evaluation_queue",
+				study_pk=study.pk,
+				run_pk=run.pk,
+			)
+
+	else:
+		form = DiaryEntryManualEvaluationForm(instance=entry_analysis)
+
+	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
+
+	created_at = date_format(
+		timezone.localtime(study.created_at),
+		"j M Y, H:i"
+	)
+
+	context = {
+		"page_title_heroicon": "book-open",
+		"page_title": study.title,
+		"page_subtitle": f"Owner: {owner_name}, Created on: {created_at}",
+		"study": study,
+		"run": run,
+		"entry": entry_analysis.entry,
+		"entry_analysis": entry_analysis,
+		"form": form,
+	}
+
+	return render(
+		request,
+		"studies/diary_entry_evaluation.html",
+		context,
+	)

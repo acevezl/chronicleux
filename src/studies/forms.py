@@ -296,11 +296,7 @@ class DiaryEntryManualEvaluationForm(forms.ModelForm):
                     "class": "form-select",
                 }
             ),
-            "evaluator_dominant_theme": forms.Select(
-                attrs={
-                    "class": "form-select",
-                }
-            ),
+            "evaluator_dominant_theme": forms.RadioSelect(),
             "evaluator_issues": forms.CheckboxSelectMultiple(),
             "evaluator_notes": forms.Textarea(
                 attrs={

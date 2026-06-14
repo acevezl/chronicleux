@@ -270,11 +270,13 @@
                     {% endif %}
                 </section>
                 <footer class="flex gap-2 p-2">
+                    {% if is_human_evaluation_queue %}
                     <!-- Link to entry -->
-                    <a href="{% url 'diary_entry_detail' entry.study_id entry.id %}"
-                    class="text-xs font-medium text-blue-600 hover:text-blue-500 dark:text-blue-100 dark:hover:text-blue-50">
-                        View entry →
+                    <a href="{% url 'evaluate_entry_analysis' study.pk run.pk entry_analysis.pk %}"
+                    class="button-SECONDARY">
+                        Evaluate Entry
                     </a>
+                    {% endif %}
                 </footer>
             </article>
         {% endwith %}

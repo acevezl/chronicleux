@@ -1,0 +1,374 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+{% load formatters %}
+
+{% block title %}Human Evaluation · {{ study.title }} · ChronicleUX{% endblock %}
+
+{% block content %}
+
+<div class="sticky-top">
+    {% include "studies/partials/_header.html" with study=study page_title_heroicon=page_title_heroicon page_title=page_title page_subtitle=page_subtitle %}
+    {% include "studies/partials/_menu_analysis_actions.html" with study=study run=run %}
+</div>
+
+<div class="p-4">
+    {% include "studies/partials/_messages.html" %}
+    <div class="main-card">
+
+        <!-- PAGE HEADER -->
+        <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+
+            <div>
+                <h2 class="card-summary-title">
+                    {% heroicon_outline "clipboard-document-check" %}
+                    Human Evaluation
+                </h2>
+
+                <p class="card-summary-subtitle">
+                    Review the machine analysis and provide the evaluator classification for this diary entry.
+                </p>
+            </div>
+
+            <a
+                href="{% url 'human_evaluation_queue' study.pk run.pk %}"
+                class="button-FILTER-CLEAR"
+            >
+                Back to queue
+            </a>
+
+        </div>
+
+        <!-- CONTENT -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+
+            <!-- LEFT: DIARY ENTRY -->
+            <section class="card-border bg-white dark:bg-gray-900 overflow-hidden">
+
+                <header class="p-3 border-b border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800">
+                    <h3 class="sm-label uppercase">
+                        {% heroicon_outline "document-text" class="h-4 w-4 shrink-0" %}
+                        Diary Entry
+                    </h3>
+                </header>
+
+                <div class="p-4 space-y-4">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <p class="xs-label uppercase">Participant</p>
+                            <p class="text-sm text-gray-900 dark:text-gray-100">
+                                {{ entry.participant_display_name|default:"Participant"|capfirst }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="xs-label uppercase">Created on</p>
+                            <p class="text-sm text-gray-900 dark:text-gray-100">
+                                {{ entry.created_at|date:"M d, Y H:i" }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="xs-label uppercase">Source</p>
+                            <p class="text-sm text-gray-900 dark:text-gray-100">
+                                {{ entry.source|default:"-" }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="xs-label uppercase">Self-reported sentiment</p>
+                            <div class="mt-1">
+                                {% include "studies/partials/_badge_sentiment.html" with sentiment=entry.sentiment_self_report %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="xs-label uppercase mb-2">Entry content</p>
+
+                        <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-3">
+                            <p class="whitespace-pre-line text-sm leading-6 text-gray-700 dark:text-gray-200">
+                                {{ entry.content }}
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- RIGHT: MACHINE ANALYSIS -->
+            <section class="card-border bg-white dark:bg-gray-900 overflow-hidden">
+
+                <header class="p-3 border-b border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800">
+                    <h3 class="sm-label uppercase">
+                        {% heroicon_outline "cpu-chip" class="h-4 w-4 shrink-0" %}
+                        Machine Analysis
+                    </h3>
+                </header>
+
+                <div class="p-4 space-y-4">
+
+                    <div>
+                        <p class="xs-label uppercase mb-2">Machine summary</p>
+
+                        <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-3">
+                            <p class="text-sm leading-6 text-gray-700 dark:text-gray-200">
+                                {{ entry_analysis.entry_summary|default:"No summary available." }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                        <div class="card-border p-3">
+                            <p class="xs-label uppercase mb-2">
+                                Sentiment method
+                            </p>
+
+                            <p class="text-sm text-gray-900 dark:text-gray-100">
+                                {{ entry_analysis.methods.sentiment|default:"-"|humanize_enum }}
+                            </p>
+                        </div>
+
+                        <div class="card-border p-3">
+                            <p class="xs-label uppercase mb-2">
+                                Theme method
+                            </p>
+
+                            <p class="text-sm text-gray-900 dark:text-gray-100">
+                                {{ entry_analysis.methods.theme|default:"-"|humanize_enum }}
+                            </p>
+                        </div>
+
+                    </div>
+
+                    {% if entry_analysis.methods.sentiment == "llm" or entry_analysis.methods.theme == "llm" %}
+                        <div class="card-border p-3">
+                            <p class="xs-label uppercase mb-2">
+                                LLM configuration
+                            </p>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <p class="xs-label uppercase">
+                                        Provider
+                                    </p>
+                                    <p class="text-sm text-gray-900 dark:text-gray-100">
+                                        {{ entry_analysis.methods.provider|default:"-"|humanize_enum }}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <p class="xs-label uppercase">
+                                        Model
+                                    </p>
+                                    <p class="text-sm text-gray-900 dark:text-gray-100">
+                                        {{ entry_analysis.methods.model|default:"-" }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="card-border p-3">
+                        <p class="xs-label uppercase mb-2">
+                            Detected issue(s)
+                        </p>
+
+                        <div class="flex flex-wrap items-center gap-2">
+                            {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.issues %}
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <p class="xs-label uppercase">Run</p>
+                            <p class="text-sm text-gray-900 dark:text-gray-100">
+                                RUN-{{ run.id|stringformat:"03d" }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="xs-label uppercase">Analyzed on</p>
+                            <p class="text-sm text-gray-900 dark:text-gray-100">
+                                {{ entry_analysis.analyzed_at|date:"M d, Y H:i"|default:"Date unavailable" }}
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </section>
+
+        </div>
+
+        <!-- HUMAN EVAULATION FORM -->
+        <form
+            method="post"
+            class="border-t border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4 space-y-4"
+        >
+            {% csrf_token %}
+
+            <div>
+                <h3 class="card-summary-title">
+                    {% heroicon_outline "user-circle" %}
+                    Evaluator Classification
+                </h3>
+
+                <p class="card-summary-subtitle">
+                    These values are used as the human evaluation for this machine-analyzed entry.
+                </p>
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="message-warning">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                <div class="flex flex-col gap-1">
+                    <label for="{{ form.evaluator_sentiment_label.id_for_label }}" class="xs-label uppercase">
+                        Evaluator sentiment
+                    </label>
+
+                    {{ form.evaluator_sentiment_label }}
+
+                    {% if form.evaluator_sentiment_label.errors %}
+                        <p class="text-xs text-red-600">
+                            {{ form.evaluator_sentiment_label.errors|join:", " }}
+                        </p>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                <div class="flex flex-col gap-2">
+                    <label class="xs-label uppercase">
+                        Dominant theme
+                    </label>
+
+                    <input
+                        type="text"
+                        id="theme-search"
+                        placeholder="Search canonical themes..."
+                        class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-full dark:text-white dark:border-gray-500 dark:bg-gray-900"
+                        data-filter-target="[data-theme-option]"
+                    >
+
+                    <div class="card-border p-3 max-h-72 overflow-y-auto bg-gray-50 dark:bg-gray-800 space-y-2">
+                        {% for radio in form.evaluator_dominant_theme %}
+                            <label
+                                data-theme-option
+                                class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200"
+                            >
+                                {{ radio.tag }}
+                                <span>{{ radio.choice_label }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+
+                    {% if form.evaluator_dominant_theme.errors %}
+                        <p class="text-xs text-red-600">
+                            {{ form.evaluator_dominant_theme.errors|join:", " }}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="xs-label uppercase">
+                        Issue(s)
+                    </label>
+
+                    <input
+                        type="text"
+                        id="issue-search"
+                        placeholder="Search canonical issues..."
+                        class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-full dark:text-white dark:border-gray-500 dark:bg-gray-900"
+                        data-filter-target="[data-issue-option]"
+                    >
+
+                    <div class="card-border p-3 max-h-72 overflow-y-auto bg-gray-50 dark:bg-gray-800 space-y-2">
+                        {% for checkbox in form.evaluator_issues %}
+                            <label
+                                data-issue-option
+                                class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200"
+                            >
+                                {{ checkbox.tag }}
+                                <span>{{ checkbox.choice_label }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+
+                    {% if form.evaluator_issues.errors %}
+                        <p class="text-xs text-red-600">
+                            {{ form.evaluator_issues.errors|join:", " }}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <div class="lg:col-span-2 flex flex-col gap-1">
+                    <label for="{{ form.evaluator_notes.id_for_label }}" class="xs-label uppercase">
+                        Evaluator notes
+                    </label>
+
+                    {{ form.evaluator_notes }}
+
+                    {% if form.evaluator_notes.errors %}
+                        <p class="text-xs text-red-600">
+                            {{ form.evaluator_notes.errors|join:", " }}
+                        </p>
+                    {% endif %}
+                </div>
+
+            </div>
+
+            <div class="flex flex-wrap justify-end gap-2 pt-2">
+
+                <a
+                    href="{% url 'human_evaluation_queue' study.pk run.pk %}"
+                    class="button-FILTER-CLEAR"
+                >
+                    Cancel
+                </a>
+
+                <button
+                    type="submit"
+                    class="button-PRIMARY"
+                >
+                    Save human evaluation
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const searchInputs = document.querySelectorAll("[data-filter-target]");
+
+        searchInputs.forEach(function (input) {
+            const targetSelector = input.dataset.filterTarget;
+            const options = document.querySelectorAll(targetSelector);
+
+            input.addEventListener("input", function () {
+                const query = input.value.trim().toLowerCase();
+
+                options.forEach(function (option) {
+                    const text = option.textContent.trim().toLowerCase();
+                    option.classList.toggle("hidden", query && !text.includes(query));
+                });
+            });
+        });
+    });
+</script>
+
+{% endblock %}
