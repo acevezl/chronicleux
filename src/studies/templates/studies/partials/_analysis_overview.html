@@ -3,7 +3,7 @@
 <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
 
     <!-- RUN CONFIGURATION -->
-    <section class="col-span-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
+    <section class="lg:col-span-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
         <header class="flex items-center justify-between gap-2 p-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <div class="flex flex-col">
                 <h4 class="font-semibold text-gray-900 dark:text-gray-100">
@@ -70,25 +70,11 @@
                 </div>
 
                 <div class="main-card p-2">
-                    <dt class="xs-label">Entries analyzed</dt>
-                    <dd class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">
-                        <strong>{{run.total_entries}}</strong>
-                    </dd>
-                </div>
-
-                <div class="main-card p-2">
                     <dt class="xs-label">Run status</dt>
                     <dd class="mt-1">
                         <span class="run-{{run.status}}">
                             {{run.status}}
                         </span>
-                    </dd>
-                </div>
-
-                <div class="main-card p-2">
-                    <dt class="xs-label">Created by</dt>
-                    <dd class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {{ run.created_by.username|capfirst }}
                     </dd>
                 </div>
 
@@ -106,6 +92,21 @@
                     </dd>
                 </div>
 
+                <div class="main-card p-2">
+                    <dt class="xs-label">Created by</dt>
+                    <dd class="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {{ run.created_by.username|capfirst }}
+                    </dd>
+                </div>
+
+                <div class="main-card p-2">
+                    <dt class="xs-label">Entries analyzed</dt>
+                    <dd class="flex flex-col mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">
+                        <span>By machine: <strong>{{run.total_entries}}</strong></span>
+                        <span>By human: <strong>{{completed_human_evaluation_count}}</strong></span>
+                    </dd>
+                </div>
+
             </dl>
         </div>
     </section>
@@ -115,7 +116,7 @@
         <header class="flex items-center justify-between gap-2 p-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <div class="flex flex-col">
                 <h4 class="font-semibold text-gray-900 dark:text-gray-100">
-                    Run Summary
+                    Entry Evaluation Progress
                 </h4>
             </div>
         </header>
@@ -131,15 +132,56 @@
                     for sentiment and thematic analysis.
                 {% endif %}
             </p>
-            <div class="mt-4 rounded-sm border border-dashed border-gray-300 p-4 text-center dark:border-gray-600">
-                <p class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                    {{run.total_entries}}
-                </p>
-                <p class="mt-1 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                    Entries analyzed
-                </p>
+            <div class="grid grid-cols-3 lg:grid-cols-1 xl:grid-cols-3 gap-4 mt-4 rounded-sm border border-dashed border-gray-300 p-4 text-center dark:border-gray-600">
+                <div class="flex flex-col items-center justify-center text-center">
+                    <p class="xs-label uppercase mb-2">
+                        Analyzed by machine
+                    </p>
+                    <p class="message-success text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                        {{run.total_entries}}
+                    </p>
+                </div>
+
+                <div class="flex flex-col items-center justify-center text-center">
+                    <p class="xs-label uppercase mb-2">
+                        Evaluated by a human
+                    </p>
+                    <p class="{% if pending_human_evaluation_count > 0 %}message-warning{% else %} message-success {% endif %} text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                        {{completed_human_evaluation_count}}
+                    </p>
+                </div>
+
+                <div class="flex flex-col items-center justify-center text-center">
+                    <p class="xs-label uppercase mb-2">
+                        Pending human evaluation
+                    </p>
+                    <p class="{% if pending_human_evaluation_count > 0 %}message-warning{% else %} message-success {% endif %} text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                        {{pending_human_evaluation_count}}
+                    </p>
+                </div>
             </div>
         </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="flex items-center justify-between px-4 pb-4">
+            <a
+                href="{% url 'human_evaluation_queue' study.pk run.pk %}"
+                class="button-PRIMARY"
+            >
+                {% heroicon_outline "document-text" class="h-4 w-4 shrink-0" %}
+                Evaluate Entries
+            </a>
+        
+            <a 
+                href="#"
+                class="button-SECONDARY"
+            >
+                {% heroicon_outline "chart-bar" class="h-4 w-4 shrink-0" %}
+                Refresh Metrics
+            </a>
+        </div>
     </section>
+
+    
 
 </div>

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block title %}Human Evaluation Queue · {{ study.title }} · ChronicleUX{% endblock %}
+
+{% block content %}
+
+<div class="sticky-top">
+    {% include "studies/partials/_header.html" with study=study page_title_heroicon=page_title_heroicon page_title=page_title page_subtitle=page_subtitle %}
+    {% include "studies/partials/_menu_analysis_actions.html" with study=study run=run %}
+</div>
+
+<div class="p-4">
+    <section>
+        <div class="mt-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 overflow-hidden">
+
+            <div class="border-b border-gray-200 dark:border-gray-600 px-4 py-3 bg-gray-50 dark:bg-gray-800">
+                <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    Human Evaluation Queue
+                </h2>
+
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Review analyzed diary entries and complete the human evaluation for sentiment, dominant theme, and issue(s).
+                </p>
+            </div>
+
+            <div id="analysis-entries-panel">
+                {% include "studies/partials/_entries_with_analysis.html" with entry_analyses=entry_analyses study=study run=run %}
+            </div>
+
+        </div>
+    </section>
+</div>
+
+{% endblock %}

@@ -15,11 +15,16 @@ urlpatterns = [
     path("<int:pk>/import/", views.import_entries, name="import_entries"),
     path("<int:pk>/new-entry/", views.create_diary_entry, name="create_diary_entry"),
 
-    # Analyses
+    # Machine Analysis
     path("<int:pk>/select-analysis-methods/", views.select_analysis_methods, name="select_analysis_methods"),
     path("<int:pk>/run-machine-analysis/", views.run_machine_analysis, name="run_machine_analysis"),
-    path("<int:study_pk>/machine_analysis/<int:run_pk>/", views.machine_analysis_details, name="machine_analysis_details"),
-    path("<int:study_pk>/machine_analysis/<int:run_pk>/entries/partial/", views.machine_analysis_entries_partial, name="machine_analysis_entries_partial"),
+    path("<int:study_pk>/machine-analysis/<int:run_pk>/", views.machine_analysis_details, name="machine_analysis_details"),
+    path("<int:study_pk>/machine-analysis/<int:run_pk>/entries/partial/", views.machine_analysis_entries_partial, name="machine_analysis_entries_partial"),
+
+    # Manual Evaluation
+    path("<int:study_pk>/machine-analysis/<int:run_pk>/human-evaluation/", views.human_evaluation_queue, name="human_evaluation_queue"),
+    path("<int:study_pk>/machine-analysis/<int:run_pk>/human-evaluation/partial/", views.human_evaluation_queue_partial, name="human_evaluation_queue_partial"),
+    path("<int:study_pk>/machine-analysis/<int:run_pk>/human-evaluation/<int:analysis_pk>/evaluate", views.evaluate_entry_analysis, name="evaluate_entry_analysis"),
     
     # Evals / Participant Management
     path("<int:pk>/participants/",views.manage_participants, name="manage_participants"),

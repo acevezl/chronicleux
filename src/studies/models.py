@@ -657,6 +657,40 @@ class DiaryEntryAnalysis(models.Model):
         default=ConfusionMatrixOutcome.NOT_AVAILABLE
     )
 
+    evaluator_dominant_theme = models.ForeignKey(
+        "CanonicalTheme",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="evaluator_entry_analyses"
+    )
+
+    evaluator_issues = models.ManyToManyField (
+        "CanonicalIssue",
+        blank=True,
+        related_name="evaluator_entry_analyses"
+    )
+
+    evaluator_notes = models.TextField(blank=True)
+
+    evaluated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="evaluated_entry_analyses"
+    )
+
+    evaluated_at = models.DateTimeField(null=True, blank=True)
+
+    @property
+    def is_manually_evaluated(self):
+        return (
+            self.evaluator_sentiment_label and
+            self.evaluator_dominant_theme_id
+            # Django automatically creates this id for ForeignKey of evaluator_dominant_theme
+        )
+
     # Thematic Analysis Outputs
     theme_weight = models.FloatField(null=True, blank=True)
     theme_label = models.CharField(max_length=255, blank=True, null=True)
@@ -688,6 +722,9 @@ class DiaryEntryAnalysis(models.Model):
     entry_summary = models.TextField(blank=True)
     analyzed_at = models.DateTimeField(auto_now_add=True)
     raw_response = models.JSONField(default=dict, blank=True)
+
+    # Evaluator analysis
+    
 
     class Meta:
         ordering = ["-analyzed_at"]

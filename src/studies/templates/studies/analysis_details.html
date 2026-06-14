@@ -106,7 +106,7 @@
         <div class="p-4">
 
             <section data-analysis-tab-panel="overview">
-                {% include "studies/partials/_analysis_overview.html" with run=run study=study %}
+                {% include "studies/partials/_analysis_overview.html" with run=run study=study pending_human_evaluation_count=pending_human_evaluation_count completed_human_evaluation_count=completed_human_evaluation_count %}
             </section>
 
             <section data-analysis-tab-panel="negative_detection" class="hidden">

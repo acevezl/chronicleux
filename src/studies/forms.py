@@ -1,5 +1,5 @@
 from django import forms
-from .models import Study, DiaryEntry, CanonicalIssue, CanonicalTheme
+from .models import Study, CanonicalIssue, CanonicalTheme, DiaryEntry, DiaryEntryAnalysis
 
 class StudyForm(forms.ModelForm):
     class Meta:
@@ -279,3 +279,51 @@ class CanonicalIssueForm(forms.ModelForm):
                 aliases.append(alias)
 
         return aliases
+    
+class DiaryEntryManualEvaluationForm(forms.ModelForm):
+    class Meta:
+        model = DiaryEntryAnalysis
+        fields = [
+            "evaluator_sentiment_label",
+            "evaluator_dominant_theme",
+            "evaluator_issues",
+            "evaluator_notes",
+        ]
+
+        widgets = {
+            "evaluator_sentiment_label": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
+            "evaluator_dominant_theme": forms.Select(
+                attrs={
+                    "class": "form-select",
+                }
+            ),
+            "evaluator_issues": forms.CheckboxSelectMultiple(),
+            "evaluator_notes": forms.Textarea(
+                attrs={
+                    "class": "form-textarea",
+                    "rows": 3,
+                    "placeholder": "Optional notes about this evaluation...",
+                }
+            ),
+        }
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+            self.fields["evaluator_dominant_theme"].queryset = (
+                CanonicalTheme.objects
+                .filter(is_active=True)
+                .order_by("name")
+            )
+
+            self.fields["evaluator_issues"].queryset = (
+                CanonicalIssue.objects
+                .filter(is_active=True)
+                .order_by("name")
+            )
+
+            self.fields["evaluator_dominant_theme"].empty_label = "Select dominant theme"

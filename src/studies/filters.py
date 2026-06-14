@@ -126,6 +126,7 @@ def filter_analysis_entries(request, study, run):
 	theme = request.GET.get("theme", "").strip()
 	issue_detected = request.GET.get("issue_detected", "").strip()
 	issue_tag = request.GET.get("issue_tag", "").strip()
+	human_evaluation = request.GET.get("human_evaluation", "").strip()
 	sort = request.GET.get("sort", "-entry__created_at")
 
 	entry_analyses = (
@@ -164,10 +165,27 @@ def filter_analysis_entries(request, study, run):
 		]
 		entry_analyses = entry_analyses.filter(pk__in=matching_ids)
 
+	if human_evaluation == "pending":
+		entry_analyses = entry_analyses.filter(
+			Q(evaluator_sentiment_label__isnull=True)
+			| Q(evaluator_sentiment_label="")
+			| Q(evaluator_dominant_theme__isnull=True)
+		)
+
+	elif human_evaluation == "completed":
+		entry_analyses = entry_analyses.exclude(
+			Q(evaluator_sentiment_label__isnull=True)
+			| Q(evaluator_sentiment_label="")
+			| Q(evaluator_dominant_theme__isnull=True)
+		)
+
 	if sort not in ALLOWED_ANALYSIS_ENTRY_SORTS:
 		sort = "-entry__created_at"
 
 	entry_analyses = entry_analyses.order_by(sort)
+
+	sort_params = request.GET.copy()
+	sort_params.pop("sort", None)
 
 	total_filtered_entry_analyses_count = entry_analyses.count()
 	total_run_entry_analyses_count = (
@@ -179,17 +197,21 @@ def filter_analysis_entries(request, study, run):
 	return {
 		"entry_analyses": entry_analyses,
 
+		"sort_params": sort_params.urlencode(),
+
 		"q": q,
 		"sentiment": sentiment,
 		"theme": theme,
 		"issue_detected": issue_detected,
 		"issue_tag": issue_tag,
+		"human_evaluation": human_evaluation,
 		"sort": sort,
 
 		"displayed_entry_analyses_count": total_filtered_entry_analyses_count,
 		"total_filtered_entry_analyses_count": total_filtered_entry_analyses_count,
 		"total_run_entry_analyses_count": total_run_entry_analyses_count,
 	}
+
 
 
 # -------- FILTER FOR CANONICAL THEME CATALOGUE PAGE -------- #
