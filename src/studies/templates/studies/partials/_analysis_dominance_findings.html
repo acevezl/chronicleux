@@ -25,13 +25,13 @@
                 {% include "studies/partials/_distribution_sentiment.html" with dominant_sentiment=run.dominant_sentiment_label sentiment_distribution=run.sentiment_distribution study_id=study.id run_id=run.id%}
                 
                 <!-- DOMINANT THEME & DISTRIBUTION -->
-                {% include "studies/partials/_distribution_theme.html" with dominant_theme=run.dominant_theme_label theme_distribution=run.theme_distribution study_id=study.id run_id=run.id%}
+                {% include "studies/partials/_distribution_theme.html" with dominant_theme=run.dominant_theme.name theme_distribution=run.canonical_themes.all study_id=study.id run_id=run.id%}
 
                 <!-- ISSUE DISTRIBUTION -->
-                {% include "studies/partials/_distribution_issues.html" with issue_distribution=run.recurring_issues study_id=study.id run_id=run.id%}
+                {% include "studies/partials/_distribution_issues.html" with issue_distribution=run.canonical_issues.all study_id=study.id run_id=run.id%}
 
                 <!-- ISSUE IMPACT MATRIX -->
-                {% include "studies/partials/_issue_impact_matrix.html" with issue_impact_matrix=run.recurring_issues study_id=study.id run_id=run.id%}
+                {% include "studies/partials/_issue_impact_matrix.html" with issue_impact_matrix=run.canonical_issues.all study_id=study.id run_id=run.id%}
 
             </div>
                 

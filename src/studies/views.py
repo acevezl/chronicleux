@@ -123,9 +123,13 @@ def diary_study_detail(request, pk):
 		study=study
 	).select_related("participant").order_by("-created_at")
 
-	analysis_runs = StudyAnalysisRun.objects.filter(
-		study=study
-	).order_by("-started_at")
+	analysis_runs = (
+		StudyAnalysisRun.objects
+		.filter(study=study)
+		.select_related("dominant_theme")
+		.prefetch_related("canonical_themes", "canonical_issues")
+		.order_by("-started_at")
+	)
 
 	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
 
@@ -808,7 +812,14 @@ def run_machine_analysis(request, pk):
 @login_required
 def machine_analysis_details(request, study_pk, run_pk):
 	study = get_object_or_404(Study, pk=study_pk)
-	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
+	
+	run = get_object_or_404(
+		StudyAnalysisRun.objects
+		.select_related("dominant_theme")
+		.prefetch_related("canonical_themes", "canonical_issues"),
+		pk=run_pk,
+		study=study,
+	)
 
 	if not user_can_evaluate_study(request.user, study):
 		return HttpResponseForbidden()
@@ -859,7 +870,14 @@ def machine_analysis_details(request, study_pk, run_pk):
 @login_required
 def machine_analysis_entries_partial(request, study_pk, run_pk):
 	study = get_object_or_404(Study, pk=study_pk)
-	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
+	
+	run = get_object_or_404(
+		StudyAnalysisRun.objects
+		.select_related("dominant_theme")
+		.prefetch_related("canonical_themes", "canonical_issues"),
+		pk=run_pk,
+		study=study,
+	)
 
 	if not user_can_evaluate_study(request.user, study):
 		return HttpResponseForbidden()
@@ -890,6 +908,10 @@ def analysis_runs(request):
 	runs = StudyAnalysisRun.objects.select_related(
 		"study",
 		"created_by",
+		"dominant_theme",
+	).prefetch_related(
+		"canonical_themes",
+		"canonical_issues",
 	).filter(
 		created_by=request.user
 	)
@@ -988,6 +1010,10 @@ def analysis_runs_partial(request):
 	runs = StudyAnalysisRun.objects.select_related(
 		"study",
 		"created_by",
+		"dominant_theme",
+	).prefetch_related(
+		"canonical_themes",
+		"canonical_issues",
 	).filter(
 		created_by=request.user
 	)
@@ -1178,6 +1204,7 @@ def canonical_theme_create(request):
 		"studies/catalogues/canonical_theme_form.html",
 		{
 			"form": form,
+			"page_title_heroicon":"tag",
 			"page_title": "Create Canonical Theme",
 			"page_subtitle": "Create and maintain reusable canonical themes for machine and evaluator analysis.",
 			"submit_label": "Create theme",
@@ -1210,6 +1237,7 @@ def canonical_theme_update(request, theme_pk):
 		{
 			"theme": theme,
 			"form": form,
+			"page_title_heroicon":"tag",
 			"page_title": "Edit Canonical Theme",
 			"page_subtitle": "Update and maintain reusable canonical themes for machine and evaluator analysis.",
 			"submit_label": "Save theme",
@@ -1236,6 +1264,7 @@ def canonical_theme_delete(request, theme_pk):
 		"studies/catalogues/canonical_theme_confirm_delete.html",
 		{
 			"theme": theme,
+			"page_title_heroicon":"tag",
 			"page_title": "Delete Canonical Theme",
 			"page_subtitle": "Confirm whether this theme should be removed from the global catalogue.",
 		},
@@ -1272,13 +1301,16 @@ def canonical_theme_import(request):
 		except Exception as e:
 			messages.error(request, f"Theme import failed: {e}")
 
+	context = {
+		"page_title_heroicon":"tag",
+		"page_title": "Import Canonical Themes",
+		"page_subtitle": "Import canonical themes into the global catalogue from a CSV file.",
+	}
+	
 	return render(
 		request,
 		"studies/catalogues/canonical_theme_import.html",
-		{
-			"page_title": "Import Canonical Themes",
-			"page_subtitle": "Import canonical themes into the global catalogue from a CSV file.",
-		},
+		context,
 	)
 
 
@@ -1292,6 +1324,7 @@ def canonical_issue_catalogue_list(request):
 	context = filter_canonical_issues(request)
 
 	context.update({
+		"page_title_heroicon":"tag",
 		"page_title": "Canonical Issues Catalogue",
 		"page_subtitle": "Manage the global catalogue of canonical issues used by analysis methods.",
 		"canonical_issues_filter_url": reverse("canonical_issue_catalogue_partial"),
@@ -1487,7 +1520,14 @@ def canonical_issue_import(request):
 @login_required
 def human_evaluation_queue(request, study_pk, run_pk):
 	study = get_object_or_404(Study, pk=study_pk)
-	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
+	
+	run = get_object_or_404(
+		StudyAnalysisRun.objects
+		.select_related("dominant_theme")
+		.prefetch_related("canonical_themes", "canonical_issues"),
+		pk=run_pk,
+		study=study,
+	)
 
 	if not user_can_evaluate_study(request.user, study):
 		return HttpResponseForbidden()
@@ -1527,7 +1567,14 @@ def human_evaluation_queue(request, study_pk, run_pk):
 @login_required
 def human_evaluation_queue_partial(request, study_pk, run_pk):
 	study = get_object_or_404(Study, pk=study_pk)
-	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
+	
+	run = get_object_or_404(
+		StudyAnalysisRun.objects
+		.select_related("dominant_theme")
+		.prefetch_related("canonical_themes", "canonical_issues"),
+		pk=run_pk,
+		study=study,
+	)
 
 	if not user_can_evaluate_study(request.user, study):
 		return HttpResponseForbidden()
@@ -1576,7 +1623,12 @@ def human_evaluation_queue_partial(request, study_pk, run_pk):
 @login_required
 def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 	study = get_object_or_404(Study, pk=study_pk)
-	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
+	
+	run = get_object_or_404(
+		StudyAnalysisRun.objects.prefetch_related("canonical_themes"),
+		pk=run_pk,
+		study=study,
+	)
 
 	if not user_can_evaluate_study(request.user, study):
 		return HttpResponseForbidden()

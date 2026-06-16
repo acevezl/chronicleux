@@ -133,6 +133,7 @@ def filter_analysis_entries(request, study, run):
 		DiaryEntryAnalysis.objects
 		.filter(run=run, entry__study=study)
 		.select_related("entry", "entry__participant")
+		.prefetch_related("canonical_themes", "canonical_issues")
 	)
 
 	if q:
@@ -150,7 +151,7 @@ def filter_analysis_entries(request, study, run):
 		entry_analyses = entry_analyses.filter(sentiment_label=sentiment)
 
 	if theme:
-		entry_analyses = entry_analyses.filter(theme_label=theme)
+		entry_analyses = entry_analyses.filter(canonical_themes__pk=theme)
 
 	if issue_detected == "yes":
 		entry_analyses = entry_analyses.filter(issue_detected=True)
@@ -158,12 +159,7 @@ def filter_analysis_entries(request, study, run):
 		entry_analyses = entry_analyses.filter(issue_detected=False)
 
 	if issue_tag:
-		matching_ids = [
-			entry_analysis.pk
-			for entry_analysis in entry_analyses
-			if issue_tag in (entry_analysis.issues or [])
-		]
-		entry_analyses = entry_analyses.filter(pk__in=matching_ids)
+		entry_analyses = entry_analyses.filter(canonical_issues__pk=issue_tag)
 
 	if human_evaluation == "pending":
 		entry_analyses = entry_analyses.filter(
@@ -182,7 +178,7 @@ def filter_analysis_entries(request, study, run):
 	if sort not in ALLOWED_ANALYSIS_ENTRY_SORTS:
 		sort = "-entry__created_at"
 
-	entry_analyses = entry_analyses.order_by(sort)
+	entry_analyses = entry_analyses.distinct().order_by(sort)
 
 	sort_params = request.GET.copy()
 	sort_params.pop("sort", None)

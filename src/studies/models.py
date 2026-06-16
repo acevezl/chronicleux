@@ -500,38 +500,43 @@ class StudyAnalysisRun(models.Model):
     
     # Study-level outputs
 
-    # Sentiment / Opinion Analysis
+    # SENTIMENT
+    # Average sentiment label and score
     average_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
     average_sentiment_score = models.FloatField(null=True, blank=True)
+    # Dominant sentiment label and score
     dominant_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
     dominant_sentiment_score = models.FloatField(null=True, blank=True)
+    # Sentiment distribution
     sentiment_distribution = models.JSONField(default=dict, blank=True)
 
+    # THEMES
     # Canonical Themes identified in this run
+    # This also works as theme distribution
     canonical_themes = models.ManyToManyField(
         "CanonicalTheme",
         through="StudyAnalysisRunCanonicalTheme",
         related_name="analysis_runs",
         blank=True,
     )
+    # Dominant Canonical Theme identified in this run
+    dominant_theme = models.ForeignKey(
+        "CanonicalTheme",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="dominant_in_analysis_runs",
+    )
 
+    # ISSUES
     # Canonical Issues identified in this run
+    # This also works as issue distribution
     canonical_issues = models.ManyToManyField(
         "CanonicalIssue",
         through="StudyAnalysisRunCanonicalIssue",
         related_name="analysis_runs",
         blank=True,
     )
-    
-    # Dominant Theme / Topic Analysis
-    dominant_theme_label = models.CharField(max_length=255, blank=True, null=True)
-    dominant_theme_weight = models.FloatField(null=True, blank=True)
-
-    # #fixlater This line will be replaced with canonical_themes
-    theme_distribution = models.JSONField(default=dict, blank=True)
-
-    # Issues #fixlater This line will be replaced with canonical_issues
-    recurring_issues = models.JSONField(default=list, blank=True)
     
     # Evolution of Sentiment, Theme, and Issues over time
     evolution_over_time = models.JSONField(default=list, blank=True)
