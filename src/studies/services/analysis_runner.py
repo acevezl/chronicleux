@@ -6,15 +6,21 @@ import re
 from typing import Any
 
 from django.db import transaction
+from django.db.models import Avg, Count
 from django.utils import timezone
 
 from studies.models import (
-	Study,
-	StudyStatus,
-	StudyAnalysisRun,
+    AnalysisRunStatus,
+	CanonicalTheme,
 	DiaryEntry,
-	DiaryEntryAnalysis,
-	AnalysisRunStatus,
+    DiaryEntryAnalysis,
+    DiaryEntryAnalysisCanonicalTheme,
+	Study,
+    StudyStatus,
+    StudyAnalysisRun,
+    StudyAnalysisRunCanonicalTheme,
+    ThemeAndIssueSource,
+    ThemeAndIssueStatus,
 )
 
 from studies.services.nlp.pipeline import analyze_study_entries
@@ -422,9 +428,95 @@ def create_study_analysis_run(
 	return run
 
 
-#-------------------------------#
+#--------------------------------#
 # Process existing analysis run  #
-#-------------------------------#
+#--------------------------------#
+def assign_machine_canonical_theme(entry_analysis: DiaryEntryAnalysis) -> None:
+    raw_theme_result = entry_analysis.raw_theme_result or {}
+    metadata = raw_theme_result.get("metadata") or {}
+
+    canonical_theme = None
+    rationale = "Machine-assigned by theme analyzer."
+
+    canonical_theme_id = metadata.get("canonical_theme_id")
+
+    if canonical_theme_id:
+        canonical_theme = (
+            CanonicalTheme.objects
+            .filter(pk=canonical_theme_id, is_active=True)
+            .first()
+        )
+        rationale = "Matched against approved canonical theme catalog."
+
+    suggested_theme = metadata.get("suggested_theme")
+
+    if canonical_theme is None and suggested_theme:
+        suggestion_name = (
+            suggested_theme.get("name")
+            or entry_analysis.theme_label
+            or ""
+        ).strip()
+
+        if suggestion_name:
+            canonical_theme, _ = CanonicalTheme.objects.get_or_create(
+                name=suggestion_name,
+                defaults={
+                    "description": suggested_theme.get("description", ""),
+                    "aliases": suggested_theme.get("aliases", []),
+                    "examples": (
+                        entry_analysis.entry.content[:500]
+                        if entry_analysis.entry and entry_analysis.entry.content
+                        else ""
+                    ),
+                    "source": ThemeAndIssueSource.NLP,
+                    "status": ThemeAndIssueStatus.SUGGESTED,
+                    "is_active": True,
+                },
+            )
+
+            rationale = (
+                "Suggested by NLP because the entry weakly matched the "
+                "approved canonical theme catalog."
+            )
+
+    if canonical_theme is None:
+        return
+
+    DiaryEntryAnalysisCanonicalTheme.objects.update_or_create(
+        diary_entry_analysis=entry_analysis,
+        canonical_theme=canonical_theme,
+        defaults={
+            "confidence_score": entry_analysis.theme_weight,
+            "rationale": rationale,
+        },
+    )
+
+
+def refresh_canonical_theme_summaries_for_run(run: StudyAnalysisRun) -> None:
+    StudyAnalysisRunCanonicalTheme.objects.filter(run=run).delete()
+
+    rows = (
+        DiaryEntryAnalysisCanonicalTheme.objects
+        .filter(diary_entry_analysis__run=run)
+        .values("canonical_theme_id")
+        .annotate(
+            entry_count=Count("id"),
+            average_confidence_score=Avg("confidence_score"),
+        )
+    )
+
+    StudyAnalysisRunCanonicalTheme.objects.bulk_create(
+        [
+            StudyAnalysisRunCanonicalTheme(
+                run=run,
+                canonical_theme_id=row["canonical_theme_id"],
+                entry_count=row["entry_count"],
+                average_confidence_score=row["average_confidence_score"],
+            )
+            for row in rows
+        ]
+    )
+
 def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 	run = StudyAnalysisRun.objects.select_related("study").get(pk=run_id)
 	study = run.study
@@ -532,6 +624,8 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 					raw_response=entry_analysis_result_data,
 				)
 
+				assign_machine_canonical_theme(selected_entry_run)
+
 				entry.selected_entry_run = selected_entry_run
 				entry.save(update_fields=["selected_entry_run"])
 
@@ -616,6 +710,10 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 					"completed_at",
 				]
 			)
+
+			# Refresh canonical theme summaries
+			print ("Refreshing canonical theme summaries")
+			refresh_canonical_theme_summaries_for_run(run)
 
 			# And safely refresh binary metrics
 			print ("Refreshing metrics")
