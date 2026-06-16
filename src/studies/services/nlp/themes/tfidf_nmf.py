@@ -117,6 +117,7 @@ class TfidfNmfThemeExtractor(BaseThemeExtractor):
             .filter(is_active=True)
             .filter(
                 Q(status=ThemeAndIssueStatus.APPROVED)
+                | Q(status=ThemeAndIssueStatus.SUGGESTED)
                 | Q(status__isnull=True)
                 | Q(status="")
             )

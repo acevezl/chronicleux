@@ -1178,6 +1178,7 @@ def canonical_theme_create(request):
 		"studies/catalogues/canonical_theme_form.html",
 		{
 			"form": form,
+			"page_title_heroicon":"tag",
 			"page_title": "Create Canonical Theme",
 			"page_subtitle": "Create and maintain reusable canonical themes for machine and evaluator analysis.",
 			"submit_label": "Create theme",
@@ -1210,6 +1211,7 @@ def canonical_theme_update(request, theme_pk):
 		{
 			"theme": theme,
 			"form": form,
+			"page_title_heroicon":"tag",
 			"page_title": "Edit Canonical Theme",
 			"page_subtitle": "Update and maintain reusable canonical themes for machine and evaluator analysis.",
 			"submit_label": "Save theme",
@@ -1236,6 +1238,7 @@ def canonical_theme_delete(request, theme_pk):
 		"studies/catalogues/canonical_theme_confirm_delete.html",
 		{
 			"theme": theme,
+			"page_title_heroicon":"tag",
 			"page_title": "Delete Canonical Theme",
 			"page_subtitle": "Confirm whether this theme should be removed from the global catalogue.",
 		},
@@ -1272,13 +1275,16 @@ def canonical_theme_import(request):
 		except Exception as e:
 			messages.error(request, f"Theme import failed: {e}")
 
+	context = {
+		"page_title_heroicon":"tag",
+		"page_title": "Import Canonical Themes",
+		"page_subtitle": "Import canonical themes into the global catalogue from a CSV file.",
+	}
+	
 	return render(
 		request,
 		"studies/catalogues/canonical_theme_import.html",
-		{
-			"page_title": "Import Canonical Themes",
-			"page_subtitle": "Import canonical themes into the global catalogue from a CSV file.",
-		},
+		context,
 	)
 
 
@@ -1292,6 +1298,7 @@ def canonical_issue_catalogue_list(request):
 	context = filter_canonical_issues(request)
 
 	context.update({
+		"page_title_heroicon":"tag",
 		"page_title": "Canonical Issues Catalogue",
 		"page_subtitle": "Manage the global catalogue of canonical issues used by analysis methods.",
 		"canonical_issues_filter_url": reverse("canonical_issue_catalogue_partial"),

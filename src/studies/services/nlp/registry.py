@@ -41,14 +41,14 @@ THEME_EXTRACTORS = {
     "tfidf_nmf": {
         "class": TfidfNmfThemeExtractor,
         "label": "TF-IDF + NMF",
-        "description": "Extracts recurring themes using TF-IDF features and non-negative matrix factorization.",
-        "long_description": "Use TF-IDF + NMF as a fast, interpretable baseline for recurring vocabulary patterns. Best when participants describe similar experiences with similar words.",
+        "description": "Matches entries against the canonical theme catalog, then uses NMF to suggest missing themes when catalog matches are weak.",
+        "long_description": "Use TF-IDF + NMF as a topic-modeling comparison. The analyzer first maps diary entries to approved canonical themes, then runs NMF only on weakly matched entries to suggest possible new catalog themes.",
     },
     "tfidf_lda": {
         "class": TfidfLdaThemeExtractor,
         "label": "TF-IDF + LDA",
-        "description": "Extracts recurring themes using TF-IDF features and latent Dirichlet allocation.",
-        "long_description": "Use TF-IDF + LDA as a probabilistic topic-modeling comparison. Best for larger entry sets with enough repeated vocabulary.",
+        "description": "Matches entries against the canonical theme catalog, then uses LDA to suggest missing themes when catalog matches are weak.",
+        "long_description": "Use TF-IDF + LDA as a probabilistic topic-modeling comparison. The analyzer first maps diary entries to approved canonical themes, then runs LDA only on weakly matched entries to suggest possible new catalog themes.",
     },
     "bertopic": {
         "class": BertopicThemeExtractor,

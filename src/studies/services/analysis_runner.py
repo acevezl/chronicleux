@@ -1,26 +1,28 @@
 from __future__ import annotations
+import re
 
 from collections import Counter, defaultdict
 from dataclasses import asdict
-import re
-from typing import Any
 
 from django.db import transaction
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Q
 from django.utils import timezone
 
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
 from studies.models import (
-    AnalysisRunStatus,
+	AnalysisRunStatus,
 	CanonicalTheme,
 	DiaryEntry,
-    DiaryEntryAnalysis,
-    DiaryEntryAnalysisCanonicalTheme,
+	DiaryEntryAnalysis,
+	DiaryEntryAnalysisCanonicalTheme,
 	Study,
-    StudyStatus,
-    StudyAnalysisRun,
-    StudyAnalysisRunCanonicalTheme,
-    ThemeAndIssueSource,
-    ThemeAndIssueStatus,
+	StudyStatus,
+	StudyAnalysisRun,
+	StudyAnalysisRunCanonicalTheme,
+	ThemeAndIssueSource,
+	ThemeAndIssueStatus,
 )
 
 from studies.services.nlp.pipeline import analyze_study_entries
@@ -388,6 +390,93 @@ def build_top_sentiment_entries(entries_with_results: list[tuple]) -> dict:
 		"negative": top_negative,
 	}
 
+
+def normalize_catalog_text(value: str) -> str:
+	return re.sub(r"\s+", " ", (value or "").lower()).strip()
+
+
+def build_theme_similarity_text(name: str, description: str = "", aliases=None, examples: str = "") -> str:
+	aliases = aliases or []
+
+	if isinstance(aliases, str):
+		aliases = [item.strip() for item in aliases.split(",") if item.strip()]
+
+	return normalize_catalog_text(
+		" ".join(
+			[
+				name or "",
+				description or "",
+				" ".join(str(alias) for alias in aliases),
+				examples or "",
+			]
+		)
+	)
+
+
+def find_similar_existing_theme(
+    suggested_theme: dict,
+    similarity_threshold: float = 0.45,
+) -> CanonicalTheme | None:
+    suggestion_name = suggested_theme.get("name", "")
+    suggestion_description = suggested_theme.get("description", "")
+    suggestion_aliases = suggested_theme.get("aliases", [])
+
+    suggestion_text = build_theme_similarity_text(
+        name=suggestion_name,
+        description=suggestion_description,
+        aliases=suggestion_aliases,
+    )
+
+    if not suggestion_text:
+        return None
+
+    existing_themes = CanonicalTheme.objects.filter(
+        is_active=True,
+    ).filter(
+        Q(status=ThemeAndIssueStatus.APPROVED)
+        | Q(status=ThemeAndIssueStatus.SUGGESTED)
+        | Q(status__isnull=True)
+        | Q(status="")
+    )
+
+    existing_theme_list = list(existing_themes)
+
+    if not existing_theme_list:
+        return None
+
+    existing_texts = [
+        build_theme_similarity_text(
+            name=theme.name,
+            description=theme.description,
+            aliases=theme.aliases,
+            examples=theme.examples,
+        )
+        for theme in existing_theme_list
+    ]
+
+    vectorizer = TfidfVectorizer(
+        stop_words="english",
+        ngram_range=(1, 3),
+        min_df=1,
+        max_df=1.0,
+    )
+
+    matrix = vectorizer.fit_transform([suggestion_text, *existing_texts])
+
+    suggestion_vector = matrix[0]
+    existing_vectors = matrix[1:]
+
+    similarities = cosine_similarity(suggestion_vector, existing_vectors)[0]
+
+    best_index = int(similarities.argmax())
+    best_score = float(similarities[best_index])
+
+    if best_score < similarity_threshold:
+        return None
+
+    return existing_theme_list[best_index]
+
+
 #-------------------------------#
 # Create queued analysis run     #
 #-------------------------------#
@@ -427,95 +516,100 @@ def create_study_analysis_run(
 
 	return run
 
-
 #--------------------------------#
 # Process existing analysis run  #
 #--------------------------------#
 def assign_machine_canonical_theme(entry_analysis: DiaryEntryAnalysis) -> None:
-    raw_theme_result = entry_analysis.raw_theme_result or {}
-    metadata = raw_theme_result.get("metadata") or {}
+	raw_theme_result = entry_analysis.raw_theme_result or {}
+	metadata = raw_theme_result.get("metadata") or {}
 
-    canonical_theme = None
-    rationale = "Machine-assigned by theme analyzer."
+	canonical_theme = None
+	rationale = "Machine-assigned by theme analyzer."
 
-    canonical_theme_id = metadata.get("canonical_theme_id")
+	canonical_theme_id = metadata.get("canonical_theme_id")
 
-    if canonical_theme_id:
-        canonical_theme = (
-            CanonicalTheme.objects
-            .filter(pk=canonical_theme_id, is_active=True)
-            .first()
-        )
-        rationale = "Matched against approved canonical theme catalog."
+	if canonical_theme_id:
+		canonical_theme = (
+			CanonicalTheme.objects
+			.filter(pk=canonical_theme_id, is_active=True)
+			.first()
+		)
+		rationale = "Matched against approved canonical theme catalog."
 
-    suggested_theme = metadata.get("suggested_theme")
+	suggested_theme = metadata.get("suggested_theme")
 
-    if canonical_theme is None and suggested_theme:
-        suggestion_name = (
-            suggested_theme.get("name")
-            or entry_analysis.theme_label
-            or ""
-        ).strip()
+	if canonical_theme is None and suggested_theme:
+		suggestion_name = (
+			suggested_theme.get("name")
+			or entry_analysis.theme_label
+			or ""
+		).strip()
 
-        if suggestion_name:
-            canonical_theme, _ = CanonicalTheme.objects.get_or_create(
-                name=suggestion_name,
-                defaults={
-                    "description": suggested_theme.get("description", ""),
-                    "aliases": suggested_theme.get("aliases", []),
-                    "examples": (
-                        entry_analysis.entry.content[:500]
-                        if entry_analysis.entry and entry_analysis.entry.content
-                        else ""
-                    ),
-                    "source": ThemeAndIssueSource.NLP,
-                    "status": ThemeAndIssueStatus.SUGGESTED,
-                    "is_active": True,
-                },
-            )
+		if suggestion_name:
+			canonical_theme = find_similar_existing_theme(suggested_theme)
 
-            rationale = (
-                "Suggested by NLP because the entry weakly matched the "
-                "approved canonical theme catalog."
-            )
+			if canonical_theme is None:
+				canonical_theme = CanonicalTheme.objects.create(
+					name=suggestion_name,
+					description=suggested_theme.get("description", ""),
+					aliases=suggested_theme.get("aliases", []),
+					examples=(
+						entry_analysis.entry.content[:500]
+						if entry_analysis.entry and entry_analysis.entry.content
+						else ""
+					),
+					source=ThemeAndIssueSource.NLP,
+					status=ThemeAndIssueStatus.SUGGESTED,
+					is_active=True,
+				)
 
-    if canonical_theme is None:
-        return
+				rationale = (
+					"Suggested by NLP because the entry weakly matched the "
+					"approved canonical theme catalog."
+				)
+			else:
+				rationale = (
+					"Matched to an existing suggested canonical theme using "
+					"theme-name and alias similarity."
+				)
 
-    DiaryEntryAnalysisCanonicalTheme.objects.update_or_create(
-        diary_entry_analysis=entry_analysis,
-        canonical_theme=canonical_theme,
-        defaults={
-            "confidence_score": entry_analysis.theme_weight,
-            "rationale": rationale,
-        },
-    )
+	if canonical_theme is None:
+		return
+
+	DiaryEntryAnalysisCanonicalTheme.objects.update_or_create(
+		diary_entry_analysis=entry_analysis,
+		canonical_theme=canonical_theme,
+		defaults={
+			"confidence_score": entry_analysis.theme_weight,
+			"rationale": rationale,
+		},
+	)
 
 
 def refresh_canonical_theme_summaries_for_run(run: StudyAnalysisRun) -> None:
-    StudyAnalysisRunCanonicalTheme.objects.filter(run=run).delete()
+	StudyAnalysisRunCanonicalTheme.objects.filter(run=run).delete()
 
-    rows = (
-        DiaryEntryAnalysisCanonicalTheme.objects
-        .filter(diary_entry_analysis__run=run)
-        .values("canonical_theme_id")
-        .annotate(
-            entry_count=Count("id"),
-            average_confidence_score=Avg("confidence_score"),
-        )
-    )
+	rows = (
+		DiaryEntryAnalysisCanonicalTheme.objects
+		.filter(diary_entry_analysis__run=run)
+		.values("canonical_theme_id")
+		.annotate(
+			entry_count=Count("id"),
+			average_confidence_score=Avg("confidence_score"),
+		)
+	)
 
-    StudyAnalysisRunCanonicalTheme.objects.bulk_create(
-        [
-            StudyAnalysisRunCanonicalTheme(
-                run=run,
-                canonical_theme_id=row["canonical_theme_id"],
-                entry_count=row["entry_count"],
-                average_confidence_score=row["average_confidence_score"],
-            )
-            for row in rows
-        ]
-    )
+	StudyAnalysisRunCanonicalTheme.objects.bulk_create(
+		[
+			StudyAnalysisRunCanonicalTheme(
+				run=run,
+				canonical_theme_id=row["canonical_theme_id"],
+				entry_count=row["entry_count"],
+				average_confidence_score=row["average_confidence_score"],
+			)
+			for row in rows
+		]
+	)
 
 def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 	run = StudyAnalysisRun.objects.select_related("study").get(pk=run_id)
