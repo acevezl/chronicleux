@@ -138,8 +138,6 @@ class StudyAnalysisRunAdmin(ModelAdmin):
         "total_themes",
         "dominant_sentiment_label",
         "dominant_sentiment_score",
-        "dominant_theme_label",
-        "dominant_theme_weight",
     )
     list_filter = (
         "status",

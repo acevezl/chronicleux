@@ -1,10 +1,28 @@
 {% load formatters %}
-{% for theme in themes|split_csv %}
-	<span class="badge-THEME text-center">
-		{{ theme|capfirst }}
-	</span>
+{% for theme in themes %}
+    <a
+        href="{% url 'canonical_theme_update' theme.id %}"
+        class="badge-THEME inline-flex items-center gap-1.5 hover:underline"
+        title="Edit canonical theme: {{ theme.get_status_display|default:'Unknown status' }}"
+    >
+        <span
+            class="
+                h-2 w-2 rounded-full
+                {% if theme.status == 'APPROVED' %}
+                    bg-emerald-500
+                {% elif theme.status == 'SUGGESTED' %}
+                    bg-amber-400
+                {% elif theme.status == 'REJECTED' %}
+                    bg-red-400
+                {% else %}
+                    bg-gray-400
+                {% endif %}
+            "
+            aria-hidden="true"
+        ></span>
+
+        <span>{{ theme.name|capfirst }}</span>
+    </a>
 {% empty %}
-	<span class="badge-NONE">
-		None
-	</span>
+    <span class="badge-NONE">None</span>
 {% endfor %}

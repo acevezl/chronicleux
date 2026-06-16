@@ -187,7 +187,7 @@
                                 </p>
 
                                 <div class="flex flex-wrap items-center gap-2">
-                                    {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.theme_label %}
+                                    {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.canonical_themes.all %}
 
                                     {% if entry_analysis.theme_weight %}
                                     <span class="badge">

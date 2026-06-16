@@ -60,8 +60,13 @@ def analyze_study_entries(study_id: int, entries: list[dict], sentiment_method: 
                     label = theme_result.label,
                     keywords = theme_result.keywords,
                     method = theme_result.method,
-                    metadata= {
+                    metadata={
                         **theme_result.metadata,
+                        "assignment": {
+                            key: value
+                            for key, value in assignment.items()
+                            if key not in {"document_index", "theme_id"}
+                        },
                     },
                 )
         
