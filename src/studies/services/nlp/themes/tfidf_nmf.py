@@ -32,8 +32,8 @@ class TfidfNmfThemeExtractor(BaseThemeExtractor):
         num_keywords: int = 8,
         max_features: int = 1000,
         canonical_confidence_threshold: float = 0.12,
-        suggestion_confidence_threshold: float = 0.35,
-        suggestion_margin: float = 0.08,
+        suggestion_confidence_threshold: float = 0.36, # Suggestions need to be at least 3x orders of magnitude heavier than existing canonical
+        suggestion_margin: float = 0.08, # Suggestions need to be above canonical + margin (i.e., .20 in my initial example)
     ):
         self.num_themes = num_themes
         self.num_keywords = num_keywords

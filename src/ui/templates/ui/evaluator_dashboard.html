@@ -131,6 +131,33 @@
 			</div>
 		</article>
 
+		<!-- CANONICAL THEMES -->
+		<article class="flex flex-col justify-between rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
+			<div class="flex items-start justify-between gap-3">
+				<div>
+					<p class="xs-label mb-1">Catalogue</p>
+					<h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">
+						Canonical Themes
+					</h3>
+				</div>
+
+				<div class="rounded-full bg-sky-50 dark:bg-sky-950 p-2 text-sky-600 dark:text-sky-300">
+					{% heroicon_outline "swatch" class="size-5" %}
+				</div>
+			</div>
+
+			<p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
+				Manage your list of canonical themes.
+			</p>
+
+			<div class="mt-4">
+				<a href="{% url 'canonical_theme_catalogue_list' %}" class="button-SECONDARY">
+					{% heroicon_outline "plus" class="h-4 w-4 shrink-0" %}
+					View Canonical Themes
+				</a>
+			</div>
+		</article>
+
 		<!-- STUDIES NEEDING SETUP -->
 		{% comment %} <article class="flex flex-col justify-between rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition">
 			<div class="flex items-start justify-between gap-3">

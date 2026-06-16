@@ -45,9 +45,13 @@
     --color-emerald-300: oklch(84.5% 0.143 164.978);
     --color-emerald-600: oklch(59.6% 0.145 163.225);
     --color-emerald-950: oklch(26.2% 0.051 172.552);
+    --color-sky-50: oklch(97.7% 0.013 236.62);
     --color-sky-100: oklch(95.1% 0.026 236.824);
+    --color-sky-300: oklch(82.8% 0.111 230.318);
+    --color-sky-600: oklch(58.8% 0.158 241.966);
     --color-sky-700: oklch(50% 0.134 242.749);
     --color-sky-800: oklch(44.3% 0.11 240.79);
+    --color-sky-950: oklch(29.3% 0.066 243.157);
     --color-blue-50: oklch(97% 0.014 254.604);
     --color-blue-100: oklch(93.2% 0.032 255.585);
     --color-blue-200: oklch(88.2% 0.059 254.128);
@@ -917,6 +921,9 @@
   .bg-red-50 {
     background-color: var(--color-red-50);
   }
+  .bg-sky-50 {
+    background-color: var(--color-sky-50);
+  }
   .bg-slate-50 {
     background-color: var(--color-slate-50);
   }
@@ -1146,6 +1153,9 @@
   }
   .text-red-700 {
     color: var(--color-red-700);
+  }
+  .text-sky-600 {
+    color: var(--color-sky-600);
   }
   .text-slate-600 {
     color: var(--color-slate-600);
@@ -1707,6 +1717,11 @@
       }
     }
   }
+  .dark\:bg-sky-950 {
+    @media (prefers-color-scheme: dark) {
+      background-color: var(--color-sky-950);
+    }
+  }
   .dark\:bg-slate-950 {
     @media (prefers-color-scheme: dark) {
       background-color: var(--color-slate-950);
@@ -1813,6 +1828,11 @@
   .dark\:text-red-300 {
     @media (prefers-color-scheme: dark) {
       color: var(--color-red-300);
+    }
+  }
+  .dark\:text-sky-300 {
+    @media (prefers-color-scheme: dark) {
+      color: var(--color-sky-300);
     }
   }
   .dark\:text-slate-300 {
