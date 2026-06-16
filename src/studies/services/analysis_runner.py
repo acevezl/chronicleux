@@ -13,6 +13,8 @@ from studies.models import (
 	DiaryEntry,
 	DiaryEntryAnalysis,
 	AnalysisRunStatus,
+	DiaryEntryAnalysisCanonicalTheme,
+	StudyAnalysisRunCanonicalTheme,
 )
 
 from studies.services.nlp.pipeline import analyze_study_entries
@@ -77,11 +79,37 @@ def build_sentiment_distribution(entry_results: list[dict]) -> list[dict]:
 	]
 
 
+def build_recurring_themes(entry_results: list[dict]) -> list[dict]:
+	counts = Counter()
+
+	for result in entry_results:
+		theme_label = result.get("theme_label")
+
+		if not theme_label:
+			continue
+
+		counts[theme_label] += 1
+
+	total = sum(counts.values())
+
+	return [
+		{
+			"label": label,
+			"count": count,
+			"percentage": round(count / total, 4) if total else 0,
+		}
+		for label, count in counts.most_common()
+	]
+
+def build_recurring_issues(entry_results: list[dict]) -> list[dict]:
+	# Pending issue refactor
+	return
+
 def build_evolution_over_time(entries_with_results: list[tuple]) -> list[dict]:
 	"""
 	Build a time series of average sentiment and sentiment distribution by day.
 
-	This intentionally does not include themes or issues yet.
+	This intentionally does not include issues yet.
 	"""
 	grouped = {}
 
@@ -115,9 +143,8 @@ def build_evolution_over_time(entries_with_results: list[tuple]) -> list[dict]:
 			"avg_sentiment": avg_sentiment,
 			"sentiment_distribution": build_sentiment_distribution(day_results),
 
-			# Left empty intentionally. We will rebuild these later.
-			"top_themes": [],
-			"top_issues": [],
+			"top_themes": build_recurring_themes(day_results),
+			"top_issues": [], # Left issues intentinoally empty through this reset
 		})
 
 	return output
@@ -166,11 +193,10 @@ def serialize_dashboard_entry(entry: DiaryEntry, result: dict) -> dict:
 		"sentiment_score": result.get("sentiment_score"),
 		"sentiment_label": result.get("sentiment_label"),
 
-		# Left empty intentionally. We will rebuild themes later.
-		"theme_label": None,
-		"theme_weight": None,
+		"theme_label": result.get("theme_label"),
+		"theme_weight": result.get("theme_weight"),
 
-		# Left empty intentionally. We will rebuild issues later.
+		# Left empty intentionally. I will rebuild issues later.
 		"issue_tags": [],
 
 		"created_at": entry.created_at.isoformat() if entry.created_at else None,
@@ -225,6 +251,27 @@ def build_top_sentiment_entries(entries_with_results: list[tuple]) -> dict:
 		"negative": top_negative,
 	}
 
+def attach_canonical_theme_from_analyzer_result(
+	entry_analysis: DiaryEntryAnalysis,
+	theme_result,
+) -> None:
+	if not theme_result:
+		return
+
+	metadata = theme_result.metadata or {}
+	canonical_theme_id = metadata.get("canonical_theme_id")
+
+	if not canonical_theme_id:
+		return
+
+	DiaryEntryAnalysisCanonicalTheme.objects.update_or_create(
+		diary_entry_analysis=entry_analysis,
+		canonical_theme_id=canonical_theme_id,
+		defaults={
+			"confidence_score": theme_result.weight,
+			"rationale": "Assigned from TF-IDF/NMF analyzer output.",
+		},
+	)
 
 # -------------------------------
 # Create queued analysis run
@@ -265,6 +312,59 @@ def create_study_analysis_run(
 
 	return run
 
+
+def refresh_run_canonical_themes(run: StudyAnalysisRun) -> None:
+	StudyAnalysisRunCanonicalTheme.objects.filter(run=run).delete()
+
+	entry_theme_rows = (
+		DiaryEntryAnalysisCanonicalTheme.objects
+		.filter(diary_entry_analysis__run=run)
+		.select_related("canonical_theme")
+	)
+
+	grouped = {}
+
+	for row in entry_theme_rows:
+		theme_id = row.canonical_theme_id
+
+		if theme_id not in grouped:
+			grouped[theme_id] = {
+				"count": 0,
+				"scores": [],
+			}
+
+		grouped[theme_id]["count"] += 1
+
+		if row.confidence_score is not None:
+			grouped[theme_id]["scores"].append(row.confidence_score)
+
+	for theme_id, data in grouped.items():
+		scores = data["scores"]
+
+		average_confidence_score = (
+			round(sum(scores) / len(scores), 4)
+			if scores
+			else None
+		)
+
+		StudyAnalysisRunCanonicalTheme.objects.create(
+			run=run,
+			canonical_theme_id=theme_id,
+			entry_count=data["count"],
+			average_confidence_score=average_confidence_score,
+		)
+
+
+def set_run_dominant_theme(run: StudyAnalysisRun) -> None:
+	top_theme = (
+		StudyAnalysisRunCanonicalTheme.objects
+		.filter(run=run)
+		.select_related("canonical_theme")
+		.order_by("-entry_count", "-average_confidence_score", "canonical_theme__name")
+		.first()
+	)
+
+	run.dominant_theme = top_theme.canonical_theme if top_theme else None
 
 # -------------------------------
 # Process existing analysis run
@@ -344,6 +444,15 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 				normalized_content = normalize_entry_text(entry.content)
 				entry_summary = make_entry_summary(normalized_content)
 
+				theme_weight = None
+				theme_label = None
+
+				if entry_analysis_result.theme:
+					if entry_analysis_result.theme.weight is not None:
+						theme_weight = round(entry_analysis_result.theme.weight, 4)
+
+					theme_label = entry_analysis_result.theme.label
+
 				selected_entry_run = DiaryEntryAnalysis.objects.create(
 					run=run,
 					entry=entry,
@@ -356,10 +465,14 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 						else {}
 					),
 
-					# Themes are intentionally disabled for this reset.
-					theme_weight=None,
-					theme_label=None,
-					raw_theme_result={},
+					# Themes added again
+					theme_weight=theme_weight,
+					theme_label=theme_label,
+					raw_theme_result=(
+						asdict(entry_analysis_result.theme)
+						if entry_analysis_result.theme
+						else {}
+					),
 
 					# Issues are intentionally disabled for this reset.
 					issue_detected=False,
@@ -373,6 +486,11 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 					raw_response=entry_analysis_result_data,
 				)
 
+				attach_canonical_theme_from_analyzer_result(
+					entry_analysis=selected_entry_run,
+					theme_result=entry_analysis_result.theme,
+				)
+
 				entry.selected_entry_run = selected_entry_run
 				entry.save(update_fields=["selected_entry_run"])
 
@@ -380,8 +498,8 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 					"sentiment_score": sentiment_score,
 					"sentiment_label": sentiment_label,
 
-					"theme_weight": None,
-					"theme_label": None,
+					"theme_weight": theme_weight,
+					"theme_label": theme_label,
 
 					"analysis_issue_detected": False,
 					"analysis_issue_tags": [],
@@ -410,9 +528,7 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 
 			run.sentiment_distribution = build_sentiment_distribution(entry_results)
 
-			# Theme/issue fields are intentionally reset for now.
-			run.dominant_theme = None
-			run.total_themes = 0
+			run.total_themes = study_analysis_result.total_themes
 
 			run.evolution_over_time = build_evolution_over_time(entries_with_results)
 			run.top_representative_quotes = build_top_sentiment_entries(entries_with_results)
@@ -425,6 +541,9 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 
 			run.status = AnalysisRunStatus.COMPLETED
 			run.completed_at = now
+
+			refresh_run_canonical_themes(run)
+			set_run_dominant_theme(run)
 
 			run.save(
 				update_fields=[
