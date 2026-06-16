@@ -23,9 +23,9 @@
         </div>
 
         <div class="xs-label">
-            {% include "studies/partials/_badge_theme_labels.html" with themes=run.dominant_theme_label %}
+            {% include "studies/partials/_badge_theme_labels.html" with themes=run.canonical_themes.all %}
             <span class="badge">
-                {{ run.dominant_theme_weight }}
+                {weight}
             </span>
         </div>
     </div>

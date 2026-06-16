@@ -123,9 +123,13 @@ def diary_study_detail(request, pk):
 		study=study
 	).select_related("participant").order_by("-created_at")
 
-	analysis_runs = StudyAnalysisRun.objects.filter(
-		study=study
-	).order_by("-started_at")
+	analysis_runs = (
+		StudyAnalysisRun.objects
+		.filter(study=study)
+		.select_related("dominant_theme")
+		.prefetch_related("canonical_themes", "canonical_issues")
+		.order_by("-started_at")
+	)
 
 	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
 
@@ -808,7 +812,14 @@ def run_machine_analysis(request, pk):
 @login_required
 def machine_analysis_details(request, study_pk, run_pk):
 	study = get_object_or_404(Study, pk=study_pk)
-	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
+	
+	run = get_object_or_404(
+		StudyAnalysisRun.objects
+		.select_related("dominant_theme")
+		.prefetch_related("canonical_themes", "canonical_issues"),
+		pk=run_pk,
+		study=study,
+	)
 
 	if not user_can_evaluate_study(request.user, study):
 		return HttpResponseForbidden()
@@ -859,7 +870,14 @@ def machine_analysis_details(request, study_pk, run_pk):
 @login_required
 def machine_analysis_entries_partial(request, study_pk, run_pk):
 	study = get_object_or_404(Study, pk=study_pk)
-	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
+	
+	run = get_object_or_404(
+		StudyAnalysisRun.objects
+		.select_related("dominant_theme")
+		.prefetch_related("canonical_themes", "canonical_issues"),
+		pk=run_pk,
+		study=study,
+	)
 
 	if not user_can_evaluate_study(request.user, study):
 		return HttpResponseForbidden()
@@ -890,6 +908,10 @@ def analysis_runs(request):
 	runs = StudyAnalysisRun.objects.select_related(
 		"study",
 		"created_by",
+		"dominant_theme",
+	).prefetch_related(
+		"canonical_themes",
+		"canonical_issues",
 	).filter(
 		created_by=request.user
 	)
@@ -988,6 +1010,10 @@ def analysis_runs_partial(request):
 	runs = StudyAnalysisRun.objects.select_related(
 		"study",
 		"created_by",
+		"dominant_theme",
+	).prefetch_related(
+		"canonical_themes",
+		"canonical_issues",
 	).filter(
 		created_by=request.user
 	)
@@ -1494,7 +1520,14 @@ def canonical_issue_import(request):
 @login_required
 def human_evaluation_queue(request, study_pk, run_pk):
 	study = get_object_or_404(Study, pk=study_pk)
-	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
+	
+	run = get_object_or_404(
+		StudyAnalysisRun.objects
+		.select_related("dominant_theme")
+		.prefetch_related("canonical_themes", "canonical_issues"),
+		pk=run_pk,
+		study=study,
+	)
 
 	if not user_can_evaluate_study(request.user, study):
 		return HttpResponseForbidden()
@@ -1534,7 +1567,14 @@ def human_evaluation_queue(request, study_pk, run_pk):
 @login_required
 def human_evaluation_queue_partial(request, study_pk, run_pk):
 	study = get_object_or_404(Study, pk=study_pk)
-	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
+	
+	run = get_object_or_404(
+		StudyAnalysisRun.objects
+		.select_related("dominant_theme")
+		.prefetch_related("canonical_themes", "canonical_issues"),
+		pk=run_pk,
+		study=study,
+	)
 
 	if not user_can_evaluate_study(request.user, study):
 		return HttpResponseForbidden()
@@ -1583,7 +1623,12 @@ def human_evaluation_queue_partial(request, study_pk, run_pk):
 @login_required
 def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 	study = get_object_or_404(Study, pk=study_pk)
-	run = get_object_or_404(StudyAnalysisRun, pk=run_pk, study=study)
+	
+	run = get_object_or_404(
+		StudyAnalysisRun.objects.prefetch_related("canonical_themes"),
+		pk=run_pk,
+		study=study,
+	)
 
 	if not user_can_evaluate_study(request.user, study):
 		return HttpResponseForbidden()

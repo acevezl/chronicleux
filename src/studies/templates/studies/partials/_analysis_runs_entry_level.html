@@ -120,7 +120,7 @@
                                         THEME KEYWORDS
                                     </span>
                                     <span class="flex flex-wrap gap-2 justify-center">
-                                        {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.theme_label %}
+                                        {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.canonical_themes.all %}
                                     </span>
                                 </div>
 

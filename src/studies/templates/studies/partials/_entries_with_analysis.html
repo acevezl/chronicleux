@@ -74,9 +74,12 @@
                 >
                     <option value="">All detected themes</option>
 
-                    {% for theme_item in run.theme_distribution %}
-                        <option value="{{ theme_item.label }}" {% if theme == theme_item.label %}selected{% endif %}>
-                            {{ theme_item.label|capfirst }}
+                    {% for theme_item in run.canonical_themes.all %}
+                        <option
+                            value="{{ theme_item.pk }}"
+                            {% if theme == theme_item.pk|stringformat:"s" %}selected{% endif %}
+                        >
+                            {{ theme_item.name|capfirst }}
                         </option>
                     {% endfor %}
                 </select>
@@ -108,9 +111,12 @@
                 >
                     <option value="">All issue tags</option>
 
-                    {% for issue_item in run.recurring_issues %}
-                        <option value="{{ issue_item.label }}" {% if issue_tag == issue_item.label %}selected{% endif %}>
-                            {{ issue_item.label|capfirst }}
+                    {% for issue_item in run.canonical_issues.all %}
+                        <option
+                            value="{{ issue_item.pk }}"
+                            {% if issue_tag == issue_item.pk|stringformat:"s" %}selected{% endif %}
+                        >
+                            {{ issue_item.name|capfirst }}
                         </option>
                     {% endfor %}
                 </select>
@@ -252,7 +258,7 @@
                             </div>
 
                             <div class="flex flex-wrap  items-center gap-1">
-                                {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.theme_label %}
+                                {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.canonical_themes.all %}
 
                                 <span class="badge">
                                     Weight: {{ entry_analysis.theme_weight|floatformat:2 }}
@@ -260,7 +266,7 @@
                             </div>
 
                             <div class="flex flex-wrap  items-center gap-1">
-                                {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.issues %}
+                                {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.canonical_issues.all %}
                             </div>
                         </div>
                     {% else %}
