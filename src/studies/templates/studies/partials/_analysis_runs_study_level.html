@@ -7,10 +7,10 @@
 	{% endif %}
 {% endfor %}
 
-<details open class="group main-card">
+<article open class="group main-card flex max-h-[calc(100vh-9rem)] flex-col overflow-hidden">
 
 	<!-- CARD TITLE (I.E., SUMMARY) -->
-	<summary class="card-summary">
+	<div class="card-summary">
 		<div class="flex flex-col">
 			<span class="card-summary-title">
 				{% heroicon_outline "cpu-chip" %}
@@ -18,198 +18,25 @@
 			</span>
 
 			<p class="card-summary-subtitle">
-				Machine-generated analyses for this study, including sentiment, theme, and issue detection.
+				Machine-generated analyses for this study.
 			</p>
 		</div>
 
-		<span class="card-summary-chevron">
-			{% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
-		</span>
-	</summary>
+	</div>
 
 	<!-- ANALYSIS RUNS -->
-	<div class="p-4 bg-white dark:bg-gray-900">
+	 
+	<div class="min-h-0 flex-1 overflow-y-auto p-4">
 		{% if analysis_runs %}
-			<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+			<div class="grid grid-cols-1 gap-2">
 				{% for run in analysis_runs %}
 
 					<!-- ANALYSIS RUN CARD -->
-					<article class="h-full flex flex-col rounded-sm border border-gray-200 dark:border-gray-600overflow-hidden">
-
-						<!-- RUN HEADER -->
-						<header class="shrink-0 p-2 border-b border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800">
-							<div class="flex items-start justify-between gap-2">
-								<div class="flex flex-col">
-									<span class="card-summary-title">
-										{% heroicon_outline "code-bracket-square"%}
-										RUN-{{ run.id|stringformat:"03d" }}
-									</span>
-
-									<!-- CREATOR -->
-									<span class="xs-label p-1">
-										{% heroicon_outline "chart-bar-square" class="h-4 w-4 shrink-0" %}
-										{% if run.created_by %}
-											Executed by: {{ run.created_by.username|capfirst }}
-										{% endif %}
-									</span>
-
-									<!-- ANALYSIS DATE -->
-									<span class="xs-label p-1">
-										{% heroicon_outline "calendar-days" class="h-4 w-4 shrink-0" %}
-										{% if run.completed_at %}
-											Completed on: {{ run.completed_at|date:"Y-m-d H:i" }}
-
-										{% elif run.started_at %}
-											Started on: {{ run.started_at|date:"Y-m-d H:i" }}
-										{% else %}
-											Date unavailable
-										{% endif %}
-									</span>
-										
-								</div>
-
-								{% if run.status %}
-									<span class="run-{{ run.status }}">
-										{{ run.status }}
-									</span>
-								{% endif %}
-							</div>
-						</header>
-
-						<!-- RUN BODY -->
-						<section class="flex-1 p-2 space-y-2 bg-white dark:bg-gray-400">
-
-							<!-- METHODS -->
-							<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-
-								<!-- SENTIMENT METHOD -->
-								<div class="flex flex-col gap-2 card-border p-2">
-									<div class="xs-label uppercase">
-										{% heroicon_outline "face-smile" class="h-4 w-4 shrink-0" %}
-										Sentiment Method
-									</div>
-									<div class="flex flex-wrap gap-2">
-										<span class="badge-bigger">
-											{{ run.methods.sentiment|humanize_enum|upper|default:"—" }} 
-											{% if run.methods.sentiment == "llm" %}
-													{{ run.methods.provider|upper }}
-											{% endif %}
-										</span>
-
-										{% if run.methods.sentiment == "llm" %}
-											<span class="badge">
-												{{ run.methods.model }}
-											</span>
-										{% endif %}
-									</div>
-
-								</div>
-
-								<!-- THEME METHOD -->
-								<div class="flex flex-col gap-2 card-border p-2">
-									<div class="xs-label uppercase">
-										{% heroicon_outline "tag" class="h-4 w-4 shrink-0" %}
-										Theme Method
-									</div>
-									<div class="flex flex-wrap gap-2">
-										<span class="badge-bigger">
-											{{ run.methods.theme|humanize_enum|upper|default:"—" }} 
-											{% if run.methods.theme == "llm" %}
-													{{ run.methods.provider|upper }}
-											{% endif %}
-										</span>
-
-										{% if run.methods.theme == "llm" %}
-											<span class="badge">
-												{{ run.methods.model }}
-											</span>
-										{% endif %}
-									</div>
-								</div>
-
-							</div>
-
-							<!-- KEY RESULTS -->
-							<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-
-								<!-- DOMINANT SENTIMENT -->
-								<div class="flex flex-col gap-2 card-border p-2">
-									<div class="xs-label uppercase">
-										{% heroicon_outline "arrow-trending-up" class="h-4 w-4 shrink-0" %}
-										Dominant Sentiment
-									</div>
-
-									<div>
-										{% include "studies/partials/_badge_sentiment.html" with sentiment=run.dominant_sentiment_label %}
-									</div>
-								</div>
-
-								<!-- DOMINANT THEMES -->
-								<div class="flex flex-col gap-2 card-border p-2">
-									<div class="xs-label uppercase">
-										{% heroicon_outline "rectangle-group" class="h-4 w-4 shrink-0" %}
-										Theme Keywords
-									</div>
-
-									<div class="flex flex-wrap gap-2">
-										{% include "studies/partials/_badge_theme_labels.html" with themes=run.dominant_theme_label %}
-									</div>
-								</div>
-
-							</div>
-							
-							<div class="grid grid-cols-1 gap-2">
-
-								<!-- RECURRING ISSUES -->
-								<div class="flex flex-col gap-2 card-border p-2">
-									<div class="xs-label uppercase">
-										{% heroicon_outline "exclamation-triangle" class="h-4 w-4 shrink-0" %}
-										Detected Issues
-									</div>
-
-									<div class="flex flex-wrap gap-2">
-										{% include "studies/partials/_badge_issue_tags.html" with issues=run.recurring_issues|extract_labels %}
-									</div>
-								</div>
-
-							</div>
-
-						</section>
-
-						<!-- RUN ACTIONS -->
-						<footer class="shrink-0 p-2 border-t border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800">
-							{% if run.status == "COMPLETED" %}
-							<a
-								href="{% url 'machine_analysis_details' run.study_id run.pk %}"
-								class="inline-flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
-							>
-								{% heroicon_outline "chart-bar-square" class="h-4 w-4 shrink-0" %}
-								View analysis details
-							</a>
-							{% else %}
-								<div class="flex flex-col gap-1">
-
-									{% if run.status == "FAILED" and run.error_message %}
-										<span class="xs-label text-red-700 dark:text-red-300 items-start">
-											{% heroicon_outline 'exclamation-circle' class="h-4 w-4 shrink-0" %}
-											Run failed: {{ run.error_message|truncatechars:100 }} 
-											Check study in Admin panel for full details.
-										</span>
-									{% else %}
-										<span class="xs-label py-2">
-											Details not available because analysis status is {{ run.status }}
-										</span>
-									{% endif %}
-								</div>
-							{% endif %}
-						</footer>
-
-					</article>
+					{% include "studies/partials/_analysis_run_card.html" with run=run study=study %}
 
 				{% endfor %}
 			</div>
 		{% else %}
-
 			<!-- EMPTY STATE -->
 			<div class="rounded-sm border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
 				<div class="flex items-start gap-3">
@@ -232,4 +59,4 @@
 		{% endif %}
 	</div>
 
-</details>
+</article>

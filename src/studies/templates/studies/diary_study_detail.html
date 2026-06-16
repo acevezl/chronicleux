@@ -10,14 +10,20 @@
 		{% include "studies/partials/_menu_study_actions.html" %}
 	</div>
 
-	<div class="flex flex-col p-4 gap-4">
-	{% include "studies/partials/_messages.html" %}
-	
-	{% include "studies/partials/_study_details.html" with study=study %}
+	<div class="p-4">
+		{% include "studies/partials/_messages.html" %}
 
-	{% if is_evaluator %}
-		{% include "studies/partials/_analysis_runs_study_level.html" with analysis_runs=analysis_runs %}
-	{% endif %}
+		<div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+			<section class="lg:col-span-2">
+				{% include "studies/partials/_study_details.html" with study=study %}
+			</section>
+
+			{% if is_evaluator %}
+			<section class="lg:col-span-1">
+				{% include "studies/partials/_analysis_runs_study_level.html" with analysis_runs=analysis_runs %}
+			</section>
+			{% endif %}
+		</div>
 	</div>
 
 {% endblock %}

@@ -694,8 +694,18 @@ def select_analysis_methods(request, pk):
 
 	if study.owner != request.user:
 		return HttpResponseForbidden()
+	
+	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
+
+	created_at = date_format(
+		timezone.localtime(study.created_at),
+		"j M Y, H:i"
+	)
 
 	context = {
+		"page_title_heroicon":"book-open",
+		"page_title":study.title,
+		"page_subtitle": f"Owner: {owner_name}, Created on: {created_at}",
 		"study": study,
 		"sentiment_methods": get_available_sentiment_methods(),
 		"theme_methods": get_available_theme_methods(),

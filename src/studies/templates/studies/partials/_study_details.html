@@ -2,10 +2,10 @@
 {% load formatters %}
 
 
-<details open class="group main-card">
+<article class="group main-card">
 
 	<!-- CARD TITLE (I.E., SUMMARY) -->
-	<summary class="card-summary">
+	<div class="card-summary">
 
 		<div class="flex flex-col">
 			<span class="card-summary-title">
@@ -18,20 +18,16 @@
 			</p>
 		</div>
 
-		<span class="card-summary-chevron">
-			{% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
-		</span>
-
-	</summary>
+	</div>
 
 	<!-- STUDY DATA -->
-	<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4">
+	<div class="grid grid-cols-1 lg:grid-cols-4 gap-4 p-4">
 
 		<!-- MAIN STUDY CONTENT -->
-		<div class="lg:col-span-2 grid grid-cols-1 xl:grid-cols-2 gap-4">
+		<div class="lg:col-span-3 grid grid-cols-1 gap-4">
 
 			<!-- GOAL -->
-			<div class="xl:col-span-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+			<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
 				<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
 					{% heroicon_outline "flag" class="h-4 w-4 shrink-0" %}
 					Study Goal
@@ -174,4 +170,4 @@
 
 	</div>
 
-</details>
+</article>
