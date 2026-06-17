@@ -269,7 +269,7 @@ def attach_canonical_theme_from_analyzer_result(
 		canonical_theme_id=canonical_theme_id,
 		defaults={
 			"confidence_score": theme_result.weight,
-			"rationale": "Assigned from TF-IDF/NMF analyzer output.",
+			"rationale": "Assigned from NLP analyzer output.",
 		},
 	)
 
