@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block title %}{{ study.title }} · ChronicleUX{% endblock %}
+
+{% block content %}
+
+    <div class="sticky-top">
+        {% include "studies/partials/_header.html" with study=study page_title_heroicon=page_title_heroicon page_title=page_title page_subtitle=page_subtitle%}
+        {% include "studies/partials/_menu_back_to_study.html" with study=study %}
+    </div>
+
+    <div class="p-4">
+        <details open class="group main-card">
+
+            <!-- CARD TITLE (I.E., SUMMARY) -->
+            <summary class="card-summary">
+                <div class="flex flex-col">
+                    <h3 class="card-summary-title">
+                        {% heroicon_outline "arrow-up-on-square-stack" %}
+                        Import Entries
+                    </h3>
+                    <p class="top-subtitle">
+                        Upload diary entries from external sources.
+                    </p>
+                </div>
+                <span class="card-summary-chevron">
+                    {% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
+                </span>
+            </summary>
+
+            <!-- CARD DETAILS -->
+            <div class="p-4">
+                {% include "studies/partials/_messages.html" %}
+
+                <form method="post" enctype="multipart/form-data" class="space-y-6">
+                    {% csrf_token %}
+
+                    <!-- FILE -->
+                    <div>
+                        <label for="file" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+                            CSV File
+                        </label>
+
+                        <p class="message-default my-2">
+                            {% heroicon_outline "chat-bubble-oval-left" class="h-4 w-4"%}
+                            Upload a UTF-8 CSV file using the diary entry import template.
+                        </p>
+
+                        <input
+                            id="file"
+                            type="file"
+                            name="file"
+                            accept=".csv,text/csv"
+                            required
+                            class="w-full rounded-sm border border-gray-300 dark:border-gray-600 p-2 text-sm text-gray-700 dark:text-gray-200"
+                        >
+                    </div>
+
+                    <!-- CSV FORMAT -->
+                    <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+
+                        <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            Expected CSV format
+                        </h2>
+
+                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                            Required column: <span class="font-semibold">content</span>
+                        </p>
+
+                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                            Optional columns: participant_external_id, participant_display_name, participant_email, sentiment_self_report, issue_encountered, created_at
+                        </p>
+
+                        <div class="message-warning my-3">
+                            {% heroicon_outline "exclamation-circle" class="h-4 w-4"%}
+                            Each row creates one diary entry for this study. Keep the header names exactly as shown in the template.
+                        </div>
+
+                        <div class="mt-4 overflow-x-auto">
+                            <table class="w-full table-auto text-xs">
+                                <thead class="bg-gray-100 dark:bg-gray-700 dark:text-gray-200 text-gray-600">
+                                    <tr class="border-b border-t border-gray-200 dark:border-gray-600">
+                                        <th>Column</th>
+                                        <th>Example</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody class="divide-y divide-gray-200 dark:divide-gray-600 text-gray-600 dark:text-gray-200">
+                                    <tr>
+                                        <td class="px-4 py-3 font-medium">participant_external_id</td>
+                                        <td class="px-4 py-3">P001</td>
+                                        <td class="px-4 py-3">Optional. External participant identifier from the source system or research dataset.</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="px-4 py-3 font-medium">participant_display_name</td>
+                                        <td class="px-4 py-3">Participant 1</td>
+                                        <td class="px-4 py-3">Optional. Human-readable participant label shown in ChronicleUX.</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="px-4 py-3 font-medium">participant_email</td>
+                                        <td class="px-4 py-3">participant1@example.com</td>
+                                        <td class="px-4 py-3">Optional. Used only when the imported entry should be associated with an email identity.</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="px-4 py-3 font-medium">sentiment_self_report</td>
+                                        <td class="px-4 py-3">POSITIVE</td>
+                                        <td class="px-4 py-3">Optional. Participant-reported sentiment. Use one of the study sentiment labels, such as VERY_NEGATIVE, NEGATIVE, NEUTRAL, POSITIVE, or VERY_POSITIVE.</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="px-4 py-3 font-medium">issue_encountered</td>
+                                        <td class="px-4 py-3">true</td>
+                                        <td class="px-4 py-3">Optional. Boolean flag for whether the participant reported a problem. Use true/false, yes/no, or 1/0 if supported by the importer.</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="px-4 py-3 font-medium">content</td>
+                                        <td class="px-4 py-3">I could not find the settings page after the update.</td>
+                                        <td class="px-4 py-3">Required. The diary entry text written by the participant.</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="px-4 py-3 font-medium">created_at</td>
+                                        <td class="px-4 py-3">2026-06-17 14:30:00</td>
+                                        <td class="px-4 py-3">Optional. Entry creation date/time. Use a consistent date format, preferably YYYY-MM-DD HH:MM:SS or ISO 8601.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+
+                    <!-- EXAMPLE -->
+                    <div>
+                        <label for="csv-example" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+                            Example CSV
+                        </label>
+
+                        <textarea
+                            id="csv-example"
+                            readonly
+                            rows="5"
+                            class="mt-2 w-full rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-2 text-xs text-gray-700 dark:text-gray-200"
+                        >participant_external_id,participant_display_name,participant_email,sentiment_self_report,issue_encountered,content,created_at
+P001,Participant 1,participant1@example.com,NEGATIVE,true,I could not find the settings page after the update.,2026-06-17 14:30:00
+P002,Participant 2,participant2@example.com,POSITIVE,false,The reminder helped me complete my task today.,2026-06-17 18:10:00</textarea>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-4">
+                        <button
+                            class="button-PRIMARY"
+                            type="submit">
+                            {% heroicon_outline "arrow-up-on-square-stack" class="h-4 w-4 shrink-0" %}
+                            Import Entries
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </details>
+    </div>
+{% endblock %}

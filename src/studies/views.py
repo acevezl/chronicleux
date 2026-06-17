@@ -493,7 +493,7 @@ def import_entries(request, pk):
 			except Exception as e:
 				messages.error(request, f"Import failed: {e}")
 
-	return render(request, "studies/import_entries.html", context)
+	return render(request, "studies/diary_entry_import.html", context)
 
 
 # ---------------------------- #
