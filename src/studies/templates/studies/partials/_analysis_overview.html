@@ -1,9 +1,9 @@
 {% load formatters %}
 
-<div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+<div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
 
     <!-- RUN CONFIGURATION -->
-    <section class="lg:col-span-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
+    <section class="xl:col-span-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
         <header class="flex items-center justify-between gap-2 p-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
             <div class="flex flex-col">
                 <h4 class="font-semibold text-gray-900 dark:text-gray-100">
@@ -132,7 +132,7 @@
                     for sentiment and thematic analysis.
                 {% endif %}
             </p>
-            <div class="grid grid-cols-3 lg:grid-cols-1 xl:grid-cols-3 gap-4 mt-4 rounded-sm border border-dashed border-gray-300 p-4 text-center dark:border-gray-600">
+            <div class="grid grid-cols-3 gap-4 mt-4 rounded-sm border border-dashed border-gray-300 p-4 text-center dark:border-gray-600">
                 <div class="flex flex-col items-center justify-center text-center">
                     <p class="xs-label uppercase mb-2">
                         Analyzed by machine
@@ -182,6 +182,84 @@
         </div>
     </section>
 
+    <!-- HIGH-LEVEL RESULTS -->
+    <section class="xl:col-span-3 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
+        <header class="flex items-center justify-between gap-2 p-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex flex-col">
+                <h4 class="font-semibold text-gray-900 dark:text-gray-100">
+                    Results Overview
+                </h4>
+                
+            </div>
+        </header>
+
+        <div class="p-4">
+
+            <p class="card-summary-subtitle">
+                High-level results of this analysis run.
+            </p>
+
+            <dl class="grid grid-cols-1 gap-4 xl:grid-cols-3 mt-4">
+
+                <div class="main-card">
+                    <div class="bg-gray-100 p-2">
+                        <span class="sm-label">Sentiment Analysis</span>
+                    </div>
+                    <div class="p-2 grid grid-cols-2 gap-2">
+                        <div class="main-card p-2">
+                            <dt class="xs-label">Average Sentiment</dt>
+                            <dd class="flex flex-wrap items-center mt-1 gap-2">
+                                {% include "studies/partials/_badge_sentiment.html" with sentiment=run.average_sentiment_label %}
+                                <span class="badge">
+                                    {{ run.average_sentiment_score }}
+                                </span>
+                            </dd>
+                        </div>
+                        <div class="main-card p-2">
+                            <dt class="xs-label">Dominant Sentiment</dt>
+                            <dd class="flex flex-wrap items-center mt-1 gap-2">
+                                {% include "studies/partials/_badge_sentiment.html" with sentiment=run.dominant_sentiment_label %}
+                                <span class="badge">
+                                    {{ run.dominant_sentiment_score }}
+                                </span>
+                            </dd>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="main-card">
+                    <div class="bg-gray-100 p-2">
+                        <span class="sm-label">Thematic Extraction</span>
+                    </div>
+                    <div class="p-2 flex gap-2">
+                        <div class="main-card p-2">
+                            <dt class="xs-label">Extracted Themes</dt>
+                            <dd class="flex flex-wrap items-center mt-1 gap-2">
+                                {% include "studies/partials/_badge_theme_labels.html" with themes=run.canonical_themes.all %}
+                            </dd>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="main-card">
+                    <div class="bg-gray-100 p-2">
+                        <span class="sm-label">Issue Detection</span>
+                    </div>
+                    <div class="p-2 flex gap-2">
+                        <div class="main-card p-2">
+                            <dt class="xs-label">Detected Issues</dt>
+                            <dd class="flex flex-wrap items-center mt-1 gap-2">
+                                {% include "studies/partials/_badge_issue_tags.html" with issues=run.canonical_issues.all %}
+                            </dd>
+                        </div>
+                    </div>
+                </div>
+
+                
+
+            </dl>
+        </div>
+    </section>
     
 
 </div>
