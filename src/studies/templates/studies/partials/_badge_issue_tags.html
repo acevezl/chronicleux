@@ -1,8 +1,28 @@
 {% load formatters %}
-{% for issue in issues|split_csv %}
-	<span class="badge-ISSUE">
-		{{ issue | capfirst }}
-	</span>
+{% for issue in issues %}
+	<a
+        href="{% url 'canonical_issue_update' issue.id %}"
+        class="badge-ISSUE inline-flex items-center gap-1.5 hover:underline"
+        title="Edit canonical issue: {{ issue.get_status_display|default:'Unknown status' }}"
+    >
+        <span
+            class="
+                h-2 w-2 rounded-full
+                {% if issue.status == 'APPROVED' %}
+                    bg-emerald-500
+                {% elif issue.status == 'SUGGESTED' %}
+                    bg-amber-400
+                {% elif issue.status == 'REJECTED' %}
+                    bg-red-400
+                {% else %}
+                    bg-gray-400
+                {% endif %}
+            "
+            aria-hidden="true"
+        ></span>
+
+        <span>{{ issue.name|capfirst }}</span>
+    </a>
 {% empty %}
 	<span class="badge-NONE">
 		No issues detected

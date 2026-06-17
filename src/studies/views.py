@@ -16,8 +16,10 @@ from django.utils.formats import date_format
 from studies.services.nlp.registry import (
 	get_available_sentiment_methods,
 	get_available_theme_methods,
+	get_available_issue_methods,
 	get_available_sentiment_method_values,
 	get_available_theme_method_values,
+	get_available_issue_method_values
 )
 
 from studies.services.llm.client import get_available_llm_providers, get_llm_model
@@ -713,6 +715,7 @@ def select_analysis_methods(request, pk):
 		"study": study,
 		"sentiment_methods": get_available_sentiment_methods(),
 		"theme_methods": get_available_theme_methods(),
+		"issue_methods": get_available_issue_methods(),
 		"llm_providers": get_available_llm_providers(),
 	}
 
@@ -741,32 +744,37 @@ def run_machine_analysis(request, pk):
 
 	sentiment_method = None
 	theme_method = None
+	issue_method = None
 	llm_provider = None
 	llm_model = None
 
 	if analysis_mode == "nlp":
 		sentiment_method = request.POST.get("sentiment_method")
 		theme_method = request.POST.get("theme_method")
+		issue_method = request.POST.get("issue_method")
 
-		if not sentiment_method or not theme_method:
-			messages.error(request, "Select both a sentiment method and a thematic analysis method.")
+		if not sentiment_method or not theme_method or not issue_method:
+			messages.error(request, "You must select one sentiment-analysis method, one thematic-extraction method, and one issue-detection method.")
 			return redirect("select_analysis_methods", pk=study.pk)
 
-		if sentiment_method == "llm" or theme_method == "llm":
+		if sentiment_method == "llm" or theme_method == "llm" or issue_method == "llm":
 			messages.error(request, "LLM methods cannot be selected in NLP mode.")
 			return redirect("select_analysis_methods", pk=study.pk)
 
 		if sentiment_method not in get_available_sentiment_method_values():
-			messages.error(request, "Invalid sentiment analysis method.")
+			messages.error(request, "Invalid sentiment-analysis method.")
 			return redirect("select_analysis_methods", pk=study.pk)
 
 		if theme_method not in get_available_theme_method_values():
-			messages.error(request, "Invalid thematic analysis method.")
+			messages.error(request, "Invalid thematic-extraction method.")
+			return redirect("select_analysis_methods", pk=study.pk)
+		
+		if issue_method not in get_available_issue_method_values():
+			messages.error(request, "Invalid issue-detection method.")
 			return redirect("select_analysis_methods", pk=study.pk)
 
 	elif analysis_mode == "llm":
-		sentiment_method = "llm"
-		theme_method = "llm"
+		sentiment_method = theme_method = issue_method = "llm"
 
 		llm_provider = request.POST.get("llm_provider")
 		llm_model = (request.POST.get("llm_model") or "").strip() or None
@@ -788,6 +796,7 @@ def run_machine_analysis(request, pk):
 			user_id=request.user.id,
 			sentiment_method=sentiment_method,
 			theme_method=theme_method,
+			issue_method=issue_method,
 			llm_provider=llm_provider,
 			llm_model=llm_model,
 		)
@@ -978,8 +987,18 @@ def analysis_runs(request):
 
 	page_params = request.GET.copy()
 	page_params.pop("page", None)
+	
+	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
+
+	created_at = date_format(
+		timezone.localtime(study.created_at),
+		"j M Y, H:i"
+	)
 
 	context = {
+		"page_title_heroicon":"book-open",
+		"page_title":study.title,
+		"page_subtitle": f"Owner: {owner_name}, Created on: {created_at}",
 		"analysis_runs": page_obj,
 		"page_obj": page_obj,
 		"sort": sort,
@@ -1324,7 +1343,7 @@ def canonical_issue_catalogue_list(request):
 	context = filter_canonical_issues(request)
 
 	context.update({
-		"page_title_heroicon":"tag",
+		"page_title_heroicon":"exclamation-triangle",
 		"page_title": "Canonical Issues Catalogue",
 		"page_subtitle": "Manage the global catalogue of canonical issues used by analysis methods.",
 		"canonical_issues_filter_url": reverse("canonical_issue_catalogue_partial"),
@@ -1411,6 +1430,7 @@ def canonical_issue_create(request):
 		"studies/catalogues/canonical_issue_form.html",
 		{
 			"form": form,
+			"page_title_heroicon":"exclamation-triangle",
 			"page_title": "Create Canonical Issue",
 			"page_subtitle": "Create and maintain reusable canonical issues for machine and evaluator analysis.",
 			"submit_label": "Create issue",
@@ -1443,6 +1463,7 @@ def canonical_issue_update(request, issue_pk):
 		{
 			"issue": issue,
 			"form": form,
+			"page_title_heroicon":"exclamation-triangle",
 			"page_title": "Edit Canonical Issue",
 			"page_subtitle": "Update and maintain reusable canonical issues for machine and evaluator analysis.",
 			"submit_label": "Save issue",
@@ -1469,6 +1490,7 @@ def canonical_issue_delete(request, issue_pk):
 		"studies/catalogues/canonical_issue_confirm_delete.html",
 		{
 			"issue": issue,
+			"page_title_heroicon":"exclamation-triangle",
 			"page_title": "Delete Canonical Issue",
 			"page_subtitle": "Confirm whether this issue should be removed from the global catalogue.",
 		},
@@ -1508,6 +1530,7 @@ def canonical_issue_import(request):
 		request,
 		"studies/catalogues/canonical_issue_import.html",
 		{
+			"page_title_heroicon":"exclamation-triangle",
 			"page_title": "Import Canonical Issues",
 			"page_subtitle": "Import canonical issues into the global catalogue from a CSV file.",
 		},
@@ -1625,7 +1648,9 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 	study = get_object_or_404(Study, pk=study_pk)
 	
 	run = get_object_or_404(
-		StudyAnalysisRun.objects.prefetch_related("canonical_themes"),
+		StudyAnalysisRun.objects
+		.select_related("dominant_theme")
+		.prefetch_related("canonical_themes", "canonical_issues"),
 		pk=run_pk,
 		study=study,
 	)
@@ -1641,7 +1666,8 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 			"run",
 			"run__study",
 		).prefetch_related(
-			"evaluator_issues",
+			"canonical_themes",
+			"canonical_issues",
 		),
 		pk=analysis_pk,
 		run=run,

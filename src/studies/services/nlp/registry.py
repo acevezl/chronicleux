@@ -1,14 +1,19 @@
 # This file defines the registry for NLP analysis methods in the context of studies.
 # Given a method name like "vader" or "tfidf_nmf", the registry can be used to look up the corresponding function that performs the analysis.
 
+# Sentiment Analyzers
 from studies.services.nlp.sentiment.vader import VaderSentimentAnalyzer
 from studies.services.nlp.sentiment.bert import BertSentimentAnalyzer
 from studies.services.nlp.sentiment.roberta import RobertaSentimentAnalyzer
 from studies.services.nlp.sentiment.fivestar import StarRatingSentimentAnalyzer
 
+# Theme Extractors
 from studies.services.nlp.themes.tfidf_nmf import TfidfNmfThemeExtractor
 from studies.services.nlp.themes.tfidf_lda import TfidfLdaThemeExtractor
 from studies.services.nlp.themes.bertopic import BertopicThemeExtractor
+
+# Issue Detectors
+from studies.services.nlp.issues.tfidf import TfidfIssueDetector
 
 SENTIMENT_ANALYZERS = {
     "vader": {
@@ -53,21 +58,28 @@ THEME_EXTRACTORS = {
     "bertopic": {
         "class": BertopicThemeExtractor,
         "label": "BERTopic",
-        "description": "Extracts semantic topics using transformer embeddings and c-TF-IDF.",
-        "long_description": "Use BERTopic when participants describe similar experiences using different words. Best for semantic themes beyond simple keyword overlap.",
+        "description": "Discovers semantic topics with BERTopic, then resolves them against the canonical theme catalog.",
+        "long_description": "Use BERTopic when participants describe similar experiences using different words. The analyzer first discovers semantic topics using transformer embeddings and c-TF-IDF, then matches each generated topic to the canonical theme catalog. If no strong catalog match is found, it creates a suggested canonical theme for evaluator review.",
     },
 }
 
-# Note to self, how do we allow users to add their own custom analyzers? 
-# Maybe I can add a function like `register_sentiment_analyzer(name: str, analyzer_class: Type[SentimentAnalyzer])` that adds to the SENTIMENT_ANALYZERS dict, and similarly for theme analyzers... but the user will need to know the correct analysizer classes.
+ISSUE_DETECTORS = {
+    "tfidf": {
+        "class": TfidfIssueDetector,
+        "label": "Keyword Match + TF-IDF",
+        "description": "Detects UX issues by comparing diary entries against canonical issue definitions using keyword match and TF-IDF similarity.",
+        "long_description": "Use Keyword Match + TF-IDF issue detection as a transparent NLP baseline. It works best when diary entries share vocabulary with issue names, aliases, descriptions, or examples.",
+    }
+}
 
+# Analyzer / Extractor / Detector getters
 def get_sentiment_analyzer(method: str):
     try:
         return SENTIMENT_ANALYZERS[method]["class"]()
     except KeyError:
         available_methods = ", ".join(SENTIMENT_ANALYZERS.keys())
         raise ValueError(
-            f"Unknown sentiment analysis method '{method}'. "
+            f"Unknown sentiment-analysis method '{method}'. "
             f"Available methods: {available_methods}"
         )
 
@@ -78,11 +90,22 @@ def get_theme_extractor(method: str):
     except KeyError:
         available_methods = ", ".join(THEME_EXTRACTORS.keys())
         raise ValueError(
-            f"Unknown theme extraction method '{method}'. "
+            f"Unknown theme-extraction method '{method}'. "
             f"Available methods: {available_methods}"
         )
 
 
+def get_issue_detector(method: str):
+    try:
+        return ISSUE_DETECTORS[method]["class"]()
+    except KeyError:
+        available_methods = ", ".join(ISSUE_DETECTORS.keys())
+        raise ValueError(
+            f"Unknown issue-detection method '{method}'. "
+            f"Available methods: {available_methods}"
+        )
+
+# Method listers
 def get_available_sentiment_methods():
     return [
         {
@@ -106,10 +129,26 @@ def get_available_theme_methods():
         for method, config in THEME_EXTRACTORS.items()
     ]
 
+def get_available_issue_methods():
+    return [
+        {
+            "value": method,
+            "label": config["label"],
+            "description": config["description"],
+            "long_description": config["long_description"],
+        }
+        for method, config in ISSUE_DETECTORS.items()
+    ]
 
+
+# Method values listers
 def get_available_sentiment_method_values():
     return list(SENTIMENT_ANALYZERS.keys())
 
 
 def get_available_theme_method_values():
     return list(THEME_EXTRACTORS.keys())
+
+
+def get_available_issue_method_values():
+    return list(ISSUE_DETECTORS.keys())

@@ -78,6 +78,10 @@
     --color-fuchsia-700: oklch(51.8% 0.253 323.949);
     --color-fuchsia-800: oklch(45.2% 0.211 324.591);
     --color-fuchsia-950: oklch(29.3% 0.136 325.661);
+    --color-rose-50: oklch(96.9% 0.015 12.422);
+    --color-rose-300: oklch(81% 0.117 11.638);
+    --color-rose-600: oklch(58.6% 0.253 17.585);
+    --color-rose-950: oklch(27.1% 0.105 12.094);
     --color-slate-50: oklch(98.4% 0.003 247.858);
     --color-slate-200: oklch(92.9% 0.013 255.508);
     --color-slate-300: oklch(86.9% 0.022 252.894);
@@ -895,6 +899,9 @@
   .bg-red-400 {
     background-color: var(--color-red-400);
   }
+  .bg-rose-50 {
+    background-color: var(--color-rose-50);
+  }
   .bg-sky-50 {
     background-color: var(--color-sky-50);
   }
@@ -1118,6 +1125,9 @@
   }
   .text-red-700 {
     color: var(--color-red-700);
+  }
+  .text-rose-600 {
+    color: var(--color-rose-600);
   }
   .text-sky-600 {
     color: var(--color-sky-600);
@@ -1679,6 +1689,11 @@
       }
     }
   }
+  .dark\:bg-rose-950 {
+    @media (prefers-color-scheme: dark) {
+      background-color: var(--color-rose-950);
+    }
+  }
   .dark\:bg-sky-950 {
     @media (prefers-color-scheme: dark) {
       background-color: var(--color-sky-950);
@@ -1790,6 +1805,11 @@
   .dark\:text-red-300 {
     @media (prefers-color-scheme: dark) {
       color: var(--color-red-300);
+    }
+  }
+  .dark\:text-rose-300 {
+    @media (prefers-color-scheme: dark) {
+      color: var(--color-rose-300);
     }
   }
   .dark\:text-sky-300 {

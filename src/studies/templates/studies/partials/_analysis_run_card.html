@@ -97,7 +97,7 @@
             </div>
 
             <div class="min-w-0 flex flex-wrap items-center gap-1.5">
-                {% include "studies/partials/_badge_issue_tags.html" with issues=run.canonical_issues.all|extract_labels %}
+                {% include "studies/partials/_badge_issue_tags.html" with issues=run.canonical_issues.all %}
             </div>
         </div>
 

@@ -46,10 +46,44 @@ class ThemeResult:
 # )
 
 @dataclass
+class IssueResult:
+    issue_id: int
+    weight: float
+    label: str
+    keywords: list[str]
+    method: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+# Example usage:
+# issue = IssueResult(
+#     issue_id=0,
+#     weight=0.68,
+#     label="Poor Discoverability",
+#     keywords=[
+#         "couldn't find",
+#         "hidden option",
+#         "settings",
+#         "not obvious",
+#     ],
+#     method="tfidf",
+#     metadata={
+#         "model": "TF-IDF + Canonical Issue Matching",
+#         "match_type": "canonical",
+#         "canonical_issue_id": 12,
+#         "catalog_match_weight": 0.68,
+#         "issue_match_threshold": 0.25,
+#         "language": "english",
+#         "vectorizer": "tfidf",
+#         "ngram_range": [1, 3],
+#     },
+# )
+
+@dataclass
 class EntryAnalysisResult:
     entry_id: int
     sentiment: SentimentResult | None = None
     theme: ThemeResult | None = None
+    issue: IssueResult | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
 # Example usage:
@@ -93,10 +127,16 @@ class StudyAnalysisResult:
     dominant_sentiment_score: float | None = None
     sentiment_distribution: dict[str, int] = field(default_factory=dict)
     
-    # Theme / Topic Analysis
+    # Theme / Topic Extraction
     dominant_theme_label: str | None = None
     dominant_theme_weight: float | None = None
     theme_distribution: dict[str, int] = field(default_factory=dict)
+
+    # Issue Detection
+    dominant_issue_label: str | None = None
+    dominant_issue_weight: float | None = None
+    issue_distribution: dict[str, int] = field(default_factory=dict)
+    total_issues: int = 0
 
     # All entry results, for traceability
     entry_analysis_results: list[EntryAnalysisResult] = field(default_factory=list)
@@ -209,3 +249,8 @@ class BaseThemeExtractor:
     def extract(self, documents: list[str]) -> tuple[list[ThemeResult], list[dict]]:
         raise NotImplementedError("Subclasses must implement this method")
     
+class BaseIssueDetector:
+    method_name: str = 'base'
+
+    def detect(self, documents: list[str]) -> tuple[list[IssueResult], list[dict]]:
+        raise NotImplementedError("Subclasses must implement this method")

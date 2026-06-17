@@ -549,6 +549,7 @@ class StudyAnalysisRun(models.Model):
     
     total_entries = models.PositiveIntegerField(default=0)
     total_themes = models.PositiveIntegerField(default=0)
+    total_issues = models.PositiveIntegerField(default=0)
 
     methods = models.JSONField(default=dict, blank=True)
     metadata = models.JSONField(default=dict, blank=True)

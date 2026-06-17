@@ -97,7 +97,7 @@
 						</p>
 
 						<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-							Choose separate methods for sentiment analysis and thematic analysis. This allows combinations such as VADER for sentiment and BERTopic for themes.
+							Choose separate methods for sentiment analysis, thematic extraction, and UX issue detection. This allows combinations such as VADER for sentiment, BERTopic for themes, and TF-IDF for issue detection.
 						</p>
 					</div>
 
@@ -111,7 +111,7 @@
 						</p>
 
 						<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-							Use a selected LLM provider to perform both sentiment analysis and thematic analysis in the same run.
+							Use a selected LLM provider to perform sentiment analysis, thematic extraction, and UX issue detection in the same run.
 						</p>
 					</div>
 
@@ -127,6 +127,14 @@
 					<input
 						type="hidden"
 						name="theme_method"
+						value="llm"
+						data-llm-method-input
+						disabled
+					>
+
+					<input
+						type="hidden"
+						name="issue_method"
 						value="llm"
 						data-llm-method-input
 						disabled
@@ -183,7 +191,7 @@
 						<!-- THEME METHODS -->
 						<div>
 							<h2 class="block text-lg font-medium text-gray-700 dark:text-gray-200">
-								Thematic analysis
+								thematic extraction
 							</h2>
 
 							<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -225,6 +233,51 @@
 							</div>
 						</div>
 
+						<!-- ISSUE METHODS -->
+						<div>
+							<h2 class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+								Issue detection
+							</h2>
+
+							<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+								Method used to detect UX issues and map them to the canonical issue catalogue.
+							</p>
+
+							<div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+								{% for method in issue_methods %}
+									{% if method.value != "llm" %}
+										<label class="cursor-pointer rounded-sm border border-gray-200 dark:border-gray-600 p-4 hover:bg-gray-50 dark:hover:bg-gray-800">
+											<div class="flex items-start gap-3">
+												<input
+													type="radio"
+													name="issue_method"
+													value="{{ method.value }}"
+													class="mt-1"
+													{% if forloop.first %}checked{% endif %}
+													required
+													data-nlp-method-input
+												>
+
+												<div class="flex flex-col gap-2">
+													<p class="sm-label">
+														<strong>{{ method.label }}</strong>
+													</p>
+
+													<p class="sm-label">
+														{{ method.description }}
+													</p>
+
+													<p class="xs-label">
+														{{ method.long_description }}
+													</p>
+												</div>
+											</div>
+										</label>
+									{% endif %}
+								{% endfor %}
+							</div>
+						</div>	
+
 					</div>
 
 					<!-- LLM OPTIONS -->
@@ -236,7 +289,7 @@
 							</h2>
 
 							<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-								Provider used to run both sentiment analysis and thematic analysis.
+								Provider used to run both sentiment analysis and thematic extraction.
 							</p>
 
 							<div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">

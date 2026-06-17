@@ -15,6 +15,8 @@ from studies.models import (
 	AnalysisRunStatus,
 	DiaryEntryAnalysisCanonicalTheme,
 	StudyAnalysisRunCanonicalTheme,
+	DiaryEntryAnalysisCanonicalIssue,
+	StudyAnalysisRunCanonicalIssue,
 )
 
 from studies.services.nlp.pipeline import analyze_study_entries
@@ -102,14 +104,32 @@ def build_recurring_themes(entry_results: list[dict]) -> list[dict]:
 	]
 
 def build_recurring_issues(entry_results: list[dict]) -> list[dict]:
-	# Pending issue refactor
-	return
+	counts = Counter()
+
+	for result in entry_results:
+		for issue in result.get("analysis_issue_tags", []):
+			issue_name = issue.get("name")
+
+			if not issue_name:
+				continue
+
+			counts[issue_name] += 1
+
+	total = sum(counts.values())
+
+	return [
+		{
+			"label": label,
+			"count": count,
+			"percentage": round(count / total, 4) if total else 0,
+		}
+		for label, count in counts.most_common()
+	]
 
 def build_evolution_over_time(entries_with_results: list[tuple]) -> list[dict]:
 	"""
 	Build a time series of average sentiment and sentiment distribution by day.
-
-	This intentionally does not include issues yet.
+	It now also includes top themes and isues by day.
 	"""
 	grouped = {}
 
@@ -144,7 +164,7 @@ def build_evolution_over_time(entries_with_results: list[tuple]) -> list[dict]:
 			"sentiment_distribution": build_sentiment_distribution(day_results),
 
 			"top_themes": build_recurring_themes(day_results),
-			"top_issues": [], # Left issues intentinoally empty through this reset
+			"top_issues": build_recurring_issues(day_results),
 		})
 
 	return output
@@ -196,8 +216,7 @@ def serialize_dashboard_entry(entry: DiaryEntry, result: dict) -> dict:
 		"theme_label": result.get("theme_label"),
 		"theme_weight": result.get("theme_weight"),
 
-		# Left empty intentionally. I will rebuild issues later.
-		"issue_tags": [],
+		"issue_tags": result.get("analysis_issue_tags", []),
 
 		"created_at": entry.created_at.isoformat() if entry.created_at else None,
 		"created_at_display": entry.created_at.strftime("%b %d, %Y") if entry.created_at else "—",
@@ -273,6 +292,28 @@ def attach_canonical_theme_from_analyzer_result(
 		},
 	)
 
+def attach_canonical_issue_from_analyzer_result(
+	entry_analysis: DiaryEntryAnalysis,
+	issue_result,
+) -> None:
+	if not issue_result:
+		return
+
+	metadata = issue_result.metadata or {}
+	canonical_issue_id = metadata.get("canonical_issue_id")
+
+	if not canonical_issue_id:
+		return
+
+	DiaryEntryAnalysisCanonicalIssue.objects.update_or_create(
+		diary_entry_analysis=entry_analysis,
+		canonical_issue_id=canonical_issue_id,
+		defaults={
+			"confidence_score": issue_result.weight,
+			"rationale": "Assigned from NLP analyzer output.",
+		},
+	)
+
 # -------------------------------
 # Create queued analysis run
 # -------------------------------
@@ -282,16 +323,22 @@ def create_study_analysis_run(
 	user_id: int | None = None,
 	sentiment_method: str = "vader",
 	theme_method: str = "tfidf_nmf",
+	issue_method: str = "tfidf",
 	llm_provider: str | None = None,
 	llm_model: str | None = None,
 ) -> StudyAnalysisRun:
 	study = Study.objects.get(pk=study_id)
 
-	is_llm_run = sentiment_method == "llm" or theme_method == "llm"
+	is_llm_run = (
+		sentiment_method == "llm"
+		or theme_method == "llm"
+		or issue_method == "llm"
+	)
 
 	methods = {
 		"sentiment": sentiment_method,
 		"theme": theme_method,
+		"issue": issue_method,
 	}
 
 	if is_llm_run:
@@ -301,7 +348,7 @@ def create_study_analysis_run(
 	run = StudyAnalysisRun.objects.create(
 		study=study,
 		status=AnalysisRunStatus.QUEUED,
-		analysis_model=f"{sentiment_method}_{theme_method}",
+		analysis_model=f"{sentiment_method}_{theme_method}_{issue_method}",
 		analysis_version="v3",
 		methods=methods,
 		created_by_id=user_id,
@@ -354,6 +401,46 @@ def refresh_run_canonical_themes(run: StudyAnalysisRun) -> None:
 			average_confidence_score=average_confidence_score,
 		)
 
+def refresh_run_canonical_issues(run: StudyAnalysisRun) -> None:
+	StudyAnalysisRunCanonicalIssue.objects.filter(run=run).delete()
+
+	entry_issue_rows = (
+		DiaryEntryAnalysisCanonicalIssue.objects
+		.filter(diary_entry_analysis__run=run)
+		.select_related("canonical_issue")
+	)
+
+	grouped = {}
+
+	for row in entry_issue_rows:
+		issue_id = row.canonical_issue_id
+
+		if issue_id not in grouped:
+			grouped[issue_id] = {
+				"count": 0,
+				"scores": [],
+			}
+
+		grouped[issue_id]["count"] += 1
+
+		if row.confidence_score is not None:
+			grouped[issue_id]["scores"].append(row.confidence_score)
+
+	for issue_id, data in grouped.items():
+		scores = data["scores"]
+
+		average_confidence_score = (
+			round(sum(scores) / len(scores), 4)
+			if scores
+			else None
+		)
+
+		StudyAnalysisRunCanonicalIssue.objects.create(
+			run=run,
+			canonical_issue_id=issue_id,
+			entry_count=data["count"],
+			average_confidence_score=average_confidence_score,
+		)
 
 def set_run_dominant_theme(run: StudyAnalysisRun) -> None:
 	top_theme = (
@@ -379,6 +466,7 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 
 	sentiment_method = run.methods.get("sentiment", "vader")
 	theme_method = run.methods.get("theme", "tfidf_nmf")
+	issue_method = run.methods.get("issue", "tfidf")
 
 	run.status = AnalysisRunStatus.RUNNING
 	run.error_message = ""
@@ -398,7 +486,11 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 
 			now = timezone.now()
 
-			is_llm_run = sentiment_method == "llm" or theme_method == "llm"
+			is_llm_run = (
+				sentiment_method == "llm"
+				or theme_method == "llm"
+				or issue_method == "llm"
+			)
 
 			if is_llm_run:
 				llm_provider = run.methods.get("provider")
@@ -420,6 +512,7 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 					entries=entries,
 					sentiment_method=sentiment_method,
 					theme_method=theme_method,
+					issue_method=issue_method,
 				)
 
 			study_analysis_result_data = asdict(study_analysis_result)
@@ -453,6 +546,26 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 
 					theme_label = entry_analysis_result.theme.label
 
+				issue_detected = False
+				issues = []
+
+				if entry_analysis_result.issue:
+					issue_detected = True
+
+					issues = [
+						{
+							"id": entry_analysis_result.issue.metadata.get("canonical_issue_id"),
+							"name": entry_analysis_result.issue.label,
+							"score": round(entry_analysis_result.issue.weight, 4),
+							"method": entry_analysis_result.issue.method,
+							"match_type": entry_analysis_result.issue.metadata.get("match_type"),
+							"is_catalog_suggestion": entry_analysis_result.issue.metadata.get(
+								"is_catalog_suggestion",
+								False,
+							),
+						}
+					]
+
 				selected_entry_run = DiaryEntryAnalysis.objects.create(
 					run=run,
 					entry=entry,
@@ -474,9 +587,8 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 						else {}
 					),
 
-					# Issues are intentionally disabled for this reset.
-					issue_detected=False,
-					issues=[],
+					issue_detected=issue_detected,
+					issues=issues,
 
 					methods=study_analysis_result.methods,
 					metadata=study_analysis_result.metadata,
@@ -491,6 +603,11 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 					theme_result=entry_analysis_result.theme,
 				)
 
+				attach_canonical_issue_from_analyzer_result(
+					entry_analysis=selected_entry_run,
+					issue_result=entry_analysis_result.issue,
+				)
+
 				entry.selected_entry_run = selected_entry_run
 				entry.save(update_fields=["selected_entry_run"])
 
@@ -501,8 +618,8 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 					"theme_weight": theme_weight,
 					"theme_label": theme_label,
 
-					"analysis_issue_detected": False,
-					"analysis_issue_tags": [],
+					"analysis_issue_detected": issue_detected,
+					"analysis_issue_tags": issues,
 
 					"entry_summary": entry_summary,
 				}
@@ -529,6 +646,11 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 			run.sentiment_distribution = build_sentiment_distribution(entry_results)
 
 			run.total_themes = study_analysis_result.total_themes
+			refresh_run_canonical_themes(run)
+			set_run_dominant_theme(run)
+
+			run.total_issues = study_analysis_result.total_issues
+			refresh_run_canonical_issues(run)
 
 			run.evolution_over_time = build_evolution_over_time(entries_with_results)
 			run.top_representative_quotes = build_top_sentiment_entries(entries_with_results)
@@ -541,9 +663,6 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 
 			run.status = AnalysisRunStatus.COMPLETED
 			run.completed_at = now
-
-			refresh_run_canonical_themes(run)
-			set_run_dominant_theme(run)
 
 			run.save(
 				update_fields=[
@@ -599,6 +718,7 @@ def run_study_analysis(
 	user_id: int | None = None,
 	sentiment_method: str = "vader",
 	theme_method: str = "tfidf_nmf",
+	issue_method: str = "tfidf",
 	llm_provider: str | None = None,
 	llm_model: str | None = None,
 ) -> StudyAnalysisRun:
@@ -607,6 +727,7 @@ def run_study_analysis(
 		user_id=user_id,
 		sentiment_method=sentiment_method,
 		theme_method=theme_method,
+		issue_method=issue_method,
 		llm_provider=llm_provider,
 		llm_model=llm_model,
 	)
