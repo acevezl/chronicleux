@@ -154,7 +154,7 @@
                             const totals = {};
 
                             evolution.forEach(item => {
-                                const issues = item.top_issues || [];
+                                const issues = item.issues || [];
 
                                 issues.forEach(issue => {
                                     const label = normalizeIssueLabel(issue);
@@ -193,7 +193,7 @@
                                     });
                                 }
 
-                                const issues = item.top_issues || [];
+                                const issues = item.issues || [];
 
                                 issues.forEach(issue => {
                                     const label = normalizeIssueLabel(issue);

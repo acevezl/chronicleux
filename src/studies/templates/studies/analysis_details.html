@@ -123,11 +123,12 @@
 
             <!-- SENTIMENT ANALYSIS -->
             <section data-analysis-tab-panel="sentiment_analysis" class="hidden">
-                    {% include "studies/partials/_analysis_sentiment.html" with run=run study=study %}
+                {% include "studies/partials/_analysis_sentiment.html" with run=run study=study %}
             </section>
 
             <!-- THEMATIC EXTRACTION ANALYSIS -->
             <section data-analysis-tab-panel="thematic_extraction" class="hidden">
+                {% include "studies/partials/_analysis_theme.html" with run=run study=study %}
             </section>
 
             <!-- ISSUE DETECTION -->

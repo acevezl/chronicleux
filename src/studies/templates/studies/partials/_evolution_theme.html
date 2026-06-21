@@ -154,7 +154,7 @@
                             const totals = {};
 
                             evolution.forEach(item => {
-                                const themes = item.top_themes || [];
+                                const themes = item.themes || [];
 
                                 themes.forEach(theme => {
                                     const label = normalizeThemeLabel(theme);
@@ -193,7 +193,7 @@
                                     });
                                 }
 
-                                const themes = item.top_themes || [];
+                                const themes = item.themes || [];
 
                                 themes.forEach(theme => {
                                     const label = normalizeThemeLabel(theme);
