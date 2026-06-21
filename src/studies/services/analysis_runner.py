@@ -26,6 +26,10 @@ from studies.services.nlp.sentiment._confusion_matrix import (
 	refresh_sentiment_confusion_matrix_for_run,
 )
 
+from studies.services.nlp.sentiment._ordinal_distance import (
+	refresh_sentiment_ordinal_distance_for_run,
+)
+
 
 MAX_SUMMARY_LENGTH = 180
 
@@ -639,6 +643,7 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 			)
 
 			refresh_sentiment_confusion_matrix_for_run(run)
+			refresh_sentiment_ordinal_distance_for_run(run)
 
 			study.selected_study_run = run
 			study.status = StudyStatus.HUMAN_ANALYSIS

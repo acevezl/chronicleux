@@ -38,7 +38,7 @@
                     <input
                         type="radio"
                         name="analysis_detail_tab"
-                        value="negative_detection"
+                        value="machine_analysis_metrics"
                         class="peer sr-only"
                     >
 
@@ -51,7 +51,7 @@
                     <input
                         type="radio"
                         name="analysis_detail_tab"
-                        value="sentiment_labels"
+                        value="sentiment_analysis"
                         class="peer sr-only"
                     >
 
@@ -64,7 +64,7 @@
                     <input
                         type="radio"
                         name="analysis_detail_tab"
-                        value="dominant_findings"
+                        value="thematic_extraction"
                         class="peer sr-only"
                     >
 
@@ -77,7 +77,7 @@
                     <input
                         type="radio"
                         name="analysis_detail_tab"
-                        value="evolution"
+                        value="issue_detection"
                         class="peer sr-only"
                     >
 
@@ -105,11 +105,13 @@
         <!-- TAB CONTENT -->
         <div class="p-4">
 
+            <!-- OVERVIEW -->
             <section data-analysis-tab-panel="overview">
                 {% include "studies/partials/_analysis_overview.html" with run=run study=study pending_human_evaluation_count=pending_human_evaluation_count completed_human_evaluation_count=completed_human_evaluation_count %}
             </section>
 
-            <section data-analysis-tab-panel="negative_detection" class="hidden">
+            <!-- MACHINE ANALYSIS METRICS -->
+            <section data-analysis-tab-panel="machine_analysis_metrics" class="hidden">
                 <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <!-- Participant -->
                     {% include "studies/partials/_analysis_run_metrics_participant.html" with run=run%}
@@ -119,24 +121,20 @@
                 </div>
             </section>
 
-            <section data-analysis-tab-panel="sentiment_labels" class="hidden">
-                <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <!-- Participant -->
-                    {% include "studies/partials/_analysis_run_metrics_per_category_participant.html" with run=run study=study %}
-
-                    <!-- Evaluator -->
-                    {% include "studies/partials/_analysis_run_metrics_per_category_evaluator.html" with run=run study=study %}
-                </div>
+            <!-- SENTIMENT ANALYSIS -->
+            <section data-analysis-tab-panel="sentiment_analysis" class="hidden">
+                    {% include "studies/partials/_analysis_sentiment.html" with run=run study=study %}
             </section>
 
-            <section data-analysis-tab-panel="dominant_findings" class="hidden">
-                {% include "studies/partials/_analysis_dominance_findings.html" with run=run study=study %}
+            <!-- THEMATIC EXTRACTION ANALYSIS -->
+            <section data-analysis-tab-panel="thematic_extraction" class="hidden">
             </section>
 
-            <section data-analysis-tab-panel="evolution" class="hidden">
-                {% include "studies/partials/_analysis_evolution_over_time.html" with run=run study=study %}
+            <!-- ISSUE DETECTION -->
+            <section data-analysis-tab-panel="issue_detection" class="hidden">
             </section>
 
+            <!-- ENTRIES -->
             <section data-analysis-tab-panel="entries" class="hidden">
                 <div class="mt-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 overflow-hidden">
             

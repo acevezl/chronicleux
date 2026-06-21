@@ -526,13 +526,13 @@ class StudyAnalysisRun(models.Model):
     # Study-level outputs
 
     # SENTIMENT
-    # Average sentiment label and score
+    # Detected average sentiment label and score
     average_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
     average_sentiment_score = models.FloatField(null=True, blank=True)
-    # Dominant sentiment label and score
+    # Detected dominant sentiment label and score
     dominant_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
     dominant_sentiment_score = models.FloatField(null=True, blank=True)
-    # Sentiment distribution
+    # Detected sentiment distribution
     sentiment_distribution = models.JSONField(default=dict, blank=True)
 
     # THEMES
@@ -586,7 +586,16 @@ class StudyAnalysisRun(models.Model):
     error_message = models.TextField(blank=True)
 
     # Study-level metrics
+
     # Vs. Participant Reference
+    participant_average_sentiment_score = models.FloatField(null=True, blank=True)
+    participant_average_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
+    participant_dominant_sentiment_score = models.FloatField(null=True, blank=True)
+    participant_dominant_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
+    participant_abs_distance_average_sentiment = models.IntegerField(null=True, blank=True)
+    participant_abs_distance_dominant_sentiment = models.IntegerField(null=True, blank=True)
+    participant_sentiment_distribution = models.JSONField(default=dict, blank=True)
+
     participant_sentiment_true_positives = models.PositiveIntegerField(default=0)
     participant_sentiment_false_positives = models.PositiveIntegerField(default=0)
     participant_sentiment_true_negatives = models.PositiveIntegerField(default=0)
@@ -607,6 +616,14 @@ class StudyAnalysisRun(models.Model):
     )
 
     # Vs. Evaluator Reference
+    evaluator_average_sentiment_score = models.FloatField(null=True, blank=True)
+    evaluator_average_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
+    evaluator_dominant_sentiment_score = models.FloatField(null=True, blank=True)
+    evaluator_dominant_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
+    evaluator_abs_distance_average_sentiment = models.IntegerField(null=True, blank=True)
+    evaluator_abs_distance_dominant_sentiment = models.IntegerField(null=True, blank=True)
+    evaluator_sentiment_distribution = models.JSONField(default=dict, blank=True)
+
     evaluator_sentiment_true_positives = models.PositiveIntegerField(default=0)
     evaluator_sentiment_false_positives = models.PositiveIntegerField(default=0)
     evaluator_sentiment_true_negatives = models.PositiveIntegerField(default=0)

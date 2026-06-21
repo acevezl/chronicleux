@@ -1,0 +1,459 @@
+{% load heroicons %}
+{% load formatters %}
+
+<section class="space-y-4">
+
+    <!-- SUMMARY -->
+    <div class="main-card overflow-hidden">
+
+        <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+            <div>
+                <h4 class="card-summary-title">
+                    {% heroicon_outline "sparkles" %}
+                    Summary
+                </h4>
+
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    Average and dominant sentiment across participant reports, evaluator assessments, and machine analysis.
+                </p>
+            </div>
+
+            <div class="mt-4 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+
+                    <div>
+                        <span class="xs-label uppercase">Sentiment Analysis Method</span>
+
+                        <div class="mt-2 flex flex-wrap items-center gap-2">
+                            <span class="message-default">
+                                {{ run.methods.sentiment|humanize_enum|upper|default:"—" }}
+                            </span>
+
+                            {% if run.methods.sentiment == "llm" %}
+                                <span class="message-default">
+                                    {{ run.methods.provider|upper }}
+                                </span>
+
+                                <span class="message-default">
+                                    {{ run.methods.model }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div>
+                            <dt class="xs-label uppercase">Started</dt>
+                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                                {{ run.started_at|date:"M d, Y H:i"|default:"—" }}
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt class="xs-label uppercase">Completed</dt>
+                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                                {{ run.completed_at|date:"M d, Y H:i"|default:"—" }}
+                            </dd>
+                        </div>
+                    </dl>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 p-4 xl:grid-cols-3">
+
+            <!-- PARTICIPANT SUMMARY -->
+            <div class="main-card overflow-hidden">
+                <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                    <h5 class="sm-label">
+                        Participant Self-Reported Sentiment
+                    </h5>
+                </div>
+
+                <dl class="grid grid-cols-1 gap-3 p-3">
+
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                        <dt class="xs-label">Average sentiment</dt>
+                        <dd class="mt-2 flex flex-wrap items-center gap-2">
+                            {% if run.participant_average_sentiment_label %}
+                                {% include "studies/partials/_badge_sentiment.html" with sentiment=run.participant_average_sentiment_label %}
+                                <span class="badge">
+                                    Score: {{ run.participant_average_sentiment_score|floatformat:3|default:"—" }}
+                                </span>
+                            {% else %}
+                                <span class="badge">Not available</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                        <dt class="xs-label">Dominant sentiment</dt>
+                        <dd class="mt-2 flex flex-wrap items-center gap-2">
+                            {% if run.participant_dominant_sentiment_label %}
+                                {% include "studies/partials/_badge_sentiment.html" with sentiment=run.participant_dominant_sentiment_label %}
+                                <span class="badge">
+                                    Score: {{ run.participant_dominant_sentiment_score|floatformat:3|default:"—" }}
+                                </span>
+                            {% else %}
+                                <span class="badge">Not available</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                </dl>
+            </div>
+
+            <!-- MACHINE SUMMARY -->
+            <div class="main-card overflow-hidden">
+                <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                    <h5 class="sm-label">
+                        Machine-Detected Sentiment
+                    </h5>
+                </div>
+
+                <dl class="grid grid-cols-1 gap-3 p-3">
+
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                        <dt class="xs-label">Average sentiment</dt>
+                        <dd class="mt-2 flex flex-wrap items-center gap-2">
+                            {% if run.average_sentiment_label %}
+                                {% include "studies/partials/_badge_sentiment.html" with sentiment=run.average_sentiment_label %}
+                                <span class="badge">
+                                    Score: {{ run.average_sentiment_score|floatformat:3|default:"—" }}
+                                </span>
+                            {% else %}
+                                <span class="badge">Not available</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                        <dt class="xs-label">Dominant sentiment</dt>
+                        <dd class="mt-2 flex flex-wrap items-center gap-2">
+                            {% if run.dominant_sentiment_label %}
+                                {% include "studies/partials/_badge_sentiment.html" with sentiment=run.dominant_sentiment_label %}
+                                <span class="badge">
+                                    Score: {{ run.dominant_sentiment_score|floatformat:3|default:"—" }}
+                                </span>
+                            {% else %}
+                                <span class="badge">Not available</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                </dl>
+            </div>
+
+            <!-- EVALUATOR SUMMARY -->
+            <div class="main-card overflow-hidden">
+                <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                    <h5 class="sm-label">
+                        Evaluator-Assessed Sentiment
+                    </h5>
+                </div>
+
+                <dl class="grid grid-cols-1 gap-3 p-3">
+
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                        <dt class="xs-label">Average sentiment</dt>
+                        <dd class="mt-2 flex flex-wrap items-center gap-2">
+                            {% if run.evaluator_average_sentiment_label %}
+                                {% include "studies/partials/_badge_sentiment.html" with sentiment=run.evaluator_average_sentiment_label %}
+                                <span class="badge">
+                                    Score: {{ run.evaluator_average_sentiment_score|floatformat:3|default:"—" }}
+                                </span>
+                            {% else %}
+                                <span class="badge">Not available</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                        <dt class="xs-label">Dominant sentiment</dt>
+                        <dd class="mt-2 flex flex-wrap items-center gap-2">
+                            {% if run.evaluator_dominant_sentiment_label %}
+                                {% include "studies/partials/_badge_sentiment.html" with sentiment=run.evaluator_dominant_sentiment_label %}
+                                <span class="badge">
+                                    Score: {{ run.evaluator_dominant_sentiment_score|floatformat:3|default:"—" }}
+                                </span>
+                            {% else %}
+                                <span class="badge">Not available</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+
+                </dl>
+            </div>
+
+            
+
+        </div>
+
+    </div>
+    
+
+    <!-- SENTIMENT DISTRIBUTION -->
+    <div class="main-card overflow-hidden">
+
+        <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+            <h4 class="card-summary-title">
+                {% heroicon_outline "chart-pie" %}
+                Sentiment Distribution
+            </h4>
+
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                Comparison of sentiment polarity distributions across participant reports, evaluator assessments, and machine analysis.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 p-4 xl:grid-cols-3">
+
+            <div class="main-card overflow-hidden">
+                <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                    <h5 class="sm-label">
+                        As Reported by Participants
+                    </h5>
+                </div>
+
+                <div class="p-4">
+                    {% include "studies/partials/_distribution_sentiment.html" with distribution=run.participant_sentiment_distribution chart_id="participantSentimentDistributionChart" %}
+                </div>
+            </div>
+
+            <div class="main-card overflow-hidden">
+                <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                    <h5 class="sm-label">
+                        As Detected by Machine Analysis
+                    </h5>
+                </div>
+
+                <div class="p-4">
+                    {% include "studies/partials/_distribution_sentiment.html" with distribution=run.sentiment_distribution chart_id="machineSentimentDistributionChart" %}
+                </div>
+            </div>
+
+            <div class="main-card overflow-hidden">
+                <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                    <h5 class="sm-label">
+                        As Assessed by Evaluators
+                    </h5>
+                </div>
+
+                <div class="p-4">
+                    {% include "studies/partials/_distribution_sentiment.html" with distribution=run.evaluator_sentiment_distribution chart_id="evaluatorSentimentDistributionChart" %}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ORDINAL DISTANCE COMPARISON -->
+    <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+
+        <!-- PARTICIPANT -->
+        <div class="main-card overflow-hidden">
+            <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+                <h4 class="card-summary-title">
+                    Machine Vs. Participant Sentiment
+                </h4>
+
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    Ordinal distance between machine sentiment and participant self-reported sentiment.
+                </p>
+            </div>
+
+            <div class="p-4">
+                <dl class="grid grid-cols-1 gap-3">
+
+                    <div class="main-card">
+                        <div class="bg-gray-100 dark:bg-gray-800 p-2">
+                            <span class="sm-label">Absolute Median Distance on Average Sentiment </span>
+                        </div>
+                        <dd class="grid grid-cols-1 gap-2 md:grid-cols-3 p-2">
+
+                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                                <span class="xs-label">Self-reported by Participants</span>
+                                <div class="mt-1 flex flex-wrap items-center gap-2">
+                                    {% include "studies/partials/_badge_sentiment.html" with sentiment=run.participant_average_sentiment_label %}
+                                </div>
+                            </div>
+
+                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                                <span class="xs-label">Detected by Machine Analysis</span>
+                                <div class="mt-1 flex flex-wrap items-center gap-2">
+                                    {% include "studies/partials/_badge_sentiment.html" with sentiment=run.average_sentiment_label %}
+                                </div>
+                            </div>
+
+                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                                <span class="xs-label">Absolute Median Distance</span>
+                                <div class="mt-1">
+                                    <span class="badge">
+                                        {{ run.participant_abs_distance_average_sentiment|default:"0" }}
+                                    </span>
+                                </div>
+                            </div>
+                        </dd>
+                    </div>
+
+                    <div class="main-card">
+                        <div class="bg-gray-100 dark:bg-gray-800 p-2">
+                            <span class="sm-label">Absolute Median Distance on Dominant Sentiment </span>
+                        </div>
+                        <dd class="grid grid-cols-1 gap-2 md:grid-cols-3 p-2">
+
+                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                                <span class="xs-label">Self-reported by Participants</span>
+                                <div class="mt-1 flex flex-wrap items-center gap-2">
+                                    {% include "studies/partials/_badge_sentiment.html" with sentiment=run.participant_dominant_sentiment_label %}
+                                </div>
+                            </div>
+
+                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                                <span class="xs-label">Detected by Machine Analysis</span>
+                                <div class="mt-1 flex flex-wrap items-center gap-2">
+                                    {% include "studies/partials/_badge_sentiment.html" with sentiment=run.dominant_sentiment_label %}
+                                </div>
+                            </div>
+
+                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                                <span class="xs-label">Ordinal Distance</span>
+                                <div class="mt-1">
+                                    <span class="badge">
+                                        {{ run.participant_abs_distance_dominant_sentiment|default:"0" }}
+                                    </span>
+                                </div>
+                            </div>
+                        </dd>
+                    </div>
+
+                </dl>
+            </div>
+        </div>
+
+        <!-- EVALUATOR -->
+        <div class="main-card overflow-hidden">
+            <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+                <h4 class="card-summary-title">
+                    Machine Vs. Evaluator Sentiment
+                </h4>
+
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    Ordinal distance between machine sentiment and evaluator self-reported sentiment.
+                </p>
+            </div>
+
+            <div class="p-4">
+                <dl class="grid grid-cols-1 gap-3">
+
+                    <div class="main-card">
+                        <div class="bg-gray-100 dark:bg-gray-800 p-2">
+                            <span class="sm-label">Absolute Median Distance on Average Sentiment </span>
+                        </div>
+                        <dd class="grid grid-cols-1 gap-2 md:grid-cols-3 p-2">
+
+                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                                <span class="xs-label">Assessed by evaluators</span>
+                                <div class="mt-1 flex flex-wrap items-center gap-2">
+                                    {% if run.evaluator_average_sentiment_label %}
+                                    {% include "studies/partials/_badge_sentiment.html" with sentiment=run.evaluator_average_sentiment_label %}
+                                    {% else %}
+                                    <span class="badge">Not available<span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                                <span class="xs-label">Detected by Machine Analysis</span>
+                                <div class="mt-1 flex flex-wrap items-center gap-2">
+                                    {% include "studies/partials/_badge_sentiment.html" with sentiment=run.average_sentiment_label %}
+                                </div>
+                            </div>
+
+                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                                <span class="xs-label">Absolute Median Distance</span>
+                                <div class="mt-1">
+                                    {% if run.evaluator_average_sentiment_label %}
+                                    <span class="badge">
+                                        {{ run.evaluator_abs_distance_average_sentiment|default:"0" }}
+                                    </span>
+                                    {% else %}
+                                    <span class="badge">Not available<span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </dd>
+                    </div>
+
+                    <div class="main-card">
+                        <div class="bg-gray-100 dark:bg-gray-800 p-2">
+                            <span class="sm-label">Absolute Median Distance on Dominant Sentiment </span>
+                        </div>
+                        <dd class="grid grid-cols-1 gap-2 md:grid-cols-3 p-2">
+
+                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                                <span class="xs-label">Assessed by evaluators</span>
+                                <div class="mt-1 flex flex-wrap items-center gap-2">
+                                    {% if run.evaluator_dominant_sentiment_label %}
+                                    {% include "studies/partials/_badge_sentiment.html" with sentiment=run.evaluator_dominant_sentiment_label %}
+                                    {% else %}
+                                    <span class="badge">Not available<span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                                <span class="xs-label">Detected by Machine Analysis</span>
+                                <div class="mt-1 flex flex-wrap items-center gap-2">
+                                    {% include "studies/partials/_badge_sentiment.html" with sentiment=run.dominant_sentiment_label %}
+                                </div>
+                            </div>
+
+                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                                <span class="xs-label">Ordinal Distance</span>
+                                <div class="mt-1">
+                                    {% if run.evaluator_dominant_sentiment_label %}
+                                    <span class="badge">
+                                        {{ run.evaluator_abs_distance_dominant_sentiment|default:"0" }}
+                                    </span>
+                                    {% else %}
+                                    <span class="badge">Not available<span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </dd>
+                    </div>
+
+                </dl>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- EVOLUTION OVER TIME -->
+    <div class="main-card overflow-hidden">
+
+        <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+            <h4 class="card-summary-title">
+                {% heroicon_outline "arrow-trending-up" %}
+                Evolution Over Time
+            </h4>
+
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                Sentiment score and sentiment-label changes across the study timeline.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 p-4 xl:grid-cols-2">
+
+                {% include "studies/partials/_evolution_sentiment.html" with run=run evolution=run.evolution_over_time %}
+
+                {% include "studies/partials/_evolution_sentiment_label.html" with run=run evolution=run.evolution_over_time %}
+
+        </div>
+
+    </div>
+</section>

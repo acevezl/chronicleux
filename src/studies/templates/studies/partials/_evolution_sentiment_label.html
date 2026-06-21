@@ -67,11 +67,11 @@
                         const evolution = JSON.parse(dataElement.textContent);
 
                         const sentimentLabels = [
-                            "VERY_POSITIVE",
-                            "POSITIVE",
-                            "NEUTRAL",
-                            "NEGATIVE",
                             "VERY_NEGATIVE",
+                            "NEGATIVE",
+                            "NEUTRAL",
+                            "POSITIVE",
+                            "VERY_POSITIVE",
                         ];
 
                         const sentimentDisplayLabels = {
@@ -80,6 +80,22 @@
                             NEUTRAL: "Neutral",
                             POSITIVE: "Positive",
                             VERY_POSITIVE: "Very positive",
+                        };
+
+                        const sentimentColors = {
+                            VERY_NEGATIVE: "#fecaca99",
+                            NEGATIVE: "#fee2e299",
+                            NEUTRAL: "#fde68a99",
+                            POSITIVE: "#dcfce799",
+                            VERY_POSITIVE: "#bbf7d099"
+                        };
+
+                        const sentimentBorderColors = {
+                            VERY_NEGATIVE: "#991b1b",
+                            NEGATIVE: "#b91c1c",
+                            NEUTRAL: "#b45309",
+                            POSITIVE: "#15803d",
+                            VERY_POSITIVE: "#166534"
                         };
 
                         const activeButtonClass = [
@@ -199,22 +215,6 @@
                                 VERY_POSITIVE: [],
                             };
 
-                            const sentimentColors = {
-                                VERY_NEGATIVE: "#fecacacc", 
-                                NEGATIVE: "#fef2f2cc",      
-                                NEUTRAL: "#fde68acc",       
-                                POSITIVE: "#f0fdf4cc",      
-                                VERY_POSITIVE: "#bbf7d0cc"  
-                            };
-
-                            const sentimentBorderColors = {
-                                VERY_NEGATIVE: "#fecaca", 
-                                NEGATIVE: "#fef2f2",      
-                                NEUTRAL: "#fde68a",       
-                                POSITIVE: "#f0fdf4",      
-                                VERY_POSITIVE: "#bbf7d0"  
-                            };
-
                             bucketedData.forEach(bucket => {
                                 sentimentLabels.forEach(sentimentLabel => {
                                     runningTotals[sentimentLabel] += bucket.counts[sentimentLabel] || 0;
@@ -302,7 +302,6 @@
                                             precision: 0,
                                         },
                                     },
-                                    
                                 },
                             },
                         });

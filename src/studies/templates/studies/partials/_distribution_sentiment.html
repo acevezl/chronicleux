@@ -1,164 +1,128 @@
 {% load heroicons %}
 
-<div class="group main-card">
-    <div class="card-summary">
-        <div class="card-summary-title">
-            {% heroicon_outline "face-smile" %}
-            Average Sentiment
-        </div>
-
-        <div class="card-summary-subtitle">
-            {% include "studies/partials/_badge_sentiment.html" with sentiment=run.average_sentiment_label %}
-            <span class="badge">
-                {{ run.average_sentiment_score|floatformat:2|default:"-" }}
-            </span>
-        </div>
+{% if distribution %}
+    <div class="relative h-72 w-full overflow-hidden rounded-md bg-gray-50 dark:bg-gray-800">
+        <canvas id="{{ chart_id }}"></canvas>
     </div>
 
-    {% if run.sentiment_distribution %}
-        <div class="mt-4">
-            <div class="relative h-64 w-full overflow-hidden">
-                <canvas id="sentimentDistributionChart-{{ study.id }}-{{ run.id }}"></canvas>
-            </div>
-        </div>
-    {% endif %}
-
-    <div class="flex w-full justify-center gap-2 p-2 mt-4">
-        <div class="xs-label">
-            {% heroicon_outline "arrow-trending-up" %}
-            Dominant Sentiment
-        </div>
-
-        <div class="xs-label">
-            {% include "studies/partials/_badge_sentiment.html" with sentiment=run.dominant_sentiment_label %}
-            <span class="badge">
-                {{ run.dominant_sentiment_score|floatformat:2|default:"-" }}
-            </span>
-        </div>
-    </div>
-</div>
-
-{% if run.sentiment_distribution %}
-<script>
-    function prettifySentimentLabel(label) {
-        return label
-            .toLowerCase()
-            .split("_")
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(" ");
-    }
-
-    const sentimentData{{ run.id }} = [
-        {% for label, count in run.sentiment_distribution.items %}
-            {
-                label: "{{ label|escapejs }}",
-                count: {{ count|default:0 }}
-            },
-        {% endfor %}
-    ];
-
-    const sentimentTotal{{ run.id }} = sentimentData{{ run.id }}.reduce(
-        (sum, item) => sum + item.count,
-        0
-    );
-
-    const sentimentOrder{{ run.id }} = {
-        VERY_POSITIVE: 1,
-        POSITIVE: 2,
-        NEUTRAL: 3,
-        NEGATIVE: 4,
-        VERY_NEGATIVE: 5
-    };
-
-    sentimentData{{ run.id }}.sort((a, b) => {
-        return sentimentOrder{{ run.id }}[a.label] - sentimentOrder{{ run.id }}[b.label];
-    });
-
-    const sentimentColors{{ run.id }} = {
-        VERY_NEGATIVE: "#fecacacc",
-        NEGATIVE: "#fef2f2cc",
-        NEUTRAL: "#fde68acc",
-        POSITIVE: "#f0fdf4cc",
-        VERY_POSITIVE: "#bbf7d0cc"
-    };
-
-    const sentimentBorderColors{{ run.id }} = {
-        VERY_NEGATIVE: "#b91c1c",
-        NEGATIVE: "#b91c1c",
-        NEUTRAL: "#b45309",
-        POSITIVE: "#15803d",
-        VERY_POSITIVE: "#15803d"
-    };
-
-    const sentimentLabels{{ run.id }} = sentimentData{{ run.id }}.map(item => {
-        const label = prettifySentimentLabel(item.label);
-        const percentage = sentimentTotal{{ run.id }}
-            ? ((item.count / sentimentTotal{{ run.id }}) * 100).toFixed(1)
-            : "0.0";
-
-        return `${label} (${percentage}%)`;
-    });
-
-    const sentimentCounts{{ run.id }} = sentimentData{{ run.id }}.map(item => item.count);
-
-    const sentimentCtx{{ run.id }} = document.getElementById(
-        "sentimentDistributionChart-{{ study.id }}-{{ run.id }}"
-    );
-
-    if (sentimentCtx{{ run.id }}) {
-        new Chart(sentimentCtx{{ run.id }}, {
-            type: "polarArea",
-            data: {
-                labels: sentimentLabels{{ run.id }},
-                datasets: [{
-                    data: sentimentCounts{{ run.id }},
-                    backgroundColor: sentimentData{{ run.id }}.map(
-                        item => sentimentColors{{ run.id }}[item.label] || "#e5e7ebcc"
-                    ),
-                    borderColor: sentimentData{{ run.id }}.map(
-                        item => sentimentBorderColors{{ run.id }}[item.label] || "#374151"
-                    ),
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    r: {
-                        ticks: {
-                            display: true
-                        },
-                        grid: {
-                            display: true
-                        },
-                        angleLines: {
-                            display: true
-                        },
-                        pointLabels: {
-                            display: true,
-                            centerPointLabels: true,
-                            font: {
-                                size: 12
-                            }
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const item = sentimentData{{ run.id }}[context.dataIndex];
-                                return ` ${item.count} entries`;
-                            }
-                        }
-                    }
-                }
+    <script>
+        (function () {
+            function prettifySentimentLabel(label) {
+                return label
+                    .toLowerCase()
+                    .split("_")
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(" ");
             }
-        });
-    }
-</script>
+
+            const sentimentData = [
+                {% for item in distribution %}
+                    {
+                        label: "{{ item.label|escapejs }}",
+                        count: {{ item.count|default:0 }},
+                        percentage: {{ item.percentage|default:0 }}
+                    },
+                {% endfor %}
+            ];
+
+            const sentimentOrder = {
+                VERY_NEGATIVE: 1,
+                NEGATIVE: 2,
+                NEUTRAL: 3,
+                POSITIVE: 4,
+                VERY_POSITIVE: 5
+            };
+
+            sentimentData.sort((a, b) => {
+                return sentimentOrder[a.label] - sentimentOrder[b.label];
+            });
+
+            const sentimentColors = {
+                VERY_NEGATIVE: "#fecaca99",
+                NEGATIVE: "#fee2e299",
+                NEUTRAL: "#fde68a99",
+                POSITIVE: "#dcfce799",
+                VERY_POSITIVE: "#bbf7d099"
+            };
+
+            const sentimentBorderColors = {
+                VERY_NEGATIVE: "#991b1b",
+                NEGATIVE: "#b91c1c",
+                NEUTRAL: "#b45309",
+                POSITIVE: "#15803d",
+                VERY_POSITIVE: "#166534"
+            };
+
+            const sentimentLabels = sentimentData.map(item => {
+                const label = prettifySentimentLabel(item.label);
+                const percentage = (item.percentage * 100).toFixed(1);
+
+                return `${label} (${percentage}%)`;
+            });
+
+            const sentimentCounts = sentimentData.map(item => item.count);
+
+            const sentimentCtx = document.getElementById("{{ chart_id }}");
+
+            if (sentimentCtx) {
+                new Chart(sentimentCtx, {
+                    type: "polarArea",
+                    data: {
+                        labels: sentimentLabels,
+                        datasets: [{
+                            data: sentimentCounts,
+                            backgroundColor: sentimentData.map(
+                                item => sentimentColors[item.label] || "#e5e7eb99"
+                            ),
+                            borderColor: sentimentData.map(
+                                item => sentimentBorderColors[item.label] || "#374151"
+                            ),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: "bottom",
+                                labels: {
+                                    boxWidth: 12,
+                                    boxHeight: 12
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const item = sentimentData[context.dataIndex];
+                                        const percentage = (item.percentage * 100).toFixed(1);
+                                        return ` ${item.count} entries (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            r: {
+                                ticks: {
+                                    display: true
+                                },
+                                grid: {
+                                    color: "#e5e7eb"
+                                },
+                                angleLines: {
+                                    color: "#e5e7eb"
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        })();
+    </script>
+{% else %}
+    <div class="flex h-72 items-center justify-center rounded-md border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <span class="text-sm text-gray-500 dark:text-gray-400">
+            No sentiment distribution available.
+        </span>
+    </div>
 {% endif %}
