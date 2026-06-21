@@ -1,32 +1,33 @@
+{% load heroicons %}
+
 <div class="group main-card">
     <div class="card-summary">
         <div class="card-summary-title">
             {% heroicon_outline "cursor-arrow-rays" %}
-            Issue-Impact Matrix
+            Issue Frequency Matrix
         </div>
     </div>
-    <div class="">
-        {% if issue_impact_matrix %}
-        <div>
-            <div class="relative h-64 w-full overflow-hidden">
-                <canvas
-                    id="issueImpactMatrixChart-{{ study_id }}-{{ run_id }}"
-                ></canvas>
-            </div>
-        </div>
 
-        <div class="mb-4 mx-4 text-xs text-gray-500 dark:text-gray-400">
-            Issues farther right appear more often. Issues higher up are associated with more negative sentiment.
-        </div>
+    <div>
+        {% if run.canonical_issue_summaries.all %}
+            <div>
+                <div class="relative h-64 w-full overflow-hidden">
+                    <canvas id="issueImpactMatrixChart-{{ study.id }}-{{ run.id }}"></canvas>
+                </div>
+            </div>
+
+            <div class="mb-4 mx-4 text-xs text-gray-500 dark:text-gray-400">
+                Issues farther right appear more often. Issues higher up have higher average assignment confidence.
+            </div>
         {% else %}
-        <div class="p-4 text-sm text-gray-500 dark:text-gray-400">
-            No issue-impact data available.
-        </div>
+            <div class="p-4 text-sm text-gray-500 dark:text-gray-400">
+                No issue matrix data available.
+            </div>
         {% endif %}
     </div>
 </div>
 
-
+{% if run.canonical_issue_summaries.all %}
 <script>
     function prettifyImpactIssueLabel(label) {
         return label
@@ -36,110 +37,122 @@
             .join(" ");
     }
 
-    const issueImpactData = [
-        {% for issue in issue_impact_matrix %}
+    const issueImpactData{{ run.id }} = [
+        {% for issue_summary in run.canonical_issue_summaries.all %}
             {
-                label: "{{ issue.label|escapejs }}",
-                count: {{ issue.count }},
-                frequency: {{ issue.percentage }},
-                negativeRatio: {{ issue.negative_ratio|default:0 }},
-                avgSentiment: {{ issue.avg_sentiment|default:0 }}
+                label: "{{ issue_summary.canonical_issue.name|escapejs }}",
+                count: {{ issue_summary.entry_count|default:0 }},
+                confidence: {{ issue_summary.average_confidence_score|default:0 }}
             },
         {% endfor %}
     ];
 
-    const issueImpactPoints = issueImpactData.map(item => ({
-        x: item.frequency * 100,
-        y: item.negativeRatio,
-        r: Math.max(6, Math.min(22, item.count * 2)),
-        label: prettifyImpactIssueLabel(item.label),
-        count: item.count,
-        frequency: item.frequency,
-        negativeRatio: item.negativeRatio,
-        avgSentiment: item.avgSentiment
-    }));
+    const issueImpactTotal{{ run.id }} = issueImpactData{{ run.id }}.reduce(
+        (sum, item) => sum + item.count,
+        0
+    );
 
-    const issueImpactCtx = document.getElementById("issueImpactMatrixChart-{{ study_id }}-{{ run_id }}");
+    const issueImpactPoints{{ run.id }} = issueImpactData{{ run.id }}.map(item => {
+        const frequency = issueImpactTotal{{ run.id }}
+            ? (item.count / issueImpactTotal{{ run.id }}) * 100
+            : 0;
 
-    new Chart(issueImpactCtx, {
-        type: "bubble",
-        data: {
-            datasets: [{
-                label: "Issues",
-                data: issueImpactPoints,
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    top: 12,
-                    right: 16,
-                    bottom: 4,
-                    left: 4
-                }
+        return {
+            x: frequency,
+            y: item.confidence,
+            r: Math.max(6, Math.min(22, item.count * 2)),
+            label: prettifyImpactIssueLabel(item.label),
+            count: item.count,
+            frequency: frequency,
+            confidence: item.confidence
+        };
+    });
+
+    const issueImpactCtx{{ run.id }} = document.getElementById(
+        "issueImpactMatrixChart-{{ study.id }}-{{ run.id }}"
+    );
+
+    if (issueImpactCtx{{ run.id }}) {
+        new Chart(issueImpactCtx{{ run.id }}, {
+            type: "bubble",
+            data: {
+                datasets: [{
+                    label: "Issues",
+                    data: issueImpactPoints{{ run.id }},
+                    borderWidth: 2
+                }]
             },
-            scales: {
-                x: {
-                    min: 0,
-                    max: 100,
-                    title: {
-                        display: true,
-                        text: "Frequency"
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return value + "%";
-                        }
-                    },
-                    grid: {
-                        drawBorder: false
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 12,
+                        right: 16,
+                        bottom: 4,
+                        left: 4
                     }
                 },
-                y: {
-                    min: 0,
-                    max: 1,
-                    title: {
-                        display: true,
-                        text: "Negative impact"
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return value.toFixed(1);
-                        }
-                    },
-                    grid: {
-                        drawBorder: false
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    callbacks: {
-                        title: function() {
-                            return "Issue impact";
+                scales: {
+                    x: {
+                        min: 0,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: "Frequency"
                         },
-                        label: function(context) {
-                            const item = context.raw;
-                            const frequency = item.x.toFixed(1);
-                            const negativeRatio = item.y.toFixed(2);
-                            const avgSentiment = Number(item.avgSentiment).toFixed(2);
+                        ticks: {
+                            callback: function(value) {
+                                return value + "%";
+                            }
+                        },
+                        grid: {
+                            drawBorder: false
+                        }
+                    },
+                    y: {
+                        min: 0,
+                        max: 1,
+                        title: {
+                            display: true,
+                            text: "Average confidence"
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return Number(value).toFixed(1);
+                            }
+                        },
+                        grid: {
+                            drawBorder: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function() {
+                                return "Issue frequency";
+                            },
+                            label: function(context) {
+                                const item = context.raw;
+                                const frequency = item.frequency.toFixed(1);
+                                const confidence = Number(item.confidence).toFixed(2);
 
-                            return [
-                                `${item.label}`,
-                                `Frequency: ${frequency}%`,
-                                `Negative impact: ${negativeRatio}`,
-                                `Avg sentiment: ${avgSentiment}`
-                            ];
+                                return [
+                                    `${item.label}`,
+                                    `Frequency: ${frequency}%`,
+                                    `Entries: ${item.count}`,
+                                    `Avg confidence: ${confidence}`
+                                ];
+                            }
                         }
                     }
                 }
             }
-        }
-    });
+        });
+    }
 </script>
+{% endif %}

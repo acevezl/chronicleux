@@ -1,5 +1,17 @@
 from django import forms
-from .models import Study, CanonicalIssue, CanonicalTheme, DiaryEntry, DiaryEntryAnalysis
+
+from django.utils import timezone
+
+from .models import (
+    Study,
+    CanonicalIssue,
+    CanonicalTheme,
+    DiaryEntry,
+    DiaryEntryAnalysis,
+    DiaryEntryAnalysisEvaluatorTheme,
+    DiaryEntryAnalysisEvaluatorIssue,
+)
+
 
 class StudyForm(forms.ModelForm):
     class Meta:
@@ -281,11 +293,12 @@ class CanonicalIssueForm(forms.ModelForm):
         return aliases
     
 class DiaryEntryManualEvaluationForm(forms.ModelForm):
+
     class Meta:
         model = DiaryEntryAnalysis
         fields = [
             "evaluator_sentiment_label",
-            "evaluator_dominant_theme",
+            "evaluator_themes",
             "evaluator_issues",
             "evaluator_notes",
         ]
@@ -296,7 +309,7 @@ class DiaryEntryManualEvaluationForm(forms.ModelForm):
                     "class": "form-select",
                 }
             ),
-            "evaluator_dominant_theme": forms.RadioSelect(),
+            "evaluator_themes": forms.CheckboxSelectMultiple(),
             "evaluator_issues": forms.CheckboxSelectMultiple(),
             "evaluator_notes": forms.Textarea(
                 attrs={
@@ -307,19 +320,66 @@ class DiaryEntryManualEvaluationForm(forms.ModelForm):
             ),
         }
 
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
+        labels = {
+            "evaluator_sentiment_label": "Evaluator sentiment",
+            "evaluator_themes": "Evaluator themes",
+            "evaluator_issues": "Evaluator issues",
+            "evaluator_notes": "Evaluator notes",
+        }
 
-            self.fields["evaluator_dominant_theme"].queryset = (
-                CanonicalTheme.objects
-                .filter(is_active=True)
-                .order_by("name")
-            )
+    def __init__(self, *args, evaluator=None, **kwargs):
+        self.evaluator = evaluator
+        super().__init__(*args, **kwargs)
 
-            self.fields["evaluator_issues"].queryset = (
-                CanonicalIssue.objects
-                .filter(is_active=True)
-                .order_by("name")
-            )
+        self.fields["evaluator_themes"].queryset = (
+            CanonicalTheme.objects
+            .filter(is_active=True)
+            .order_by("name")
+        )
 
-            self.fields["evaluator_dominant_theme"].empty_label = "Select dominant theme"
+        self.fields["evaluator_issues"].queryset = (
+            CanonicalIssue.objects
+            .filter(is_active=True)
+            .order_by("name")
+        )
+
+        self.fields["evaluator_themes"].required = True
+        self.fields["evaluator_issues"].required = False
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        if self.evaluator:
+            instance.evaluated_by = self.evaluator
+
+        instance.evaluated_at = timezone.now()
+
+        if commit:
+            instance.save()
+
+            evaluator_themes = self.cleaned_data.get("evaluator_themes") or []
+            evaluator_issues = self.cleaned_data.get("evaluator_issues") or []
+
+            DiaryEntryAnalysisEvaluatorTheme.objects.filter(
+                diary_entry_analysis=instance
+            ).delete()
+
+            DiaryEntryAnalysisEvaluatorIssue.objects.filter(
+                diary_entry_analysis=instance
+            ).delete()
+
+            for theme in evaluator_themes:
+                DiaryEntryAnalysisEvaluatorTheme.objects.create(
+                    diary_entry_analysis=instance,
+                    canonical_theme=theme,
+                    assigned_by=self.evaluator,
+                )
+
+            for issue in evaluator_issues:
+                DiaryEntryAnalysisEvaluatorIssue.objects.create(
+                    diary_entry_analysis=instance,
+                    canonical_issue=issue,
+                    assigned_by=self.evaluator,
+                )
+
+        return instance

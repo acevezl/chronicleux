@@ -195,23 +195,23 @@
 
         <div class="p-4">
 
-            <p class="card-summary-subtitle">
+            <span class="card-summary-subtitle">
                 High-level results of this analysis run.
-            </p>
+            </span>
 
-            <dl class="grid grid-cols-1 gap-4 xl:grid-cols-3 mt-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 xl:grid-cols-3 mt-4">
 
                 <div class="main-card">
                     <div class="bg-gray-100 p-2">
                         <span class="sm-label">Sentiment Analysis</span>
                     </div>
-                    <div class="p-2 grid grid-cols-2 gap-2">
+                    <div class="p-2 grid grid-cols-2 md:grid-cols-1 xl:grid-cols-2 gap-2">
                         <div class="main-card p-2">
                             <dt class="xs-label">Average Sentiment</dt>
                             <dd class="flex flex-wrap items-center mt-1 gap-2">
                                 {% include "studies/partials/_badge_sentiment.html" with sentiment=run.average_sentiment_label %}
                                 <span class="badge">
-                                    {{ run.average_sentiment_score }}
+                                    Score: {{ run.average_sentiment_score }}
                                 </span>
                             </dd>
                         </div>
@@ -220,7 +220,7 @@
                             <dd class="flex flex-wrap items-center mt-1 gap-2">
                                 {% include "studies/partials/_badge_sentiment.html" with sentiment=run.dominant_sentiment_label %}
                                 <span class="badge">
-                                    {{ run.dominant_sentiment_score }}
+                                    Score: {{ run.dominant_sentiment_score }}
                                 </span>
                             </dd>
                         </div>
@@ -235,7 +235,7 @@
                         <div class="main-card p-2">
                             <dt class="xs-label">Extracted Themes</dt>
                             <dd class="flex flex-wrap items-center mt-1 gap-2">
-                                {% include "studies/partials/_badge_theme_labels.html" with themes=run.canonical_themes.all %}
+                                {% include "studies/partials/_badge_theme_labels.html" with themes=run.themes.all %}
                             </dd>
                         </div>
                     </div>
@@ -249,15 +249,37 @@
                         <div class="main-card p-2">
                             <dt class="xs-label">Detected Issues</dt>
                             <dd class="flex flex-wrap items-center mt-1 gap-2">
-                                {% include "studies/partials/_badge_issue_tags.html" with issues=run.canonical_issues.all %}
+                                {% include "studies/partials/_badge_issue_tags.html" with issues=run.issues.all %}
+                            </dd>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 mt-4">
+                <div class="main-card w-full">
+                    <div class="bg-gray-100 p-2">
+                        <span class="sm-label">Negative Sentiment Detection Metrics</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 p-2">
+                        <div class="flex-1 main-card p-2">
+                            <dt class="xs-label">Machine Vs. Participant Reference</dt>
+                            <dd class="flex flex-wrap items-center mt-1 gap-2">
+                                <!-- METRIC SCORES Machine vs Participant Ref -->
+                                {% include "studies/partials/_analysis_run_metric_cards.html" with run=run comparison_type="participant" only %}
+                            </dd>
+                        </div>
+                        <div class="flex-1 main-card p-2">
+                            <dt class="xs-label">Machine Vs. Evaluator Reference</dt>
+                            <dd class="flex flex-wrap items-center mt-1 gap-2">
+                                <!-- METRIC SCORES Machine vs Evaluator Ref -->
+                                {% include "studies/partials/_analysis_run_metric_cards.html" with run=run comparison_type="evaluator" only %}
                             </dd>
                         </div>
                     </div>
                 </div>
 
-                
-
-            </dl>
+            </div>
         </div>
     </section>
     

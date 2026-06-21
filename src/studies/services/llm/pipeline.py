@@ -1,8 +1,8 @@
 # This file defines the main LLM pipeline for analyzing study entries
 # Steps:
 # 1. Receive a study_id and list/query for entries to analyze
-# 2. Explore study-level themes using an LLM and all entries (1ST PASS)
-# 3. Analyze each entry with an LLM to obtain sentiment and theme assignment (2ND PASS)
+# 2. Explore study-level themes and issues using an LLM and all entries (1ST PASS)
+# 3. Analyze each entry with an LLM to obtain sentiment, theme, and issue assignment (2ND PASS)
 # 4. Return one StudyAnalysisResult containing all the entry-level results
 
 ############################
@@ -11,8 +11,14 @@
 
 from collections import Counter
 
-from studies.services.contracts import EntryAnalysisResult, StudyAnalysisResult, ThemeResult
+from studies.services.contracts import (
+    EntryAnalysisResult,
+    IssueResult,
+    StudyAnalysisResult,
+    ThemeResult,
+)
 from studies.services.llm.entry_analyzer import analyze_entry_with_llm
+from studies.services.llm.issue_explorer import explore_issues_with_llm
 from studies.services.llm.theme_explorer import explore_themes_with_llm
 from studies.services.nlp.sentiment._thresholds import map_sentiment_score_to_label
 
@@ -23,6 +29,7 @@ def analyze_study_entries_with_llm(
     provider: str,
     model: str | None = None,
     max_themes: int = 8,
+    max_issues: int = 8,
 ) -> StudyAnalysisResult:
 
     entry_list = list(entries)
@@ -30,7 +37,8 @@ def analyze_study_entries_with_llm(
     if not entry_list:
         raise RuntimeError("No diary entries available for LLM analysis.")
 
-    # FIRST PASS: Explore shared study-level themes
+    # FIRST PASS: Build the study-level theme catalog
+    # This returns canonical themes + LLM-suggested themes.
     themes = explore_themes_with_llm(
         entries=entry_list,
         provider=provider,
@@ -41,13 +49,23 @@ def analyze_study_entries_with_llm(
     if not themes:
         raise RuntimeError("LLM theme exploration did not return any themes.")
 
-    # SECOND PASS: Analyze each entry using the discovered theme catalog
+    # FIRST PASS: Build the study-level issue catalog
+    # This returns canonical issues + LLM-suggested issues.
+    issues = explore_issues_with_llm(
+        entries=entry_list,
+        provider=provider,
+        model=model,
+        max_issues=max_issues,
+    )
+
+    # SECOND PASS: Analyze each entry using both catalogs.
     entry_analysis_results = []
 
     for entry in entry_list:
         entry_analysis_result = analyze_entry_with_llm(
             entry=entry,
             theme_catalog=themes,
+            issue_catalog=issues,
             provider=provider,
             model=model,
         )
@@ -58,6 +76,7 @@ def analyze_study_entries_with_llm(
         study_id=study_id,
         entry_analysis_results=entry_analysis_results,
         themes=themes,
+        issues=issues,
         provider=provider,
         model=model,
     )
@@ -67,6 +86,7 @@ def build_study_analysis_result(
     study_id: int,
     entry_analysis_results: list[EntryAnalysisResult],
     themes: list[ThemeResult],
+    issues: list[IssueResult],
     provider: str,
     model: str | None = None,
 ) -> StudyAnalysisResult:
@@ -155,6 +175,12 @@ def build_study_analysis_result(
                 sum(dominant_theme_weights) / len(dominant_theme_weights)
             )
 
+    total_issues = sum(
+        1
+        for result in entry_analysis_results
+        if result.issue is not None
+    )
+
     return StudyAnalysisResult(
         study_id=study_id,
 
@@ -169,19 +195,23 @@ def build_study_analysis_result(
         dominant_theme_weight=dominant_theme_weight,
         theme_distribution=theme_distribution,
 
-        entry_analysis_results=entry_analysis_results,
+        # entry_analysis_results=entry_analysis_results,
         total_entries=len(entry_analysis_results),
         total_themes=len(themes),
+        total_issues=total_issues,
 
         methods={
             "sentiment": "llm",
             "theme": "llm",
+            "issue": "llm",
             "provider": provider,
             "model": model,
         },
         metadata={
-            "pipeline": "llm_v1",
+            "pipeline": "llm_v2",
             "provider": provider,
             "model": model,
+            "theme_catalog_size": len(themes),
+            "issue_catalog_size": len(issues),
         },
     )

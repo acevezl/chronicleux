@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.http import HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.urls import reverse
@@ -129,7 +129,7 @@ def diary_study_detail(request, pk):
 		StudyAnalysisRun.objects
 		.filter(study=study)
 		.select_related("dominant_theme")
-		.prefetch_related("canonical_themes", "canonical_issues")
+		.prefetch_related("themes", "issues")
 		.order_by("-started_at")
 	)
 
@@ -824,10 +824,10 @@ def machine_analysis_details(request, study_pk, run_pk):
 	
 	run = get_object_or_404(
 		StudyAnalysisRun.objects
+		.filter(study=study)
 		.select_related("dominant_theme")
-		.prefetch_related("canonical_themes", "canonical_issues"),
+		.prefetch_related("themes", "issues"),
 		pk=run_pk,
-		study=study,
 	)
 
 	if not user_can_evaluate_study(request.user, study):
@@ -842,13 +842,17 @@ def machine_analysis_details(request, study_pk, run_pk):
 		"j M Y, H:i"
 	)
 
-	pending_human_evaluation_count = DiaryEntryAnalysis.objects.filter(
-		run=run,
-	).filter(
-		Q(evaluator_sentiment_label__isnull=True)
-		| Q(evaluator_sentiment_label="")
-		| Q(evaluator_dominant_theme__isnull=True)
-	).count()
+	pending_human_evaluation_count = (
+		DiaryEntryAnalysis.objects
+		.filter(run=run)
+		.annotate(evaluator_theme_count=Count("evaluator_themes", distinct=True))
+		.filter(
+			Q(evaluator_sentiment_label__isnull=True)
+			| Q(evaluator_sentiment_label="")
+			| Q(evaluator_theme_count=0)
+		)
+		.count()
+	)
 
 	completed_human_evaluation_count = run.total_entries - pending_human_evaluation_count
 
@@ -883,7 +887,7 @@ def machine_analysis_entries_partial(request, study_pk, run_pk):
 	run = get_object_or_404(
 		StudyAnalysisRun.objects
 		.select_related("dominant_theme")
-		.prefetch_related("canonical_themes", "canonical_issues"),
+		.prefetch_related("themes", "issues"),
 		pk=run_pk,
 		study=study,
 	)
@@ -919,8 +923,8 @@ def analysis_runs(request):
 		"created_by",
 		"dominant_theme",
 	).prefetch_related(
-		"canonical_themes",
-		"canonical_issues",
+		"themes",
+		"issues",
 	).filter(
 		created_by=request.user
 	)
@@ -928,7 +932,7 @@ def analysis_runs(request):
 	# Filtering
 	q = request.GET.get("q")
 	status = request.GET.get("status")
-	study = request.GET.get("study")
+	study_title = request.GET.get("study")
 	model = request.GET.get("model")
 	sentiment_method = request.GET.get("sentiment_method")
 	theme_method = request.GET.get("theme_method")
@@ -944,8 +948,8 @@ def analysis_runs(request):
 	if status:
 		runs = runs.filter(status=status)
 
-	if study:
-		runs = runs.filter(study__title__icontains=study)
+	if study_title:
+		runs = runs.filter(study__title__icontains=study_title)
 
 	if model:
 		runs = runs.filter(analysis_model__icontains=model)
@@ -987,18 +991,11 @@ def analysis_runs(request):
 
 	page_params = request.GET.copy()
 	page_params.pop("page", None)
-	
-	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
-
-	created_at = date_format(
-		timezone.localtime(study.created_at),
-		"j M Y, H:i"
-	)
 
 	context = {
 		"page_title_heroicon":"book-open",
-		"page_title":study.title,
-		"page_subtitle": f"Owner: {owner_name}, Created on: {created_at}",
+		"page_title": "Machine Analysis Runs",
+		"page_subtitle": "Analysis analyzed by NLP techniques or Large-Language Models",
 		"analysis_runs": page_obj,
 		"page_obj": page_obj,
 		"sort": sort,
@@ -1031,8 +1028,8 @@ def analysis_runs_partial(request):
 		"created_by",
 		"dominant_theme",
 	).prefetch_related(
-		"canonical_themes",
-		"canonical_issues",
+		"themes",
+		"issues",
 	).filter(
 		created_by=request.user
 	)
@@ -1547,7 +1544,7 @@ def human_evaluation_queue(request, study_pk, run_pk):
 	run = get_object_or_404(
 		StudyAnalysisRun.objects
 		.select_related("dominant_theme")
-		.prefetch_related("canonical_themes", "canonical_issues"),
+		.prefetch_related("themes", "issues"),
 		pk=run_pk,
 		study=study,
 	)
@@ -1594,7 +1591,7 @@ def human_evaluation_queue_partial(request, study_pk, run_pk):
 	run = get_object_or_404(
 		StudyAnalysisRun.objects
 		.select_related("dominant_theme")
-		.prefetch_related("canonical_themes", "canonical_issues"),
+		.prefetch_related("themes", "issues"),
 		pk=run_pk,
 		study=study,
 	)
@@ -1650,7 +1647,7 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 	run = get_object_or_404(
 		StudyAnalysisRun.objects
 		.select_related("dominant_theme")
-		.prefetch_related("canonical_themes", "canonical_issues"),
+		.prefetch_related("themes", "issues"),
 		pk=run_pk,
 		study=study,
 	)
@@ -1666,8 +1663,10 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 			"run",
 			"run__study",
 		).prefetch_related(
-			"canonical_themes",
-			"canonical_issues",
+			"themes",
+			"issues",
+			"evaluator_themes",
+			"evaluator_issues",
 		),
 		pk=analysis_pk,
 		run=run,
@@ -1675,16 +1674,13 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 
 	if request.method == "POST":
 		form = DiaryEntryManualEvaluationForm(
-			request.POST,
+			request.POST or None,
 			instance=entry_analysis,
+			evaluator=request.user,
 		)
 
 		if form.is_valid():
-			evaluated_analysis = form.save(commit=False)
-			evaluated_analysis.evaluated_by = request.user
-			evaluated_analysis.evaluated_at = timezone.now()
-			evaluated_analysis.save()
-			form.save_m2m()
+			form.save()
 
 			messages.success(request, "Human evaluation saved.")
 
@@ -1695,7 +1691,10 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 			)
 
 	else:
-		form = DiaryEntryManualEvaluationForm(instance=entry_analysis)
+		form = DiaryEntryManualEvaluationForm(
+			instance=entry_analysis,
+			evaluator=request.user,
+			)
 
 	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
 

@@ -86,7 +86,7 @@
                     </span>
                 {% endif %}
 
-                {% include "studies/partials/_badge_theme_labels.html" with themes=run.canonical_themes.all %}
+                {% include "studies/partials/_badge_theme_labels.html" with themes=run.themes.all %}
             </div>
         </div>
 
@@ -97,7 +97,7 @@
             </div>
 
             <div class="min-w-0 flex flex-wrap items-center gap-1.5">
-                {% include "studies/partials/_badge_issue_tags.html" with issues=run.canonical_issues.all %}
+                {% include "studies/partials/_badge_issue_tags.html" with issues=run.issues.all %}
             </div>
         </div>
 

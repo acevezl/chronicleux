@@ -1,3 +1,5 @@
+{% load heroicons %}
+
 <div class="group main-card">
     <div class="card-summary">
         <div class="card-summary-title">
@@ -6,32 +8,35 @@
         </div>
     </div>
 
-    {% if theme_distribution %}
-    <div class="mt-4">
-        <div class="relative h-64 w-full overflow-hidden">
-            <canvas
-                id="themeDistributionChart-{{ study_id }}-{{ run_id }}"
-            ></canvas>
+    {% if run.canonical_theme_summaries.all %}
+        <div class="mt-4">
+            <div class="relative h-64 w-full overflow-hidden">
+                <canvas id="themeDistributionChart-{{ study.id }}-{{ run.id }}"></canvas>
+            </div>
         </div>
-    </div>
+    {% else %}
+        <div class="p-4 text-sm text-gray-500 dark:text-gray-400">
+            No theme distribution available.
+        </div>
     {% endif %}
 
-    <div class="flex w-ful justify-center gap-2 p-2 mt-4">
+    <div class="flex w-full justify-center gap-2 p-2 mt-4">
         <div class="xs-label">
             {% heroicon_outline "arrow-trending-up" %}
             Dominant Theme
         </div>
 
         <div class="xs-label">
-            {% include "studies/partials/_badge_theme_labels.html" with themes=run.canonical_themes.all %}
-            <span class="badge">
-                {weight}
-            </span>
+            {% if run.dominant_theme %}
+                {% include "studies/partials/_badge_theme_labels.html" with theme=run.dominant_theme %}
+            {% else %}
+                <span class="badge">No dominant theme</span>
+            {% endif %}
         </div>
     </div>
-
 </div>
 
+{% if run.canonical_theme_summaries.all %}
 <script>
     function prettifyThemeLabel(label) {
         return label
@@ -41,59 +46,70 @@
             .join(" ");
     }
 
-    const themeData = [
-        {% for theme in theme_distribution %}
+    const themeData{{ run.id }} = [
+        {% for theme_summary in run.canonical_theme_summaries.all %}
             {
-                label: "{{ theme.label|escapejs }}",
-                count: {{ theme.count }},
-                percentage: {{ theme.percentage }}
+                label: "{{ theme_summary.canonical_theme.name|escapejs }}",
+                count: {{ theme_summary.entry_count|default:0 }}
             },
         {% endfor %}
     ];
 
-    const themeLabels = themeData.map(item => {
+    const themeTotal{{ run.id }} = themeData{{ run.id }}.reduce(
+        (sum, item) => sum + item.count,
+        0
+    );
+
+    const themeLabels{{ run.id }} = themeData{{ run.id }}.map(item => {
         const label = prettifyThemeLabel(item.label);
-        const percentage = (item.percentage * 100).toFixed(1);
+        const percentage = themeTotal{{ run.id }}
+            ? ((item.count / themeTotal{{ run.id }}) * 100).toFixed(1)
+            : "0.0";
+
         return `${label} (${percentage}%)`;
     });
 
-    const themeCounts = themeData.map(item => item.count);
+    const themeCounts{{ run.id }} = themeData{{ run.id }}.map(item => item.count);
 
-    const themeCtx = document.getElementById("themeDistributionChart-{{ study_id }}-{{ run_id }}");
+    const themeCtx{{ run.id }} = document.getElementById(
+        "themeDistributionChart-{{ study.id }}-{{ run.id }}"
+    );
 
-    new Chart(themeCtx, {
-        type: "doughnut",
-        data: {
-            labels: themeLabels,
-            datasets: [{
-                data: themeCounts,
-                borderWidth: 2,
-                hoverOffset: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: "60%",
-            plugins: {
-                legend: {
-                    display: true,
-                    position: "bottom",
-                    labels: {
-                        boxWidth: 12,
-                        padding: 12
-                    }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const item = themeData[context.dataIndex];
-                            const percentage = (item.percentage * 100).toFixed(1);
-                            return ` ${item.count} entries`;
+    if (themeCtx{{ run.id }}) {
+        new Chart(themeCtx{{ run.id }}, {
+            type: "doughnut",
+            data: {
+                labels: themeLabels{{ run.id }},
+                datasets: [{
+                    data: themeCounts{{ run.id }},
+                    borderWidth: 2,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: "60%",
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: "bottom",
+                        labels: {
+                            boxWidth: 12,
+                            padding: 12
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const item = themeData{{ run.id }}[context.dataIndex];
+                                return ` ${item.count} entries`;
+                            }
                         }
                     }
                 }
             }
-        }
-    });
+        });
+    }
 </script>
+{% endif %}

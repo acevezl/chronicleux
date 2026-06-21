@@ -200,7 +200,7 @@
 									</div>
 
 									<div class="flex flex-wrap gap-2">
-										{% include "studies/partials/_badge_theme_labels.html" with themes=run.canonical_themes.all %}
+										{% include "studies/partials/_badge_theme_labels.html" with themes=run.themes.all %}
 									</div>
 								</div>
 
@@ -216,7 +216,7 @@
 									</div>
 
 									<div class="flex flex-wrap gap-2">
-										{% include "studies/partials/_badge_issue_tags.html" with issues=run.canonical_issues.all %}
+										{% include "studies/partials/_badge_issue_tags.html" with issues=run.issues.all %}
 									</div>
 								</div>
 

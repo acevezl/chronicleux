@@ -297,6 +297,9 @@
   }
 }
 @layer utilities {
+  .\@container {
+    container-type: inline-size;
+  }
   .invisible {
     visibility: hidden;
   }
@@ -592,6 +595,9 @@
   .min-w-0 {
     min-width: calc(var(--spacing) * 0);
   }
+  .min-w-32 {
+    min-width: calc(var(--spacing) * 32);
+  }
   .flex-1 {
     flex: 1;
   }
@@ -613,6 +619,9 @@
   .cursor-pointer {
     cursor: pointer;
   }
+  .\[grid-template-columns\:repeat\(auto-fit\,minmax\(9rem\,1fr\)\)\] {
+    grid-template-columns: repeat(auto-fit,minmax(9rem,1fr));
+  }
   .grid-cols-1 {
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }
@@ -633,6 +642,9 @@
   }
   .flex-col {
     flex-direction: column;
+  }
+  .flex-row {
+    flex-direction: row;
   }
   .flex-nowrap {
     flex-wrap: nowrap;
@@ -678,6 +690,9 @@
   }
   .gap-8 {
     gap: calc(var(--spacing) * 8);
+  }
+  .gap-px {
+    gap: 1px;
   }
   .space-y-1 {
     :where(& > :not(:last-child)) {
@@ -988,6 +1003,9 @@
   }
   .text-center {
     text-align: center;
+  }
+  .text-left {
+    text-align: left;
   }
   .text-right {
     text-align: right;
@@ -1385,6 +1403,16 @@
       padding-inline: calc(var(--spacing) * 6);
     }
   }
+  .md\:grid {
+    @media (width >= 48rem) {
+      display: grid;
+    }
+  }
+  .md\:grid-cols-1 {
+    @media (width >= 48rem) {
+      grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+  }
   .md\:grid-cols-2 {
     @media (width >= 48rem) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1393,6 +1421,11 @@
   .md\:grid-cols-3 {
     @media (width >= 48rem) {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  .md\:flex-row {
+    @media (width >= 48rem) {
+      flex-direction: row;
     }
   }
   .md\:text-4xl {
@@ -1471,6 +1504,16 @@
       flex-direction: column;
     }
   }
+  .lg\:flex-row {
+    @media (width >= 64rem) {
+      flex-direction: row;
+    }
+  }
+  .lg\:gap-4 {
+    @media (width >= 64rem) {
+      gap: calc(var(--spacing) * 4);
+    }
+  }
   .lg\:divide-x {
     @media (width >= 64rem) {
       :where(& > :not(:last-child)) {
@@ -1532,6 +1575,16 @@
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
+  .xl\:flex-col {
+    @media (width >= 80rem) {
+      flex-direction: column;
+    }
+  }
+  .xl\:flex-row {
+    @media (width >= 80rem) {
+      flex-direction: row;
+    }
+  }
   .xl\:pl-72 {
     @media (width >= 80rem) {
       padding-left: calc(var(--spacing) * 72);
@@ -1548,10 +1601,27 @@
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
+  .\@md\:grid-cols-2 {
+    @container (width >= 28rem) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .\@lg\:grid-cols-2 {
+    @container (width >= 32rem) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
   .dark\:divide-gray-600 {
     @media (prefers-color-scheme: dark) {
       :where(& > :not(:last-child)) {
         border-color: var(--color-gray-600);
+      }
+    }
+  }
+  .dark\:divide-gray-700 {
+    @media (prefers-color-scheme: dark) {
+      :where(& > :not(:last-child)) {
+        border-color: var(--color-gray-700);
       }
     }
   }

@@ -132,8 +132,8 @@ def analyze_study_entries(
         entry_analysis_result = EntryAnalysisResult(
             entry_id=entry.id,
             sentiment=sentiment_result,
-            theme=theme_result,
-            issue=issue_result,
+            themes=[theme_result] if theme_result else [],
+            issues=[issue_result] if issue_result else [],
             metadata={
                 "word_count": len(entry_text.split()),
                 "language": "en",
@@ -212,73 +212,70 @@ def build_study_analysis_result(
                 sum(dominant_sentiment_scores) / len(dominant_sentiment_scores)
             )
 
-    theme_labels = [
-        result.theme.label
+        theme_results = [
+        theme
         for result in entry_analysis_results
-        if result.theme and result.theme.label
+        for theme in result.themes
+        if theme and theme.label
+    ]
+
+    theme_labels = [
+        theme.label
+        for theme in theme_results
     ]
 
     theme_distribution = dict(Counter(theme_labels))
 
-    dominant_theme_label = None
+    dominant_theme = None
     if theme_distribution:
         dominant_theme_label = max(
             theme_distribution,
             key=theme_distribution.get,
         )
 
-    dominant_theme_weight = None
-    dominant_theme_weights = []
-
-    if dominant_theme_label:
-        dominant_theme_weights = [
-            result.theme.weight
-            for result in entry_analysis_results
-            if (
-                result.theme
-                and result.theme.label == dominant_theme_label
-                and result.theme.weight is not None
-            )
+        dominant_theme_matches = [
+            theme
+            for theme in theme_results
+            if theme.label == dominant_theme_label
         ]
 
-        if dominant_theme_weights:
+        if dominant_theme_matches:
+            dominant_theme_weight_values = [
+                theme.weight
+                for theme in dominant_theme_matches
+                if theme.weight is not None
+            ]
+
             dominant_theme_weight = (
-                sum(dominant_theme_weights) / len(dominant_theme_weights)
+                sum(dominant_theme_weight_values) / len(dominant_theme_weight_values)
+                if dominant_theme_weight_values
+                else dominant_theme_matches[0].weight
             )
 
-    issue_labels = [
-        result.issue.label
+            base_dominant_theme = dominant_theme_matches[0]
+
+            dominant_theme = ThemeResult(
+                theme_id=base_dominant_theme.theme_id,
+                weight=dominant_theme_weight,
+                label=base_dominant_theme.label,
+                keywords=base_dominant_theme.keywords,
+                method=base_dominant_theme.method,
+                metadata=base_dominant_theme.metadata,
+            )
+
+    issue_results = [
+        issue
         for result in entry_analysis_results
-        if result.issue and result.issue.label
+        for issue in result.issues
+        if issue and issue.label
+    ]
+
+    issue_labels = [
+        issue.label
+        for issue in issue_results
     ]
 
     issue_distribution = dict(Counter(issue_labels))
-
-    dominant_issue_label = None
-    if issue_distribution:
-        dominant_issue_label = max(
-            issue_distribution,
-            key=issue_distribution.get,
-        )
-
-    dominant_issue_weight = None
-    dominant_issue_weights = []
-
-    if dominant_issue_label:
-        dominant_issue_weights = [
-            result.issue.weight
-            for result in entry_analysis_results
-            if (
-                result.issue
-                and result.issue.label == dominant_issue_label
-                and result.issue.weight is not None
-            )
-        ]
-
-        if dominant_issue_weights:
-            dominant_issue_weight = (
-                sum(dominant_issue_weights) / len(dominant_issue_weights)
-            )
 
     return StudyAnalysisResult(
         study_id=study_id,
@@ -290,14 +287,11 @@ def build_study_analysis_result(
         dominant_sentiment_score=dominant_sentiment_score,
         sentiment_distribution=sentiment_distribution,
 
-        dominant_theme_label=dominant_theme_label,
-        dominant_theme_weight=dominant_theme_weight,
+        dominant_theme=dominant_theme,
         theme_distribution=theme_distribution,
 
-        dominant_issue_label=dominant_issue_label,
-        dominant_issue_weight=dominant_issue_weight,
+        issues=issue_results,
         issue_distribution=issue_distribution,
-
 
         entry_analysis_results=entry_analysis_results,
         total_entries=len(entry_analysis_results),
@@ -310,6 +304,6 @@ def build_study_analysis_result(
             "issue": issue_method,
         },
         metadata={
-            "pipeline": "v1",
+            "pipeline": "nlp_v2",
         },
     )

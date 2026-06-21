@@ -43,7 +43,7 @@
                     >
 
                     <span class="tab-menu-item-label">
-                        Sentiment Analysis
+                        Machine Analysis Metrics
                     </span>
                 </label>
 
@@ -56,7 +56,7 @@
                     >
 
                     <span class="tab-menu-item-label">
-                        All Sentiments Detection Metrics
+                        Sentiment Analysis
                     </span>
                 </label>
 
@@ -69,7 +69,7 @@
                     >
 
                     <span class="tab-menu-item-label">
-                        Dominance Findings
+                        Thematic Extraction
                     </span>
                 </label>
 
@@ -82,7 +82,7 @@
                     >
 
                     <span class="tab-menu-item-label">
-                        Evolution Over Time
+                        Issue Detection
                     </span>
                 </label>
 
@@ -158,20 +158,53 @@
         const tabInputs = document.querySelectorAll("input[name='analysis_detail_tab']");
         const tabPanels = document.querySelectorAll("[data-analysis-tab-panel]");
 
-        function updateAnalysisDetailTab() {
-            const selectedTab = document.querySelector("input[name='analysis_detail_tab']:checked").value;
+        function getValidTabValues() {
+            return Array.from(tabInputs).map(function (input) {
+                return input.value;
+            });
+        }
+
+        function selectTab(tabValue) {
+            const selectedInput = document.querySelector(
+                `input[name='analysis_detail_tab'][value='${tabValue}']`
+            );
+
+            if (!selectedInput) {
+                return;
+            }
+
+            selectedInput.checked = true;
 
             tabPanels.forEach(function (panel) {
-                const isSelected = panel.dataset.analysisTabPanel === selectedTab;
+                const isSelected = panel.dataset.analysisTabPanel === tabValue;
                 panel.classList.toggle("hidden", !isSelected);
             });
         }
 
+        function getInitialTab() {
+            const hashValue = window.location.hash.replace("#", "");
+            const validTabs = getValidTabValues();
+
+            if (validTabs.includes(hashValue)) {
+                return hashValue;
+            }
+
+            return "overview";
+        }
+
         tabInputs.forEach(function (input) {
-            input.addEventListener("change", updateAnalysisDetailTab);
+            input.addEventListener("change", function () {
+                selectTab(input.value);
+
+                history.replaceState(
+                    null,
+                    "",
+                    `${window.location.pathname}${window.location.search}#${input.value}`
+                );
+            });
         });
 
-        updateAnalysisDetailTab();
+        selectTab(getInitialTab());
     });
 </script>
 

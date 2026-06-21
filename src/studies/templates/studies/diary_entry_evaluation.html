@@ -187,13 +187,7 @@
                                 </p>
 
                                 <div class="flex flex-wrap items-center gap-2">
-                                    {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.canonical_themes.all %}
-
-                                    {% if entry_analysis.theme_weight %}
-                                    <span class="badge">
-                                        Weight: {{ entry_analysis.theme_weight|floatformat:2 }}
-                                    </span>
-                                    {% endif %}
+                                    {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.themes.all %}
                                 </div>
                             </div>
 
@@ -203,7 +197,7 @@
                                 </p>
 
                                 <div class="flex flex-wrap items-center gap-2">
-                                    {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.canonical_issues.all %}
+                                    {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.issues.all %}
                                 </div>
                             </div>
 
@@ -273,7 +267,7 @@
 
                     <div class="flex flex-col gap-2">
                         <label class="xs-label uppercase">
-                            Dominant theme
+                            Themes
                         </label>
 
                         <input
@@ -285,20 +279,20 @@
                         >
 
                         <div class="card-border p-3 max-h-48 overflow-y-auto bg-gray-50 dark:bg-gray-800 space-y-2">
-                            {% for radio in form.evaluator_dominant_theme %}
+                            {% for checkbox in form.evaluator_themes %}
                                 <label
                                     data-theme-option
                                     class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200"
                                 >
-                                    {{ radio.tag }}
-                                    <span>{{ radio.choice_label }}</span>
+                                    {{ checkbox.tag }}
+                                    <span>{{ checkbox.choice_label }}</span>
                                 </label>
                             {% endfor %}
                         </div>
 
-                        {% if form.evaluator_dominant_theme.errors %}
+                        {% if form.evaluator_themes.errors %}
                             <p class="text-xs text-red-600">
-                                {{ form.evaluator_dominant_theme.errors|join:", " }}
+                                {{ form.evaluator_themes.errors|join:", " }}
                             </p>
                         {% endif %}
                     </div>

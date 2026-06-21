@@ -74,7 +74,7 @@
                 >
                     <option value="">All detected themes</option>
 
-                    {% for theme_item in run.canonical_themes.all %}
+                    {% for theme_item in run.themes.all %}
                         <option
                             value="{{ theme_item.pk }}"
                             {% if theme == theme_item.pk|stringformat:"s" %}selected{% endif %}
@@ -111,7 +111,7 @@
                 >
                     <option value="">All issue tags</option>
 
-                    {% for issue_item in run.canonical_issues.all %}
+                    {% for issue_item in run.issues.all %}
                         <option
                             value="{{ issue_item.pk }}"
                             {% if issue_tag == issue_item.pk|stringformat:"s" %}selected{% endif %}
@@ -192,27 +192,27 @@
             </a>
 
             <a
-                href="?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'theme_label' %}-theme_label{% else %}theme_label{% endif %}"
-                hx-get="{{ machine_analysis_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'theme_label' %}-theme_label{% else %}theme_label{% endif %}"
+                href="?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'themes__name' %}-themes__name{% else %}themes__name{% endif %}"
+                hx-get="{{ machine_analysis_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'themes__name' %}-themes__name{% else %}themes__name{% endif %}"
                 hx-target="#analysis-entries-panel"
                 hx-swap="innerHTML"
                 hx-push-url="false"
                 class="button-FILTER"
             >
                 Theme
-                {% if sort == "theme_label" %}↑{% elif sort == "-theme_label" %}↓{% endif %}
+                {% if sort == "themes__name" %}↑{% elif sort == "-themes__name" %}↓{% endif %}
             </a>
 
             <a
-                href="?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'issue_detected' %}-issue_detected{% else %}issue_detected{% endif %}"
-                hx-get="{{ machine_analysis_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'issue_detected' %}-issue_detected{% else %}issue_detected{% endif %}"
+                href="?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'issues__name' %}-issues__name{% else %}issues__name{% endif %}"
+                hx-get="{{ machine_analysis_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'issues__name' %}-issues__name{% else %}issues__name{% endif %}"
                 hx-target="#analysis-entries-panel"
                 hx-swap="innerHTML"
                 hx-push-url="false"
                 class="button-FILTER"
             >
                 Issues
-                {% if sort == "issue_detected" %}↑{% elif sort == "-issue_detected" %}↓{% endif %}
+                {% if sort == "issues__name" %}↑{% elif sort == "-issues__name" %}↓{% endif %}
             </a>
         </div>
     </div>
@@ -258,15 +258,11 @@
                             </div>
 
                             <div class="flex flex-wrap  items-center gap-1">
-                                {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.canonical_themes.all %}
-
-                                <span class="badge">
-                                    Weight: {{ entry_analysis.theme_weight|floatformat:2 }}
-                                </span>
+                                {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.themes.all %}
                             </div>
 
                             <div class="flex flex-wrap  items-center gap-1">
-                                {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.canonical_issues.all %}
+                                {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.issues.all %}
                             </div>
                         </div>
                     {% else %}

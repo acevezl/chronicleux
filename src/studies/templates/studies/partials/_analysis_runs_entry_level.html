@@ -117,18 +117,13 @@
 
                                 <div class="flex flex-col gap-2 px-2">
                                     <span class="xs-label justify-center text-nowrap">
-                                        THEME KEYWORDS
+                                        EXTRACTED THEMES
                                     </span>
                                     <span class="flex flex-wrap gap-2 justify-center">
-                                        {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.canonical_themes.all %}
+                                        {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.themes.all %}
                                     </span>
                                 </div>
 
-                                <div class="flex flex-nowrap items-end justify-center p-2">
-                                    <span class="badge-bigger">
-                                        Weight: {{ entry_analysis.theme_weight|floatformat:2|default:0.00 }}
-                                    </span>
-                                </div>
                             </div>
                             <div class="flex flex-col gap-2 card-border justify-between">
                                 <div class="flex flex-nowrap items-center justify-between p-2 bg-gray-100">
@@ -140,7 +135,7 @@
 
                                 <div class="flex flex-nowrap items-end justify-center mb-2">
                                     <span class="flex flex-wrap gap-2 justify-center">
-                                        {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.canonical_issues.all %}
+                                        {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.issues.all %}
                                     </span>
                                 </div>
                             </div>

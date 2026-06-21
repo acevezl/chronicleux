@@ -82,8 +82,8 @@ class IssueResult:
 class EntryAnalysisResult:
     entry_id: int
     sentiment: SentimentResult | None = None
-    theme: ThemeResult | None = None
-    issue: IssueResult | None = None
+    themes: list[ThemeResult] = field(default_factory=list)
+    issues: list[IssueResult] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
 
 # Example usage:
@@ -126,115 +126,107 @@ class StudyAnalysisResult:
     dominant_sentiment_label: str | None = None
     dominant_sentiment_score: float | None = None
     sentiment_distribution: dict[str, int] = field(default_factory=dict)
-    
+
     # Theme / Topic Extraction
-    dominant_theme_label: str | None = None
-    dominant_theme_weight: float | None = None
+    dominant_theme: ThemeResult | None = None
     theme_distribution: dict[str, int] = field(default_factory=dict)
+    total_themes: int = 0
 
     # Issue Detection
-    dominant_issue_label: str | None = None
-    dominant_issue_weight: float | None = None
+    issues: list[IssueResult] = field(default_factory=list)
     issue_distribution: dict[str, int] = field(default_factory=dict)
     total_issues: int = 0
 
-    # All entry results, for traceability
+    # Entry-level results
     entry_analysis_results: list[EntryAnalysisResult] = field(default_factory=list)
     total_entries: int = 0
-    total_themes: int = 0
 
     methods: dict[str, str] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
 
 # Example usage:
 # study_analysis = StudyAnalysisResult(
-# 	study_id=5,
-# 	average_sentiment_label="NEGATIVE",
-# 	average_study_sentiment_score=-0.32,
-# 	dominant_sentiment_label="NEGATIVE",
-# 	dominant_sentiment_score=-0.32,
-# 	study_sentiment_distribution={
-# 		"NEGATIVE": 2,
-# 		"POSITIVE": 1,
-# 	},
-# 	dominant_theme_label="login frustration",
-# 	dominant_theme_weight=0.77,
-# 	theme_distribution={
-# 		"login frustration": 2,
-# 		"interface clarity": 1,
-# 	},
-# 	entry_analysis_results=[
-# 		EntryAnalysisResult(
-# 			entry_id=17,
-# 			sentiment=SentimentResult(
-# 				score=-0.62,
-# 				label="NEGATIVE",
-# 				method="vader",
-# 				metadata={
-# 					"compound": -0.62,
-# 				}
-# 			),
-# 			theme=ThemeResult(
-# 				theme_id=0,
-# 				label="login frustration",
-# 				keywords=["login", "password", "error", "reset", "access"],
-# 				method="tfidf_nmf",
-# 				metadata={
-# 					"topic_weight": 0.74,
-# 				}
-# 			)
-# 		),
-# 		EntryAnalysisResult(
-# 			entry_id=18,
-# 			sentiment=SentimentResult(
-# 				score=-0.45,
-# 				label="NEGATIVE",
-# 				method="vader",
-# 				metadata={
-# 					"compound": -0.45,
-# 				}
-# 			),
-# 			theme=ThemeResult(
-# 				theme_id=0,
-# 				label="login frustration",
-# 				keywords=["login", "password", "error", "reset", "access"],
-# 				method="tfidf_nmf",
-# 				metadata={
-# 					"topic_weight": 0.80,
-# 				}
-# 			)
-# 		),
-# 		EntryAnalysisResult(
-# 			entry_id=19,
-# 			sentiment=SentimentResult(
-# 				score=0.21,
-# 				label="POSITIVE",
-# 				method="vader",
-# 				metadata={
-# 					"compound": 0.21,
-# 				}
-# 			),
-# 			theme=ThemeResult(
-# 				theme_id=1,
-# 				label="interface clarity",
-# 				keywords=["clear", "simple", "button", "screen"],
-# 				method="tfidf_nmf",
-# 				metadata={
-# 					"topic_weight": 0.69,
-# 				}
-# 			)
-# 		),
-# 	],
-# 	total_entries=3,
-# 	total_themes=2,
-# 	methods={
-# 		"sentiment": "vader",
-# 		"theme": "tfidf_nmf",
-# 	},
-# 	metadata={
-# 		"num_themes_requested": 5,
-# 		"num_themes_generated": 2,
-# 	}
+#     study_id=5,
+#     average_sentiment_label="NEGATIVE",
+#     average_sentiment_score=-0.32,
+#     dominant_sentiment_label="NEGATIVE",
+#     dominant_sentiment_score=-0.32,
+#     sentiment_distribution={
+#         "NEGATIVE": 2,
+#         "POSITIVE": 1,
+#     },
+#     dominant_theme=ThemeResult(
+#         theme_id=0,
+#         weight=0.77,
+#         label="login frustration",
+#         keywords=["login", "password", "error", "reset", "access"],
+#         method="tfidf_nmf",
+#     ),
+#     theme_distribution={
+#         "login frustration": 2,
+#         "interface clarity": 1,
+#     },
+#     issues=[
+#         IssueResult(
+#             issue_id=12,
+#             weight=0.68,
+#             label="Poor Discoverability",
+#             keywords=["couldn't find", "hidden option", "settings"],
+#             method="tfidf",
+#         ),
+#         IssueResult(
+#             issue_id=18,
+#             weight=0.51,
+#             label="Error Recovery",
+#             keywords=["error", "reset", "retry"],
+#             method="tfidf",
+#         ),
+#     ],
+#     issue_distribution={
+#         "Poor Discoverability": 2,
+#         "Error Recovery": 1,
+#     },
+#     entry_analysis_results=[
+#         EntryAnalysisResult(
+#             entry_id=17,
+#             sentiment=SentimentResult(
+#                 score=-0.62,
+#                 label="NEGATIVE",
+#                 method="vader",
+#                 metadata={"compound": -0.62},
+#             ),
+#             themes=[
+#                 ThemeResult(
+#                     theme_id=0,
+#                     weight=0.74,
+#                     label="login frustration",
+#                     keywords=["login", "password", "error", "reset", "access"],
+#                     method="tfidf_nmf",
+#                 )
+#             ],
+#             issues=[
+#                 IssueResult(
+#                     issue_id=12,
+#                     weight=0.68,
+#                     label="Poor Discoverability",
+#                     keywords=["couldn't find", "hidden option", "settings"],
+#                     method="tfidf",
+#                 )
+#             ],
+#         ),
+#     ],
+#     total_entries=3,
+#     total_themes=2,
+#     total_issues=2,
+#     methods={
+#         "sentiment": "vader",
+#         "theme": "tfidf_nmf",
+#         "issue": "tfidf",
+#     },
+#     metadata={
+#         "num_themes_requested": 5,
+#         "num_themes_generated": 2,
+#     },
 # )
 
 class BaseSentimentAnalyzer:

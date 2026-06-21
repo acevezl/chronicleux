@@ -115,37 +115,48 @@ BINARY_SENTIMENT_SCORE_THRESHOLDS = [
 # STUDY MODEL
 class Study(models.Model):
 
+    # Title of the study
     title = models.CharField(max_length=255) 
+    # Description of the study
     description = models.TextField(blank=False) 
-    
+    # Goal of study
     goal = models.TextField(blank=True)
+    # Context of study
     context = models.TextField(blank=True)
-    hypotheses = models.TextField(blank=True)
-
+    # Hypotheses of study
+    hypotheses = models.TextField(blank=True) # comma-separated for PoC, future should be a list
+    # Participant instructions
     participant_instructions = models.TextField(blank=True) 
-    tags = models.CharField(max_length=300, blank=True)  # optional, comma-separated for PoC
+    # Tags for study classification
+    tags = models.CharField(max_length=300, blank=True)  # optional, comma-separated for PoC.
 
-    # owners are evaluators who create the study and manage it
-    # other evaluators may evaluate and analyze the study but not change study design or membership
+    # Study owner
+    # Owners are evaluators by default
+    # other evaluators may evaluate and analyze the study but cannot change study design or membership
     owner = models.ForeignKey(
         User, on_delete=models.PROTECT, related_name="owned_studies"
     )
 
+    # Study status
     status = models.CharField(
         max_length=20, choices=StudyStatus.choices, default=StudyStatus.PLANNING
     )
 
+    # Data collection period, start and end
     data_collection_start = models.DateTimeField(null=True, blank=True)
     data_collection_end = models.DateTimeField(null=True, blank=True)
 
+    # Data entry frequency
     entry_frequency = models.CharField(
         max_length=20, choices=EntryFrequency.choices, default=EntryFrequency.DAILY
     )
 
+    # Creation and update dates
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     # Selected Analysis Run
+    # The ultimately-selected analysis to complete the diary study
     selected_study_run = models.ForeignKey(
         "StudyAnalysisRun",
         on_delete=models.SET_NULL,
@@ -194,6 +205,7 @@ class Study(models.Model):
     def __str__(self) -> str:
         return f"{self.title} [{self.get_status_display()}]"
 
+
 # STUDY MEMBERSHIP MODEL (I.E. WHAT PARTICIPANTS BELONG TO STUDY WITH WHAT ROLE)
 class StudyMembership(models.Model):
 
@@ -222,53 +234,10 @@ class StudyMembership(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user} · {self.study} · {self.role}"
-
-# PROMPT MODEL
-class Prompt(models.Model):
-
-    study = models.ForeignKey(Study, on_delete=models.CASCADE, related_name="prompts")
-    text = models.CharField(max_length=300)
-    prompt_type = models.CharField(max_length=20, choices=PromptType.choices)
-    is_required = models.BooleanField(default=True)
-    order = models.PositiveIntegerField(default=1)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["order", "id"]
-        constraints = [
-            models.CheckConstraint(condition=Q(order__gte=1), name="prompt_order_gte_1"),
-        ]
-
-    def clean(self):
-        # Freeze prompts once collection starts.
-        if self.pk and self.study.prompts_locked:
-            raise ValidationError("Prompts are locked once data collection has started.")
-
-    def save(self, *args, **kwargs):
-        # Enforce lock at save time too (clean() can be bypassed).
-        if self.pk:
-            # if updating existing prompt, reload study status from DB for safety
-            current = Prompt.objects.select_related("study").get(pk=self.pk)
-            if current.study.prompts_locked:
-                raise ValidationError("Prompts are locked once data collection has started.")
-        else:
-            if self.study.prompts_locked:
-                raise ValidationError("Prompts are locked once data collection has started.")
-        super().save(*args, **kwargs)
-
-    def __str__(self) -> str:
-        return f"[{self.study.pk}] {self.order}. {self.text}"
+    
 
 # DIARY ENTRY
 class DiaryEntry(models.Model):
-
-    # Entry SOURCE (Internal vs. External)
-    source = models.CharField(
-        max_length=20,
-        choices=DiaryEntrySource.choices,
-        default=DiaryEntrySource.INTERNAL,
-    )
 
     # Entry Study
     study = models.ForeignKey(
@@ -277,7 +246,14 @@ class DiaryEntry(models.Model):
         related_name="entries"
     )
 
-    # Entry participant
+    # Entry SOURCE (Internal vs. External)
+    source = models.CharField(
+        max_length=20,
+        choices=DiaryEntrySource.choices,
+        default=DiaryEntrySource.INTERNAL,
+    )
+
+    # Entry participant (i.e., author of the entry)
     participant = models.ForeignKey(
         User, 
         on_delete=models.SET_NULL, # Not CASCADE b/c evaluators need the ability to import external data that may not include system users
@@ -287,6 +263,7 @@ class DiaryEntry(models.Model):
     )
 
     # Default / Selected Machine Analysis
+    # The ultimately-selected Machine Analysis for this entry (all entries have to have the same overarching Study Analysis Run)
     selected_entry_run = models.ForeignKey(
         "DiaryEntryAnalysis",
         on_delete=models.SET_NULL,
@@ -296,21 +273,27 @@ class DiaryEntry(models.Model):
         help_text="The selected/default analysis for this diary entry.",
     )
 
-    # These two attributes are needed for external entries imported into ChronicleUX
+    # When participant is external, we need an id, display name and email (in the case of imported entries)
     participant_external_id = models.CharField(max_length=255, blank=True)
     participant_display_name = models.CharField(max_length=255, blank=True)
     participant_email = models.EmailField(blank=True)
 
-    # This is the sentiment reference
+    # Sentiment self-reported by participant (for Reference calculations)
     sentiment_self_report = models.CharField(
         max_length=20,
         choices=SentimentCategory.choices,
         help_text="How would you describe your overall experience sentiment for this entry?",
     )
+
+    # Bool that indicates if issue was encountered.
+    # The issue is described within the body of the entry.
     issue_encountered = models.BooleanField(
         help_text="Did you encounter any issue or friction during this experience?",
     )
+
+    # Entry content
     content = models.TextField()  # unstructured narrative
+    # Creation date
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -425,7 +408,48 @@ class DiaryEntry(models.Model):
             f"{participant_label} · {self.created_at}"
         )
 
+
+# PROMPT MODEL
+# This is an entry prompt (i.e, question that can be added to the entry)
+class Prompt(models.Model):
+
+    study = models.ForeignKey(Study, on_delete=models.CASCADE, related_name="prompts")
+    text = models.CharField(max_length=300)
+    prompt_type = models.CharField(max_length=20, choices=PromptType.choices)
+    is_required = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=1)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["order", "id"]
+        constraints = [
+            models.CheckConstraint(condition=Q(order__gte=1), name="prompt_order_gte_1"),
+        ]
+
+    def clean(self):
+        # Freeze prompts once collection starts.
+        if self.pk and self.study.prompts_locked:
+            raise ValidationError("Prompts are locked once data collection has started.")
+
+    def save(self, *args, **kwargs):
+        # Enforce lock at save time too (clean() can be bypassed).
+        if self.pk:
+            # if updating existing prompt, reload study status from DB for safety
+            current = Prompt.objects.select_related("study").get(pk=self.pk)
+            if current.study.prompts_locked:
+                raise ValidationError("Prompts are locked once data collection has started.")
+        else:
+            if self.study.prompts_locked:
+                raise ValidationError("Prompts are locked once data collection has started.")
+        super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return f"[{self.study.pk}] {self.order}. {self.text}"
+    
+    
 # PROMPT RESPONSE
+# This is the response per entry to the prompt
 class PromptResponse(models.Model):
     diary_entry = models.ForeignKey(DiaryEntry, on_delete=models.CASCADE, related_name="prompt_responses")
     prompt = models.ForeignKey(Prompt, on_delete=models.PROTECT, related_name="responses")
@@ -461,34 +485,35 @@ class PromptResponse(models.Model):
 
     def __str__(self) -> str:
         return f"Response · entry={self.diary_entry.pk} · prompt={self.prompt.pk}"
+    
 
 # STUDY ANALYSIS RUN
-# Results of the full study analysis (i.e., all entries)
+# Full-study analysis run
 class StudyAnalysisRun(models.Model):
 
-    # study
+    # Study
     study = models.ForeignKey(
         Study, 
         on_delete=models.CASCADE, 
         related_name="analysis_runs"
     )
 
-    # status
+    # Status
     status = models.CharField(
         max_length=20,
         choices=AnalysisRunStatus.choices,
         default=AnalysisRunStatus.QUEUED,
     )
 
-    # model and version
+    # Model and version
     analysis_model = models.CharField(max_length=100)
     analysis_version = models.CharField(max_length=50)
 
-    # start and end times
+    # Start and end times
     started_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True) 
 
-    # study created by [user]
+    # Study created by [user]
     created_by = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -511,15 +536,16 @@ class StudyAnalysisRun(models.Model):
     sentiment_distribution = models.JSONField(default=dict, blank=True)
 
     # THEMES
-    # Canonical Themes identified in this run
+    # Themes identified in this run
     # This also works as theme distribution
-    canonical_themes = models.ManyToManyField(
+    themes = models.ManyToManyField(
         "CanonicalTheme",
         through="StudyAnalysisRunCanonicalTheme",
         related_name="analysis_runs",
         blank=True,
     )
-    # Dominant Canonical Theme identified in this run
+
+    # Dominant Theme identified in this run
     dominant_theme = models.ForeignKey(
         "CanonicalTheme",
         on_delete=models.SET_NULL,
@@ -529,9 +555,9 @@ class StudyAnalysisRun(models.Model):
     )
 
     # ISSUES
-    # Canonical Issues identified in this run
+    # Issues identified in this run
     # This also works as issue distribution
-    canonical_issues = models.ManyToManyField(
+    issues = models.ManyToManyField(
         "CanonicalIssue",
         through="StudyAnalysisRunCanonicalIssue",
         related_name="analysis_runs",
@@ -545,12 +571,14 @@ class StudyAnalysisRun(models.Model):
     top_representative_quotes = models.JSONField(default=list, blank=True)
 
     # All entry results, for traceability
-    entry_analysis_results = models.JSONField(default=list, blank=True)
+    # entry_analysis_results = models.JSONField(default=list, blank=True)
     
+    # Total entries analized, themes extracted, and issues detected
     total_entries = models.PositiveIntegerField(default=0)
     total_themes = models.PositiveIntegerField(default=0)
     total_issues = models.PositiveIntegerField(default=0)
 
+    # methods and metadata
     methods = models.JSONField(default=dict, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
 
@@ -623,7 +651,7 @@ class DiaryEntryAnalysis(models.Model):
         related_name="entry",
     )
 
-    # Sentiment Analysis Outputs
+    # SENTIMENT ANALYSIS
     sentiment_score = models.FloatField(null=True, blank=True)
     sentiment_label = models.CharField(
         max_length=20,
@@ -633,8 +661,26 @@ class DiaryEntryAnalysis(models.Model):
     )
     raw_sentiment_result = models.JSONField(default=list, blank=True)
 
-    # Sentiment data for accuracy, precision, recall, and F1 metrics
+    # THEME EXTRACTION
+    # Themes detected (extracted) in this entry
+    themes = models.ManyToManyField(
+        "CanonicalTheme",
+        through="DiaryEntryAnalysisCanonicalTheme",
+        related_name="diary_entry_analyses",
+        blank=True,
+    )
 
+    # ISSUE DETECTION
+    # Issues detected in this entry
+    issues = models.ManyToManyField(
+        "CanonicalIssue",
+        through="DiaryEntryAnalysisCanonicalIssue",
+        related_name="diary_entry_analyses",
+        blank=True,
+    )
+
+
+    # METRICS METADATA
     # Participant Reference
     participant_sentiment_label = models.CharField(
         max_length=20,
@@ -642,14 +688,14 @@ class DiaryEntryAnalysis(models.Model):
         null=True,
         blank=True,
     )
-
     participant_confusion_matrix_outcome = models.CharField(
         max_length=32,
         choices=ConfusionMatrixOutcome.choices,
         default=ConfusionMatrixOutcome.NOT_AVAILABLE
     )
-
-    # Evaluator Reference
+    
+    # HUMAN EVALUATION
+    # (and Evaluator Reference)
     evaluator_sentiment_label = models.CharField(
         max_length=20,
         choices=SentimentCategory.choices,
@@ -663,18 +709,22 @@ class DiaryEntryAnalysis(models.Model):
         default=ConfusionMatrixOutcome.NOT_AVAILABLE
     )
 
-    evaluator_dominant_theme = models.ForeignKey(
+    # EVALUATOR THEMES
+    # Themes assigned by the evaluator during human review.
+    evaluator_themes = models.ManyToManyField(
         "CanonicalTheme",
-        on_delete=models.SET_NULL,
+        through="DiaryEntryAnalysisEvaluatorTheme",
+        related_name="evaluator_diary_entry_analyses",
         blank=True,
-        null=True,
-        related_name="evaluator_entry_analyses"
     )
 
-    evaluator_issues = models.ManyToManyField (
+    # EVALUATOR ISSUES
+    # Issues assigned by the evaluator during human review.
+    evaluator_issues = models.ManyToManyField(
         "CanonicalIssue",
+        through="DiaryEntryAnalysisEvaluatorIssue",
+        related_name="evaluator_diary_entry_analyses",
         blank=True,
-        related_name="evaluator_entry_analyses"
     )
 
     evaluator_notes = models.TextField(blank=True)
@@ -692,35 +742,10 @@ class DiaryEntryAnalysis(models.Model):
     @property
     def is_manually_evaluated(self):
         return (
-            self.evaluator_sentiment_label and
-            self.evaluator_dominant_theme_id
-            # Django automatically creates this id for ForeignKey of evaluator_dominant_theme
+            bool(self.evaluator_sentiment_label)
+            and self.evaluator_themes.exists()
+            # and self.evaluator_issues.exists() - Decided to comment this b/c an entry may not have an issue. And that's OK. 
         )
-
-    # Thematic Analysis Outputs
-    theme_weight = models.FloatField(null=True, blank=True)
-    theme_label = models.CharField(max_length=255, blank=True, null=True)
-    raw_theme_result = models.JSONField(default=list, blank=True)
-
-    # Issues Identified
-    issue_detected = models.BooleanField(default=False, blank=False)
-    issues = models.JSONField(default=list, blank=True)
-
-    # Canonical Themes assigned to this entry analysis
-    canonical_themes = models.ManyToManyField(
-        "CanonicalTheme",
-        through="DiaryEntryAnalysisCanonicalTheme",
-        related_name="diary_entry_analyses",
-        blank=True,
-    )
-
-    # Canonical Issues assigned to this entry analysis
-    canonical_issues = models.ManyToManyField(
-        "CanonicalIssue",
-        through="DiaryEntryAnalysisCanonicalIssue",
-        related_name="diary_entry_analyses",
-        blank=True,
-    )
 
     methods = models.JSONField(default=dict, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
@@ -728,9 +753,6 @@ class DiaryEntryAnalysis(models.Model):
     entry_summary = models.TextField(blank=True)
     analyzed_at = models.DateTimeField(auto_now_add=True)
     raw_response = models.JSONField(default=dict, blank=True)
-
-    # Evaluator analysis
-    
 
     class Meta:
         ordering = ["-analyzed_at"]
@@ -964,6 +986,99 @@ class DiaryEntryAnalysisCanonicalIssue(models.Model):
     def __str__(self) -> str:
         return f"{self.canonical_issue} · analysis={self.diary_entry_analysis_id}"
     
+
+# DIARY ENTRY ANALYSIS EVALUATOR THEME
+# Canonical themes assigned by a human evaluator to an individual diary entry analysis.
+class DiaryEntryAnalysisEvaluatorTheme(models.Model):
+
+    diary_entry_analysis = models.ForeignKey(
+        DiaryEntryAnalysis,
+        on_delete=models.CASCADE,
+        related_name="evaluator_theme_assignments",
+    )
+
+    canonical_theme = models.ForeignKey(
+        CanonicalTheme,
+        on_delete=models.PROTECT,
+        related_name="evaluator_entry_analysis_assignments",
+    )
+
+    rationale = models.TextField(blank=True)
+
+    assigned_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_evaluator_entry_themes",
+    )
+
+    assigned_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["canonical_theme__name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["diary_entry_analysis", "canonical_theme"],
+                name="unique_evaluator_theme_per_entry_analysis",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["diary_entry_analysis"]),
+            models.Index(fields=["canonical_theme"]),
+        ]
+        verbose_name = "Diary Entry Analysis Evaluator Theme"
+        verbose_name_plural = "Diary Entry Analysis Evaluator Themes"
+
+    def __str__(self) -> str:
+        return f"{self.canonical_theme} · evaluator analysis={self.diary_entry_analysis_id}"
+    
+
+# DIARY ENTRY ANALYSIS EVALUATOR ISSUE
+# Canonical issues assigned by a human evaluator to an individual diary entry analysis.
+class DiaryEntryAnalysisEvaluatorIssue(models.Model):
+
+    diary_entry_analysis = models.ForeignKey(
+        DiaryEntryAnalysis,
+        on_delete=models.CASCADE,
+        related_name="evaluator_issue_assignments",
+    )
+
+    canonical_issue = models.ForeignKey(
+        CanonicalIssue,
+        on_delete=models.PROTECT,
+        related_name="evaluator_entry_analysis_assignments",
+    )
+
+    rationale = models.TextField(blank=True)
+
+    assigned_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_evaluator_entry_issues",
+    )
+
+    assigned_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["canonical_issue__name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["diary_entry_analysis", "canonical_issue"],
+                name="unique_evaluator_issue_per_entry_analysis",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["diary_entry_analysis"]),
+            models.Index(fields=["canonical_issue"]),
+        ]
+        verbose_name = "Diary Entry Analysis Evaluator Issue"
+        verbose_name_plural = "Diary Entry Analysis Evaluator Issues"
+
+    def __str__(self) -> str:
+        return f"{self.canonical_issue} · evaluator analysis={self.diary_entry_analysis_id}"
 
 # STUDY ANALYSIS RUN CANONICAL THEME
 # Canonical themes found across all diary entry analyses in a run.

@@ -13,6 +13,8 @@ from .models import (
     CanonicalIssue,
     DiaryEntryAnalysisCanonicalTheme,
     DiaryEntryAnalysisCanonicalIssue,
+    DiaryEntryAnalysisEvaluatorTheme,
+    DiaryEntryAnalysisEvaluatorIssue,
     StudyAnalysisRunCanonicalTheme,
     StudyAnalysisRunCanonicalIssue,
 )
@@ -45,6 +47,18 @@ class DiaryEntryAnalysisCanonicalIssueInline(admin.TabularInline):
     autocomplete_fields = ("canonical_issue", "assigned_by")
 
 
+class DiaryEntryAnalysisEvaluatorThemeInline(admin.TabularInline):
+	model = DiaryEntryAnalysisEvaluatorTheme
+	extra = 0
+	autocomplete_fields = ("canonical_theme", "assigned_by")
+
+
+class DiaryEntryAnalysisEvaluatorIssueInline(admin.TabularInline):
+	model = DiaryEntryAnalysisEvaluatorIssue
+	extra = 0
+	autocomplete_fields = ("canonical_issue", "assigned_by")
+
+
 class StudyAnalysisRunCanonicalThemeInline(admin.TabularInline):
     model = StudyAnalysisRunCanonicalTheme
     extra = 0
@@ -60,6 +74,7 @@ class StudyAnalysisRunCanonicalIssueInline(admin.TabularInline):
 @admin.register(Study)
 class StudyAdmin(ModelAdmin):
     list_display = (
+        "id",
         "title",
         "status",
         "owner",
@@ -76,7 +91,7 @@ class StudyAdmin(ModelAdmin):
 
 @admin.register(StudyMembership)
 class StudyMembershipAdmin(ModelAdmin):
-    list_display = ("study", "user", "role", "created_at")
+    list_display = ("id", "study", "user", "role", "created_at")
     list_filter = ("role", "created_at")
     search_fields = ("study__title", "user__username", "user__email")
     autocomplete_fields = ("study", "user")
@@ -84,7 +99,7 @@ class StudyMembershipAdmin(ModelAdmin):
 
 @admin.register(Prompt)
 class PromptAdmin(ModelAdmin):
-    list_display = ("study", "order", "prompt_type", "is_required", "text", "created_at")
+    list_display = ("id", "study", "order", "prompt_type", "is_required", "text", "created_at")
     list_filter = ("prompt_type", "is_required", "created_at")
     search_fields = ("study__title", "text")
     autocomplete_fields = ("study",)
@@ -118,7 +133,7 @@ class DiaryEntryAdmin(ModelAdmin):
 
 @admin.register(PromptResponse)
 class PromptResponseAdmin(ModelAdmin):
-    list_display = ("diary_entry", "prompt", "likert_value", "text_value")
+    list_display = ("id", "diary_entry", "prompt", "likert_value", "text_value")
     list_filter = ("prompt__prompt_type",)
     search_fields = ("diary_entry__content", "prompt__text", "text_value")
     autocomplete_fields = ("diary_entry", "prompt")
@@ -167,9 +182,6 @@ class DiaryEntryAnalysisAdmin(ModelAdmin):
         "participant_confusion_matrix_outcome",
         "evaluator_sentiment_label",
         "evaluator_confusion_matrix_outcome",
-        "theme_label",
-        "theme_weight",
-        "issue_detected",
     )
     list_filter = (
         "sentiment_label",
@@ -177,26 +189,27 @@ class DiaryEntryAnalysisAdmin(ModelAdmin):
         "participant_confusion_matrix_outcome",
         "evaluator_sentiment_label",
         "evaluator_confusion_matrix_outcome",
-        "issue_detected",
         "analyzed_at",
     )
     search_fields = (
         "entry__content",
         "entry__participant_display_name",
         "entry__study__title",
-        "theme_label",
         "entry_summary",
     )
     autocomplete_fields = ("run", "entry")
     inlines = [
         DiaryEntryAnalysisCanonicalThemeInline,
         DiaryEntryAnalysisCanonicalIssueInline,
+        DiaryEntryAnalysisEvaluatorThemeInline,
+        DiaryEntryAnalysisEvaluatorIssueInline,
     ]
 
 
 @admin.register(CanonicalTheme)
 class CanonicalThemeAdmin(ModelAdmin):
     list_display = (
+        "id",
         "name",
         "source",
         "status",
@@ -213,6 +226,7 @@ class CanonicalThemeAdmin(ModelAdmin):
 @admin.register(CanonicalIssue)
 class CanonicalIssueAdmin(ModelAdmin):
     list_display = (
+        "id",
         "name",
         "source",
         "status",
@@ -229,6 +243,7 @@ class CanonicalIssueAdmin(ModelAdmin):
 @admin.register(DiaryEntryAnalysisCanonicalTheme)
 class DiaryEntryAnalysisCanonicalThemeAdmin(ModelAdmin):
     list_display = (
+        "id",
         "diary_entry_analysis",
         "canonical_theme",
         "confidence_score",
@@ -247,6 +262,7 @@ class DiaryEntryAnalysisCanonicalThemeAdmin(ModelAdmin):
 @admin.register(DiaryEntryAnalysisCanonicalIssue)
 class DiaryEntryAnalysisCanonicalIssueAdmin(ModelAdmin):
     list_display = (
+        "id",
         "diary_entry_analysis",
         "canonical_issue",
         "confidence_score",
@@ -265,6 +281,7 @@ class DiaryEntryAnalysisCanonicalIssueAdmin(ModelAdmin):
 @admin.register(StudyAnalysisRunCanonicalTheme)
 class StudyAnalysisRunCanonicalThemeAdmin(ModelAdmin):
     list_display = (
+        "id",
         "run",
         "canonical_theme",
         "entry_count",
@@ -278,6 +295,7 @@ class StudyAnalysisRunCanonicalThemeAdmin(ModelAdmin):
 @admin.register(StudyAnalysisRunCanonicalIssue)
 class StudyAnalysisRunCanonicalIssueAdmin(ModelAdmin):
     list_display = (
+        "id",
         "run",
         "canonical_issue",
         "entry_count",

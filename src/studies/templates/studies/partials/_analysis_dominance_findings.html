@@ -22,16 +22,16 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                 <!-- DOMINANT SENTIMENT & DISTRIBUTION -->
-                {% include "studies/partials/_distribution_sentiment.html" with dominant_sentiment=run.dominant_sentiment_label sentiment_distribution=run.sentiment_distribution study_id=study.id run_id=run.id%}
+                {% include "studies/partials/_distribution_sentiment.html" with run=run study=study%}
                 
                 <!-- DOMINANT THEME & DISTRIBUTION -->
-                {% include "studies/partials/_distribution_theme.html" with dominant_theme=run.dominant_theme.name theme_distribution=run.canonical_themes.all study_id=study.id run_id=run.id%}
+                {% include "studies/partials/_distribution_theme.html" with run=run study=study%}
 
                 <!-- ISSUE DISTRIBUTION -->
-                {% include "studies/partials/_distribution_issues.html" with issue_distribution=run.canonical_issues.all study_id=study.id run_id=run.id%}
+                {% include "studies/partials/_distribution_issues.html" with run=run study=study%}
 
                 <!-- ISSUE IMPACT MATRIX -->
-                {% include "studies/partials/_issue_impact_matrix.html" with issue_impact_matrix=run.canonical_issues.all study_id=study.id run_id=run.id%}
+                {% include "studies/partials/_issue_impact_matrix.html" with run=run study=study%}
 
             </div>
                 

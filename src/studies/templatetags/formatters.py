@@ -117,3 +117,9 @@ def extract_labels(value):
 			labels.append(str(item))
 
 	return ", ".join(labels)
+
+
+@register.simple_tag
+def run_metric(run, metric_name, comparison_type):
+	field_name = f"run_{metric_name}_v_{comparison_type}"
+	return getattr(run, field_name, None)

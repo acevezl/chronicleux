@@ -1,5 +1,5 @@
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Q, Count
 
 from .models import DiaryEntry, DiaryEntryAnalysis, CanonicalTheme, CanonicalIssue, ThemeAndIssueSource, ThemeAndIssueStatus
 
@@ -114,10 +114,10 @@ ALLOWED_ANALYSIS_ENTRY_SORTS = {
 	"-entry__participant_display_name",
 	"sentiment_label",
 	"-sentiment_label",
-	"theme_label",
-	"-theme_label",
-	"issue_detected",
-	"-issue_detected",
+	"themes__name",
+	"-themes__name",
+	"issues__name",
+	"-issues__name",
 }
 
 def filter_analysis_entries(request, study, run):
@@ -133,7 +133,12 @@ def filter_analysis_entries(request, study, run):
 		DiaryEntryAnalysis.objects
 		.filter(run=run, entry__study=study)
 		.select_related("entry", "entry__participant")
-		.prefetch_related("canonical_themes", "canonical_issues")
+		.prefetch_related(
+			"themes",
+			"issues",
+			"evaluator_themes",
+			"evaluator_issues",
+		)
 	)
 
 	if q:
@@ -144,35 +149,50 @@ def filter_analysis_entries(request, study, run):
 			| Q(entry__participant_email__icontains=q)
 			| Q(entry_summary__icontains=q)
 			| Q(sentiment_label__icontains=q)
-			| Q(theme_label__icontains=q)
+			| Q(themes__name__icontains=q)
+			| Q(themes__description__icontains=q)
+			| Q(themes__aliases__icontains=q)
+			| Q(issues__name__icontains=q)
+			| Q(issues__description__icontains=q)
+			| Q(issues__aliases__icontains=q)
 		)
 
 	if sentiment:
 		entry_analyses = entry_analyses.filter(sentiment_label=sentiment)
 
 	if theme:
-		entry_analyses = entry_analyses.filter(canonical_themes__pk=theme)
+		entry_analyses = entry_analyses.filter(
+			Q(themes__name__iexact=theme)
+			| Q(themes__aliases__icontains=theme)
+		)
 
 	if issue_detected == "yes":
-		entry_analyses = entry_analyses.filter(issue_detected=True)
+		entry_analyses = entry_analyses.filter(issues__isnull=False)
 	elif issue_detected == "no":
-		entry_analyses = entry_analyses.filter(issue_detected=False)
+		entry_analyses = entry_analyses.filter(issues__isnull=True)
 
 	if issue_tag:
-		entry_analyses = entry_analyses.filter(canonical_issues__pk=issue_tag)
+		entry_analyses = entry_analyses.filter(
+			Q(issues__name__iexact=issue_tag)
+			| Q(issues__aliases__icontains=issue_tag)
+		)
+
+	entry_analyses = entry_analyses.annotate(
+		evaluator_theme_count=Count("evaluator_themes", distinct=True)
+	)
 
 	if human_evaluation == "pending":
 		entry_analyses = entry_analyses.filter(
 			Q(evaluator_sentiment_label__isnull=True)
 			| Q(evaluator_sentiment_label="")
-			| Q(evaluator_dominant_theme__isnull=True)
+			| Q(evaluator_theme_count=0)
 		)
 
 	elif human_evaluation == "completed":
 		entry_analyses = entry_analyses.exclude(
 			Q(evaluator_sentiment_label__isnull=True)
 			| Q(evaluator_sentiment_label="")
-			| Q(evaluator_dominant_theme__isnull=True)
+			| Q(evaluator_theme_count=0)
 		)
 
 	if sort not in ALLOWED_ANALYSIS_ENTRY_SORTS:

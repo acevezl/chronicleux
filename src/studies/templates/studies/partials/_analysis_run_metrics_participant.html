@@ -17,53 +17,7 @@
         </p>
 
         <!-- METRIC SCORES -->
-        <div class="grid grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
-
-            <div class="rounded-md border border-gray-200 dark:border-gray-700 p-3">
-                <span class="xs-label">Accuracy</span>
-                <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">
-                    {% if run.run_accuracy_v_participant is not None %}
-                        {{ run.run_accuracy_v_participant|floatformat:3 }}
-                    {% else %}
-                        —
-                    {% endif %}
-                </p>
-            </div>
-
-            <div class="rounded-md border border-gray-200 dark:border-gray-700 p-3">
-                <span class="xs-label">Precision</span>
-                <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">
-                    {% if run.run_precision_v_participant is not None %}
-                        {{ run.run_precision_v_participant|floatformat:3 }}
-                    {% else %}
-                        —
-                    {% endif %}
-                </p>
-            </div>
-
-            <div class="rounded-md border border-gray-200 dark:border-gray-700 p-3">
-                <span class="xs-label">Recall</span>
-                <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">
-                    {% if run.run_recall_v_participant is not None %}
-                        {{ run.run_recall_v_participant|floatformat:3 }}
-                    {% else %}
-                        —
-                    {% endif %}
-                </p>
-            </div>
-
-            <div class="rounded-md border border-gray-200 dark:border-gray-700 p-3">
-                <span class="xs-label">F1 score</span>
-                <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">
-                    {% if run.run_f1_v_participant is not None %}
-                        {{ run.run_f1_v_participant|floatformat:3 }}
-                    {% else %}
-                        —
-                    {% endif %}
-                </p>
-            </div>
-
-        </div>
+        {% include "studies/partials/_analysis_run_metric_cards.html" with run=run comparison_type="participant" only %}
 
         <div class="main-card p-4 bg-gray-50">
 

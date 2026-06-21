@@ -213,10 +213,7 @@ def serialize_dashboard_entry(entry: DiaryEntry, result: dict) -> dict:
 		"sentiment_score": result.get("sentiment_score"),
 		"sentiment_label": result.get("sentiment_label"),
 
-		"theme_label": result.get("theme_label"),
-		"theme_weight": result.get("theme_weight"),
-
-		"issue_tags": result.get("analysis_issue_tags", []),
+		# need to add themes and issues
 
 		"created_at": entry.created_at.isoformat() if entry.created_at else None,
 		"created_at_display": entry.created_at.strftime("%b %d, %Y") if entry.created_at else "—",
@@ -537,35 +534,6 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 				normalized_content = normalize_entry_text(entry.content)
 				entry_summary = make_entry_summary(normalized_content)
 
-				theme_weight = None
-				theme_label = None
-
-				if entry_analysis_result.theme:
-					if entry_analysis_result.theme.weight is not None:
-						theme_weight = round(entry_analysis_result.theme.weight, 4)
-
-					theme_label = entry_analysis_result.theme.label
-
-				issue_detected = False
-				issues = []
-
-				if entry_analysis_result.issue:
-					issue_detected = True
-
-					issues = [
-						{
-							"id": entry_analysis_result.issue.metadata.get("canonical_issue_id"),
-							"name": entry_analysis_result.issue.label,
-							"score": round(entry_analysis_result.issue.weight, 4),
-							"method": entry_analysis_result.issue.method,
-							"match_type": entry_analysis_result.issue.metadata.get("match_type"),
-							"is_catalog_suggestion": entry_analysis_result.issue.metadata.get(
-								"is_catalog_suggestion",
-								False,
-							),
-						}
-					]
-
 				selected_entry_run = DiaryEntryAnalysis.objects.create(
 					run=run,
 					entry=entry,
@@ -578,18 +546,6 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 						else {}
 					),
 
-					# Themes added again
-					theme_weight=theme_weight,
-					theme_label=theme_label,
-					raw_theme_result=(
-						asdict(entry_analysis_result.theme)
-						if entry_analysis_result.theme
-						else {}
-					),
-
-					issue_detected=issue_detected,
-					issues=issues,
-
 					methods=study_analysis_result.methods,
 					metadata=study_analysis_result.metadata,
 
@@ -598,15 +554,17 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 					raw_response=entry_analysis_result_data,
 				)
 
-				attach_canonical_theme_from_analyzer_result(
-					entry_analysis=selected_entry_run,
-					theme_result=entry_analysis_result.theme,
-				)
+				for theme_result in entry_analysis_result.themes or []:
+					attach_canonical_theme_from_analyzer_result(
+						entry_analysis=selected_entry_run,
+						theme_result=theme_result,
+					)
 
-				attach_canonical_issue_from_analyzer_result(
-					entry_analysis=selected_entry_run,
-					issue_result=entry_analysis_result.issue,
-				)
+				for issue_result in entry_analysis_result.issues or []:
+					attach_canonical_issue_from_analyzer_result(
+						entry_analysis=selected_entry_run,
+						issue_result=issue_result,
+					)
 
 				entry.selected_entry_run = selected_entry_run
 				entry.save(update_fields=["selected_entry_run"])
@@ -614,12 +572,6 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 				result = {
 					"sentiment_score": sentiment_score,
 					"sentiment_label": sentiment_label,
-
-					"theme_weight": theme_weight,
-					"theme_label": theme_label,
-
-					"analysis_issue_detected": issue_detected,
-					"analysis_issue_tags": issues,
 
 					"entry_summary": entry_summary,
 				}
@@ -657,7 +609,6 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 
 			run.total_entries = study_analysis_result.total_entries
 
-			run.entry_analysis_results = study_analysis_result_data["entry_analysis_results"]
 			run.methods = study_analysis_result.methods
 			run.metadata = study_analysis_result.metadata
 
@@ -677,9 +628,9 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 					"evolution_over_time",
 					"top_representative_quotes",
 
-					"entry_analysis_results",
 					"total_entries",
 					"total_themes",
+					"total_issues",
 					"methods",
 					"metadata",
 					"status",
