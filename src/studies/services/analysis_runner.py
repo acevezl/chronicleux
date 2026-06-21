@@ -84,17 +84,41 @@ def build_sentiment_distribution(entry_results: list[dict]) -> list[dict]:
 		for label, count in counts.most_common()
 	]
 
+def serialize_analysis_tag(result) -> dict:
+	"""
+	Serialize a theme/issue analyzer result into a stable JSON-friendly shape.
+
+	This keeps both the human-readable label/name and useful metadata so the
+	run-level and day-level summaries can be rebuilt without touching the M2M rows.
+	"""
+	if not result:
+		return {}
+
+	metadata = result.metadata or {}
+
+	return {
+		"name": result.label,
+		"label": result.label,
+		"weight": round(result.weight, 4) if result.weight is not None else None,
+		"canonical_theme_id": metadata.get("canonical_theme_id"),
+		"canonical_issue_id": metadata.get("canonical_issue_id"),
+		"metadata": metadata,
+	}
 
 def build_recurring_themes(entry_results: list[dict]) -> list[dict]:
 	counts = Counter()
 
 	for result in entry_results:
-		theme_label = result.get("theme_label")
+		for theme in result.get("analysis_theme_tags") or []:
+			theme_name = (
+				theme.get("name")
+				or theme.get("label")
+			)
 
-		if not theme_label:
-			continue
+			if not theme_name:
+				continue
 
-		counts[theme_label] += 1
+			counts[theme_name] += 1
 
 	total = sum(counts.values())
 
@@ -107,12 +131,16 @@ def build_recurring_themes(entry_results: list[dict]) -> list[dict]:
 		for label, count in counts.most_common()
 	]
 
+
 def build_recurring_issues(entry_results: list[dict]) -> list[dict]:
 	counts = Counter()
 
 	for result in entry_results:
-		for issue in result.get("analysis_issue_tags", []):
-			issue_name = issue.get("name")
+		for issue in result.get("analysis_issue_tags") or []:
+			issue_name = (
+				issue.get("name")
+				or issue.get("label")
+			)
 
 			if not issue_name:
 				continue
@@ -130,10 +158,11 @@ def build_recurring_issues(entry_results: list[dict]) -> list[dict]:
 		for label, count in counts.most_common()
 	]
 
+
 def build_evolution_over_time(entries_with_results: list[tuple]) -> list[dict]:
 	"""
 	Build a time series of average sentiment and sentiment distribution by day.
-	It now also includes top themes and isues by day.
+	It also includes detected themes and issues by day.
 	"""
 	grouped = {}
 
@@ -167,8 +196,8 @@ def build_evolution_over_time(entries_with_results: list[tuple]) -> list[dict]:
 			"avg_sentiment": avg_sentiment,
 			"sentiment_distribution": build_sentiment_distribution(day_results),
 
-			"top_themes": build_recurring_themes(day_results),
-			"top_issues": build_recurring_issues(day_results),
+			"themes": build_recurring_themes(day_results),
+			"issues": build_recurring_issues(day_results),
 		})
 
 	return output
@@ -217,7 +246,8 @@ def serialize_dashboard_entry(entry: DiaryEntry, result: dict) -> dict:
 		"sentiment_score": result.get("sentiment_score"),
 		"sentiment_label": result.get("sentiment_label"),
 
-		# need to add themes and issues
+		"themes": result.get("analysis_theme_tags") or [],
+		"issues": result.get("analysis_issue_tags") or [],
 
 		"created_at": entry.created_at.isoformat() if entry.created_at else None,
 		"created_at_display": entry.created_at.strftime("%b %d, %Y") if entry.created_at else "—",
@@ -570,12 +600,25 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 						issue_result=issue_result,
 					)
 
+				analysis_theme_tags = [
+					serialize_analysis_tag(theme_result)
+					for theme_result in entry_analysis_result.themes or []
+				]
+
+				analysis_issue_tags = [
+					serialize_analysis_tag(issue_result)
+					for issue_result in entry_analysis_result.issues or []
+				]
+
 				entry.selected_entry_run = selected_entry_run
 				entry.save(update_fields=["selected_entry_run"])
 
 				result = {
 					"sentiment_score": sentiment_score,
 					"sentiment_label": sentiment_label,
+
+					"analysis_theme_tags": analysis_theme_tags,
+					"analysis_issue_tags": analysis_issue_tags,
 
 					"entry_summary": entry_summary,
 				}
