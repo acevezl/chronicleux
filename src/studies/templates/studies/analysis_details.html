@@ -112,13 +112,7 @@
 
             <!-- MACHINE ANALYSIS METRICS -->
             <section data-analysis-tab-panel="machine_analysis_metrics" class="hidden">
-                <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    <!-- Participant -->
-                    {% include "studies/partials/_analysis_run_metrics_participant.html" with run=run%}
-
-                    <!-- Evaluator -->
-                    {% include "studies/partials/_analysis_run_metrics_evaluator.html" with run=run%}
-                </div>
+                {% include "studies/partials/_analysis_metrics.html" with run=run study=study %}
             </section>
 
             <!-- SENTIMENT ANALYSIS -->
@@ -133,6 +127,7 @@
 
             <!-- ISSUE DETECTION -->
             <section data-analysis-tab-panel="issue_detection" class="hidden">
+                {% include "studies/partials/_analysis_issue.html" with run=run study=study %}
             </section>
 
             <!-- ENTRIES -->

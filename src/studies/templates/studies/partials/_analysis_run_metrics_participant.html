@@ -1,99 +1,89 @@
 {% load heroicons %}
-<section class="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
 
-    <header class="flex items-center justify-between gap-2 p-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div class="flex items-center gap-2">
-            {% heroicon_outline "user-group" %}
-            <h4 class="font-semibold text-gray-900 dark:text-gray-100">
-                Machine Analysis vs. Participant Reference
-            </h4>
-        </div>
-    </header>
+<div class="flex flex-col p-4 gap-4">
 
-    <div class="p-4">
-
-        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Sentiment classification metrics comparing detected sentiment against participant self-reported sentiment.
-        </p>
-
-        <!-- METRIC SCORES -->
+    <p class="text-sm text-gray-600 dark:text-gray-400">
+        Sentiment classification metrics comparing detected sentiment against participant self-reported sentiment.
+    </p>
+    
+    <div class="flex flex-wrap items-center mt-1 gap-2">
+        <!-- METRIC SCORES Machine vs Participant Ref -->
         {% include "studies/partials/_analysis_run_metric_cards.html" with run=run comparison_type="participant" only %}
+    </div>
 
-        <div class="main-card p-4 bg-gray-50">
+    <div class="main-card p-4 bg-gray-50">
 
-            <!-- MATRIX GRID -->
-            <div class="grid grid-cols-[2.5rem_5rem_minmax(0,1fr)_minmax(0,1fr)] gap-2">
+        <!-- MATRIX GRID -->
+        <div class="grid grid-cols-[2.5rem_5rem_minmax(0,1fr)_minmax(0,1fr)] gap-2">
 
-                <!-- TOP AXIS LABEL -->
-                <div class="col-span-2 row-span-2 ">
-                    
-                </div>
+            <!-- TOP AXIS LABEL -->
+            <div class="col-span-2 row-span-2 ">
+                
+            </div>
 
-                <div class="col-span-2 flex flex-col items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800 p-2">
-                    <span class="xs-label">Participant reported...</span>
-                </div>
+            <div class="col-span-2 flex flex-col items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800 p-2">
+                <span class="xs-label">Participant reported...</span>
+            </div>
 
-                <!-- COLUMN LABELS -->
+            <!-- COLUMN LABELS -->
 
-                <div class="flex flex-col items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800 p-2">
-                    <span class="xs-label">NEGATIVE</span>
-                </div>
+            <div class="flex flex-col items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800 p-2">
+                <span class="xs-label">NEGATIVE</span>
+            </div>
 
-                <div class="flex flex-col items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800 p-2">
-                    <span class="xs-label">NOT NEGATIVE</span>
-                </div>
+            <div class="flex flex-col items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800 p-2">
+                <span class="xs-label">NOT NEGATIVE</span>
+            </div>
 
-                <!-- ROW AXIS LABEL -->
-                <div class="row-span-2 flex items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800 p-2">
-                    <span class="xs-label -rotate-90 whitespace-nowrap">Detected...</span>
-                </div>
+            <!-- ROW AXIS LABEL -->
+            <div class="row-span-2 flex items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800 p-2">
+                <span class="xs-label -rotate-90 whitespace-nowrap">Detected...</span>
+            </div>
 
-                <!-- ROW: DETECTED NEGATIVE -->
-                <div class="flex items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800 p-2">
-                    <span class="xs-label -rotate-90 whitespace-nowrap">NEGATIVE</span>
-                </div>
+            <!-- ROW: DETECTED NEGATIVE -->
+            <div class="flex items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800 p-2">
+                <span class="xs-label -rotate-90 whitespace-nowrap">NEGATIVE</span>
+            </div>
 
-                <div class="rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20 p-4 text-center">
-                    <span class="block xs-label">True positive</span>
-                    <span class="mt-1 block text-2xl font-semibold text-green-700 dark:text-green-300">
-                        {{ run.participant_sentiment_true_positives|default:0 }}
-                    </span>
-                    <span class="block xs-label">(Negative sentiment correctly detected)</span>
-                </div>
+            <div class="rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/20 p-4 text-center">
+                <span class="block xs-label">True positive</span>
+                <span class="mt-1 block text-2xl font-semibold text-green-700 dark:text-green-300">
+                    {{ run.participant_sentiment_true_positives|default:0 }}
+                </span>
+                <span class="block xs-label">(Negative sentiment correctly detected)</span>
+            </div>
 
-                <div class="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 p-4 text-center">
-                    <span class="block xs-label">False positive</span>
-                    <span class="mt-1 block text-2xl font-semibold text-red-700 dark:text-red-300">
-                        {{ run.participant_sentiment_false_positives|default:0 }}
-                    </span>
-                    <span class="block xs-label">(False alarm)</span>
-                </div>
+            <div class="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 p-4 text-center">
+                <span class="block xs-label">False positive</span>
+                <span class="mt-1 block text-2xl font-semibold text-red-700 dark:text-red-300">
+                    {{ run.participant_sentiment_false_positives|default:0 }}
+                </span>
+                <span class="block xs-label">(False alarm)</span>
+            </div>
 
-                <!-- ROW: DETECTED NOT NEGATIVE -->
-                <div class="flex items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800 p-2">
-                    <span class="xs-label -rotate-90 whitespace-nowrap">NOT NEGATIVE</span>
-                </div>
+            <!-- ROW: DETECTED NOT NEGATIVE -->
+            <div class="flex items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800 p-2">
+                <span class="xs-label -rotate-90 whitespace-nowrap">NOT NEGATIVE</span>
+            </div>
 
-                <div class="rounded-md border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/20 p-4 text-center">
-                    <span class="block xs-label">False negative</span>
-                    <span class="mt-1 block text-2xl font-semibold text-orange-700 dark:text-orange-300">
-                        {{ run.participant_sentiment_false_negatives|default:0 }}
-                    </span>
-                    <span class="block xs-label">(Missed negative sentiment)</span>
-                </div>
+            <div class="rounded-md border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/20 p-4 text-center">
+                <span class="block xs-label">False negative</span>
+                <span class="mt-1 block text-2xl font-semibold text-orange-700 dark:text-orange-300">
+                    {{ run.participant_sentiment_false_negatives|default:0 }}
+                </span>
+                <span class="block xs-label">(Missed negative sentiment)</span>
+            </div>
 
-                <div class="rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 p-4 text-center">
-                    <span class="block xs-label">True negative</span>
-                    <span class="mt-1 block text-2xl font-semibold text-blue-700 dark:text-blue-300">
-                        {{ run.participant_sentiment_true_negatives|default:0 }}
-                    </span>
-                    <span class="block xs-label">(Correctly ignored)</span>
-                </div>
-
+            <div class="rounded-md border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20 p-4 text-center">
+                <span class="block xs-label">True negative</span>
+                <span class="mt-1 block text-2xl font-semibold text-blue-700 dark:text-blue-300">
+                    {{ run.participant_sentiment_true_negatives|default:0 }}
+                </span>
+                <span class="block xs-label">(Correctly ignored)</span>
             </div>
 
         </div>
 
     </div>
 
-</section>
+</div>

@@ -9,12 +9,12 @@
         <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
             <div>
                 <h4 class="card-summary-title">
-                    {% heroicon_outline "rectangle-group" %}
-                    Theme Analysis
+                    {% heroicon_outline "exclamation-triangle" %}
+                    Issue Analysis
                 </h4>
 
                 <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    Overview of machine-detected themes, evaluator-assessed themes, their distributions, and how themes changed over time.
+                    Overview of machine-detected issues, evaluator-assessed issues, their distributions, and how issues changed over time.
                 </p>
             </div>
 
@@ -22,14 +22,14 @@
                 <div class="flex flex-wrap items-center justify-between gap-3">
 
                     <div>
-                        <span class="xs-label uppercase">Theme Analysis Method</span>
+                        <span class="xs-label uppercase">Issue Detection Method</span>
 
                         <div class="mt-2 flex flex-wrap items-center gap-2">
                             <span class="message-default">
-                                {{ run.methods.theme|humanize_enum|upper|default:"—" }}
+                                {{ run.methods.issue|humanize_enum|upper|default:"—" }}
                             </span>
 
-                            {% if run.methods.theme == "llm" %}
+                            {% if run.methods.issue == "llm" %}
                                 <span class="message-default">
                                     {{ run.methods.provider|upper }}
                                 </span>
@@ -63,20 +63,20 @@
 
         <div class="grid grid-cols-1 gap-4 p-4 xl:grid-cols-2">
 
-            <!-- MACHINE THEMES -->
+            <!-- MACHINE ISSUES -->
             <div class="main-card overflow-hidden">
                 <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
                     <h5 class="sm-label">
-                        Themes Detected by Machine Analysis
+                        Issues Detected by Machine Analysis
                     </h5>
                 </div>
 
                 <div class="p-4">
-                    {% if run.canonical_theme_summaries.all %}
+                    {% if run.canonical_issue_summaries.all %}
                         <div class="flex flex-wrap gap-2">
-                            {% for item in run.canonical_theme_summaries.all %}
-                                <span class="badge-THEME">
-                                    <span>{{ item.canonical_theme.name }}</span>
+                            {% for item in run.canonical_issue_summaries.all %}
+                                <span class="badge-ISSUE">
+                                    <span>{{ item.canonical_issue.name }}</span>
                                     <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
                                         {{ item.entry_count }}
                                     </span>
@@ -85,26 +85,26 @@
                         </div>
                     {% else %}
                         <p class="text-sm text-gray-500 dark:text-gray-400">
-                            No machine-detected themes available.
+                            No machine-detected issues available.
                         </p>
                     {% endif %}
                 </div>
             </div>
 
-            <!-- EVALUATOR THEMES -->
+            <!-- EVALUATOR ISSUES -->
             <div class="main-card overflow-hidden">
                 <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
                     <h5 class="sm-label">
-                        Themes Assessed by Evaluators
+                        Issues Assessed by Evaluators
                     </h5>
                 </div>
 
                 <div class="p-4">
-                    {% if run.evaluator_canonical_theme_summaries.all %}
+                    {% if run.evaluator_canonical_issue_summaries.all %}
                         <div class="flex flex-wrap gap-2">
-                            {% for item in run.evaluator_canonical_theme_summaries.all %}
-                                <span class="badge-THEME">
-                                    <span>{% firstof item.label item.name item.canonical_theme.name "Unnamed theme" %}</span>
+                            {% for item in run.evaluator_canonical_issue_summaries.all %}
+                                <span class="badge-ISSUE">
+                                    <span>{% firstof item.label item.name item.canonical_issue.name "Unnamed issue" %}</span>
                                     <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
                                         {% firstof item.count item.entry_count item.frequency 0 %}
                                     </span>
@@ -114,7 +114,7 @@
                     {% else %}
                         <div class="flex h-20 items-center justify-center rounded-md border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
                             <span class="text-sm text-gray-500 dark:text-gray-400 text-center">
-                                Evaluator-assessed themes are not yet available.<br>
+                                Evaluator-assessed issues are not yet available.<br>
                                 Complete human evaluations and refresh metrics to see this data.
                             </span>
                         </div>
@@ -125,17 +125,17 @@
         </div>
     </div>
 
-    <!-- THEME DISTRIBUTION -->
+    <!-- ISSUE DISTRIBUTION -->
     <div class="main-card overflow-hidden">
 
         <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
             <h4 class="card-summary-title">
                 {% heroicon_outline "chart-pie" %}
-                Theme Distribution
+                Issue Distribution
             </h4>
 
             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Comparison of theme distributions across evaluator assessments and machine analysis.
+                Comparison of issue distributions across evaluator assessments and machine analysis.
             </p>
         </div>
 
@@ -149,7 +149,7 @@
                 </div>
 
                 <div class="p-4">
-                    {% include "studies/partials/_distribution_theme.html" with distribution=run.canonical_theme_summaries.all dominant_theme=run.dominant_theme chart_id="machineThemeDistributionChart" distribution_subtitle="Themes detected across analyzed entries." empty_text="No machine theme distribution available." %}
+                    {% include "studies/partials/_distribution_issues.html" with distribution=run.canonical_issue_summaries.all dominant_issue=run.dominant_issue chart_id="machineIssueDistributionChart" distribution_subtitle="Issues detected across analyzed entries." empty_text="No machine issue distribution available." %}
                 </div>
             </div>
 
@@ -161,7 +161,7 @@
                 </div>
 
                 <div class="p-4">
-                    {% include "studies/partials/_distribution_theme.html" with distribution=run.evaluator_canonical_theme_summaries.all dominant_theme=run.evaluator_dominant_theme chart_id="evaluatorThemeDistributionChart" distribution_subtitle="Themes assigned during human evaluation." empty_text="No evaluator theme distribution available." %}
+                    {% include "studies/partials/_distribution_issues.html" with distribution=run.evaluator_canonical_issue_summaries.all dominant_issue=run.evaluator_dominant_issue chart_id="evaluatorIssueDistributionChart" distribution_subtitle="Issues assigned during human evaluation." empty_text="No evaluator issue distribution available." %}
                 </div>
             </div>
 
@@ -174,16 +174,34 @@
         <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
             <h4 class="card-summary-title">
                 {% heroicon_outline "arrow-trending-up" %}
-                Theme Evolution Over Time
+                Issue Evolution Over Time
             </h4>
 
             <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                Theme frequency across the study timeline.
+                Issue frequency across the study timeline.
             </p>
         </div>
 
         <div class="p-4">
-            {% include "studies/partials/_evolution_theme.html" with run=run evolution=run.evolution_over_time %}
+            {% include "studies/partials/_evolution_issues.html" with run=run evolution=run.evolution_over_time %}
         </div>
     </div>
+
+    <!-- ISSUE-IMPACT MATRIX -->
+    <div class="main-card overflow-hidden">
+        <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+            <h4 class="card-summary-title">
+                {% heroicon_outline "arrows-up-down" %}
+                Issue-Impact Matrix
+            </h4>
+
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                Prioritizes detected issues by comparing how often they appeared with negative sentiment. 
+        </div>
+
+        <div class="p-4">
+            {% include "studies/partials/_issue_impact_matrix.html" with run=run evolution=run.evolution_over_time %}
+        </div>
+    </div>
+    
 </section>

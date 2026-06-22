@@ -1,23 +1,14 @@
-{% load heroicons %}
-
-<div class="group main-card">
-    <div class="card-summary">
-        <div class="card-summary-title">
-            {% heroicon_outline "cursor-arrow-rays" %}
-            Issue Frequency Matrix
-        </div>
-    </div>
-
+<div class="p-4 justify-center rounded-sm border border-dashed border-gray-300 dark:border-gray-600 text-sm text-gray-500 dark:text-gray-400">
     <div>
         {% if run.canonical_issue_summaries.all %}
             <div>
-                <div class="relative h-64 w-full overflow-hidden">
+                <div class="relative h-72 w-full">
                     <canvas id="issueImpactMatrixChart-{{ study.id }}-{{ run.id }}"></canvas>
                 </div>
             </div>
 
-            <div class="mb-4 mx-4 text-xs text-gray-500 dark:text-gray-400">
-                Issues farther right appear more often. Issues higher up have higher average assignment confidence.
+            <div class="mt-4 mx-4 text-xs text-gray-500 dark:text-gray-400">
+                Issues farther to the left are more frequent, while issues lower on the chart are associated with stronger negative sentiment and may require faster attention.
             </div>
         {% else %}
             <div class="p-4 text-sm text-gray-500 dark:text-gray-400">
@@ -57,14 +48,16 @@
             ? (item.count / issueImpactTotal{{ run.id }}) * 100
             : 0;
 
+        const negativeSentimentIntensity = -Math.abs(item.confidence);
+
         return {
             x: frequency,
-            y: item.confidence,
+            y: negativeSentimentIntensity,
             r: Math.max(6, Math.min(22, item.count * 2)),
             label: prettifyImpactIssueLabel(item.label),
             count: item.count,
             frequency: frequency,
-            confidence: item.confidence
+            negativeSentimentIntensity: negativeSentimentIntensity
         };
     });
 
@@ -79,7 +72,8 @@
                 datasets: [{
                     label: "Issues",
                     data: issueImpactPoints{{ run.id }},
-                    borderWidth: 2
+                    borderWidth: 2,
+                    clip: false
                 }]
             },
             options: {
@@ -88,8 +82,8 @@
                 layout: {
                     padding: {
                         top: 12,
-                        right: 16,
-                        bottom: 4,
+                        right: 4,
+                        bottom: 28,
                         left: 4
                     }
                 },
@@ -97,6 +91,8 @@
                     x: {
                         min: 0,
                         max: 100,
+                        reverse: true,
+                        position: "top",
                         title: {
                             display: true,
                             text: "Frequency"
@@ -111,11 +107,11 @@
                         }
                     },
                     y: {
-                        min: 0,
-                        max: 1,
+                        min: -1,
+                        max: 0,
                         title: {
                             display: true,
-                            text: "Average confidence"
+                            text: "Negative Sentiment Intensity"
                         },
                         ticks: {
                             callback: function(value) {
@@ -133,19 +129,16 @@
                     },
                     tooltip: {
                         callbacks: {
-                            title: function() {
-                                return "Issue frequency";
-                            },
                             label: function(context) {
                                 const item = context.raw;
                                 const frequency = item.frequency.toFixed(1);
-                                const confidence = Number(item.confidence).toFixed(2);
+                                const negativeSentimentIntensity = Number(item.negativeSentimentIntensity).toFixed(2);
 
                                 return [
                                     `${item.label}`,
                                     `Frequency: ${frequency}%`,
                                     `Entries: ${item.count}`,
-                                    `Avg confidence: ${confidence}`
+                                    `Negative sentiment intensity: ${negativeSentimentIntensity}`
                                 ];
                             }
                         }

@@ -32,7 +32,7 @@
                     Sentiment category evolution over time
                 </h3>
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Running total of detected sentiment labels throughout the study.
+                    Running total of detected sentiment labels throughout the study. BERT runs are grouped as negative and non-negative.
                 </p>
             </div>
 
@@ -65,38 +65,59 @@
                         }
 
                         const evolution = JSON.parse(dataElement.textContent);
+                        const isBertSentiment = "{{ run.methods.sentiment }}" === "bert";
 
-                        const sentimentLabels = [
-                            "VERY_NEGATIVE",
-                            "NEGATIVE",
-                            "NEUTRAL",
-                            "POSITIVE",
-                            "VERY_POSITIVE",
-                        ];
+                        const sentimentLabels = isBertSentiment
+                            ? [
+                                "NEGATIVE",
+                                "NOT_NEGATIVE",
+                            ]
+                            : [
+                                "VERY_NEGATIVE",
+                                "NEGATIVE",
+                                "NEUTRAL",
+                                "POSITIVE",
+                                "VERY_POSITIVE",
+                            ];
 
-                        const sentimentDisplayLabels = {
-                            VERY_NEGATIVE: "Very negative",
-                            NEGATIVE: "Negative",
-                            NEUTRAL: "Neutral",
-                            POSITIVE: "Positive",
-                            VERY_POSITIVE: "Very positive",
-                        };
+                        const sentimentDisplayLabels = isBertSentiment
+                            ? {
+                                NEGATIVE: "Negative",
+                                NOT_NEGATIVE: "Non-negative",
+                            }
+                            : {
+                                VERY_NEGATIVE: "Very negative",
+                                NEGATIVE: "Negative",
+                                NEUTRAL: "Neutral",
+                                POSITIVE: "Positive",
+                                VERY_POSITIVE: "Very positive",
+                            };
 
-                        const sentimentColors = {
-                            VERY_NEGATIVE: "#fecaca99",
-                            NEGATIVE: "#fee2e299",
-                            NEUTRAL: "#fde68a99",
-                            POSITIVE: "#dcfce799",
-                            VERY_POSITIVE: "#bbf7d099"
-                        };
+                        const sentimentColors = isBertSentiment
+                            ? {
+                                NEGATIVE: "#fee2e299",
+                                NOT_NEGATIVE: "#dcfce799",
+                            }
+                            : {
+                                VERY_NEGATIVE: "#fecaca99",
+                                NEGATIVE: "#fee2e299",
+                                NEUTRAL: "#fde68a99",
+                                POSITIVE: "#dcfce799",
+                                VERY_POSITIVE: "#bbf7d099"
+                            };
 
-                        const sentimentBorderColors = {
-                            VERY_NEGATIVE: "#991b1b",
-                            NEGATIVE: "#b91c1c",
-                            NEUTRAL: "#b45309",
-                            POSITIVE: "#15803d",
-                            VERY_POSITIVE: "#166534"
-                        };
+                        const sentimentBorderColors = isBertSentiment
+                            ? {
+                                NEGATIVE: "#b91c1c",
+                                NOT_NEGATIVE: "#15803d",
+                            }
+                            : {
+                                VERY_NEGATIVE: "#991b1b",
+                                NEGATIVE: "#b91c1c",
+                                NEUTRAL: "#b45309",
+                                POSITIVE: "#15803d",
+                                VERY_POSITIVE: "#166534"
+                            };
 
                         const activeButtonClass = [
                             "text-white",
@@ -153,7 +174,7 @@
                             return item.date;
                         }
 
-                        function getDistributionCount(distribution, sentimentLabel) {
+                        function getRawDistributionCount(distribution, sentimentLabel) {
                             if (!distribution) {
                                 return 0;
                             }
@@ -166,6 +187,30 @@
                             return distribution[sentimentLabel] || 0;
                         }
 
+                        function getDistributionCount(distribution, sentimentLabel) {
+                            if (!isBertSentiment) {
+                                return getRawDistributionCount(distribution, sentimentLabel);
+                            }
+
+                            if (sentimentLabel === "NEGATIVE") {
+                                return (
+                                    getRawDistributionCount(distribution, "NEGATIVE")
+                                    + getRawDistributionCount(distribution, "VERY_NEGATIVE")
+                                );
+                            }
+
+                            if (sentimentLabel === "NOT_NEGATIVE") {
+                                return (
+                                    getRawDistributionCount(distribution, "NOT_NEGATIVE")
+                                    + getRawDistributionCount(distribution, "NEUTRAL")
+                                    + getRawDistributionCount(distribution, "POSITIVE")
+                                    + getRawDistributionCount(distribution, "VERY_POSITIVE")
+                                );
+                            }
+
+                            return 0;
+                        }
+
                         function aggregateDistributions(scale) {
                             const buckets = {};
 
@@ -175,14 +220,12 @@
                                 if (!buckets[key]) {
                                     buckets[key] = {
                                         label: key,
-                                        counts: {
-                                            VERY_NEGATIVE: 0,
-                                            NEGATIVE: 0,
-                                            NEUTRAL: 0,
-                                            POSITIVE: 0,
-                                            VERY_POSITIVE: 0,
-                                        },
+                                        counts: {},
                                     };
+
+                                    sentimentLabels.forEach(sentimentLabel => {
+                                        buckets[key].counts[sentimentLabel] = 0;
+                                    });
                                 }
 
                                 sentimentLabels.forEach(sentimentLabel => {
@@ -199,21 +242,13 @@
                         function buildRunningTotals(scale) {
                             const bucketedData = aggregateDistributions(scale);
 
-                            const runningTotals = {
-                                VERY_NEGATIVE: 0,
-                                NEGATIVE: 0,
-                                NEUTRAL: 0,
-                                POSITIVE: 0,
-                                VERY_POSITIVE: 0,
-                            };
+                            const runningTotals = {};
+                            const series = {};
 
-                            const series = {
-                                VERY_NEGATIVE: [],
-                                NEGATIVE: [],
-                                NEUTRAL: [],
-                                POSITIVE: [],
-                                VERY_POSITIVE: [],
-                            };
+                            sentimentLabels.forEach(sentimentLabel => {
+                                runningTotals[sentimentLabel] = 0;
+                                series[sentimentLabel] = [];
+                            });
 
                             bucketedData.forEach(bucket => {
                                 sentimentLabels.forEach(sentimentLabel => {

@@ -74,7 +74,7 @@
 
                 <dl class="grid grid-cols-1 gap-3 p-3">
 
-                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-sky-50 dark:bg-sky-800 p-3">
                         <dt class="xs-label">Average sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
                             {% if run.participant_average_sentiment_label %}
@@ -88,7 +88,7 @@
                         </dd>
                     </div>
 
-                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-sky-50 dark:bg-sky-800 p-3">
                         <dt class="xs-label">Dominant sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
                             {% if run.participant_dominant_sentiment_label %}
@@ -113,9 +113,9 @@
                     </h5>
                 </div>
 
-                <dl class="grid grid-cols-1 gap-3 p-3">
+                <dl class="grid grid-cols-1 gap-3 p-3 ">
 
-                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-fuchsia-50 dark:bg-fuchsia-800 p-3">
                         <dt class="xs-label">Average sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
                             {% if run.average_sentiment_label %}
@@ -129,7 +129,7 @@
                         </dd>
                     </div>
 
-                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-fuchsia-50 dark:bg-fuchsia-800 p-3">
                         <dt class="xs-label">Dominant sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
                             {% if run.dominant_sentiment_label %}
@@ -154,40 +154,39 @@
                     </h5>
                 </div>
 
-                <dl class="grid grid-cols-1 gap-3 p-3">
-
-                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                <dl class="grid grid-cols-1 gap-3 p-3 ">
+                    {% if run.evaluator_dominant_sentiment_label %}
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-emerald-50 dark:bg-emerald-800 p-3">
                         <dt class="xs-label">Average sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
-                            {% if run.evaluator_average_sentiment_label %}
-                                {% include "studies/partials/_badge_sentiment.html" with sentiment=run.evaluator_average_sentiment_label %}
-                                <span class="badge">
-                                    Score: {{ run.evaluator_average_sentiment_score|floatformat:3|default:"—" }}
-                                </span>
-                            {% else %}
-                                <span class="badge">Not available</span>
-                            {% endif %}
+                            {% include "studies/partials/_badge_sentiment.html" with sentiment=run.evaluator_average_sentiment_label %}
+                            <span class="badge">
+                                Score: {{ run.evaluator_average_sentiment_score|floatformat:3|default:"—" }}
+                            </span>
                         </dd>
                     </div>
 
-                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-emerald-50 dark:bg-emerald-800 p-3">
                         <dt class="xs-label">Dominant sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
-                            {% if run.evaluator_dominant_sentiment_label %}
-                                {% include "studies/partials/_badge_sentiment.html" with sentiment=run.evaluator_dominant_sentiment_label %}
-                                <span class="badge">
-                                    Score: {{ run.evaluator_dominant_sentiment_score|floatformat:3|default:"—" }}
-                                </span>
-                            {% else %}
-                                <span class="badge">Not available</span>
-                            {% endif %}
+                            
+                            {% include "studies/partials/_badge_sentiment.html" with sentiment=run.evaluator_dominant_sentiment_label %}
+                            <span class="badge">
+                                Score: {{ run.evaluator_dominant_sentiment_score|floatformat:3|default:"—" }}
+                            </span>
                         </dd>
                     </div>
+                    {% else %}
+                    <div class="h-full w-full flex items-center justify-center rounded-md border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-2">
+                        <span class="text-sm text-gray-500 dark:text-gray-400 text-center p-1.5">
+                            Evaluator-assessed sentiment is not yet available.<br>
+                            Complete human evaluations and refresh metrics to see this data.
+                        </span>
+                    </div>
+                    {% endif %}
 
                 </dl>
             </div>
-
-            
 
         </div>
 
@@ -271,27 +270,27 @@
             <div class="p-4">
                 <dl class="grid grid-cols-1 gap-3">
 
-                    <div class="main-card">
-                        <div class="bg-gray-100 dark:bg-gray-800 p-2">
+                    <div class="main-card h-32">
+                        <div class="bg-gray-50 dark:bg-gray-800 p-2">
                             <span class="sm-label">Absolute Median Distance on Average Sentiment </span>
                         </div>
                         <dd class="grid grid-cols-1 gap-2 md:grid-cols-3 p-2">
 
-                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                            <div class="main-card p-2 bg-sky-50 dark:bg-sky-800">
                                 <span class="xs-label">Self-reported by Participants</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=run.participant_average_sentiment_label %}
                                 </div>
                             </div>
 
-                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                            <div class="main-card p-2 bg-fuchsia-50 dark:bg-fuchsia-800">
                                 <span class="xs-label">Detected by Machine Analysis</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=run.average_sentiment_label %}
                                 </div>
                             </div>
 
-                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                            <div class="main-card p-2 bg-slate-50 dark:bg-slate-800">
                                 <span class="xs-label">Absolute Median Distance</span>
                                 <div class="mt-1">
                                     <span class="badge">
@@ -302,27 +301,27 @@
                         </dd>
                     </div>
 
-                    <div class="main-card">
-                        <div class="bg-gray-100 dark:bg-gray-800 p-2">
+                    <div class="main-card h-32">
+                        <div class="bg-gray-50 dark:bg-gray-800 p-2">
                             <span class="sm-label">Absolute Median Distance on Dominant Sentiment </span>
                         </div>
                         <dd class="grid grid-cols-1 gap-2 md:grid-cols-3 p-2">
 
-                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                            <div class="main-card p-2 bg-sky-50 dark:bg-sky-800">
                                 <span class="xs-label">Self-reported by Participants</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=run.participant_dominant_sentiment_label %}
                                 </div>
                             </div>
 
-                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                            <div class="main-card p-2 bg-fuchsia-50 dark:bg-fuchsia-800">
                                 <span class="xs-label">Detected by Machine Analysis</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=run.dominant_sentiment_label %}
                                 </div>
                             </div>
 
-                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                            <div class="main-card p-2 bg-slate-50 dark:bg-slate-800">
                                 <span class="xs-label">Ordinal Distance</span>
                                 <div class="mt-1">
                                     <span class="badge">
@@ -355,81 +354,84 @@
             <div class="p-4">
                 <dl class="grid grid-cols-1 gap-3">
 
-                    <div class="main-card">
-                        <div class="bg-gray-100 dark:bg-gray-800 p-2">
+                    <div class="main-card h-32">
+                        <div class="bg-gray-50 dark:bg-gray-800 p-2">
                             <span class="sm-label">Absolute Median Distance on Average Sentiment </span>
                         </div>
+                        
                         <dd class="grid grid-cols-1 gap-2 md:grid-cols-3 p-2">
-
-                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                            {% if run.evaluator_average_sentiment_label %}
+                            <div class="main-card p-2 bg-emerald-50 dark:bg-emerald-800">
                                 <span class="xs-label">Assessed by evaluators</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
-                                    {% if run.evaluator_average_sentiment_label %}
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=run.evaluator_average_sentiment_label %}
-                                    {% else %}
-                                    <span class="badge">Not available<span>
-                                    {% endif %}
                                 </div>
                             </div>
 
-                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                            <div class="main-card p-2 bg-fuchsia-50 dark:bg-fuchsia-800">
                                 <span class="xs-label">Detected by Machine Analysis</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=run.average_sentiment_label %}
                                 </div>
                             </div>
 
-                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                            <div class="main-card p-2 bg-slate-50 dark:bg-slate-800">
                                 <span class="xs-label">Absolute Median Distance</span>
                                 <div class="mt-1">
-                                    {% if run.evaluator_average_sentiment_label %}
                                     <span class="badge">
                                         {{ run.evaluator_abs_distance_average_sentiment|default:"0" }}
                                     </span>
-                                    {% else %}
-                                    <span class="badge">Not available<span>
-                                    {% endif %}
                                 </div>
                             </div>
+                            {% else %}
+                            <div class="md:col-span-3 flex items-center justify-center rounded-md border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-2">
+                                <span class="text-sm text-gray-500 dark:text-gray-400 text-center p-1.5">
+                                    Evaluator-assessed sentiment is not yet available.<br>
+                                    Complete human evaluations and refresh metrics to see this data.
+                                </span>
+                            </div>
+                            {% endif %}
                         </dd>
+                        
                     </div>
 
-                    <div class="main-card">
-                        <div class="bg-gray-100 dark:bg-gray-800 p-2">
+                    <div class="main-card h-32">
+                        <div class="bg-gray-50 dark:bg-gray-800 p-2">
                             <span class="sm-label">Absolute Median Distance on Dominant Sentiment </span>
                         </div>
                         <dd class="grid grid-cols-1 gap-2 md:grid-cols-3 p-2">
-
-                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                            {% if run.evaluator_dominant_sentiment_label %}
+                            <div class="main-card p-2 bg-emerald-50 dark:bg-emerald-800">
                                 <span class="xs-label">Assessed by evaluators</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
-                                    {% if run.evaluator_dominant_sentiment_label %}
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=run.evaluator_dominant_sentiment_label %}
-                                    {% else %}
-                                    <span class="badge">Not available<span>
-                                    {% endif %}
                                 </div>
                             </div>
 
-                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                            <div class="main-card p-2 bg-fuchsia-50 dark:bg-fuchsia-800">
                                 <span class="xs-label">Detected by Machine Analysis</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=run.dominant_sentiment_label %}
                                 </div>
                             </div>
 
-                            <div class="main-card p-2 bg-gray-200 dark:bg-gray-800">
+                            <div class="main-card p-2 bg-slate-50 dark:bg-slate-800">
                                 <span class="xs-label">Ordinal Distance</span>
                                 <div class="mt-1">
-                                    {% if run.evaluator_dominant_sentiment_label %}
                                     <span class="badge">
                                         {{ run.evaluator_abs_distance_dominant_sentiment|default:"0" }}
                                     </span>
-                                    {% else %}
-                                    <span class="badge">Not available<span>
-                                    {% endif %}
                                 </div>
                             </div>
+
+                            {% else %}
+                            <div class="md:col-span-3 flex items-center justify-center rounded-md border border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-2">
+                                <span class="text-sm text-gray-500 dark:text-gray-400 text-center p-1.5">
+                                    Evaluator-assessed sentiment is not yet available.<br>
+                                    Complete human evaluations and refresh metrics to see this data.
+                                </span>
+                            </div>
+                            {% endif %}
                         </dd>
                     </div>
 

@@ -1,100 +1,121 @@
-{% load heroicons %}
-
-<div class="group main-card">
-    <div class="card-summary">
-        <div class="card-summary-title">
-            {% heroicon_outline "exclamation-triangle" %}
-            Recurring Issues
-        </div>
+{% if distribution %}
+    <div class="flex h-72 items-center justify-center rounded-md border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+        <canvas id="{{ chart_id }}"></canvas>
     </div>
 
-    {% if run.canonical_issue_summaries.all %}
-        <div class="mt-4">
-            <div class="relative h-64 w-full overflow-hidden">
-                <canvas id="issueDistributionChart-{{ study.id }}-{{ run.id }}"></canvas>
-            </div>
-        </div>
-    {% else %}
-        <div class="p-4 text-sm text-gray-500 dark:text-gray-400">
-            No recurring issues detected.
-        </div>
-    {% endif %}
-</div>
-
-{% if run.canonical_issue_summaries.all %}
-<script>
-    function prettifyIssueLabel(label) {
-        return label
-            .replaceAll("_", " ")
-            .split(" ")
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(" ");
-    }
-
-    const issueData{{ run.id }} = [
-        {% for issue_summary in run.canonical_issue_summaries.all %}
-            {
-                label: "{{ issue_summary.canonical_issue.name|escapejs }}",
-                count: {{ issue_summary.entry_count|default:0 }}
-            },
-        {% endfor %}
-    ];
-
-    const issueTotal{{ run.id }} = issueData{{ run.id }}.reduce(
-        (sum, item) => sum + item.count,
-        0
-    );
-
-    const issueLabels{{ run.id }} = issueData{{ run.id }}.map(item => {
-        const label = prettifyIssueLabel(item.label);
-        const percentage = issueTotal{{ run.id }}
-            ? ((item.count / issueTotal{{ run.id }}) * 100).toFixed(1)
-            : "0.0";
-
-        return `${label} (${percentage}%)`;
-    });
-
-    const issueCounts{{ run.id }} = issueData{{ run.id }}.map(item => item.count);
-
-    const issueCtx{{ run.id }} = document.getElementById(
-        "issueDistributionChart-{{ study.id }}-{{ run.id }}"
-    );
-
-    if (issueCtx{{ run.id }}) {
-        new Chart(issueCtx{{ run.id }}, {
-            type: "doughnut",
-            data: {
-                labels: issueLabels{{ run.id }},
-                datasets: [{
-                    data: issueCounts{{ run.id }},
-                    borderWidth: 2,
-                    hoverOffset: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: "60%",
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: "bottom",
-                        labels: {
-                            boxWidth: 12,
-                            padding: 12
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const item = issueData{{ run.id }}[context.dataIndex];
-                                return ` ${item.count} entries`;
-                            }
-                        }
-                    }
-                }
+    <script>
+        (function () {
+            function prettifyIssueLabel(label) {
+                return label
+                    .replaceAll("_", " ")
+                    .split(" ")
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(" ");
             }
-        });
-    }
-</script>
+
+            const issueData = [
+                {% for item in distribution %}
+                    {
+                        label: "{{ item.canonical_issue.name|escapejs }}",
+                        count: {{ item.entry_count|default:0 }}
+                    },
+                {% endfor %}
+            ];
+
+            const issueTotal = issueData.reduce(
+                (sum, item) => sum + item.count,
+                0
+            );
+
+            const issueLabels = issueData.map(item => {
+                const label = prettifyIssueLabel(item.label);
+                const percentage = issueTotal
+                    ? ((item.count / issueTotal) * 100).toFixed(1)
+                    : "0.0";
+
+                return `${label} (${percentage}%)`;
+            });
+
+            const issueCounts = issueData.map(item => item.count);
+
+            const issueColors = [
+                "#fed7aa99",
+                "#fecaca99",
+                "#fde68a99",
+                "#fbcfe899",
+                "#ffedd599",
+                "#fee2e299",
+                "#fef3c799",
+                "#fae8ff99",
+                "#fce7f399",
+                "#fef2f299"
+            ];
+
+            const issueBorderColors = [
+                "#c2410c",
+                "#b91c1c",
+                "#b45309",
+                "#be185d",
+                "#ea580c",
+                "#dc2626",
+                "#ca8a04",
+                "#a21caf",
+                "#db2777",
+                "#991b1b"
+            ];
+
+            const issueCtx = document.getElementById("{{ chart_id }}");
+
+            if (issueCtx) {
+                new Chart(issueCtx, {
+                    type: "doughnut",
+                    data: {
+                        labels: issueLabels,
+                        datasets: [{
+                            data: issueCounts,
+                            backgroundColor: issueData.map(
+                                (item, index) => issueColors[index % issueColors.length]
+                            ),
+                            borderColor: issueData.map(
+                                (item, index) => issueBorderColors[index % issueBorderColors.length]
+                            ),
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        cutout: "70%",
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: "bottom",
+                                labels: {
+                                    boxWidth: 12,
+                                    boxHeight: 12
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const item = issueData[context.dataIndex];
+                                        const percentage = issueTotal
+                                            ? ((item.count / issueTotal) * 100).toFixed(1)
+                                            : "0.0";
+
+                                        return ` ${item.count} entries (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        },
+                    }
+                });
+            }
+        })();
+    </script>
+{% else %}
+    <div class="flex h-72 items-center justify-center rounded-md border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <span class="text-sm text-gray-500 dark:text-gray-400">
+            No issue distribution available.
+        </span>
+    </div>
 {% endif %}
