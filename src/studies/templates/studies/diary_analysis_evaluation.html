@@ -29,10 +29,40 @@
                 </p>
             </div>
 
-            <div class="flex justify-end gap-3">
+            <div class="flex flex-wrap justify-end gap-2">
+                {% if previous_entry_analysis %}
+                    <a
+                        href="{% url 'evaluate_entry_analysis' study.pk run.pk previous_entry_analysis.pk %}"
+                        class="button-TERTIARY"
+                    >
+                        {% heroicon_outline "chevron-left" class="h-4 w-4 shrink-0" %}
+                        Previous
+                    </a>
+                {% else %}
+                    <span class="button-TERTIARY opacity-40 cursor-not-allowed">
+                        {% heroicon_outline "chevron-left" class="h-4 w-4 shrink-0" %}
+                        Previous
+                    </span>
+                {% endif %}
+
+                {% if next_entry_analysis %}
+                    <a
+                        href="{% url 'evaluate_entry_analysis' study.pk run.pk next_entry_analysis.pk %}"
+                        class="button-TERTIARY"
+                    >
+                        Next
+                        {% heroicon_outline "chevron-right" class="h-4 w-4 shrink-0" %}
+                    </a>
+                {% else %}
+                    <span class="button-TERTIARY opacity-40 cursor-not-allowed">
+                        Next
+                        {% heroicon_outline "chevron-right" class="h-4 w-4 shrink-0" %}
+                    </span>
+                {% endif %}
+
                 <a
-                href="{% url 'machine_analysis_details' run.study_id run.pk %}#entries"
-                class="button-TERTIARY"
+                    href="{% url 'machine_analysis_details' study.pk run.pk %}#entries"
+                    class="button-TERTIARY"
                 >
                     {% heroicon_outline "code-bracket-square" class="h-4 w-4 shrink-0" %}
                     {% heroicon_outline "arrow-left" class="h-4 w-4 shrink-0" %}

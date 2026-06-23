@@ -1590,6 +1590,40 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 		run=run,
 	)
 
+	entry = entry_analysis.entry
+
+	entry_analyses_qs = (
+		DiaryEntryAnalysis.objects
+		.filter(run=run)
+		.select_related("entry")
+		.order_by("entry__created_at", "entry__pk", "pk")
+	)
+
+	previous_entry_analysis = (
+		entry_analyses_qs
+		.filter(
+			Q(entry__created_at__lt=entry.created_at)
+			| Q(
+				entry__created_at=entry.created_at,
+				entry__pk__lt=entry.pk,
+			)
+		)
+		.order_by("-entry__created_at", "-entry__pk", "-pk")
+		.first()
+	)
+
+	next_entry_analysis = (
+		entry_analyses_qs
+		.filter(
+			Q(entry__created_at__gt=entry.created_at)
+			| Q(
+				entry__created_at=entry.created_at,
+				entry__pk__gt=entry.pk,
+			)
+		)
+		.first()
+	)
+
 	if request.method == "POST":
 		form = DiaryEntryManualEvaluationForm(
 			request.POST or None,
@@ -1603,20 +1637,17 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 			messages.success(request, "Human evaluation saved.")
 
 			return redirect(
-				reverse(
-					"machine_analysis_details",
-					kwargs={
-						"study_pk": study.pk,
-						"run_pk": run.pk,
-					},
-				) + "#entries"
+				"evaluate_entry_analysis",
+				study_pk=study.pk,
+				run_pk=run.pk,
+				analysis_pk=entry_analysis.pk,
 			)
 
 	else:
 		form = DiaryEntryManualEvaluationForm(
 			instance=entry_analysis,
 			evaluator=request.user,
-			)
+		)
 
 	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
 
@@ -1633,6 +1664,8 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 		"run": run,
 		"entry": entry_analysis.entry,
 		"entry_analysis": entry_analysis,
+		"previous_entry_analysis": previous_entry_analysis,
+		"next_entry_analysis": next_entry_analysis,
 		"form": form,
 	}
 
