@@ -345,6 +345,9 @@
   .left-full {
     left: 100%;
   }
+  .z-10 {
+    z-index: 10;
+  }
   .z-40 {
     z-index: 40;
   }
@@ -380,6 +383,9 @@
   }
   .mx-1 {
     margin-inline: calc(var(--spacing) * 1);
+  }
+  .mx-2 {
+    margin-inline: calc(var(--spacing) * 2);
   }
   .mx-4 {
     margin-inline: calc(var(--spacing) * 4);
@@ -515,8 +521,8 @@
   .max-h-48 {
     max-height: calc(var(--spacing) * 48);
   }
-  .max-h-\[calc\(100vh-9rem\)\] {
-    max-height: calc(100vh - 9rem);
+  .max-h-\[calc\(100vh-12rem\)\] {
+    max-height: calc(100vh - 12rem);
   }
   .min-h-0 {
     min-height: calc(var(--spacing) * 0);
@@ -655,6 +661,9 @@
   }
   .items-start {
     align-items: flex-start;
+  }
+  .justify-baseline {
+    justify-content: baseline;
   }
   .justify-between {
     justify-content: space-between;
@@ -2591,6 +2600,7 @@
     }
   }
   .xs-label {
+    margin: calc(var(--spacing) * 1);
     display: inline-flex;
     flex-wrap: nowrap;
     align-items: center;
@@ -2622,10 +2632,8 @@
     display: flex;
     align-items: center;
     gap: calc(var(--spacing) * 2);
-    font-size: var(--text-lg);
-    line-height: var(--tw-leading, var(--text-lg--line-height));
-    --tw-font-weight: var(--font-weight-medium);
-    font-weight: var(--font-weight-medium);
+    --tw-font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-semibold);
     color: var(--color-gray-900);
     @media (prefers-color-scheme: dark) {
       color: var(--color-gray-100);
@@ -2725,6 +2733,7 @@
     }
   }
   .card-summary-subtitle {
+    margin-top: calc(var(--spacing) * 1);
     display: inline-flex;
     align-items: center;
     gap: calc(var(--spacing) * 2);
@@ -2752,6 +2761,7 @@
     display: flex;
     list-style-type: none;
     align-items: center;
+    justify-content: space-between;
     gap: calc(var(--spacing) * 4);
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 1px;
@@ -2916,6 +2926,8 @@
     color: var(--color-amber-800);
   }
   .tab-menu {
+    display: flex;
+    justify-content: space-between;
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 1px;
     border-color: var(--color-gray-200);
@@ -2974,6 +2986,99 @@
     @media (prefers-color-scheme: dark) {
       &:is(:where(.peer):checked ~ *) {
         color: var(--color-fuchsia-300);
+      }
+    }
+    @media (prefers-color-scheme: dark) {
+      &:hover {
+        @media (hover: hover) {
+          color: var(--color-white);
+        }
+      }
+    }
+  }
+  .top-menu {
+    border-top-style: var(--tw-border-style);
+    border-top-width: 1px;
+    border-color: var(--color-gray-200);
+    background-color: var(--color-gray-50);
+    @media (prefers-color-scheme: dark) {
+      border-color: var(--color-gray-700);
+    }
+    @media (prefers-color-scheme: dark) {
+      background-color: var(--color-gray-900);
+    }
+  }
+  .top-menu-items {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 1);
+    overflow-x: auto;
+  }
+  .top-menu-item {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 2);
+    padding: calc(var(--spacing) * 4);
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    color: var(--color-gray-700);
+    text-transform: uppercase;
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-gray-100);
+      }
+    }
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-gray-900);
+      }
+    }
+    @media (prefers-color-scheme: dark) {
+      color: var(--color-gray-300);
+    }
+    @media (prefers-color-scheme: dark) {
+      &:hover {
+        @media (hover: hover) {
+          background-color: var(--color-gray-800);
+        }
+      }
+    }
+    @media (prefers-color-scheme: dark) {
+      &:hover {
+        @media (hover: hover) {
+          color: var(--color-white);
+        }
+      }
+    }
+  }
+  .top-menu-last-item {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: calc(var(--spacing) * 2);
+    padding: calc(var(--spacing) * 4);
+    font-size: var(--text-xs);
+    line-height: var(--tw-leading, var(--text-xs--line-height));
+    color: var(--color-gray-500);
+    text-transform: uppercase;
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-gray-100);
+      }
+    }
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-gray-900);
+      }
+    }
+    @media (prefers-color-scheme: dark) {
+      color: var(--color-gray-400);
+    }
+    @media (prefers-color-scheme: dark) {
+      &:hover {
+        @media (hover: hover) {
+          background-color: var(--color-gray-800);
+        }
       }
     }
     @media (prefers-color-scheme: dark) {

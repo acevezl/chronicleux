@@ -3,18 +3,6 @@
 <!-- ENTRIES WITH EVALUATION -->
 <div id="analysis-entries-panel">
     <section class="xl:col-span-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden" >
-        <header class="flex items-center justify-between gap-2 p-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-            <div class="flex flex-col">
-                <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        Human Evaluation Queue
-                </h4>
-
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    Review analyzed diary entries and complete the human evaluation for sentiment, dominant theme, and issue(s).
-                </p>
-                
-            </div>
-        </header>
 
         <div class="p-4">
 
@@ -239,95 +227,96 @@
             {% for entry_analysis in entry_analyses %}
                 {% with entry=entry_analysis.entry %}
                     <article class="flex flex-col h-full w-full justify-between rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-                        
-                        <!-- Analysis Header (Shows Entry data) -->
-                        <header class="flex flex-col gap-2 p-2 bg-gray-100 dark:bg-gray-700">
-                            <div class="flex flex-wrap items-center w-full justify-between mb-2">
-                                <span class="xs-label text-nowrap">Created on {{ entry.created_at|date:"M d, Y H:i" }}</span>
-                                <span class="xs-label">{{ entry.source|default:"-" }}</span>
-                            </div>
-                            <div class="block">
-                                <!-- Summary -->
-                                <p class="mb-2 sm-label line-clamp-2">
-                                    {{ entry_analysis.entry_summary|default:"No summary available." }}
-                                </p>
-                                <span class="xs-label text-nowrap">
-                                    Author: {{ entry.participant_display_name|capfirst }}
-                                </span>
-                            </div>
-                        </header>
+                        <div class="justify-baseline">
+                            <!-- Analysis Header (Shows Entry data) -->
+                            <header class="flex flex-col gap-2 p-2 bg-gray-100 dark:bg-gray-700">
+                                <div class="flex flex-wrap items-center w-full justify-between mb-2">
+                                    <span class="xs-label text-nowrap">Created on {{ entry.created_at|date:"M d, Y H:i" }}</span>
+                                    <span class="xs-label">{{ entry.source|default:"-" }}</span>
+                                </div>
+                                <div class="block">
+                                    <!-- Summary -->
+                                    <p class="mb-2 sm-label line-clamp-2">
+                                        {{ entry_analysis.entry_summary|default:"No summary available." }}
+                                    </p>
+                                    <span class="xs-label text-nowrap">
+                                        Author: {{ entry.participant_display_name|capfirst }}
+                                    </span>
+                                </div>
+                            </header>
 
-                        <!-- Analysis Body (Shows Analysis data) -->
-                        <section class="flex flex-col gap-2 p-2">
-                            {% if entry_analysis %}
-                                <span class="xs-label text-nowrap">
-                                    Analyzed on {{ entry_analysis.analyzed_at|date:"M d, Y H:i" }}
-                                </span>
-                                <!-- Analysis chips -->
-                                <div class="flex flex-col gap-3 justify-between text-xs">
+                            <!-- Analysis Body (Shows Analysis data) -->
+                            <section class="flex flex-col gap-2 p-2">
+                                {% if entry_analysis %}
+                                    <span class="xs-label text-nowrap">
+                                        Analyzed on {{ entry_analysis.analyzed_at|date:"M d, Y H:i" }}
+                                    </span>
+                                    <!-- Analysis chips -->
+                                    <div class="flex flex-col gap-3 justify-between text-xs">
 
-                                    <!-- MACHINE ANALYSIS -->
-                                    <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2">
-                                        <p class="xs-label uppercase mb-2">
-                                            Machine analysis
-                                        </p>
+                                        <!-- MACHINE ANALYSIS -->
+                                        <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2">
+                                            <p class="xs-label uppercase mb-2">
+                                                Machine analysis
+                                            </p>
 
-                                        <div class="flex flex-col gap-2">
-                                            <div class="flex flex-wrap items-center gap-1">
-                                                {% include "studies/partials/_badge_sentiment.html" with sentiment=entry_analysis.sentiment_label %}
-
-                                                <span class="badge">
-                                                    Score: {{ entry_analysis.sentiment_score|floatformat:2 }}
-                                                </span>
-                                            </div>
-
-                                            <div class="flex flex-wrap items-center gap-1">
-                                                {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.themes.all %}
-                                            </div>
-
-                                            <div class="flex flex-wrap items-center gap-1">
-                                                {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.issues.all %}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- HUMAN EVALUATION -->
-                                    <div class="rounded-md border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-2">
-                                        <p class="xs-label uppercase mb-2">
-                                            Evaluator assessment
-                                        </p>
-
-                                        {% if entry_analysis.evaluator_sentiment_label or entry_analysis.evaluator_themes.all or entry_analysis.evaluator_issues.all %}
                                             <div class="flex flex-col gap-2">
                                                 <div class="flex flex-wrap items-center gap-1">
-                                                    {% if entry_analysis.evaluator_sentiment_label %}
-                                                        {% include "studies/partials/_badge_sentiment.html" with sentiment=entry_analysis.evaluator_sentiment_label %}
-                                                    {% else %}
-                                                        <span class="badge">No sentiment assessed</span>
-                                                    {% endif %}
+                                                    {% include "studies/partials/_badge_sentiment.html" with sentiment=entry_analysis.sentiment_label %}
+
+                                                    <span class="badge">
+                                                        Score: {{ entry_analysis.sentiment_score|floatformat:2 }}
+                                                    </span>
                                                 </div>
 
                                                 <div class="flex flex-wrap items-center gap-1">
-                                                    {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.evaluator_themes.all %}
+                                                    {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.themes.all %}
                                                 </div>
 
                                                 <div class="flex flex-wrap items-center gap-1">
-                                                    {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.evaluator_issues.all %}
+                                                    {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.issues.all %}
                                                 </div>
                                             </div>
-                                        {% else %}
-                                            <span class="message-warning">
-                                                Pending human evaluation
-                                            </span>
-                                        {% endif %}
+                                        </div>
+
+                                        <!-- HUMAN EVALUATION -->
+                                        <div class="rounded-md border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-2">
+                                            <p class="xs-label uppercase mb-2">
+                                                Evaluator assessment
+                                            </p>
+
+                                            {% if entry_analysis.evaluator_sentiment_label or entry_analysis.evaluator_themes.all or entry_analysis.evaluator_issues.all %}
+                                                <div class="flex flex-col gap-2">
+                                                    <div class="flex flex-wrap items-center gap-1">
+                                                        {% if entry_analysis.evaluator_sentiment_label %}
+                                                            {% include "studies/partials/_badge_sentiment.html" with sentiment=entry_analysis.evaluator_sentiment_label %}
+                                                        {% else %}
+                                                            <span class="badge">No sentiment assessed</span>
+                                                        {% endif %}
+                                                    </div>
+
+                                                    <div class="flex flex-wrap items-center gap-1">
+                                                        {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.evaluator_themes.all %}
+                                                    </div>
+
+                                                    <div class="flex flex-wrap items-center gap-1">
+                                                        {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.evaluator_issues.all %}
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <span class="message-warning">
+                                                    Pending human evaluation
+                                                </span>
+                                            {% endif %}
+                                        </div>
                                     </div>
-                                </div>
-                            {% else %}
-                                <div class="mt-2 text-sm text-gray-500 dark:text-gray-400 text-nowrap">
-                                    No analysis available for this entry.
-                                </div>
-                            {% endif %}
-                        </section>
+                                {% else %}
+                                    <div class="mt-2 text-sm text-gray-500 dark:text-gray-400 text-nowrap">
+                                        No analysis available for this entry.
+                                    </div>
+                                {% endif %}
+                            </section>
+                        </div>
                         <footer class="flex gap-2 p-2">
                             <!-- Link to entry -->
                             <a href="{% url 'evaluate_entry_analysis' study.pk run.pk entry_analysis.pk %}"

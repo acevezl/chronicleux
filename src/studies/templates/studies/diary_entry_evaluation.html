@@ -9,7 +9,7 @@
 
 <div class="sticky-top">
     {% include "studies/partials/_header.html" with study=study page_title_heroicon=page_title_heroicon page_title=page_title page_subtitle=page_subtitle %}
-    {% include "studies/partials/_menu_analysis_actions.html" with study=study run=run %}
+    {% include "studies/partials/_menu_study.html" with study=study run=run %}
 </div>
 
 <div class="p-4">
@@ -19,11 +19,11 @@
         <!-- PAGE HEADER -->
         <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
 
-            <div>
-                <h2 class="card-summary-title">
+            <div class="flex flex-col">
+                <h4 class="md-card-title">
                     {% heroicon_outline "clipboard-document-check" %}
                     Human Evaluation
-                </h2>
+                </h4>
 
                 <p class="card-summary-subtitle">
                     Review the machine analysis and provide the evaluator classification for this diary entry.

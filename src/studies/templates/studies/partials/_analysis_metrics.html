@@ -7,13 +7,13 @@
     <div class="main-card overflow-hidden">
 
         <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
-            <div>
+            <div class="flex flex-col">
                 <h4 class="card-summary-title">
-                    {% heroicon_outline "chart-bar-square" %}
+                    {% heroicon_outline "chart-bar" class="shrink-0" %}
                     Machine Analysis Metrics
                 </h4>
 
-                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                <p class="xs-label">
                     Evaluation metrics comparing machine analysis results against participant reports and evaluator assessments.
                 </p>
             </div>
@@ -114,7 +114,7 @@
                 Per-Category Metrics
             </h4>
 
-            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            <p class="xs-label">
                 Breakdown of performance by sentiment category, showing where the machine analysis aligns or diverges from human-provided labels.
             </p>
         </div>

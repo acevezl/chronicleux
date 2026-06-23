@@ -8,12 +8,35 @@
 
 <div class="sticky-top">
     {% include "studies/partials/_header.html" with study=study page_title_heroicon=page_title_heroicon page_title=page_title page_subtitle=page_subtitle%}
-    {% include "studies/partials/_menu_analysis_actions.html" with study=study run=run %}
+    {% include "studies/partials/_menu_study.html" %}
 </div>
 
 <div class="p-4">
     {% include "studies/partials/_messages.html" %}
-    <div class="main-card">
+    <article class="group main-card flex max-h-[calc(100vh-12rem)] flex-col overflow-hidden">
+
+        <!-- CARD TITLE (I.E., SUMMARY) -->
+        <div class="card-summary">
+            <div class="flex flex-col">
+                <h3 class="card-summary-title">
+                    {% heroicon_outline "code-bracket-square" %}
+                    Diary Analysis Run # {{run.pk}}
+                </h3>
+                <p class="card-summary-subtitle">
+                    
+                </p>
+            </div>
+            <div class="flex justify-end gap-3">
+                <a
+                href="{% url 'analysis_runs' study.id %}"
+                class="button-TERTIARY"
+                >
+                    {% heroicon_outline "cpu-chip" class="h-4 w-4 shrink-0" %}
+                    {% heroicon_outline "arrow-left" class="h-4 w-4 shrink-0" %}
+                    Back to Analyses
+                </a>
+            </div>
+        </div>
 
         <!-- TAB MENU -->
         <div class="tab-menu">
@@ -98,12 +121,11 @@
                         Entries
                     </span>
                 </label>
-
             </div>
         </div>
 
         <!-- TAB CONTENT -->
-        <div class="p-4">
+        <div class="min-h-0 flex-1 overflow-y-auto p-4">
 
             <!-- OVERVIEW -->
             <section data-analysis-tab-panel="overview">
@@ -137,7 +159,7 @@
 
         </div>
 
-    </div>
+    </article>
 
 </div>
 

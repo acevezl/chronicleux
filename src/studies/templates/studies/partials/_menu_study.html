@@ -1,0 +1,57 @@
+{% load heroicons %}
+
+<nav class="top-menu px-4">
+	<div class="top-menu-items">
+
+		<a
+			href="{% url 'diary_study_detail' study.pk %}"
+			class="top-menu-item"
+		>
+			{% heroicon_outline "newspaper" class="h-4 w-4 shrink-0" %}
+			Details
+		</a>
+
+		<a
+			href="{% url 'entries' study.pk %}"
+			class="top-menu-item"
+		>
+			{% heroicon_outline "document-text" class="h-4 w-4 shrink-0" %}
+			Entries
+		</a>
+
+		<a
+			href="{% url 'analysis_runs' study.pk %}"
+			class="top-menu-item"
+		>
+			{% heroicon_outline "cpu-chip" class="h-4 w-4 shrink-0" %}
+			Analysis
+		</a>
+
+		<div class="h-5 w-px bg-gray-200 dark:bg-gray-700 mx-2"></div>
+
+		<a
+			href="{% url 'manage_evaluators' study.pk %}"
+			class="top-menu-item"
+		>
+			{% heroicon_outline "user-circle" class="h-4 w-4 shrink-0" %}
+			Evaluators
+		</a>
+
+		<a
+			href="{% url 'manage_participants' study.pk %}"
+			class="top-menu-item"
+		>
+			{% heroicon_outline "users" class="h-4 w-4 shrink-0" %}
+			Participants
+		</a>
+
+		<a
+			href="{% url 'studies' %}"
+			class="top-menu-last-item"
+		>
+			{% heroicon_outline "arrow-left" class="h-4 w-4 shrink-0" %}
+			Back to studies
+		</a>
+
+	</div>
+</nav>

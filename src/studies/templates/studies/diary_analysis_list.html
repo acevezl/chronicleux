@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load heroicons %}
+
+{% block title %}Analysis Runs · ChronicleUX{% endblock %}
+
+{% block content %}
+    
+    <div class="sticky-top">
+        {% include "studies/partials/_header.html" with page_title_heroicon=page_title_heroicon page_title=page_title page_subtitle=page_subtitle%}
+        {% include "studies/partials/_menu_study.html" %}
+    </div>
+
+    <div class="p-4">
+        {% include "studies/partials/_messages.html" %}
+        {% include "studies/partials/_analysis_runs_study_level.html" with study=study is_evaluator=is_evaluator %}
+    </div>
+
+{% endblock %}

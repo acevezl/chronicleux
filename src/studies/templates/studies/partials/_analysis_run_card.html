@@ -6,9 +6,9 @@
     <!-- HEADER -->
     <header class="flex items-start justify-between gap-2 border-b border-gray-200 px-3 py-2 dark:border-gray-700 bg-gray-100 dark:bg-gray-600">
         <div class="min-w-0">
-            <div class="flex items-center gap-1.5 font-semibold text-gray-900 dark:text-gray-100">
-                {% heroicon_outline "code-bracket-square" class="h-4 w-4 shrink-0" %}
-                <span>RUN-{{ run.id|stringformat:"03d" }}</span>
+            <div class="flex items-center gap-1.5 md-card-title">
+                {% heroicon_outline "code-bracket-square" class="shrink-0" %}
+                <span>Diary Analysis Run # {{ run.id|stringformat:"03d" }}</span>
             </div>
 
             <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-500 dark:text-gray-400">
@@ -110,7 +110,7 @@
                 href="{% url 'machine_analysis_details' run.study_id run.pk %}"
                 class="button-PRIMARY"
             >
-                {% heroicon_outline "chart-bar-square" class="h-4 w-4 shrink-0" %}
+                {% heroicon_outline "code-bracket-square" class="h-4 w-4 shrink-0" %}
                 View details
             </a>
         {% else %}

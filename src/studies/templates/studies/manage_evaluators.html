@@ -6,28 +6,25 @@
 {% block content %}
 	<div class="sticky-top">
 		{% include "studies/partials/_header.html" with study=study page_title_heroicon=page_title_heroicon page_title=page_title page_subtitle=page_subtitle%}
-		{% include "studies/partials/_menu_back_to_study.html" with study=study %}
+		{% include "studies/partials/_menu_study.html" %}
 	</div>
 
 	<div class="p-4">
 		{% include "studies/partials/_messages.html" %}
 
-		<details open class="group main-card">
+		<article class="group main-card flex max-h-[calc(100vh-12rem)] flex-col overflow-hidden">
 
 			<!-- CARD TITLE (I.E., SUMMARY) -->
 			<summary class="card-summary">
 				<div class="flex flex-col">
 					<h3 class="card-summary-title">
-						{% heroicon_outline "chart-bar-square" %}
+						{% heroicon_outline "user-circle" %}
 						Manage Evaluators
 					</h3>
 					<p class="top-subtitle">
 						Add or remove registered evaluators for {{ study.title }}.
 					</p>
 				</div>
-				<span class="card-summary-chevron">
-					{% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
-				</span>
 			</summary>
 
 			<div class="px-6 py-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600">
@@ -144,6 +141,6 @@
 
 			</div>
 
-		</div>
+		</article>
 	</div>
 {% endblock %}

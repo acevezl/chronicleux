@@ -7,28 +7,36 @@
 	{% endif %}
 {% endfor %}
 
-<article open class="group main-card flex max-h-[calc(100vh-9rem)] flex-col overflow-hidden">
+<article class="group main-card flex max-h-[calc(100vh-12rem)] flex-col overflow-hidden">
 
 	<!-- CARD TITLE (I.E., SUMMARY) -->
 	<div class="card-summary">
 		<div class="flex flex-col">
-			<span class="card-summary-title">
+			<h3 class="card-summary-title">
 				{% heroicon_outline "cpu-chip" %}
 				Machine Analysis Runs
-			</span>
-
-			<p class="card-summary-subtitle">
+			</h3>
+			<div class="card-summary-subtitle">
 				Machine-generated analyses for this study.
-			</p>
+			</div>
 		</div>
-
+		{% if study.entries.count > 0 %}
+		<div class="flex justify-end gap-3">
+			<a 
+				href="{% url 'select_analysis_methods' study.pk %}"
+				class="button-SECONDARY"
+			>
+				{% heroicon_outline "sparkles" class="h-4 w-4 shrink-0" %}
+				Run Machine Analysis
+			</a>
+		</div>
+		{% endif %}
 	</div>
 
 	<!-- ANALYSIS RUNS -->
-	 
 	<div class="min-h-0 flex-1 overflow-y-auto p-4">
 		{% if analysis_runs %}
-			<div class="grid grid-cols-1 gap-2">
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 				{% for run in analysis_runs %}
 
 					<!-- ANALYSIS RUN CARD -->
@@ -50,7 +58,7 @@
 						</div>
 
 						<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-							Once machine analysis is executed, each run will appear here with its methods, dominant sentiment and detected themes.
+							Once machine analyses are executed, each run will appear here with its methods, dominant sentiment and detected themes.
 						</p>
 					</div>
 				</div>

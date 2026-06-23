@@ -721,7 +721,7 @@ def select_analysis_methods(request, pk):
 		"llm_providers": get_available_llm_providers(),
 	}
 
-	return render(request, "studies/select_analysis_methods.html", context)
+	return render(request, "studies/diary_analysis_select_methods.html", context)
 
 
 # -------------------- #
@@ -875,7 +875,7 @@ def machine_analysis_details(request, study_pk, run_pk):
 
 	return render(
 		request,
-		"studies/analysis_details.html",
+		"studies/diary_analysis_details.html",
 		context
 	)
 
@@ -918,7 +918,9 @@ def machine_analysis_entries_partial(request, study_pk, run_pk):
 # ANALYSIS RUNS (LIST OF)       #
 # ----------------------------- #
 @login_required
-def analysis_runs(request):
+def analysis_runs(request, study_pk):
+
+	study = get_object_or_404(Study, pk=study_pk)
 
 	runs = StudyAnalysisRun.objects.select_related(
 		"study",
@@ -928,13 +930,13 @@ def analysis_runs(request):
 		"themes",
 		"issues",
 	).filter(
-		created_by=request.user
+		study=study,
+		created_by=request.user,
 	)
 
 	# Filtering
 	q = request.GET.get("q")
 	status = request.GET.get("status")
-	study_title = request.GET.get("study")
 	model = request.GET.get("model")
 	sentiment_method = request.GET.get("sentiment_method")
 	theme_method = request.GET.get("theme_method")
@@ -949,9 +951,6 @@ def analysis_runs(request):
 
 	if status:
 		runs = runs.filter(status=status)
-
-	if study_title:
-		runs = runs.filter(study__title__icontains=study_title)
 
 	if model:
 		runs = runs.filter(analysis_model__icontains=model)
@@ -995,29 +994,38 @@ def analysis_runs(request):
 	page_params.pop("page", None)
 
 	context = {
-		"page_title_heroicon":"book-open",
+		"study": study,
+		"page_title_heroicon": "book-open",
 		"page_title": "Machine Analysis Runs",
-		"page_subtitle": "Analysis analyzed by NLP techniques or Large-Language Models",
+		"page_subtitle": f"Analysis runs for {study.title}",
 		"analysis_runs": page_obj,
 		"page_obj": page_obj,
 		"sort": sort,
 		"sort_params": sort_params,
 		"page_params": page_params,
 		"status_choices": AnalysisRunStatus.choices,
-		"analysis_runs_filter_url": reverse("analysis_runs_partial"),
+		"analysis_runs_filter_url": reverse(
+			"analysis_runs_partial",
+			kwargs={"study_pk": study.pk},
+		),
 	}
 
-	return render(request, "studies/analysis_run_list.html", context)
+	return render(request, "studies/diary_analysis_list.html", context)
 
 
 # ----------------------------- #
 # ANALYSIS RUNS PARTIAL         #
 # ----------------------------- #
 @login_required
-def analysis_runs_partial(request):
+def analysis_runs_partial(request, study_pk):
+
+	study = get_object_or_404(DiaryStudy, pk=study_pk)
 
 	if request.headers.get("HX-Request") != "true":
-		url = reverse("analysis_runs")
+		url = reverse(
+			"analysis_runs",
+			kwargs={"study_pk": study.pk},
+		)
 		querystring = request.GET.urlencode()
 
 		if querystring:
@@ -1033,13 +1041,13 @@ def analysis_runs_partial(request):
 		"themes",
 		"issues",
 	).filter(
-		created_by=request.user
+		study=study,
+		created_by=request.user,
 	)
 
 	# Filtering
 	q = request.GET.get("q")
 	status = request.GET.get("status")
-	study = request.GET.get("study")
 	model = request.GET.get("model")
 	sentiment_method = request.GET.get("sentiment_method")
 	theme_method = request.GET.get("theme_method")
@@ -1054,9 +1062,6 @@ def analysis_runs_partial(request):
 
 	if status:
 		runs = runs.filter(status=status)
-
-	if study:
-		runs = runs.filter(study__title__icontains=study)
 
 	if model:
 		runs = runs.filter(analysis_model__icontains=model)
@@ -1100,13 +1105,17 @@ def analysis_runs_partial(request):
 	page_params.pop("page", None)
 
 	context = {
+		"study": study,
 		"analysis_runs": page_obj,
 		"page_obj": page_obj,
 		"sort": sort,
 		"sort_params": sort_params,
 		"page_params": page_params,
 		"status_choices": AnalysisRunStatus.choices,
-		"analysis_runs_filter_url": reverse("analysis_runs_partial"),
+		"analysis_runs_filter_url": reverse(
+			"analysis_runs_partial",
+			kwargs={"study_pk": study.pk},
+		),
 	}
 
 	response = render(
@@ -1115,7 +1124,10 @@ def analysis_runs_partial(request):
 		context,
 	)
 
-	full_page_url = reverse("analysis_runs")
+	full_page_url = reverse(
+		"analysis_runs",
+		kwargs={"study_pk": study.pk},
+	)
 	querystring = request.GET.urlencode()
 
 	if querystring:

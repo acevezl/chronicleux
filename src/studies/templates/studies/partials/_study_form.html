@@ -1,0 +1,360 @@
+{% load heroicons %}
+{% load formatters %}
+
+<form method="post" class="group main-card">
+
+	<!-- CARD TITLE (I.E., SUMMARY) -->
+	<div class="card-summary">
+
+		<div class="flex flex-col">
+			<h3 class="card-summary-title">
+				{% heroicon_outline "newspaper" %}
+				Study Details
+            </h3>
+
+			<p class="card-summary-subtitle">
+				Goals, research framing, participant instructions, collection period and study-related metadata.
+			</p>
+		</div>
+
+        <div class="flex justify-end gap-3">
+            <button
+                type="submit"
+                class="button-PRIMARY"
+            >
+                Save
+            </button>
+
+            {% if study %}
+            <a
+                href="{% url 'diary_study_detail' study.id %}"
+                class="button-TERTIARY"
+            >
+                Discard changes
+            </a>
+            {% else %}
+            <a
+                href="{% url 'studies' %}"
+                class="button-TERTIARY"
+            >
+                Cancel
+            </a>
+            {% endif %}
+        </div>
+
+	</div>
+
+	<!-- STUDY DATA -->
+    <section class="grid grid-cols-1 lg:grid-cols-4 gap-4 p-4">
+        {% csrf_token %}
+
+        <!-- MAIN STUDY CONTENT -->
+        <div class="lg:col-span-3 grid grid-cols-1 gap-4">
+
+            <!-- TITLE -->
+            <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+                <label for="{{ form.title.id_for_label }}" class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {% heroicon_outline "flag" class="h-4 w-4 shrink-0" %}
+                    Study Title
+                </label>
+
+                {% if form.title.help_text %}
+                        <p class="xs-label">
+                        {{ form.title.help_text }}
+                        </p>
+                {% endif %}
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.title.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+            
+            <!-- GOAL -->
+            <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+                <label for="{{ form.goal.id_for_label }}"class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {% heroicon_outline "flag" class="h-4 w-4 shrink-0" %}
+                    Study Goal
+                </label>
+
+                {% if form.goal.help_text %}
+                        <p class="xs-label">
+                        {{ form.goal.help_text }}
+                        </p>
+                {% endif %}
+                {{ form.goal }}
+                {% if form.goal.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.goal.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+
+            <!-- DESCRIPTION -->
+            <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+                <label for="{{ form.description.id_for_label }}"  class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {% heroicon_outline "document-text" class="h-4 w-4 shrink-0" %}
+                    Description
+                </label>
+
+                {% if form.description.help_text %}
+                        <p class="xs-label">
+                        {{ form.description.help_text }}
+                        </p>
+                {% endif %}
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.description.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+
+            <!-- HYPOTHESES -->
+            <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+                <label for="{{ form.hypotheses.id_for_label }}" class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {% heroicon_outline "light-bulb" class="h-4 w-4 shrink-0" %}
+                    Hypotheses
+                </label>
+
+                {% if form.hypotheses.help_text %}
+                        <p class="xs-label">
+                        {{ form.hypotheses.help_text }}
+                        </p>
+                {% endif %}
+                {{ form.hypotheses }}
+                {% if form.hypotheses.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.hypotheses.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+
+            <!-- PARTICIPANT INSTRUCTIONS -->
+            <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+                <label for="{{ form.participant_instructions.id_for_label }}" class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {% heroicon_outline "clipboard-document-list" class="h-4 w-4 shrink-0" %}
+                    Participant Instructions
+                </label>
+
+                {% if form.participant_instructions.help_text %}
+                        <p class="xs-label">
+                        {{ form.participant_instructions.help_text }}
+                        </p>
+                {% endif %}
+                {{ form.participant_instructions }}
+                {% if form.participant_instructions.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.participant_instructions.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+
+            <!-- CONTEXT -->
+            <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+                <label for="{{ form.context.id_for_label }}" class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {% heroicon_outline "chat-bubble-left-right" class="h-4 w-4 shrink-0" %}
+                    Entries Context
+                </label>
+
+                {% if form.context.help_text %}
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-100">
+                        {{ form.context.help_text }}
+                        </p>
+                {% endif %}
+                {{ form.context }}
+                {% if form.context.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.context.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- SIDE METADATA -->
+        <div class="lg:col-span-1 space-y-4">
+
+            {% if study %}
+            <!-- OVERALL SENTIMENT -->
+            <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+                <div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {% heroicon_outline "face-smile" class="h-4 w-4 shrink-0" %}
+                    Overall Sentiment
+                </div>
+
+                <div class="mt-2 text-sm">
+                    {% if study.dominant_sentiment_label %}
+                        {% include "studies/partials/_badge_sentiment.html" with sentiment=study.dominant_sentiment_label %}
+                    {% else %}
+                        <span class="inline-flex items-center rounded-full bg-gray-200 gap-1 px-2 py-1 text-xs font-medium text-gray-800 inset-ring inset-ring-gray-500/10 border border-gray-800">
+                            {% heroicon_outline "ellipsis-horizontal-circle" class="h-4 w-4 shrink-0" %}
+                            Pending Analysis
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- STATUS -->
+            <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+                <label for="{{ form.status.id_for_label }}"class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {% heroicon_outline "signal" class="h-4 w-4 shrink-0" %}
+                    Status
+                </label>
+                
+                {{ form.status }}
+                {% if form.status.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.status.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+
+            <!-- ENTRY FREQUENCY -->
+            <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+                <label for="{{ form.entry_frequency.id_for_label }}"  class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {% heroicon_outline "arrow-path" class="h-4 w-4 shrink-0" %}
+                    Entry Frequency
+                </label>
+
+                {{ form.entry_frequency }}
+                {% if form.entry_frequency.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.entry_frequency.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+
+            <!-- COLLECTION PERIOD -->
+            <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+                <div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {% heroicon_outline "calendar-days" class="h-4 w-4 shrink-0" %}
+                    Collection Period
+                </div>
+
+                <div class="mt-2 text-sm text-gray-900 dark:text-gray-100">
+                    <!-- START AND END DATES -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="{{ form.data_collection_start.id_for_label }}" class="xs-label">
+                                Data collection start
+                            </label>
+                            {{ form.data_collection_start }}
+                            {% if form.data_collection_start.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.data_collection_start.errors|join:", " }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label for="{{ form.data_collection_end.id_for_label }}" class="xs-label">
+                                Data collection end
+                            </label>
+                            {{ form.data_collection_end }}
+                            {% if form.data_collection_end.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.data_collection_end.errors|join:", " }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAGS -->
+            <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+                <label for="tags-entry"  class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {% heroicon_outline "tag" class="h-4 w-4 shrink-0" %}
+                    Tags
+                </label>
+
+                {% if form.tags.help_text %}
+                        <p class="xs-label">
+                        {{ form.tags.help_text }}
+                        </p>
+                {% endif %}
+
+                <input
+                        id="tags-entry"
+                        type="text"
+                        class="text-gray-600 mt-1 px-2 block w-full rounded-sm border border-gray-300 focus:ring-gray-700 dark:text-gray-200"
+                        placeholder="{{ form.tags.field.widget.attrs.placeholder }}"
+                        data-role="tags-entry"
+                >
+
+                {{ form.tags.as_hidden }}
+
+                <div data-role="tags-container" class="flex flex-wrap gap-2 mt-2"></div>
+
+                {% if form.tags.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.tags.errors|join:", " }}</p>
+                {% endif %}
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class=".message-error">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            
+
+        </div>
+
+    </section>
+
+
+</form>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+    const entryInput = document.querySelector('[data-role="tags-entry"]');
+    const hiddenInput = document.querySelector('input[name="tags"]');
+    const container = document.querySelector('[data-role="tags-container"]');
+
+    if (!entryInput || !hiddenInput || !container) return;
+
+    let tags = hiddenInput.value
+            ? hiddenInput.value.split(",").map(tag => tag.trim()).filter(Boolean)
+            : [];
+
+    function syncHiddenInput() {
+            hiddenInput.value = tags.join(", ");
+    }
+
+    function renderTags() {
+            container.innerHTML = "";
+
+            tags.forEach((tag, index) => {
+            const tagEl = document.createElement("span");
+            tagEl.className = "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs text-fuchsia-700 border border-fuchsia-700";
+
+            const textEl = document.createElement("span");
+            textEl.textContent = tag;
+
+            const buttonEl = document.createElement("button");
+            buttonEl.type = "button";
+            buttonEl.className = "text-fuchsia-700 font-bold cursor-pointer";
+            buttonEl.setAttribute("aria-label", `Remove ${tag}`);
+            buttonEl.textContent = "×";
+            buttonEl.addEventListener("click", () => {
+                    tags.splice(index, 1);
+                    syncHiddenInput();
+                    renderTags();
+            });
+
+            tagEl.appendChild(textEl);
+            tagEl.appendChild(buttonEl);
+            container.appendChild(tagEl);
+            });
+    }
+
+    function addTag(rawValue) {
+            const tag = rawValue.trim().replace(/,+$/, "");
+            if (!tag) return;
+            if (tags.includes(tag)) return;
+
+            tags.push(tag);
+            syncHiddenInput();
+            renderTags();
+            entryInput.value = "";
+    }
+
+    entryInput.addEventListener("keydown", (event) => {
+            if (event.key === ",") {
+            event.preventDefault();
+            addTag(entryInput.value);
+            }
+    });
+
+    entryInput.addEventListener("blur", () => {
+            addTag(entryInput.value);
+    });
+
+    syncHiddenInput();
+    renderTags();
+    });
+</script>

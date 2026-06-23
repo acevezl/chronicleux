@@ -16,7 +16,7 @@
 
                     <!-- CATEGORY HEADER -->
                     <header class="px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                        <h5 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        <h5 class="text-sm md-card-title">
                             {{ category|humanize_enum|upper }}
                         </h5>
                         <p class="text-xs text-gray-500 dark:text-gray-400">
@@ -31,7 +31,7 @@
 
                             <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2">
                                 <span class="xs-label">Accuracy</span>
-                                <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                <p class="mt-1 text-sm md-card-title">
                                     {% if metrics.accuracy is not None %}
                                         {{ metrics.accuracy|floatformat:3 }}
                                     {% else %}
@@ -42,7 +42,7 @@
 
                             <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2">
                                 <span class="xs-label">Precision</span>
-                                <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                <p class="mt-1 text-sm md-card-title">
                                     {% if metrics.precision is not None %}
                                         {{ metrics.precision|floatformat:3 }}
                                     {% else %}
@@ -53,7 +53,7 @@
 
                             <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2">
                                 <span class="xs-label">Recall</span>
-                                <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                <p class="mt-1 text-sm md-card-title">
                                     {% if metrics.recall is not None %}
                                         {{ metrics.recall|floatformat:3 }}
                                     {% else %}
@@ -64,7 +64,7 @@
 
                             <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2">
                                 <span class="xs-label">F1</span>
-                                <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                <p class="mt-1 text-sm md-card-title">
                                     {% if metrics.f1 is not None %}
                                         {{ metrics.f1|floatformat:3 }}
                                     {% else %}

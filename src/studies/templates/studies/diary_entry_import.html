@@ -8,27 +8,34 @@
 
     <div class="sticky-top">
         {% include "studies/partials/_header.html" with study=study page_title_heroicon=page_title_heroicon page_title=page_title page_subtitle=page_subtitle%}
-        {% include "studies/partials/_menu_back_to_study.html" with study=study %}
+        {% include "studies/partials/_menu_study.html" %}
     </div>
 
     <div class="p-4">
-        <details open class="group main-card">
+        <article class="group main-card">
 
             <!-- CARD TITLE (I.E., SUMMARY) -->
-            <summary class="card-summary">
+            <div class="card-summary">
                 <div class="flex flex-col">
                     <h3 class="card-summary-title">
                         {% heroicon_outline "arrow-up-on-square-stack" %}
                         Import Entries
                     </h3>
-                    <p class="top-subtitle">
+                    <p class="card-summary-subtitle">
                         Upload diary entries from external sources.
                     </p>
                 </div>
-                <span class="card-summary-chevron">
-                    {% heroicon_outline "chevron-down" class="h-4 w-4 text-gray-500" %}
-                </span>
-            </summary>
+                <div class="flex justify-end gap-3">
+                    <a
+                        href="{% url 'entries' study.pk %}"
+                        class="button-SECONDARY"
+                    >
+                        {% heroicon_outline "document-text" class="h-4 w-4 shrink-0" %}
+                        {% heroicon_outline "arrow-left" class="h-4 w-4 shrink-0" %}
+                        Back to Entries
+                    </a>
+                </div>
+            </div>
 
             <!-- CARD DETAILS -->
             <div class="p-4">
@@ -45,7 +52,7 @@
 
                         <p class="message-default my-2">
                             {% heroicon_outline "chat-bubble-oval-left" class="h-4 w-4"%}
-                            Upload a UTF-8 CSV file using the diary entry import template.
+                            Upload a UTF-8 CSV file using the expected CSV format described below.
                         </p>
 
                         <input
@@ -58,10 +65,19 @@
                         >
                     </div>
 
+                    <div class="flex gap-3">
+                        <button
+                            class="button-PRIMARY"
+                            type="submit">
+                            {% heroicon_outline "arrow-up-on-square-stack" class="h-4 w-4 shrink-0" %}
+                            Import Entries
+                        </button>
+                    </div>
+
                     <!-- CSV FORMAT -->
                     <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
 
-                        <h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        <h2 class="text-sm md-card-title">
                             Expected CSV format
                         </h2>
 
@@ -142,27 +158,22 @@
                             Example CSV
                         </label>
 
-                        <textarea
+                        <div
                             id="csv-example"
                             readonly
                             rows="5"
                             class="mt-2 w-full rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-2 text-xs text-gray-700 dark:text-gray-200"
-                        >participant_external_id,participant_display_name,participant_email,sentiment_self_report,issue_encountered,content,created_at
-P001,Participant 1,participant1@example.com,NEGATIVE,true,I could not find the settings page after the update.,2026-06-17 14:30:00
-P002,Participant 2,participant2@example.com,POSITIVE,false,The reminder helped me complete my task today.,2026-06-17 18:10:00</textarea>
+                        >
+                            participant_external_id,participant_display_name,participant_email,sentiment_self_report,issue_encountered,content,created_at<br/>
+                            P001,Participant 1,participant1@example.com,NEGATIVE,true,I could not find the settings page after the update.,2026-06-17 14:30:00<br/>
+                            P002,Participant 2,participant2@example.com,POSITIVE,false,The reminder helped me complete my task today.,2026-06-17 18:10:00<br/>
+                        </div>
                     </div>
 
-                    <div class="flex justify-end gap-3 pt-4">
-                        <button
-                            class="button-PRIMARY"
-                            type="submit">
-                            {% heroicon_outline "arrow-up-on-square-stack" class="h-4 w-4 shrink-0" %}
-                            Import Entries
-                        </button>
-                    </div>
+                    
                 </form>
             </div>
 
-        </details>
+        </article>
     </div>
 {% endblock %}

@@ -12,7 +12,7 @@
 
             <div class="rounded-md border border-gray-200 dark:border-gray-700 p-3">
                 <span class="xs-label">Accuracy</span>
-                <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">
+                <p class="mt-1 text-xl md-card-title">
                     {% if run.run_accuracy_v_evaluator is not None %}
                         {{ run.run_accuracy_v_evaluator|floatformat:3 }}
                     {% else %}
@@ -23,7 +23,7 @@
 
             <div class="rounded-md border border-gray-200 dark:border-gray-700 p-3">
                 <span class="xs-label">Precision</span>
-                <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">
+                <p class="mt-1 text-xl md-card-title">
                     {% if run.run_precision_v_evaluator is not None %}
                         {{ run.run_precision_v_evaluator|floatformat:3 }}
                     {% else %}
@@ -34,7 +34,7 @@
 
             <div class="rounded-md border border-gray-200 dark:border-gray-700 p-3">
                 <span class="xs-label">Recall</span>
-                <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">
+                <p class="mt-1 text-xl md-card-title">
                     {% if run.run_recall_v_evaluator is not None %}
                         {{ run.run_recall_v_evaluator|floatformat:3 }}
                     {% else %}
@@ -45,7 +45,7 @@
 
             <div class="rounded-md border border-gray-200 dark:border-gray-700 p-3">
                 <span class="xs-label">F1 score</span>
-                <p class="mt-1 text-xl font-semibold text-gray-900 dark:text-gray-100">
+                <p class="mt-1 text-xl md-card-title">
                     {% if run.run_f1_v_evaluator is not None %}
                         {{ run.run_f1_v_evaluator|floatformat:3 }}
                     {% else %}
