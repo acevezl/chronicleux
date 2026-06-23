@@ -1,12 +1,14 @@
 {% load heroicons %}
 
-{% if status_value in "PLANNING COLLECTING MACHINE_ANALYSIS HUMAN_ANALYSIS COMPLETED" %}
+{% if status_value in "PLANNING COLLECTING ANALYZING MACHINE_ANALYSIS HUMAN_ANALYSIS COMPLETED" %}
 	<span class="status-cell-{{ status_value }}">
 
 		{% if status_value == "PLANNING" %}
 			{% heroicon_outline "pencil-square" class="h-4 w-4 shrink-0" %}
 		{% elif status_value == "COLLECTING" %}
 			{% heroicon_outline "inbox-arrow-down" class="h-4 w-4 shrink-0" %}
+		{% elif status_value == "ANALYZING" %}
+			{% heroicon_outline "cpu-chip" class="h-4 w-4 shrink-0" %}
 		{% elif status_value == "MACHINE_ANALYSIS" %}
 			{% heroicon_outline "cpu-chip" class="h-4 w-4 shrink-0" %}
 		{% elif status_value == "HUMAN_ANALYSIS" %}

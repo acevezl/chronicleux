@@ -993,11 +993,18 @@ def analysis_runs(request, study_pk):
 	page_params = request.GET.copy()
 	page_params.pop("page", None)
 
+	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
+
+	created_at = date_format(
+		timezone.localtime(study.created_at),
+		"j M Y, H:i"
+	)
+
 	context = {
 		"study": study,
-		"page_title_heroicon": "book-open",
-		"page_title": "Machine Analysis Runs",
-		"page_subtitle": f"Analysis runs for {study.title}",
+		"page_title_heroicon":"book-open",
+		"page_title":study.title,
+		"page_subtitle": f"Owner: {owner_name}, Created on: {created_at}",
 		"analysis_runs": page_obj,
 		"page_obj": page_obj,
 		"sort": sort,
@@ -1548,109 +1555,6 @@ def canonical_issue_import(request):
 	)
 
 
-# -------------------------- #
-# HUMAN EVALUATION QUEUE    #
-# -------------------------- #
-@login_required
-def human_evaluation_queue(request, study_pk, run_pk):
-	study = get_object_or_404(Study, pk=study_pk)
-	
-	run = get_object_or_404(
-		StudyAnalysisRun.objects
-		.select_related("dominant_theme")
-		.prefetch_related("themes", "issues"),
-		pk=run_pk,
-		study=study,
-	)
-
-	if not user_can_evaluate_study(request.user, study):
-		return HttpResponseForbidden()
-
-	context = filter_analysis_entries(request, study, run)
-
-	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
-
-	created_at = date_format(
-		timezone.localtime(study.created_at),
-		"j M Y, H:i"
-	)
-
-	context.update({
-		"page_title_heroicon": "book-open",
-		"page_title": study.title,
-		"page_subtitle": f"Owner: {owner_name}, Created on: {created_at}",
-		"study": study,
-		"run": run,
-		"is_human_evaluation_queue": True,
-		"machine_analysis_entries_filter_url": reverse(
-			"human_evaluation_queue_partial",
-			args=[study.pk, run.pk],
-		),
-	})
-
-	return render(
-		request,
-		"studies/human_evaluation_queue.html",
-		context
-	)
-
-
-# ------------------------------ #
-# HUMAN EVALUATION QUEUE PARTIAL #
-# ------------------------------ #
-@login_required
-def human_evaluation_queue_partial(request, study_pk, run_pk):
-	study = get_object_or_404(Study, pk=study_pk)
-	
-	run = get_object_or_404(
-		StudyAnalysisRun.objects
-		.select_related("dominant_theme")
-		.prefetch_related("themes", "issues"),
-		pk=run_pk,
-		study=study,
-	)
-
-	if not user_can_evaluate_study(request.user, study):
-		return HttpResponseForbidden()
-
-	if request.headers.get("HX-Request") != "true":
-		url = reverse("human_evaluation_queue", args=[study.pk, run.pk])
-		querystring = request.GET.urlencode()
-
-		if querystring:
-			url = f"{url}?{querystring}"
-
-		return redirect(url)
-
-	context = filter_analysis_entries(request, study, run)
-
-	context.update({
-		"study": study,
-		"run": run,
-		"is_human_evaluation_queue": True,
-		"machine_analysis_entries_filter_url": reverse(
-			"human_evaluation_queue_partial",
-			args=[study.pk, run.pk],
-		),
-	})
-
-	response = render(
-		request,
-		"studies/partials/_entries_with_analysis.html",
-		context,
-	)
-
-	full_page_url = reverse("human_evaluation_queue", args=[study.pk, run.pk])
-	querystring = request.GET.urlencode()
-
-	if querystring:
-		full_page_url = f"{full_page_url}?{querystring}"
-
-	response["HX-Push-Url"] = full_page_url
-
-	return response
-
-
 # ------------------------- #
 # EVALUATE ENTRY ANALYSIS   #
 # ------------------------- #
@@ -1699,9 +1603,13 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 			messages.success(request, "Human evaluation saved.")
 
 			return redirect(
-				"human_evaluation_queue",
-				study_pk=study.pk,
-				run_pk=run.pk,
+				reverse(
+					"machine_analysis_details",
+					kwargs={
+						"study_pk": study.pk,
+						"run_pk": run.pk,
+					},
+				) + "#entries"
 			)
 
 	else:
@@ -1730,7 +1638,7 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 
 	return render(
 		request,
-		"studies/diary_entry_evaluation.html",
+		"studies/diary_analysis_evaluation.html",
 		context,
 	)
 

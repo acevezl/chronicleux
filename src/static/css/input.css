@@ -17,7 +17,7 @@
 		@apply inline-flex items-center rounded-full gap-1 px-3 py-1 text-xs font-medium  bg-blue-50 text-blue-800 border border-blue-800;
 	}
 
-	.status-cell-MACHINE_ANALYSIS {
+	.status-cell-MACHINE_ANALYSIS, .status-cell-ANALYZING {
 		@apply inline-flex items-center rounded-full gap-1 px-3 py-1 text-xs font-medium  bg-amber-50 text-amber-800 border border-amber-800;
 	}
 

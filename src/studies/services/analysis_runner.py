@@ -385,7 +385,7 @@ def create_study_analysis_run(
 		created_by_id=user_id,
 	)
 
-	study.status = StudyStatus.MACHINE_ANALYSIS
+	study.status = StudyStatus.ANALYZING
 	study.save(update_fields=["status"])
 
 	return run

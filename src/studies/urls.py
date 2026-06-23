@@ -17,16 +17,12 @@ urlpatterns = [
     path("<int:pk>/new-entry/", views.create_diary_entry, name="create_diary_entry"),
 
     # Machine Analysis
-    path("<int:pk>/select-analysis-methods/", views.select_analysis_methods, name="select_analysis_methods"),
-    path("<int:pk>/run-machine-analysis/", views.run_machine_analysis, name="run_machine_analysis"),
+    path("<int:pk>/machine-analysis/select-methods/", views.select_analysis_methods, name="select_analysis_methods"),
+    path("<int:pk>/machine-analysis/run/", views.run_machine_analysis, name="run_machine_analysis"),
     path("<int:study_pk>/machine-analysis/<int:run_pk>/", views.machine_analysis_details, name="machine_analysis_details"),
     path("<int:study_pk>/machine-analysis/<int:run_pk>/entries/partial/", views.machine_analysis_entries_partial, name="machine_analysis_entries_partial"),
-    path("studies/<int:study_pk>/analysis-runs/", views.analysis_runs, name="analysis_runs"),
-    path("studies/<int:study_pk>/analysis-runs/partial/", views.analysis_runs_partial, name="analysis_runs_partial"),
-
-    # Manual Evaluation
-    path("<int:study_pk>/machine-analysis/<int:run_pk>/human-evaluation/", views.human_evaluation_queue, name="human_evaluation_queue"),
-    path("<int:study_pk>/machine-analysis/<int:run_pk>/human-evaluation/partial/", views.human_evaluation_queue_partial, name="human_evaluation_queue_partial"),
+    path("<int:study_pk>/machine-analysis/", views.analysis_runs, name="analysis_runs"),
+    path("<int:study_pk>/machine-analysis/partial/", views.analysis_runs_partial, name="analysis_runs_partial"),
     path("<int:study_pk>/machine-analysis/<int:run_pk>/human-evaluation/<int:analysis_pk>/evaluate", views.evaluate_entry_analysis, name="evaluate_entry_analysis"),
     
     # Update Metrics

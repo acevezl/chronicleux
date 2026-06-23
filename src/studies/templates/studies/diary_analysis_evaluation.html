@@ -9,38 +9,41 @@
 
 <div class="sticky-top">
     {% include "studies/partials/_header.html" with study=study page_title_heroicon=page_title_heroicon page_title=page_title page_subtitle=page_subtitle %}
-    {% include "studies/partials/_menu_study.html" with study=study run=run %}
+    {% include "studies/partials/_menu_evaluator.html" with study=study run=run %}
 </div>
 
 <div class="p-4">
     {% include "studies/partials/_messages.html" %}
-    <div class="main-card">
+    <article class="group main-card flex max-h-[calc(100vh-12rem)] flex-col overflow-hidden">
 
-        <!-- PAGE HEADER -->
-        <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
-
+        <!-- CARD TITLE (I.E., SUMMARY) -->
+        <div class="card-summary">
             <div class="flex flex-col">
-                <h4 class="md-card-title">
+                <h3 class="md-card-title">
                     {% heroicon_outline "clipboard-document-check" %}
                     Human Evaluation
-                </h4>
+                </h3>
 
                 <p class="card-summary-subtitle">
                     Review the machine analysis and provide the evaluator classification for this diary entry.
                 </p>
             </div>
 
-            <a
-                href="{% url 'human_evaluation_queue' study.pk run.pk %}"
-                class="button-FILTER-CLEAR"
-            >
-                Back to queue
-            </a>
+            <div class="flex justify-end gap-3">
+                <a
+                href="{% url 'machine_analysis_details' run.study_id run.pk %}#entries"
+                class="button-TERTIARY"
+                >
+                    {% heroicon_outline "code-bracket-square" class="h-4 w-4 shrink-0" %}
+                    {% heroicon_outline "arrow-left" class="h-4 w-4 shrink-0" %}
+                    Back to Analysis Run # {{ run.id }}
+                </a>
+            </div>
 
         </div>
 
         <!-- CONTENT -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+        <div class="min-h-0 overflow-y-auto grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
 
             <!-- LEFT COLUMN: ENTRY + MACHINE ANALYSIS -->
             <div class="flex flex-col gap-4">
@@ -302,7 +305,7 @@
                             data-filter-target="[data-theme-option]"
                         >
 
-                        <div class="card-border p-3 max-h-48 overflow-y-auto bg-gray-50 dark:bg-gray-800 space-y-2">
+                        <div class="card-border p-3 max-h-36 overflow-y-auto bg-gray-50 dark:bg-gray-800 space-y-2">
                             {% for checkbox in form.evaluator_themes %}
                                 <label
                                     data-theme-option
@@ -334,7 +337,7 @@
                             data-filter-target="[data-issue-option]"
                         >
 
-                        <div class="card-border p-3 max-h-48 overflow-y-auto bg-gray-50 dark:bg-gray-800 space-y-2">
+                        <div class="card-border p-3 max-h-36 overflow-y-auto bg-gray-50 dark:bg-gray-800 space-y-2">
                             {% for checkbox in form.evaluator_issues %}
                                 <label
                                     data-issue-option
@@ -370,7 +373,7 @@
                     <div class="flex flex-wrap justify-end gap-2 pt-2">
 
                         <a
-                            href="{% url 'human_evaluation_queue' study.pk run.pk %}"
+                            href="{% url 'machine_analysis_details' study.pk run.pk %}#entries"
                             class="button-FILTER-CLEAR"
                         >
                             Cancel
@@ -380,7 +383,7 @@
                             type="submit"
                             class="button-PRIMARY"
                         >
-                            Save human evaluation
+                            Save
                         </button>
 
                     </div>
