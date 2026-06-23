@@ -10,6 +10,8 @@ from .models import (
     DiaryEntryAnalysis,
     DiaryEntryAnalysisEvaluatorTheme,
     DiaryEntryAnalysisEvaluatorIssue,
+    SentimentCategory,
+    BinarySentimentCategory,
 )
 
 
@@ -331,6 +333,28 @@ class DiaryEntryManualEvaluationForm(forms.ModelForm):
         self.evaluator = evaluator
         super().__init__(*args, **kwargs)
 
+        sentiment_method = ""
+
+        if self.instance:
+            if getattr(self.instance, "methods", None):
+                sentiment_method = (self.instance.methods or {}).get("sentiment", "")
+
+            if not sentiment_method and getattr(self.instance, "run", None):
+                sentiment_method = (self.instance.run.methods or {}).get("sentiment", "")
+
+        sentiment_method = str(sentiment_method).lower()
+
+        if sentiment_method == "bert":
+            self.fields["evaluator_sentiment_label"].choices = [
+                ("", "---------"),
+                *BinarySentimentCategory.choices,
+            ]
+        else:
+            self.fields["evaluator_sentiment_label"].choices = [
+                ("", "---------"),
+                *SentimentCategory.choices,
+            ]
+
         self.fields["evaluator_themes"].queryset = (
             CanonicalTheme.objects
             .filter(is_active=True)
@@ -345,6 +369,28 @@ class DiaryEntryManualEvaluationForm(forms.ModelForm):
 
         self.fields["evaluator_themes"].required = True
         self.fields["evaluator_issues"].required = False
+
+    def clean_evaluator_sentiment_label(self):
+        value = self.cleaned_data.get("evaluator_sentiment_label")
+
+        sentiment_method = (
+            (self.instance.methods or {}).get("sentiment")
+            if self.instance and self.instance.pk
+            else None
+        )
+
+        if not value:
+            return value
+
+        if sentiment_method == "bert":
+            valid_values = {choice[0] for choice in BinarySentimentCategory.choices}
+        else:
+            valid_values = {choice[0] for choice in SentimentCategory.choices}
+
+        if value not in valid_values:
+            raise forms.ValidationError("Select a valid sentiment label for this analysis method.")
+
+        return value
 
     def save(self, commit=True):
         instance = super().save(commit=False)

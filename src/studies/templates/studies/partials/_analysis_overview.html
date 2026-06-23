@@ -165,20 +165,27 @@
         <!-- ACTION BUTTONS -->
         <div class="flex items-center justify-between px-4 pb-4">
             <a
-                href="{% url 'human_evaluation_queue' study.pk run.pk %}"
+                href="{% url 'machine_analysis_details' study.pk run.pk %}#entries"
                 class="button-PRIMARY"
             >
                 {% heroicon_outline "document-text" class="h-4 w-4 shrink-0" %}
                 Evaluate Entries
             </a>
         
-            <a 
-                href="#"
-                class="button-SECONDARY"
+            <form
+                method="post"
+                action="{% url 'refresh_analysis_run_metrics' study.pk run.pk %}"
             >
-                {% heroicon_outline "chart-bar" class="h-4 w-4 shrink-0" %}
-                Refresh Metrics
-            </a>
+                {% csrf_token %}
+
+                <button
+                    type="submit"
+                    class="button-SECONDARY"
+                >
+                    {% heroicon_outline "chart-bar" class="h-4 w-4 shrink-0" %}
+                    Refresh Metrics
+                </button>
+            </form>
         </div>
     </section>
 

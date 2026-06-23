@@ -256,7 +256,31 @@
                             Evaluator sentiment
                         </label>
 
-                        {{ form.evaluator_sentiment_label }}
+                        {% if entry_analysis.methods.sentiment == "bert" %}
+                            <select
+                                name="{{ form.evaluator_sentiment_label.html_name }}"
+                                id="{{ form.evaluator_sentiment_label.id_for_label }}"
+                                class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-full dark:text-white dark:border-gray-500 dark:bg-gray-900"
+                            >
+                                <option value="">Select evaluator sentiment</option>
+
+                                <option
+                                    value="NEGATIVE"
+                                    {% if form.evaluator_sentiment_label.value == "NEGATIVE" %}selected{% endif %}
+                                >
+                                    Negative
+                                </option>
+
+                                <option
+                                    value="NOT_NEGATIVE"
+                                    {% if form.evaluator_sentiment_label.value == "NOT_NEGATIVE" %}selected{% endif %}
+                                >
+                                    Not negative
+                                </option>
+                            </select>
+                        {% else %}
+                            {{ form.evaluator_sentiment_label }}
+                        {% endif %}
 
                         {% if form.evaluator_sentiment_label.errors %}
                             <p class="text-xs text-red-600">
@@ -285,7 +309,7 @@
                                     class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200"
                                 >
                                     {{ checkbox.tag }}
-                                    <span>{{ checkbox.choice_label }}</span>
+                                    <span>{{ checkbox.choice_label|capfirst }}</span>
                                 </label>
                             {% endfor %}
                         </div>
@@ -317,7 +341,7 @@
                                     class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200"
                                 >
                                     {{ checkbox.tag }}
-                                    <span>{{ checkbox.choice_label }}</span>
+                                    <span>{{ checkbox.choice_label|capfirst }}</span>
                                 </label>
                             {% endfor %}
                         </div>

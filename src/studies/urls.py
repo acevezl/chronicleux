@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+
     # Studies
     path("", views.studies, name="studies"),
     path("new/", views.create_diary_study, name="create_diary_study"),
@@ -26,7 +27,10 @@ urlpatterns = [
     path("<int:study_pk>/machine-analysis/<int:run_pk>/human-evaluation/partial/", views.human_evaluation_queue_partial, name="human_evaluation_queue_partial"),
     path("<int:study_pk>/machine-analysis/<int:run_pk>/human-evaluation/<int:analysis_pk>/evaluate", views.evaluate_entry_analysis, name="evaluate_entry_analysis"),
     
-    # Evals / Participant Management
+    # Update Metrics
+    path("studies/<int:study_pk>/machine-analysis/<int:run_pk>/refresh-metrics/", views.refresh_analysis_run_metrics, name="refresh_analysis_run_metrics"),
+
+    # Evaluators / Participant Management
     path("<int:pk>/participants/",views.manage_participants, name="manage_participants"),
     path("<int:pk>/evaluators/",views.manage_evaluators, name="manage_evaluators"),
 
@@ -45,4 +49,5 @@ urlpatterns = [
     path("catalogues/canonical-issues/<int:issue_pk>/delete/", views.canonical_issue_delete, name="canonical_issue_delete"),
     path("catalogues/canonical-issues/import/", views.canonical_issue_import, name="canonical_issue_import"),
     path("catalogues/canonical-issues/partial/", views.canonical_issue_catalogue_partial, name="canonical_issue_catalogue_partial"),
+    
 ]

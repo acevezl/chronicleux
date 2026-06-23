@@ -26,6 +26,8 @@ from studies.services.llm.client import get_available_llm_providers, get_llm_mod
 
 from studies.services.analysis_runner import create_study_analysis_run
 from studies.services.analysis_tasks import queue_study_analysis_run
+from studies.services.nlp.sentiment._confusion_matrix import refresh_sentiment_confusion_matrix_for_run
+from studies.services.nlp.sentiment._ordinal_distance import refresh_sentiment_ordinal_distance_for_run
 
 from .filters import (
 	filter_diary_entries, 
@@ -1581,9 +1583,9 @@ def human_evaluation_queue(request, study_pk, run_pk):
 	)
 
 
-# ------------------------------- #
+# ------------------------------ #
 # HUMAN EVALUATION QUEUE PARTIAL #
-# ------------------------------- #
+# ------------------------------ #
 @login_required
 def human_evaluation_queue_partial(request, study_pk, run_pk):
 	study = get_object_or_404(Study, pk=study_pk)
@@ -1718,4 +1720,33 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 		request,
 		"studies/diary_entry_evaluation.html",
 		context,
+	)
+
+
+# --------------- #
+# REFRESH METRICS #
+# --------------- #
+@login_required
+@require_POST
+def refresh_analysis_run_metrics(request, study_pk, run_pk):
+	study = get_object_or_404(Study, pk=study_pk)
+
+	run = get_object_or_404(
+		StudyAnalysisRun,
+		pk=run_pk,
+		study=study,
+	)
+
+	if not user_can_evaluate_study(request.user, study):
+		return HttpResponseForbidden()
+
+	refresh_sentiment_confusion_matrix_for_run(run)
+	refresh_sentiment_ordinal_distance_for_run(run)
+
+	messages.success(request, "Metrics refreshed successfully.")
+
+	return redirect(
+		"machine_analysis_details",
+		study_pk=study.pk,
+		run_pk=run.pk,
 	)

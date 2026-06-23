@@ -75,12 +75,16 @@
                     {% if run.canonical_issue_summaries.all %}
                         <div class="flex flex-wrap gap-2">
                             {% for item in run.canonical_issue_summaries.all %}
-                                <span class="badge-ISSUE">
+                                <a
+                                    href="{% url 'machine_analysis_details' study.pk run.pk %}?issue_tag={{ item.canonical_issue.pk }}#entries"
+                                    class="badge-ISSUE hover:underline"
+                                    title="View entries with issue: {{ item.canonical_issue.name }}"
+                                >
                                     <span>{{ item.canonical_issue.name }}</span>
                                     <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
                                         {{ item.entry_count }}
                                     </span>
-                                </span>
+                                </a>
                             {% endfor %}
                         </div>
                     {% else %}

@@ -57,6 +57,12 @@ class BinarySentimentCategory(models.TextChoices):
     NEGATIVE = "NEGATIVE", "Negative"
     NOT_NEGATIVE = "NOT_NEGATIVE", "Not Negative"
 
+# EVALUATOR SENTIMENT
+# Can be either binary or 5 categories (b/c of BERT)
+EVALUATOR_SENTIMENT_CHOICES = [
+    *SentimentCategory.choices,
+    (BinarySentimentCategory.NOT_NEGATIVE, BinarySentimentCategory.NOT_NEGATIVE.label),
+]
 
 # DIARY ENTRY SOURCE ENUM
 class DiaryEntrySource(models.TextChoices):
@@ -715,7 +721,7 @@ class DiaryEntryAnalysis(models.Model):
     # (and Evaluator Reference)
     evaluator_sentiment_label = models.CharField(
         max_length=20,
-        choices=SentimentCategory.choices,
+        choices=EVALUATOR_SENTIMENT_CHOICES,
         null=True,
         blank=True,
     )

@@ -1,290 +1,347 @@
 {% load formatters %}
-<div class="border-b border-gray-200 dark:border-gray-600 px-4 py-3 bg-gray-50 dark:bg-gray-800">
-                        
-    <form
-        method="get"
-        hx-get="{{ machine_analysis_entries_filter_url }}"
-        hx-target="#analysis-entries-panel"
-        hx-swap="innerHTML"
-        hx-push-url="false"
-        hx-trigger="submit, change delay:100ms from:select, change delay:500ms from:input, keyup changed delay:500ms from:input"
-        class="space-y-3"
-    >
-        <div class="flex flex-wrap gap-3">
 
-            <div>
-                <label for="human_evaluation" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Human Evaluation:
-                </label>
-                <select
-                    id="human_evaluation"
-                    name="human_evaluation"
-                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
-                >
-                    <option value="">All entries</option>
-                    <option value="pending" {% if human_evaluation == "pending" %}selected{% endif %}>
-                        Pending human evaluation
-                    </option>
-                    <option value="completed" {% if human_evaluation == "completed" %}selected{% endif %}>
-                        Completed human evaluation
-                    </option>
-                </select>
-            </div>
+<!-- ENTRIES WITH EVALUATION -->
+<div id="analysis-entries-panel">
+    <section class="xl:col-span-2 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden" >
+        <header class="flex items-center justify-between gap-2 p-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex flex-col">
+                <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        Human Evaluation Queue
+                </h4>
 
-            <div>
-                <label for="q" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Open search:
-                </label>
-                <input
-                    id="q"
-                    type="text"
-                    name="q"
-                    placeholder="Search analyzed entries..."
-                    value="{{ request.GET.q }}"
-                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
-                >
-            </div>
-
-            <div>
-                <label for="sentiment" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Detected Sentiment:
-                </label>
-                <select
-                    id="sentiment"
-                    name="sentiment"
-                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
-                >
-                    <option value="">All detected sentiments</option>
-                    <option value="VERY_NEGATIVE" {% if sentiment == "VERY_NEGATIVE" %}selected{% endif %}>Very negative</option>
-                    <option value="NEGATIVE" {% if sentiment == "NEGATIVE" %}selected{% endif %}>Negative</option>
-                    <option value="NEUTRAL" {% if sentiment == "NEUTRAL" %}selected{% endif %}>Neutral</option>
-                    <option value="POSITIVE" {% if sentiment == "POSITIVE" %}selected{% endif %}>Positive</option>
-                    <option value="VERY_POSITIVE" {% if sentiment == "VERY_POSITIVE" %}selected{% endif %}>Very positive</option>
-                </select>
-            </div>
-
-            <div>
-                <label for="theme" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Detected Theme:
-                </label>
-                <select
-                    id="theme"
-                    name="theme"
-                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
-                >
-                    <option value="">All detected themes</option>
-
-                    {% for theme_item in run.themes.all %}
-                        <option
-                            value="{{ theme_item.pk }}"
-                            {% if theme == theme_item.pk|stringformat:"s" %}selected{% endif %}
-                        >
-                            {{ theme_item.name|capfirst }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div>
-                <label for="issue_detected" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Issue Detected:
-                </label>
-                <select
-                    id="issue_detected"
-                    name="issue_detected"
-                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-48 dark:text-white dark:border-gray-500"
-                >
-                    <option value="">All analyzed entries</option>
-                    <option value="yes" {% if issue_detected == "yes" %}selected{% endif %}>Yes</option>
-                    <option value="no" {% if issue_detected == "no" %}selected{% endif %}>No</option>
-                </select>
-            </div>
-
-            <div>
-                <label for="issue_tag" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                    Issue Tag:
-                </label>
-                <select
-                    id="issue_tag"
-                    name="issue_tag"
-                    class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-48 dark:text-white dark:border-gray-500"
-                >
-                    <option value="">All issue tags</option>
-
-                    {% for issue_item in run.issues.all %}
-                        <option
-                            value="{{ issue_item.pk }}"
-                            {% if issue_tag == issue_item.pk|stringformat:"s" %}selected{% endif %}
-                        >
-                            {{ issue_item.name|capfirst }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <button
-                type="submit"
-                class="button-FILTER h-10 self-end"
-            >
-                Filter
-            </button>
-
-            {% if q or sentiment or theme or issue_detected or issue_tag or human_evaluation %}
-                <a
-                    href="{{ machine_analysis_entries_filter_url }}"
-                    hx-get="{{ machine_analysis_entries_filter_url }}"
-                    hx-target="#analysis-entries-panel"
-                    hx-swap="innerHTML"
-                    hx-push-url="false"
-                    class="button-FILTER-CLEAR h-10 self-end inline-flex items-center"
-                >
-                    Clear Filter
-                </a>
-            {% endif %}
-        </div>
-    </form>
-
-    <!-- SORT BAR -->
-    <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
-
-        <p class="xs-label">
-            Showing {{ displayed_entry_analyses_count }} of {{ total_filtered_entry_analyses_count }} matching entries.
-            Total entries analyzed in this run: {{ total_run_entry_analyses_count }}.
-        </p>
-
-        <div class="flex flex-wrap items-center gap-2">
-            <span class="xs-label">Sort by:</span>
-
-            <a
-                href="?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'entry__created_at' %}-entry__created_at{% else %}entry__created_at{% endif %}"
-                hx-get="{{ machine_analysis_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'entry__created_at' %}-entry__created_at{% else %}entry__created_at{% endif %}"
-                hx-target="#analysis-entries-panel"
-                hx-swap="innerHTML"
-                hx-push-url="false"
-                class="button-FILTER"
-            >
-                Created
-                {% if sort == "entry__created_at" %}↑{% elif sort == "-entry__created_at" %}↓{% endif %}
-            </a>
-
-            <a
-                href="?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'entry__participant_display_name' %}-entry__participant_display_name{% else %}entry__participant_display_name{% endif %}"
-                hx-get="{{ machine_analysis_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'entry__participant_display_name' %}-entry__participant_display_name{% else %}entry__participant_display_name{% endif %}"
-                hx-target="#analysis-entries-panel"
-                hx-swap="innerHTML"
-                hx-push-url="false"
-                class="button-FILTER"
-            >
-                Participant
-                {% if sort == "entry__participant_display_name" %}↑{% elif sort == "-entry__participant_display_name" %}↓{% endif %}
-            </a>
-
-            <a
-                href="?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'sentiment_label' %}-sentiment_label{% else %}sentiment_label{% endif %}"
-                hx-get="{{ machine_analysis_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'sentiment_label' %}-sentiment_label{% else %}sentiment_label{% endif %}"
-                hx-target="#analysis-entries-panel"
-                hx-swap="innerHTML"
-                hx-push-url="false"
-                class="button-FILTER"
-            >
-                Sentiment
-                {% if sort == "sentiment_label" %}↑{% elif sort == "-sentiment_label" %}↓{% endif %}
-            </a>
-
-            <a
-                href="?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'themes__name' %}-themes__name{% else %}themes__name{% endif %}"
-                hx-get="{{ machine_analysis_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'themes__name' %}-themes__name{% else %}themes__name{% endif %}"
-                hx-target="#analysis-entries-panel"
-                hx-swap="innerHTML"
-                hx-push-url="false"
-                class="button-FILTER"
-            >
-                Theme
-                {% if sort == "themes__name" %}↑{% elif sort == "-themes__name" %}↓{% endif %}
-            </a>
-
-            <a
-                href="?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'issues__name' %}-issues__name{% else %}issues__name{% endif %}"
-                hx-get="{{ machine_analysis_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'issues__name' %}-issues__name{% else %}issues__name{% endif %}"
-                hx-target="#analysis-entries-panel"
-                hx-swap="innerHTML"
-                hx-push-url="false"
-                class="button-FILTER"
-            >
-                Issues
-                {% if sort == "issues__name" %}↑{% elif sort == "-issues__name" %}↓{% endif %}
-            </a>
-        </div>
-    </div>
-</div>
-
-<div class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 items-center gap-4 p-4">
-    {% for entry_analysis in entry_analyses %}
-        {% with entry=entry_analysis.entry %}
-            <article class="flex flex-col h-full w-full justify-between rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Review analyzed diary entries and complete the human evaluation for sentiment, dominant theme, and issue(s).
+                </p>
                 
-                <!-- Analysis Header (Shows Entry data) -->
-                <header class="flex flex-col gap-2 p-2 bg-gray-100 dark:bg-gray-700">
-                    <div class="flex flex-wrap items-center w-full justify-between mb-2">
-                        <span class="xs-label text-nowrap">Created on {{ entry.created_at|date:"M d, Y H:i" }}</span>
-                        <span class="xs-label">{{ entry.source|default:"-" }}</span>
-                    </div>
-                    <div class="block">
-                        <!-- Summary -->
-                        <p class="mb-2 sm-label line-clamp-2">
-                            {{ entry_analysis.entry_summary|default:"No summary available." }}
-                        </p>
-                        <span class="xs-label text-nowrap">
-                            Author: {{ entry.participant_display_name|capfirst }}
-                        </span>
-                    </div>
-                </header>
+            </div>
+        </header>
 
-                <!-- Analysis Body (Shows Analysis data) -->
-                <section class="flex flex-col gap-2 p-2">
-                    {% if entry_analysis %}
-                        <span class="xs-label text-nowrap">
-                            Analyzed on {{ entry_analysis.analyzed_at|date:"M d, Y H:i" }}
-                        </span>
-                        <!-- Analysis chips -->
-                        <div class="flex flex-col gap-3 justify-between text-xs">
-                            
-                            <div class="flex flex-wrap items-center gap-1">
-                                {% include "studies/partials/_badge_sentiment.html" with sentiment=entry_analysis.sentiment_label %}
+        <div class="p-4">
 
-                                <span class="badge">
-                                    Score: {{ entry_analysis.sentiment_score|floatformat:2 }}
+            <form
+                method="get"
+                hx-get="{{ machine_analysis_entries_filter_url }}"
+                hx-target="#analysis-entries-panel"
+                hx-swap="innerHTML"
+                hx-push-url="false"
+                hx-trigger="submit, change delay:100ms from:select, change delay:500ms from:input, keyup changed delay:500ms from:input"
+                class="space-y-3"
+            >
+                <div class="flex flex-wrap gap-3">
+
+                    <div>
+                        <label for="human_evaluation" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                            Human Evaluation:
+                        </label>
+                        <select
+                            id="human_evaluation"
+                            name="human_evaluation"
+                            class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
+                        >
+                            <option value="">All entries</option>
+                            <option value="pending" {% if human_evaluation == "pending" %}selected{% endif %}>
+                                Pending human evaluation
+                            </option>
+                            <option value="completed" {% if human_evaluation == "completed" %}selected{% endif %}>
+                                Completed human evaluation
+                            </option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="q" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                            Open search:
+                        </label>
+                        <input
+                            id="q"
+                            type="text"
+                            name="q"
+                            placeholder="Search analyzed entries..."
+                            value="{{ request.GET.q }}"
+                            class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="sentiment" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                            Detected Sentiment:
+                        </label>
+                        <select
+                            id="sentiment"
+                            name="sentiment"
+                            class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
+                        >
+                            <option value="">All detected sentiments</option>
+                            <option value="VERY_NEGATIVE" {% if sentiment == "VERY_NEGATIVE" %}selected{% endif %}>Very negative</option>
+                            <option value="NEGATIVE" {% if sentiment == "NEGATIVE" %}selected{% endif %}>Negative</option>
+                            <option value="NEUTRAL" {% if sentiment == "NEUTRAL" %}selected{% endif %}>Neutral</option>
+                            <option value="POSITIVE" {% if sentiment == "POSITIVE" %}selected{% endif %}>Positive</option>
+                            <option value="VERY_POSITIVE" {% if sentiment == "VERY_POSITIVE" %}selected{% endif %}>Very positive</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="theme" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                            Detected Theme:
+                        </label>
+                        <select
+                            id="theme"
+                            name="theme"
+                            class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
+                        >
+                            <option value="">All detected themes</option>
+
+                            {% for theme_item in run.themes.all %}
+                                <option
+                                    value="{{ theme_item.pk }}"
+                                    {% if theme == theme_item.pk|stringformat:"s" %}selected{% endif %}
+                                >
+                                    {{ theme_item.name|capfirst }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="issue_detected" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                            Issue Detected:
+                        </label>
+                        <select
+                            id="issue_detected"
+                            name="issue_detected"
+                            class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-48 dark:text-white dark:border-gray-500"
+                        >
+                            <option value="">All analyzed entries</option>
+                            <option value="yes" {% if issue_detected == "yes" %}selected{% endif %}>Yes</option>
+                            <option value="no" {% if issue_detected == "no" %}selected{% endif %}>No</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="issue_tag" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                            Issue Tag:
+                        </label>
+                        <select
+                            id="issue_tag"
+                            name="issue_tag"
+                            class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-48 dark:text-white dark:border-gray-500"
+                        >
+                            <option value="">All issue tags</option>
+
+                            {% for issue_item in run.issues.all %}
+                                <option
+                                    value="{{ issue_item.pk }}"
+                                    {% if issue_tag == issue_item.pk|stringformat:"s" %}selected{% endif %}
+                                >
+                                    {{ issue_item.name|capfirst }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="button-FILTER h-10 self-end"
+                    >
+                        Filter
+                    </button>
+
+                    {% if q or sentiment or theme or issue_detected or issue_tag or human_evaluation %}
+                        <a
+                            href="{{ machine_analysis_entries_filter_url }}"
+                            hx-get="{{ machine_analysis_entries_filter_url }}"
+                            hx-target="#analysis-entries-panel"
+                            hx-swap="innerHTML"
+                            hx-push-url="false"
+                            class="button-FILTER-CLEAR h-10 self-end inline-flex items-center"
+                        >
+                            Clear Filter
+                        </a>
+                    {% endif %}
+                </div>
+            </form>
+
+            <!-- SORT BAR -->
+            <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+
+                <p class="xs-label">
+                    Showing {{ displayed_entry_analyses_count }} of {{ total_filtered_entry_analyses_count }} matching entries.
+                    Total entries analyzed in this run: {{ total_run_entry_analyses_count }}.
+                </p>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="xs-label">Sort by:</span>
+
+                    <a
+                        href="?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'entry__created_at' %}-entry__created_at{% else %}entry__created_at{% endif %}"
+                        hx-get="{{ machine_analysis_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'entry__created_at' %}-entry__created_at{% else %}entry__created_at{% endif %}"
+                        hx-target="#analysis-entries-panel"
+                        hx-swap="innerHTML"
+                        hx-push-url="false"
+                        class="button-FILTER"
+                    >
+                        Created
+                        {% if sort == "entry__created_at" %}↑{% elif sort == "-entry__created_at" %}↓{% endif %}
+                    </a>
+
+                    <a
+                        href="?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'entry__participant_display_name' %}-entry__participant_display_name{% else %}entry__participant_display_name{% endif %}"
+                        hx-get="{{ machine_analysis_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'entry__participant_display_name' %}-entry__participant_display_name{% else %}entry__participant_display_name{% endif %}"
+                        hx-target="#analysis-entries-panel"
+                        hx-swap="innerHTML"
+                        hx-push-url="false"
+                        class="button-FILTER"
+                    >
+                        Participant
+                        {% if sort == "entry__participant_display_name" %}↑{% elif sort == "-entry__participant_display_name" %}↓{% endif %}
+                    </a>
+
+                    <a
+                        href="?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'sentiment_label' %}-sentiment_label{% else %}sentiment_label{% endif %}"
+                        hx-get="{{ machine_analysis_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'sentiment_label' %}-sentiment_label{% else %}sentiment_label{% endif %}"
+                        hx-target="#analysis-entries-panel"
+                        hx-swap="innerHTML"
+                        hx-push-url="false"
+                        class="button-FILTER"
+                    >
+                        Sentiment
+                        {% if sort == "sentiment_label" %}↑{% elif sort == "-sentiment_label" %}↓{% endif %}
+                    </a>
+
+                    <a
+                        href="?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'themes__name' %}-themes__name{% else %}themes__name{% endif %}"
+                        hx-get="{{ machine_analysis_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'themes__name' %}-themes__name{% else %}themes__name{% endif %}"
+                        hx-target="#analysis-entries-panel"
+                        hx-swap="innerHTML"
+                        hx-push-url="false"
+                        class="button-FILTER"
+                    >
+                        Theme
+                        {% if sort == "themes__name" %}↑{% elif sort == "-themes__name" %}↓{% endif %}
+                    </a>
+
+                    <a
+                        href="?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'issues__name' %}-issues__name{% else %}issues__name{% endif %}"
+                        hx-get="{{ machine_analysis_entries_filter_url }}?{% if sort_params %}{{ sort_params }}&{% endif %}sort={% if sort == 'issues__name' %}-issues__name{% else %}issues__name{% endif %}"
+                        hx-target="#analysis-entries-panel"
+                        hx-swap="innerHTML"
+                        hx-push-url="false"
+                        class="button-FILTER"
+                    >
+                        Issues
+                        {% if sort == "issues__name" %}↑{% elif sort == "-issues__name" %}↓{% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 items-center gap-4 p-4">
+            {% for entry_analysis in entry_analyses %}
+                {% with entry=entry_analysis.entry %}
+                    <article class="flex flex-col h-full w-full justify-between rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                        
+                        <!-- Analysis Header (Shows Entry data) -->
+                        <header class="flex flex-col gap-2 p-2 bg-gray-100 dark:bg-gray-700">
+                            <div class="flex flex-wrap items-center w-full justify-between mb-2">
+                                <span class="xs-label text-nowrap">Created on {{ entry.created_at|date:"M d, Y H:i" }}</span>
+                                <span class="xs-label">{{ entry.source|default:"-" }}</span>
+                            </div>
+                            <div class="block">
+                                <!-- Summary -->
+                                <p class="mb-2 sm-label line-clamp-2">
+                                    {{ entry_analysis.entry_summary|default:"No summary available." }}
+                                </p>
+                                <span class="xs-label text-nowrap">
+                                    Author: {{ entry.participant_display_name|capfirst }}
                                 </span>
                             </div>
+                        </header>
 
-                            <div class="flex flex-wrap  items-center gap-1">
-                                {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.themes.all %}
-                            </div>
+                        <!-- Analysis Body (Shows Analysis data) -->
+                        <section class="flex flex-col gap-2 p-2">
+                            {% if entry_analysis %}
+                                <span class="xs-label text-nowrap">
+                                    Analyzed on {{ entry_analysis.analyzed_at|date:"M d, Y H:i" }}
+                                </span>
+                                <!-- Analysis chips -->
+                                <div class="flex flex-col gap-3 justify-between text-xs">
 
-                            <div class="flex flex-wrap  items-center gap-1">
-                                {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.issues.all %}
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="mt-2 text-sm text-gray-500 dark:text-gray-400 text-nowrap">
-                            No analysis available for this entry.
-                        </div>
-                    {% endif %}
-                </section>
-                <footer class="flex gap-2 p-2">
-                    {% if is_human_evaluation_queue %}
-                    <!-- Link to entry -->
-                    <a href="{% url 'evaluate_entry_analysis' study.pk run.pk entry_analysis.pk %}"
-                    class="button-SECONDARY">
-                        Evaluate Entry
-                    </a>
-                    {% endif %}
-                </footer>
-            </article>
-        {% endwith %}
-    {% empty %}
-        <div class="rounded-md border border-dashed border-gray-300 dark:border-gray-700 p-4 text-sm text-gray-500 dark:text-gray-400">
-            No entries found.
+                                    <!-- MACHINE ANALYSIS -->
+                                    <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2">
+                                        <p class="xs-label uppercase mb-2">
+                                            Machine analysis
+                                        </p>
+
+                                        <div class="flex flex-col gap-2">
+                                            <div class="flex flex-wrap items-center gap-1">
+                                                {% include "studies/partials/_badge_sentiment.html" with sentiment=entry_analysis.sentiment_label %}
+
+                                                <span class="badge">
+                                                    Score: {{ entry_analysis.sentiment_score|floatformat:2 }}
+                                                </span>
+                                            </div>
+
+                                            <div class="flex flex-wrap items-center gap-1">
+                                                {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.themes.all %}
+                                            </div>
+
+                                            <div class="flex flex-wrap items-center gap-1">
+                                                {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.issues.all %}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- HUMAN EVALUATION -->
+                                    <div class="rounded-md border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-2">
+                                        <p class="xs-label uppercase mb-2">
+                                            Evaluator assessment
+                                        </p>
+
+                                        {% if entry_analysis.evaluator_sentiment_label or entry_analysis.evaluator_themes.all or entry_analysis.evaluator_issues.all %}
+                                            <div class="flex flex-col gap-2">
+                                                <div class="flex flex-wrap items-center gap-1">
+                                                    {% if entry_analysis.evaluator_sentiment_label %}
+                                                        {% include "studies/partials/_badge_sentiment.html" with sentiment=entry_analysis.evaluator_sentiment_label %}
+                                                    {% else %}
+                                                        <span class="badge">No sentiment assessed</span>
+                                                    {% endif %}
+                                                </div>
+
+                                                <div class="flex flex-wrap items-center gap-1">
+                                                    {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.evaluator_themes.all %}
+                                                </div>
+
+                                                <div class="flex flex-wrap items-center gap-1">
+                                                    {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.evaluator_issues.all %}
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <span class="message-warning">
+                                                Pending human evaluation
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="mt-2 text-sm text-gray-500 dark:text-gray-400 text-nowrap">
+                                    No analysis available for this entry.
+                                </div>
+                            {% endif %}
+                        </section>
+                        <footer class="flex gap-2 p-2">
+                            <!-- Link to entry -->
+                            <a href="{% url 'evaluate_entry_analysis' study.pk run.pk entry_analysis.pk %}"
+                            class="button-SECONDARY">
+                                Evaluate Entry
+                            </a>
+                        </footer>
+                    </article>
+                {% endwith %}
+            {% empty %}
+                <div class="rounded-md border border-dashed border-gray-300 dark:border-gray-700 p-4 text-sm text-gray-500 dark:text-gray-400">
+                    No entries found.
+                </div>
+            {% endfor %}
         </div>
-    {% endfor %}
+    </section>
 </div>

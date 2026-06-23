@@ -75,12 +75,16 @@
                     {% if run.canonical_theme_summaries.all %}
                         <div class="flex flex-wrap gap-2">
                             {% for item in run.canonical_theme_summaries.all %}
-                                <span class="badge-THEME">
+                                <a
+                                    href="{% url 'machine_analysis_details' study.pk run.pk %}?theme={{ item.canonical_theme.pk }}#entries"
+                                    class="badge-THEME hover:underline"
+                                    title="View entries with theme: {{ item.canonical_theme.name }}"
+                                >
                                     <span>{{ item.canonical_theme.name }}</span>
                                     <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
                                         {{ item.entry_count }}
                                     </span>
-                                </span>
+                                </a>
                             {% endfor %}
                         </div>
                     {% else %}

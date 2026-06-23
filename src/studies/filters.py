@@ -162,8 +162,7 @@ def filter_analysis_entries(request, study, run):
 
 	if theme:
 		entry_analyses = entry_analyses.filter(
-			Q(themes__name__iexact=theme)
-			| Q(themes__aliases__icontains=theme)
+			themes__pk=theme
 		)
 
 	if issue_detected == "yes":
@@ -173,8 +172,7 @@ def filter_analysis_entries(request, study, run):
 
 	if issue_tag:
 		entry_analyses = entry_analyses.filter(
-			Q(issues__name__iexact=issue_tag)
-			| Q(issues__aliases__icontains=issue_tag)
+			issues__pk=issue_tag
 		)
 
 	entry_analyses = entry_analyses.annotate(

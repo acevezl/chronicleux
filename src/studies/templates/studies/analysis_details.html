@@ -12,7 +12,7 @@
 </div>
 
 <div class="p-4">
-
+    {% include "studies/partials/_messages.html" %}
     <div class="main-card">
 
         <!-- TAB MENU -->
@@ -132,13 +132,7 @@
 
             <!-- ENTRIES -->
             <section data-analysis-tab-panel="entries" class="hidden">
-                <div class="mt-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 overflow-hidden">
-            
-                    <div class="" id="analysis-entries-panel">
-                        {% include "studies/partials/_entries_with_analysis.html" with entry_analyses=entry_analyses study=study run=run %}
-                    </div>
-
-                </div>
+                {% include "studies/partials/_entries_with_analysis.html" with entry_analyses=entry_analyses study=study run=run %}
             </section>
 
         </div>
@@ -196,6 +190,10 @@
                     `${window.location.pathname}${window.location.search}#${input.value}`
                 );
             });
+        });
+
+        window.addEventListener("hashchange", function () {
+            selectTab(getInitialTab());
         });
 
         selectTab(getInitialTab());

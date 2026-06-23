@@ -1,6 +1,6 @@
 {% load formatters %}
 <div class="flex flex-wrap justify-left gap-2">
-    {% if sentiment == "VERY_POSITIVE" or sentiment == "POSITIVE" %}
+    {% if sentiment == "VERY_POSITIVE" or sentiment == "POSITIVE" or sentiment == "NOT_NEGATIVE"%}
     <span class="sentiment-{{sentiment}}">
         {% heroicon_outline "face-smile" class="h-4 w-4 shrink-0" %}{{ sentiment|humanize_enum }}
     </span>
