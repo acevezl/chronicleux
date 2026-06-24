@@ -101,6 +101,28 @@ class ThemeAndIssueStatus(models.TextChoices):
 	REJECTED = "REJECTED", "Rejected"
 
 
+# FRAMEWORK SOURCE / TYPE ENUM
+class UXFrameworkType(models.TextChoices):
+	NIELSEN = "NIELSEN", "Nielsen"
+	ISO = "ISO", "ISO"
+	WCAG = "WCAG", "WCAG"
+	CUSTOM = "CUSTOM", "Custom"
+
+
+# FRAMEWORK MAPPING METHOD ENUM
+class FrameworkMappingMethod(models.TextChoices):
+	MANUAL = "MANUAL", "Manual"
+	TFIDF = "TFIDF", "TF-IDF similarity"
+	EMBEDDING = "EMBEDDING", "Embedding similarity"
+
+
+# FRAMEWORK MAPPING STATUS ENUM
+class FrameworkMappingStatus(models.TextChoices):
+	SUGGESTED = "SUGGESTED", "Suggested"
+	APPROVED = "APPROVED", "Approved"
+	REJECTED = "REJECTED", "Rejected"
+
+
 # SENTIMENT SCORE THRESHOLDS
 # Used at the Study Level to label average sentiment score
 SENTIMENT_SCORE_THRESHOLDS = [
@@ -1183,3 +1205,268 @@ class StudyAnalysisRunCanonicalIssue(models.Model):
 
 	def __str__(self) -> str:
 		return f"{self.canonical_issue} · run={self.run_id} · entries={self.entry_count}"
+	
+
+# UX FRAMEWORK
+# Catalogue of usability frameworks, such as Nielsen, ISO, WCAG, or project-specific frameworks.
+class UXFramework(models.Model):
+
+	name = models.CharField(max_length=255, unique=True)
+	description = models.TextField(blank=True)
+	framework_type = models.CharField(
+		max_length=20,
+		choices=UXFrameworkType.choices,
+		default=UXFrameworkType.CUSTOM,
+	)
+	source = models.CharField(
+		max_length=255,
+		blank=True,
+		help_text="Source, publication, standard, or reference used for this framework.",
+	)
+	version = models.CharField(max_length=80, blank=True)
+	is_active = models.BooleanField(default=True)
+
+	created_by = models.ForeignKey(
+		User,
+		on_delete=models.SET_NULL,
+		null=True,
+		blank=True,
+		related_name="created_ux_frameworks",
+	)
+
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ["name"]
+		indexes = [
+			models.Index(fields=["is_active"]),
+			models.Index(fields=["framework_type"]),
+			models.Index(fields=["name"]),
+		]
+		verbose_name = "UX Framework"
+		verbose_name_plural = "UX Frameworks"
+
+	def clean(self):
+		if self.name:
+			self.name = self.name.strip()
+
+		if not self.name:
+			raise ValidationError({"name": "UX framework name is required."})
+
+	def __str__(self) -> str:
+		return self.name
+
+
+# UX FRAMEWORK CRITERION
+# Individual criterion, heuristic, principle, dimension, or guideline inside a framework.
+class UXFrameworkCriterion(models.Model):
+
+	framework = models.ForeignKey(
+		UXFramework,
+		on_delete=models.CASCADE,
+		related_name="criteria",
+	)
+	code = models.CharField(
+		max_length=80,
+		blank=True,
+		help_text="Optional framework code or ordering label, e.g. N1, ISO-9241-EFFICIENCY.",
+	)
+	name = models.CharField(max_length=255)
+	description = models.TextField(blank=True)
+	aliases = models.JSONField(default=list, blank=True)
+	examples = models.TextField(blank=True)
+	recommendation_guidance = models.TextField(
+		blank=True,
+		help_text="Reusable recommendation guidance associated with this framework criterion.",
+	)
+	evaluation_questions = models.JSONField(
+		default=list,
+		blank=True,
+		help_text="Optional evaluator-facing questions that help interpret this criterion.",
+	)
+	is_active = models.BooleanField(default=True)
+
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ["framework__name", "code", "name"]
+		constraints = [
+			models.UniqueConstraint(
+				fields=["framework", "name"],
+				name="unique_ux_framework_criterion_name",
+			),
+		]
+		indexes = [
+			models.Index(fields=["framework"]),
+			models.Index(fields=["is_active"]),
+			models.Index(fields=["name"]),
+		]
+		verbose_name = "UX Framework Criterion"
+		verbose_name_plural = "UX Framework Criteria"
+
+	def clean(self):
+		if self.name:
+			self.name = self.name.strip()
+
+		if self.code:
+			self.code = self.code.strip()
+
+		if not self.name:
+			raise ValidationError({"name": "UX framework criterion name is required."})
+
+	def __str__(self) -> str:
+		return f"{self.framework.name} · {self.name}"
+
+
+# CANONICAL ISSUE TO FRAMEWORK MAPPING
+# Maps canonical issues to framework criteria, either manually or through a framework matching engine.
+class CanonicalIssueToFrameworkMapping(models.Model):
+
+	canonical_issue = models.ForeignKey(
+		CanonicalIssue,
+		on_delete=models.CASCADE,
+		related_name="framework_mappings",
+	)
+	criterion = models.ForeignKey(
+		UXFrameworkCriterion,
+		on_delete=models.CASCADE,
+		related_name="issue_mappings",
+	)
+
+	method = models.CharField(
+		max_length=20,
+		choices=FrameworkMappingMethod.choices,
+		default=FrameworkMappingMethod.MANUAL,
+	)
+	status = models.CharField(
+		max_length=20,
+		choices=FrameworkMappingStatus.choices,
+		default=FrameworkMappingStatus.SUGGESTED,
+	)
+	score = models.FloatField(
+		null=True,
+		blank=True,
+		help_text="Similarity or confidence score produced by the matching method.",
+	)
+	rationale = models.TextField(blank=True)
+
+	created_by = models.ForeignKey(
+		User,
+		on_delete=models.SET_NULL,
+		null=True,
+		blank=True,
+		related_name="created_issue_framework_mappings",
+	)
+	approved_by = models.ForeignKey(
+		User,
+		on_delete=models.SET_NULL,
+		null=True,
+		blank=True,
+		related_name="approved_issue_framework_mappings",
+	)
+	approved_at = models.DateTimeField(null=True, blank=True)
+
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ["canonical_issue__name", "criterion__framework__name", "criterion__name"]
+		constraints = [
+			models.UniqueConstraint(
+				fields=["canonical_issue", "criterion"],
+				name="unique_issue_to_framework_criterion",
+			),
+		]
+		indexes = [
+			models.Index(fields=["canonical_issue"]),
+			models.Index(fields=["criterion"]),
+			models.Index(fields=["method"]),
+			models.Index(fields=["status"]),
+		]
+		verbose_name = "Canonical Issue to Framework Mapping"
+		verbose_name_plural = "Canonical Issue to Framework Mappings"
+
+	def clean(self):
+		if self.status == FrameworkMappingStatus.APPROVED and not self.approved_at:
+			self.approved_at = timezone.now()
+
+	def __str__(self) -> str:
+		return f"{self.canonical_issue} → {self.criterion}"
+
+
+# CANONICAL THEME TO FRAMEWORK MAPPING
+# Maps canonical themes to framework criteria, either manually or through a framework matching engine.
+class CanonicalThemeToFrameworkMapping(models.Model):
+
+	canonical_theme = models.ForeignKey(
+		CanonicalTheme,
+		on_delete=models.CASCADE,
+		related_name="framework_mappings",
+	)
+	criterion = models.ForeignKey(
+		UXFrameworkCriterion,
+		on_delete=models.CASCADE,
+		related_name="theme_mappings",
+	)
+
+	method = models.CharField(
+		max_length=20,
+		choices=FrameworkMappingMethod.choices,
+		default=FrameworkMappingMethod.MANUAL,
+	)
+	status = models.CharField(
+		max_length=20,
+		choices=FrameworkMappingStatus.choices,
+		default=FrameworkMappingStatus.SUGGESTED,
+	)
+	score = models.FloatField(
+		null=True,
+		blank=True,
+		help_text="Similarity or confidence score produced by the matching method.",
+	)
+	rationale = models.TextField(blank=True)
+
+	created_by = models.ForeignKey(
+		User,
+		on_delete=models.SET_NULL,
+		null=True,
+		blank=True,
+		related_name="created_theme_framework_mappings",
+	)
+	approved_by = models.ForeignKey(
+		User,
+		on_delete=models.SET_NULL,
+		null=True,
+		blank=True,
+		related_name="approved_theme_framework_mappings",
+	)
+	approved_at = models.DateTimeField(null=True, blank=True)
+
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ["canonical_theme__name", "criterion__framework__name", "criterion__name"]
+		constraints = [
+			models.UniqueConstraint(
+				fields=["canonical_theme", "criterion"],
+				name="unique_theme_to_framework_criterion",
+			),
+		]
+		indexes = [
+			models.Index(fields=["canonical_theme"]),
+			models.Index(fields=["criterion"]),
+			models.Index(fields=["method"]),
+			models.Index(fields=["status"]),
+		]
+		verbose_name = "Canonical Theme to Framework Mapping"
+		verbose_name_plural = "Canonical Theme to Framework Mappings"
+
+	def clean(self):
+		if self.status == FrameworkMappingStatus.APPROVED and not self.approved_at:
+			self.approved_at = timezone.now()
+
+	def __str__(self) -> str:
+		return f"{self.canonical_theme} → {self.criterion}"
