@@ -1,0 +1,31 @@
+{% load heroicons %}
+
+<nav class="top-menu px-4">
+	<div class="top-menu-items">
+
+		<a
+			href="{% url 'canonical_theme_catalogue_list' %}"
+			class="top-menu-item"
+		>
+			{% heroicon_outline "tag" class="h-4 w-4 shrink-0" %}
+			Canonical Themes
+		</a>
+
+		<a
+			href="{% url 'canonical_issue_catalogue_list' %}" 
+			class="top-menu-item"
+		>
+			{% heroicon_outline "exclamation-triangle" class="h-4 w-4 shrink-0" %}
+			Canonical Issues
+		</a>
+
+		<a
+			href="{% url 'ux_framework_catalogue_list' %}" 
+			class="top-menu-item"
+		>
+			{% heroicon_outline "bookmark-square" class="h-4 w-4 shrink-0" %}
+			UX Frameworks
+		</a>
+
+	</div>
+</nav>

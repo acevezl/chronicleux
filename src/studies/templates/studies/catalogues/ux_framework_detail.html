@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block title %}{{ framework.name }} · ChronicleUX{% endblock %}
+
+{% block content %}
+
+<div class="sticky-top">
+	{% include "studies/partials/_header.html" with page_title=page_title page_subtitle=page_subtitle %}
+	{% include "studies/catalogues/partials/_menu_catalogues.html" %}
+</div>
+
+<div class="p-4">
+	{% include "studies/partials/_messages.html" %}
+
+	<article class="group main-card" data-role="framework-detail">
+
+		<!-- CARD TITLE (I.E., SUMMARY) -->
+		<div class="card-summary">
+
+			<div class="flex flex-col">
+				<h3 class="card-summary-title">
+					{% heroicon_outline "bookmark-square" %}
+					UX Framework: {{ framework.name }}
+				</h3>
+
+				<p class="card-summary-subtitle">
+					Framework source, type, version, status and catalogue criteria used to ground UX recommendations.
+				</p>
+			</div>
+
+			<div class="flex justify-end gap-3">
+				<a
+					href="{% url 'ux_framework_update' framework.pk %}"
+					class="button-PRIMARY"
+				>
+					{% heroicon_outline "pencil-square" class="h-4 w-4 shrink-0" %}
+					Edit Framework
+				</a>
+
+				<a
+					href="{% url 'ux_framework_delete' framework.pk %}"
+					class="button-SECONDARY"
+					title="Delete framework"
+				>
+					{% heroicon_outline "trash" class="h-4 w-4 shrink-0" %}
+					Delete Framework
+				</a>
+
+				<a
+					href="{% url 'ux_framework_catalogue_list' %}"
+					class="button-TERTIARY"
+				>
+					{% heroicon_outline "arrow-left" class="h-4 w-4 shrink-0" %}
+					Return to UX Frameworks
+				</a>
+			</div>
+
+		</div>
+
+		<!-- FRAMEWORK DATA -->
+		<section class="grid grid-cols-1 gap-4 p-4">
+
+			<!-- TOP METADATA ROW -->
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+				<!-- NAME -->
+				<div class="lg:col-span-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "bookmark-square" class="h-4 w-4 shrink-0" %}
+						Framework Name
+					</div>
+
+					<p class="mt-2 text-sm leading-6 text-gray-900 dark:text-gray-100">
+						{{ framework.name|default:"—" }}
+					</p>
+				</div>
+
+				<!-- TYPE -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "squares-2x2" class="h-4 w-4 shrink-0" %}
+						Framework Type
+					</div>
+
+					<div class="mt-2 text-sm text-gray-900 dark:text-gray-100">
+						{% if framework.framework_type %}
+							{{ framework.get_framework_type_display }}
+						{% else %}
+							—
+						{% endif %}
+					</div>
+				</div>
+
+				<!-- ACTIVE -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "check-circle" class="h-4 w-4 shrink-0" %}
+						Active
+					</div>
+
+					<div class="mt-2 text-sm">
+						{% if framework.is_active %}
+							<span class="message-info">
+								Active
+							</span>
+						{% else %}
+							<span class="message-default">
+								Inactive
+							</span>
+						{% endif %}
+					</div>
+				</div>
+
+			</div>
+
+			<!-- MAIN CONTENT GRID -->
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+				<!-- DESCRIPTION -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "document-text" class="h-4 w-4 shrink-0" %}
+						Description
+					</div>
+
+					<p class="mt-2 text-sm leading-6 text-gray-900 dark:text-gray-100">
+						{{ framework.description|default:"—" }}
+					</p>
+				</div>
+
+				<!-- SOURCE AND VERSION -->
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+					<!-- SOURCE -->
+					<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+						<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+							{% heroicon_outline "arrow-down-tray" class="h-4 w-4 shrink-0" %}
+							Source
+						</div>
+
+						<div class="mt-2 text-sm text-gray-900 dark:text-gray-100">
+							{{ framework.source|default:"—" }}
+						</div>
+					</div>
+
+					<!-- VERSION -->
+					<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+						<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+							{% heroicon_outline "numbered-list" class="h-4 w-4 shrink-0" %}
+							Version
+						</div>
+
+						<div class="mt-2 text-sm text-gray-900 dark:text-gray-100">
+							{{ framework.version|default:"—" }}
+						</div>
+					</div>
+
+				</div>
+
+				<!-- CRITERIA LIST -->
+				<div class="lg:col-span-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900">
+					<div class="flex items-center justify-between gap-3 p-4">
+						<div>
+							<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+								{% heroicon_outline "rectangle-stack" class="h-4 w-4 shrink-0" %}
+								Framework Criteria
+							</div>
+
+							<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+								Criteria, heuristics, principles, dimensions, or guideline chunks defined for this framework.
+							</p>
+						</div>
+
+						<a
+							href="{% url 'ux_framework_criterion_create' framework.pk %}"
+							class="button-TERTIARY"
+						>
+							{% heroicon_outline "plus-circle" class="h-4 w-4 shrink-0" %}
+							Add Criterion
+						</a>
+					</div>
+
+					{% if framework.criteria.all %}
+						<div class="overflow-x-auto">
+							<table class="w-full table-auto text-sm">
+								<thead class="bg-gray-100 dark:bg-gray-700 dark:text-gray-200 text-gray-600">
+									<tr class="border-b border-t border-gray-200 dark:border-gray-600">
+										<th>Criterion</th>
+										<th>Code</th>
+										<th>Description</th>
+										<th>Active</th>
+										<th>Actions</th>
+									</tr>
+								</thead>
+
+								<tbody class="divide-y divide-gray-200 dark:divide-gray-600 text-gray-600 dark:text-gray-200">
+									{% for criterion in framework.criteria.all %}
+										<tr class="hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 transition-colors">
+
+											<td class="px-4 py-3 whitespace-nowrap">
+												<span class="font-medium text-gray-900 dark:text-gray-100">
+													{{ criterion.name }}
+												</span>
+											</td>
+
+											<td class="px-4 py-3 whitespace-nowrap">
+												{% if criterion.code %}
+													<span class="badge">
+														{{ criterion.code }}
+													</span>
+												{% else %}
+													<span class="text-gray-400">—</span>
+												{% endif %}
+											</td>
+
+											<td class="px-4 py-3 text-sm max-w-xl">
+												{% if criterion.description %}
+													<p class="line-clamp-2">
+														{{ criterion.description }}
+													</p>
+												{% else %}
+													<span class="text-gray-400">—</span>
+												{% endif %}
+											</td>
+
+											<td class="px-4 py-3 whitespace-nowrap">
+												{% if criterion.is_active %}
+													<span class="message-info">
+														Active
+													</span>
+												{% else %}
+													<span class="message-default">
+														Inactive
+													</span>
+												{% endif %}
+											</td>
+
+											<td class="whitespace-nowrap px-4 py-4 text-right text-sm font-medium">
+												<div class="flex justify-end gap-3">
+
+													<a
+														href="{% url 'ux_framework_criterion_detail' framework.pk criterion.pk %}"
+														class="dark:text-gray-400 hover:dark:text-white text-gray-700 hover:text-gray-500"
+														title="View criterion"
+													>
+														{% heroicon_outline "eye" %}
+													</a>
+
+													<a
+														href="{% url 'ux_framework_criterion_update' framework.pk criterion.pk %}"
+														class="dark:text-gray-400 hover:dark:text-white text-gray-700 hover:text-gray-500"
+														title="Edit criterion"
+													>
+														{% heroicon_outline "pencil-square" %}
+													</a>
+
+													<a
+														href="{% url 'ux_framework_criterion_delete' framework.pk criterion.pk %}"
+														class="dark:text-gray-400 hover:dark:text-white text-gray-700 hover:text-red-500"
+														title="Delete criterion"
+													>
+														{% heroicon_outline "trash" %}
+													</a>
+
+												</div>
+											</td>
+
+										</tr>
+									{% endfor %}
+								</tbody>
+							</table>
+						</div>
+					{% else %}
+						<div class="m-4 rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-6 text-center">
+							<h4 class="text-sm md-card-title">
+								No criteria yet.
+							</h4>
+
+							<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+								Add criteria, heuristics, principles, dimensions, or guideline chunks to make this framework usable for recommendations.
+							</p>
+						</div>
+					{% endif %}
+				</div>
+
+				<!-- CREATED / UPDATED -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "calendar-days" class="h-4 w-4 shrink-0" %}
+						Created
+					</div>
+
+					<div class="mt-2 text-sm text-gray-900 dark:text-gray-100">
+						{{ framework.created_at|date:"M j, Y"|default:"—" }}
+						{% if framework.created_at %}
+							<br>
+							<span class="text-xs text-gray-400">
+								{{ framework.created_at|date:"H:i" }}
+							</span>
+						{% endif %}
+					</div>
+				</div>
+
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "arrow-path" class="h-4 w-4 shrink-0" %}
+						Last Updated
+					</div>
+
+					<div class="mt-2 text-sm text-gray-900 dark:text-gray-100">
+						{{ framework.updated_at|date:"M j, Y"|default:"—" }}
+						{% if framework.updated_at %}
+							<br>
+							<span class="text-xs text-gray-400">
+								{{ framework.updated_at|date:"H:i" }}
+							</span>
+						{% endif %}
+					</div>
+				</div>
+
+			</div>
+
+		</section>
+
+	</article>
+</div>
+
+{% endblock %}

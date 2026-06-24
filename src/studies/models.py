@@ -1267,15 +1267,34 @@ class UXFrameworkCriterion(models.Model):
 		on_delete=models.CASCADE,
 		related_name="criteria",
 	)
+	
 	code = models.CharField(
 		max_length=80,
 		blank=True,
-		help_text="Optional framework code or ordering label, e.g. N1, ISO-9241-EFFICIENCY.",
+		help_text="Optional framework code, e.g. N1, ISO-9241-EFFICIENCY.",
 	)
-	name = models.CharField(max_length=255)
-	description = models.TextField(blank=True)
-	aliases = models.JSONField(default=list, blank=True)
-	examples = models.TextField(blank=True)
+
+	name = models.CharField(
+		max_length=255,
+		help_text="Name of the framework criterion, heuristic, principle, dimension, or guideline, e.g. Visibility of System Status or Efficiency.",
+	)
+
+	description = models.TextField(
+		blank=True,
+		help_text="Explain what this criterion means and what kind of usability problem it helps identify.",
+	)
+
+	aliases = models.JSONField(
+		default=list,
+		blank=True,
+		help_text="Alternative terms, labels, or phrases that may refer to this criterion. Used to support matching and search.",
+	)
+
+	examples = models.TextField(
+		blank=True,
+		help_text="Optional examples of user comments, diary evidence, or UX situations that would fit this criterion.",
+	)
+
 	recommendation_guidance = models.TextField(
 		blank=True,
 		help_text="Reusable recommendation guidance associated with this framework criterion.",

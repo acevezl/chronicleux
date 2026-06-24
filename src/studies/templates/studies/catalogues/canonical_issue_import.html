@@ -8,17 +8,7 @@
 
 <div class="sticky-top">
 	{% include "studies/partials/_header.html" with page_title=page_title page_subtitle=page_subtitle %}
-
-	<div class="px-4 py-2 bg-gray-100 dark:bg-gray-900">
-		<div class="flex flex-wrap items-center gap-2">
-			<a href="{% url 'canonical_issue_catalogue_list' %}" class="button-TERTIARY">
-				{% heroicon_outline "exclamation-triangle" class="h-4 w-4 shrink-0" %}
-				{% heroicon_outline "arrow-left" class="h-4 w-4 shrink-0" %}
-				Return to Canonical Issues
-			</a>
-		</div>
-	</div>
-
+	{% include "studies/catalogues/partials/_menu_catalogues.html" %}
 </div>
 
 <div class="p-4">

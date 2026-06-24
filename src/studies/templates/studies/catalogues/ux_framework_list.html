@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block title %}{{ page_title }} · ChronicleUX{% endblock %}
+
+{% block content %}
+
+<div class="sticky-top">
+	{% include "studies/partials/_header.html" with page_title=page_title page_subtitle=page_subtitle %}
+	{% include "studies/catalogues/partials/_menu_catalogues.html" %}
+</div>
+
+<div class="p-4">
+	{% include "studies/partials/_messages.html" %}
+
+	<div class="main-card">
+
+		<!-- CARD TITLE -->
+		<div class="card-summary">
+
+			<a
+				href="{% url 'ux_framework_create' %}"
+				class="button-SECONDARY h-10 inline-flex items-center"
+			>
+				{% heroicon_outline "plus-circle" class="h-4 w-4 shrink-0" %}
+				Add Framework
+			</a>
+
+		</div>
+
+		<!-- HTMX PANEL -->
+		<div id="entries-panel">
+			{% include "studies/catalogues/partials/_ux_frameworks.html" %}
+		</div>
+
+	</div>
+
+</div>
+
+{% endblock %}

@@ -12,6 +12,8 @@ from .models import (
     DiaryEntryAnalysisEvaluatorIssue,
     SentimentCategory,
     BinarySentimentCategory,
+    UXFramework,
+    UXFrameworkCriterion,
 )
 
 
@@ -294,6 +296,7 @@ class CanonicalIssueForm(forms.ModelForm):
 
         return aliases
     
+# MANUAL EVALUATION FORM    
 class DiaryEntryManualEvaluationForm(forms.ModelForm):
 
     class Meta:
@@ -429,3 +432,49 @@ class DiaryEntryManualEvaluationForm(forms.ModelForm):
                 )
 
         return instance
+    
+
+# UX FRAMEWORKS
+class UXFrameworkForm(forms.ModelForm):
+	class Meta:
+		model = UXFramework
+		fields = [
+			"name",
+			"description",
+			"framework_type",
+			"source",
+			"version",
+			"is_active",
+		]
+
+
+class UXFrameworkCriterionForm(forms.ModelForm):
+	class Meta:
+		model = UXFrameworkCriterion
+		fields = [
+			"code",
+			"name",
+			"description",
+			"aliases",
+			"examples",
+			"recommendation_guidance",
+			"evaluation_questions",
+			"is_active",
+		]
+		widgets = {
+			"name": forms.TextInput(attrs={
+				"class": "w-full",
+			}),
+            "description": forms.Textarea(attrs={
+				"rows": 5,
+				"class": "w-full",
+			}),
+			"examples": forms.Textarea(attrs={
+				"rows": 5,
+				"class": "w-full",
+			}),
+			"recommendation_guidance": forms.Textarea(attrs={
+				"rows": 5,
+				"class": "w-full",
+			}),
+		}

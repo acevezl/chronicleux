@@ -48,4 +48,20 @@ urlpatterns = [
     path("catalogues/canonical-issues/import/", views.canonical_issue_import, name="canonical_issue_import"),
     path("catalogues/canonical-issues/partial/", views.canonical_issue_catalogue_partial, name="canonical_issue_catalogue_partial"),
     
+    # Frameworks
+    path("catalogues/frameworks/", views.ux_framework_catalogue_list, name="ux_framework_catalogue_list"),
+    path("catalogues/frameworks/partial/", views.ux_framework_catalogue_partial, name="ux_framework_catalogue_partial"),
+    path("catalogues/frameworks/create/", views.ux_framework_create, name="ux_framework_create"),
+    path("catalogues/frameworks/<int:framework_pk>/", views.ux_framework_detail, name="ux_framework_detail"),
+    path("catalogues/frameworks/<int:framework_pk>/update/", views.ux_framework_update, name="ux_framework_update"),
+    path("catalogues/frameworks/<int:framework_pk>/delete/", views.ux_framework_delete, name="ux_framework_delete"),
+
+    # Fremwork Criteria
+    path("catalogues/frameworks/<int:framework_pk>/framework-criteria/", views.ux_framework_criterion_catalogue_list, name="ux_framework_criterion_catalogue_list"),
+    path("catalogues/frameworks/<int:framework_pk>/framework-criteria/partial/", views.ux_framework_criterion_catalogue_partial, name="ux_framework_criterion_catalogue_partial"),
+    path("catalogues/frameworks/<int:framework_pk>/framework-criteria/create/", views.ux_framework_criterion_create, name="ux_framework_criterion_create"),
+    path("catalogues/frameworks/<int:framework_pk>/framework-criteria/<int:criterion_pk>/", views.ux_framework_criterion_detail, name="ux_framework_criterion_detail"),
+    path("catalogues/frameworks/<int:framework_pk>/framework-criteria/<int:criterion_pk>/update/", views.ux_framework_criterion_update, name="ux_framework_criterion_update"),
+    path("catalogues/frameworks/<int:framework_pk>/framework-criteria/<int:criterion_pk>/delete/", views.ux_framework_criterion_delete, name="ux_framework_criterion_delete"),
+
 ]

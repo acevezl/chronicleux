@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block title %}{{ page_title }} · ChronicleUX{% endblock %}
+
+{% block content %}
+
+<div class="sticky-top">
+	{% include "studies/partials/_header.html" with page_title=page_title page_subtitle=page_subtitle %}
+	{% include "studies/catalogues/partials/_menu_catalogues.html" %}
+</div>
+
+<div class="p-4">
+	{% include "studies/partials/_messages.html" %}
+
+	<form method="post" class="group main-card">
+
+		<!-- CARD TITLE (I.E., SUMMARY) -->
+		<div class="card-summary">
+
+			<div class="flex flex-col">
+				<h3 class="card-summary-title">
+					{% heroicon_outline "bookmark-square" %}
+					Framework Details
+				</h3>
+
+				<p class="card-summary-subtitle">
+					Define the usability framework, its source, version, status, and catalogue metadata.
+				</p>
+			</div>
+
+			<div class="flex justify-end gap-3">
+				<button
+					type="submit"
+					class="button-PRIMARY"
+				>
+					{{ submit_label|default:"Save" }}
+				</button>
+
+				{% if framework %}
+					<a
+						href="{% url 'ux_framework_detail' framework.pk %}"
+						class="button-TERTIARY"
+					>
+						Cancel
+					</a>
+				{% else %}
+					<a
+						href="{% url 'ux_framework_catalogue_list' %}"
+						class="button-TERTIARY"
+					>
+						Cancel
+					</a>
+				{% endif %}
+			</div>
+
+		</div>
+
+		<!-- FRAMEWORK DATA -->
+		<section class="grid grid-cols-1 gap-4 p-4">
+			{% csrf_token %}
+
+			<!-- TOP METADATA ROW -->
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+				<!-- NAME -->
+				<div class="lg:col-span-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<label for="{{ form.name.id_for_label }}" class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "bookmark-square" class="h-4 w-4 shrink-0" %}
+						Framework Name
+					</label>
+
+					{% if form.name.help_text %}
+						<p class="xs-label">
+							{{ form.name.help_text }}
+						</p>
+					{% endif %}
+
+					{{ form.name }}
+
+					{% if form.name.errors %}
+						<p class="mt-1 text-sm text-red-600">{{ form.name.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+				<!-- TYPE -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<label for="{{ form.framework_type.id_for_label }}" class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "squares-2x2" class="h-4 w-4 shrink-0" %}
+						Framework Type
+					</label>
+
+					{% if form.framework_type.help_text %}
+						<p class="xs-label">
+							{{ form.framework_type.help_text }}
+						</p>
+					{% endif %}
+
+					{{ form.framework_type }}
+
+					{% if form.framework_type.errors %}
+						<p class="mt-1 text-sm text-red-600">{{ form.framework_type.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+				<!-- ACTIVE -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-3">
+						{{ form.is_active }}
+
+						<label for="{{ form.is_active.id_for_label }}" class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+							{% heroicon_outline "check-circle" class="h-4 w-4 shrink-0" %}
+							Active
+						</label>
+					</div>
+
+					<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+						Inactive frameworks remain saved but are excluded from active framework matching.
+					</p>
+
+					{% if form.is_active.errors %}
+						<p class="mt-1 text-sm text-red-600">{{ form.is_active.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+			</div>
+
+			<!-- SECONDARY METADATA ROW -->
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+				<!-- SOURCE -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<label for="{{ form.source.id_for_label }}" class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "arrow-down-tray" class="h-4 w-4 shrink-0" %}
+						Source
+					</label>
+
+					{% if form.source.help_text %}
+						<p class="xs-label">
+							{{ form.source.help_text }}
+						</p>
+					{% endif %}
+
+					{{ form.source }}
+
+					{% if form.source.errors %}
+						<p class="mt-1 text-sm text-red-600">{{ form.source.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+				<!-- VERSION -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<label for="{{ form.version.id_for_label }}" class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "numbered-list" class="h-4 w-4 shrink-0" %}
+						Version
+					</label>
+
+					{% if form.version.help_text %}
+						<p class="xs-label">
+							{{ form.version.help_text }}
+						</p>
+					{% endif %}
+
+					{{ form.version }}
+
+					{% if form.version.errors %}
+						<p class="mt-1 text-sm text-red-600">{{ form.version.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+				<!-- DESCRIPTION -->
+				<div class="lg:col-span-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<label for="{{ form.description.id_for_label }}" class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "document-text" class="h-4 w-4 shrink-0" %}
+						Description
+					</label>
+
+					{% if form.description.help_text %}
+						<p class="xs-label">
+							{{ form.description.help_text }}
+						</p>
+					{% endif %}
+
+					{{ form.description }}
+
+					{% if form.description.errors %}
+						<p class="mt-1 text-sm text-red-600">{{ form.description.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
+			</div>
+
+			{% if form.non_field_errors %}
+				<div class="message-error">
+					{% heroicon_outline "exclamation-triangle" class="h-4 w-4" %}
+					{{ form.non_field_errors }}
+				</div>
+			{% endif %}
+
+		</section>
+
+	</form>
+
+</div>
+
+{% endblock %}

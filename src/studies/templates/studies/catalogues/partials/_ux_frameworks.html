@@ -1,0 +1,213 @@
+{% load heroicons %}
+
+<!-- FILTERS -->
+<div class="px-6 py-4 bg-white dark:bg-gray-900">
+	<form
+		id="ux-framework-filter-form"
+		method="get"
+		hx-get="{{ ux_frameworks_filter_url }}"
+		hx-target="#entries-panel"
+		hx-swap="innerHTML"
+		hx-push-url="true"
+		hx-trigger="submit, change from:select, keyup changed delay:500ms from:input[name='q']"
+		class="space-y-3"
+	>
+
+		<div class="flex flex-wrap gap-3">
+
+			<div>
+				<label for="q" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+					Open search:
+				</label>
+				<input
+					id="q"
+					type="text"
+					name="q"
+					placeholder="Search frameworks..."
+					value="{{ q }}"
+					class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
+				>
+			</div>
+
+			<div>
+				<label for="framework_type" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+					Type:
+				</label>
+				<select
+					id="framework_type"
+					name="framework_type"
+					class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-48 dark:text-white dark:border-gray-500"
+				>
+					<option value="">All types</option>
+					{% for value, label in framework_type_choices %}
+						<option value="{{ value }}" {% if framework_type == value %}selected{% endif %}>
+							{{ label }}
+						</option>
+					{% endfor %}
+				</select>
+			</div>
+
+			<div>
+				<label for="is_active" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+					Active:
+				</label>
+				<select
+					id="is_active"
+					name="is_active"
+					class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-40 dark:text-white dark:border-gray-500"
+				>
+					<option value="">All</option>
+					<option value="yes" {% if is_active == "yes" %}selected{% endif %}>Active</option>
+					<option value="no" {% if is_active == "no" %}selected{% endif %}>Inactive</option>
+				</select>
+			</div>
+
+			<button type="submit" class="button-FILTER h-10 self-end">
+				Filter
+			</button>
+
+			{% if q or framework_type or is_active %}
+				<button
+					type="button"
+					class="button-FILTER-CLEAR h-10 self-end inline-flex items-center"
+					hx-get="{{ ux_frameworks_filter_url }}"
+					hx-target="#entries-panel"
+					hx-swap="innerHTML"
+					hx-push-url="{% url 'ux_framework_catalogue_list' %}"
+					onclick="
+						const form = document.getElementById('ux-framework-filter-form');
+						form.querySelector('[name=q]').value = '';
+						form.querySelector('[name=framework_type]').value = '';
+						form.querySelector('[name=is_active]').value = '';
+					"
+				>
+					Clear Filter
+				</button>
+			{% endif %}
+
+		</div>
+
+	</form>
+</div>
+
+<div class="overflow-x-auto">
+	{% if frameworks %}
+
+		{% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params displayed_entries=displayed_entries_count total_filtered_entries=total_filtered_entries_count total_entries=total_study_entries_count %}
+
+		<table class="w-full table-auto text-sm">
+			<thead class="bg-gray-100 dark:bg-gray-700 dark:text-gray-200 text-gray-600">
+				<tr class="border-b border-t border-gray-200 dark:border-gray-600">
+					<th>Framework</th>
+					<th>Description</th>
+					<th>Type</th>
+					<th>Source</th>
+					<th>Version</th>
+					<th>Active</th>
+					<th>Created</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+
+			<tbody class="divide-y divide-gray-200 dark:divide-gray-600 text-gray-600 dark:text-gray-200">
+				{% for framework in frameworks %}
+					<tr class="hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 transition-colors">
+
+						<td class="px-4 py-3 whitespace-nowrap">
+							<a
+								href="{% url 'ux_framework_detail' framework.pk %}"
+								class="font-medium text-gray-900 dark:text-gray-100 hover:underline"
+							>
+								{{ framework.name }}
+							</a>
+						</td>
+
+						<td class="px-4 py-3 text-sm max-w-md">
+							{% if framework.description %}
+								<p class="line-clamp-2">
+									{{ framework.description }}
+								</p>
+							{% else %}
+								<span class="text-gray-400">—</span>
+							{% endif %}
+						</td>
+
+						<td class="px-4 py-3 whitespace-nowrap">
+							{% if framework.framework_type %}
+								<span class="badge">
+									{{ framework.get_framework_type_display }}
+								</span>
+							{% else %}
+								<span class="text-gray-400">—</span>
+							{% endif %}
+						</td>
+
+						<td class="px-4 py-3 whitespace-nowrap">
+							{% if framework.source %}
+								{{ framework.source }}
+							{% else %}
+								<span class="text-gray-400">—</span>
+							{% endif %}
+						</td>
+
+						<td class="px-4 py-3 whitespace-nowrap">
+							{% if framework.version %}
+								{{ framework.version }}
+							{% else %}
+								<span class="text-gray-400">—</span>
+							{% endif %}
+						</td>
+
+						<td class="px-4 py-3 whitespace-nowrap">
+							{% if framework.is_active %}
+								<span class="message-info">
+									Active
+								</span>
+							{% else %}
+								<span class="message-default">
+									Inactive
+								</span>
+							{% endif %}
+						</td>
+
+						<td class="px-4 py-3 whitespace-nowrap">
+							{{ framework.created_at|date:"M j, Y" }}<br>
+							<span class="text-xs text-gray-400">
+								{{ framework.created_at|date:"H:i" }}
+							</span>
+						</td>
+
+						<td class="whitespace-nowrap px-4 py-4 text-right text-sm font-medium">
+							<div class="flex justify-end gap-3">
+
+								<a
+									href="{% url 'ux_framework_detail' framework.pk %}"
+									class="dark:text-gray-400 hover:dark:text-white text-gray-700 hover:text-gray-500"
+									title="View framework"
+								>
+									{% heroicon_outline "eye" %}
+								</a>
+
+								
+
+							</div>
+						</td>
+
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+
+		{% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params displayed_entries=displayed_entries_count total_filtered_entries=total_filtered_entries_count total_entries=total_study_entries_count %}
+
+	{% else %}
+		<div class="p-8 text-center">
+			<h2 class="text-sm md-card-title">
+				No UX frameworks found.
+			</h2>
+			<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+				Once created, UX frameworks will appear here.
+			</p>
+		</div>
+	{% endif %}
+</div>

@@ -1,0 +1,216 @@
+{% load heroicons %}
+
+<!-- FILTERS -->
+<div class="px-6 py-4 bg-white dark:bg-gray-900">
+	<form
+		id="ux-framework-criterion-filter-form"
+		method="get"
+		hx-get="{{ ux_framework_criteria_filter_url }}"
+		hx-target="#entries-panel"
+		hx-swap="innerHTML"
+		hx-push-url="true"
+		hx-trigger="submit, change from:select, keyup changed delay:500ms from:input[name='q']"
+		class="space-y-3"
+	>
+
+		<div class="flex flex-wrap gap-3">
+
+			<div>
+				<label for="q" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+					Open search:
+				</label>
+				<input
+					id="q"
+					type="text"
+					name="q"
+					placeholder="Search criteria..."
+					value="{{ q }}"
+					class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-56 dark:text-white dark:border-gray-500"
+				>
+			</div>
+
+			<div>
+				<label for="is_active" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+					Active:
+				</label>
+				<select
+					id="is_active"
+					name="is_active"
+					class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-40 dark:text-white dark:border-gray-500"
+				>
+					<option value="">All</option>
+					<option value="yes" {% if is_active == "yes" %}selected{% endif %}>Active</option>
+					<option value="no" {% if is_active == "no" %}selected{% endif %}>Inactive</option>
+				</select>
+			</div>
+
+			<button type="submit" class="button-FILTER h-10 self-end">
+				Filter
+			</button>
+
+			{% if q or is_active %}
+				<button
+					type="button"
+					class="button-FILTER-CLEAR h-10 self-end inline-flex items-center"
+					hx-get="{{ ux_framework_criteria_filter_url }}"
+					hx-target="#entries-panel"
+					hx-swap="innerHTML"
+					hx-push-url="{% url 'ux_framework_criterion_catalogue_list' framework.pk %}"
+					onclick="
+						const form = document.getElementById('ux-framework-criterion-filter-form');
+						form.querySelector('[name=q]').value = '';
+						form.querySelector('[name=is_active]').value = '';
+					"
+				>
+					Clear Filter
+				</button>
+			{% endif %}
+
+		</div>
+
+	</form>
+</div>
+
+<div class="overflow-x-auto">
+	{% if criteria %}
+
+		{% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params displayed_entries=displayed_entries_count total_filtered_entries=total_filtered_entries_count total_entries=total_study_entries_count %}
+
+		<table class="w-full table-auto text-sm">
+			<thead class="bg-gray-100 dark:bg-gray-700 dark:text-gray-200 text-gray-600">
+				<tr class="border-b border-t border-gray-200 dark:border-gray-600">
+					<th>Criterion</th>
+					<th>Code</th>
+					<th>Description</th>
+					<th>Aliases</th>
+					<th>Recommendation</th>
+					<th>Active</th>
+					<th>Created</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+
+			<tbody class="divide-y divide-gray-200 dark:divide-gray-600 text-gray-600 dark:text-gray-200">
+				{% for criterion in criteria %}
+					<tr class="hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 transition-colors">
+
+						<td class="px-4 py-3 whitespace-nowrap">
+							<a
+								href="{% url 'ux_framework_criterion_detail' framework.pk criterion.pk %}"
+								class="font-medium text-gray-900 dark:text-gray-100 hover:underline"
+							>
+								{{ criterion.name }}
+							</a>
+						</td>
+
+						<td class="px-4 py-3 whitespace-nowrap">
+							{% if criterion.code %}
+								<span class="badge">
+									{{ criterion.code }}
+								</span>
+							{% else %}
+								<span class="text-gray-400">—</span>
+							{% endif %}
+						</td>
+
+						<td class="px-4 py-3 text-sm max-w-md">
+							{% if criterion.description %}
+								<p class="line-clamp-2">
+									{{ criterion.description }}
+								</p>
+							{% else %}
+								<span class="text-gray-400">—</span>
+							{% endif %}
+						</td>
+
+						<td class="px-4 py-3 text-sm max-w-md">
+							{% if criterion.aliases %}
+								<div class="flex flex-wrap gap-2">
+									{% for alias in criterion.aliases %}
+										<span class="badge">
+											{{ alias }}
+										</span>
+									{% endfor %}
+								</div>
+							{% else %}
+								<span class="text-gray-400">—</span>
+							{% endif %}
+						</td>
+
+						<td class="px-4 py-3 text-sm max-w-md">
+							{% if criterion.recommendation_guidance %}
+								<p class="line-clamp-2">
+									{{ criterion.recommendation_guidance }}
+								</p>
+							{% else %}
+								<span class="text-gray-400">—</span>
+							{% endif %}
+						</td>
+
+						<td class="px-4 py-3 whitespace-nowrap">
+							{% if criterion.is_active %}
+								<span class="message-info">
+									Active
+								</span>
+							{% else %}
+								<span class="message-default">
+									Inactive
+								</span>
+							{% endif %}
+						</td>
+
+						<td class="px-4 py-3 whitespace-nowrap">
+							{{ criterion.created_at|date:"M j, Y" }}<br>
+							<span class="text-xs text-gray-400">
+								{{ criterion.created_at|date:"H:i" }}
+							</span>
+						</td>
+
+						<td class="whitespace-nowrap px-4 py-4 text-right text-sm font-medium">
+							<div class="flex justify-end gap-3">
+
+								<a
+									href="{% url 'ux_framework_criterion_detail' framework.pk criterion.pk %}"
+									class="dark:text-gray-400 hover:dark:text-white text-gray-700 hover:text-gray-500"
+									title="View criterion"
+								>
+									{% heroicon_outline "eye" %}
+								</a>
+
+								<a
+									href="{% url 'ux_framework_criterion_update' framework.pk criterion.pk %}"
+									class="dark:text-gray-400 hover:dark:text-white text-gray-700 hover:text-gray-500"
+									title="Edit criterion"
+								>
+									{% heroicon_outline "pencil-square" %}
+								</a>
+
+								<a
+									href="{% url 'ux_framework_criterion_delete' framework.pk criterion.pk %}"
+									class="dark:text-gray-400 hover:dark:text-white text-gray-700 hover:text-red-500"
+									title="Delete criterion"
+								>
+									{% heroicon_outline "trash" %}
+								</a>
+
+							</div>
+						</td>
+
+					</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+
+		{% include "studies/partials/_paginator.html" with page_obj=page_obj page_params=page_params displayed_entries=displayed_entries_count total_filtered_entries=total_filtered_entries_count total_entries=total_study_entries_count %}
+
+	{% else %}
+		<div class="p-8 text-center">
+			<h2 class="text-sm md-card-title">
+				No framework criteria found.
+			</h2>
+			<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+				Once created, criteria for this framework will appear here.
+			</p>
+		</div>
+	{% endif %}
+</div>

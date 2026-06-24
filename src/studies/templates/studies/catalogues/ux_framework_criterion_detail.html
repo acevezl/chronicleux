@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block title %}{{ criterion.name }} · ChronicleUX{% endblock %}
+
+{% block content %}
+
+<div class="sticky-top">
+	{% include "studies/partials/_header.html" with page_title=page_title page_subtitle=page_subtitle %}
+	{% include "studies/catalogues/partials/_menu_catalogues.html" %}
+</div>
+
+<div class="p-4">
+	{% include "studies/partials/_messages.html" %}
+
+	<article class="group main-card">
+
+		<!-- CARD TITLE (I.E., SUMMARY) -->
+		<div class="card-summary">
+
+			<div class="flex flex-col">
+				<h3 class="card-summary-title">
+					{% heroicon_outline "clipboard-document-list" %}
+					UX Framework: {{ framework.name }}
+				</h3>
+
+				<p class="card-summary-subtitle">
+					Viewing criterion, heuristic, principle, section, or article within {{ framework.name }}.
+				</p>
+			</div>
+
+			<div class="flex justify-end gap-3">
+				<a
+					href="{% url 'ux_framework_criterion_update' framework.pk criterion.pk %}"
+					class="button-PRIMARY"
+				>
+					{% heroicon_outline "pencil-square" class="h-4 w-4 shrink-0" %}
+					Edit Criterion
+				</a>
+
+				<a
+					href="{% url 'ux_framework_criterion_delete' framework.pk criterion.pk %}"
+					class="button-SECONDARY"
+				>
+					{% heroicon_outline "trash" class="h-4 w-4 shrink-0" %}
+					Delete Criterion
+				</a>
+
+				<a
+					href="{% url 'ux_framework_detail' framework.pk %}"
+					class="button-TERTIARY"
+				>
+					{% heroicon_outline "arrow-left" class="h-4 w-4 shrink-0" %}
+					Return to Framework
+				</a>
+			</div>
+
+		</div>
+
+		<!-- CRITERION DATA -->
+		<section class="grid grid-cols-1 gap-4 p-4">
+
+			<!-- TOP METADATA ROW -->
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+				<!-- NAME -->
+				<div class="lg:col-span-2 rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "rectangle-stack" class="h-4 w-4 shrink-0" %}
+						Criterion Name
+					</div>
+
+					<p class="mt-2 text-sm leading-6 text-gray-900 dark:text-gray-100">
+						{{ criterion.name|default:"—" }}
+					</p>
+				</div>
+
+				<!-- CODE -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "numbered-list" class="h-4 w-4 shrink-0" %}
+						Code
+					</div>
+
+					<p class="mt-2 text-sm leading-6 text-gray-900 dark:text-gray-100">
+						{% if criterion.code %}
+							<span class="badge">
+								{{ criterion.code }}
+							</span>
+						{% else %}
+							<span class="text-gray-400">—</span>
+						{% endif %}
+					</p>
+				</div>
+
+				<!-- ACTIVE -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "check-circle" class="h-4 w-4 shrink-0" %}
+						Active
+					</div>
+
+					<div class="mt-2 text-sm">
+						{% if criterion.is_active %}
+							<span class="message-info">
+								Active
+							</span>
+						{% else %}
+							<span class="message-default">
+								Inactive
+							</span>
+						{% endif %}
+					</div>
+
+					<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+						Inactive criteria remain saved but are excluded from active framework matching.
+					</p>
+				</div>
+
+			</div>
+
+			<!-- MAIN CONTENT GRID -->
+			<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+				<!-- DESCRIPTION -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "document-text" class="h-4 w-4 shrink-0" %}
+						Description
+					</div>
+
+					{% if criterion.description %}
+						<p class="mt-2 text-sm leading-6 text-gray-900 dark:text-gray-100 whitespace-pre-line">
+							{{ criterion.description }}
+						</p>
+					{% else %}
+						<p class="mt-2 text-sm text-gray-400">
+							—
+						</p>
+					{% endif %}
+				</div>
+
+				<!-- RECOMMENDATION GUIDANCE -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "light-bulb" class="h-4 w-4 shrink-0" %}
+						Recommendation Guidance
+					</div>
+
+					{% if criterion.recommendation_guidance %}
+						<p class="mt-2 text-sm leading-6 text-gray-900 dark:text-gray-100 whitespace-pre-line">
+							{{ criterion.recommendation_guidance }}
+						</p>
+					{% else %}
+						<p class="mt-2 text-sm text-gray-400">
+							—
+						</p>
+					{% endif %}
+				</div>
+
+				<!-- ALIASES -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "arrows-right-left" class="h-4 w-4 shrink-0" %}
+						Aliases
+					</div>
+
+					{% if criterion.aliases %}
+						<div class="mt-3 flex flex-wrap gap-2">
+							{% for alias in criterion.aliases %}
+								<span class="inline-flex items-center gap-2 rounded-full border border-gray-300 dark:border-gray-600 px-3 py-1 text-xs text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800">
+									{{ alias }}
+								</span>
+							{% endfor %}
+						</div>
+					{% else %}
+						<p class="mt-2 text-sm text-gray-400">
+							—
+						</p>
+					{% endif %}
+				</div>
+
+				<!-- EVALUATION QUESTIONS -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "question-mark-circle" class="h-4 w-4 shrink-0" %}
+						Evaluation Questions
+					</div>
+
+					{% if criterion.evaluation_questions %}
+						<div class="mt-3 flex flex-col gap-2">
+							{% for question in criterion.evaluation_questions %}
+								<div class="rounded-sm border border-gray-300 dark:border-gray-600 px-3 py-2 text-xs text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-800">
+									{{ question }}
+								</div>
+							{% endfor %}
+						</div>
+					{% else %}
+						<p class="mt-2 text-sm text-gray-400">
+							—
+						</p>
+					{% endif %}
+				</div>
+
+				<!-- EXAMPLES -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4 lg:col-span-2">
+					<div class="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+						{% heroicon_outline "chat-bubble-left-right" class="h-4 w-4 shrink-0" %}
+						Examples
+					</div>
+
+					{% if criterion.examples %}
+						<p class="mt-2 text-sm leading-6 text-gray-900 dark:text-gray-100 whitespace-pre-line">
+							{{ criterion.examples }}
+						</p>
+					{% else %}
+						<p class="mt-2 text-sm text-gray-400">
+							—
+						</p>
+					{% endif %}
+				</div>
+
+			</div>
+
+		</section>
+
+	</article>
+
+</div>
+
+{% endblock %}

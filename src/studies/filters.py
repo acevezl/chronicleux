@@ -1,7 +1,17 @@
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
 
-from .models import DiaryEntry, DiaryEntryAnalysis, CanonicalTheme, CanonicalIssue, ThemeAndIssueSource, ThemeAndIssueStatus
+from .models import (
+    DiaryEntry, 
+	DiaryEntryAnalysis, 
+	CanonicalTheme, 
+	CanonicalIssue, 
+	ThemeAndIssueSource, 
+	ThemeAndIssueStatus,
+	UXFramework,
+	UXFrameworkCriterion,
+	UXFrameworkType,
+	)
 
 
 # -------- FILTER FOR ENTRY LIST PAGE -------- #
@@ -399,4 +409,107 @@ def filter_canonical_issues(request):
 		"displayed_entries_count": displayed_entries_count,
 		"total_filtered_entries_count": total_filtered_entries_count,
 		"total_study_entries_count": total_study_entries_count,
+	}
+
+
+# FRAMEWORK HELPER: FILTERING UX FRAMEWORKS
+def filter_ux_frameworks(request):
+	frameworks = UXFramework.objects.annotate(
+		criteria_count=Count("criteria", distinct=True),
+	)
+
+	q = request.GET.get("q", "").strip()
+	framework_type = request.GET.get("framework_type", "").strip()
+	is_active = request.GET.get("is_active", "").strip()
+
+	if q:
+		frameworks = frameworks.filter(
+			Q(name__icontains=q)
+			| Q(description__icontains=q)
+			| Q(source__icontains=q)
+			| Q(version__icontains=q)
+		)
+
+	if framework_type:
+		frameworks = frameworks.filter(framework_type=framework_type)
+
+	if is_active == "yes":
+		frameworks = frameworks.filter(is_active=True)
+	elif is_active == "no":
+		frameworks = frameworks.filter(is_active=False)
+
+	frameworks = frameworks.order_by("name")
+
+	paginator = Paginator(frameworks, 10)
+	page_number = request.GET.get("page")
+	page_obj = paginator.get_page(page_number)
+
+	page_params = request.GET.copy()
+	page_params.pop("page", None)
+
+	return {
+		"frameworks": page_obj.object_list,
+		"page_obj": page_obj,
+		"page_params": page_params,
+		"q": q,
+		"framework_type": framework_type,
+		"is_active": is_active,
+		"framework_type_choices": UXFrameworkType.choices,
+		"displayed_entries_count": len(page_obj.object_list),
+		"total_filtered_entries_count": paginator.count,
+		"total_study_entries_count": UXFramework.objects.count(),
+	}
+
+
+# FRAMEWORK HELPER: FILTERING UX FRAMEWORK CRITERIA
+def filter_ux_framework_criteria(request, framework=None):
+	criteria = UXFrameworkCriterion.objects.select_related("framework")
+
+	if framework is not None:
+		criteria = criteria.filter(framework=framework)
+
+	q = request.GET.get("q", "").strip()
+	framework_pk = request.GET.get("framework", "").strip()
+	is_active = request.GET.get("is_active", "").strip()
+
+	if q:
+		criteria = criteria.filter(
+			Q(name__icontains=q)
+			| Q(code__icontains=q)
+			| Q(description__icontains=q)
+			| Q(examples__icontains=q)
+			| Q(recommendation_guidance__icontains=q)
+			| Q(framework__name__icontains=q)
+		)
+
+	if framework is None and framework_pk:
+		criteria = criteria.filter(framework_id=framework_pk)
+
+	if is_active == "yes":
+		criteria = criteria.filter(is_active=True)
+	elif is_active == "no":
+		criteria = criteria.filter(is_active=False)
+
+	criteria = criteria.order_by("framework__name", "code", "name")
+
+	paginator = Paginator(criteria, 10)
+	page_number = request.GET.get("page")
+	page_obj = paginator.get_page(page_number)
+
+	page_params = request.GET.copy()
+	page_params.pop("page", None)
+
+	return {
+		"criteria": page_obj.object_list,
+		"framework_criteria": page_obj.object_list,
+		"page_obj": page_obj,
+		"page_params": page_params,
+		"q": q,
+		"framework_filter": framework_pk,
+		"is_active": is_active,
+		"framework": framework,
+		"frameworks": UXFramework.objects.filter(is_active=True).order_by("name"),
+		"displayed_entries_count": len(page_obj.object_list),
+		"total_filtered_entries_count": paginator.count,
+		"total_study_entries_count": UXFrameworkCriterion.objects.count(),
 	}

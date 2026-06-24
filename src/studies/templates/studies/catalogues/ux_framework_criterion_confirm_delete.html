@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
+{% load heroicons %}
 
-{% block title %}Delete Canonical Theme · ChronicleUX{% endblock %}
+{% block title %}Delete Framework Criterion · ChronicleUX{% endblock %}
 
 {% block content %}
 
@@ -27,17 +28,21 @@
 					</h2>
 
 					<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-						You are about to delete this canonical theme:
+						You are about to delete this framework criterion:
 					</p>
 
 					<div class="mt-4 rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
 						<p class="text-sm md-card-title">
-							Name: {{ theme.name }}
+							Name: {{ criterion.name }}
 						</p>
 
-						{% if theme.description %}
+						<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+							Framework: {{ framework.name }}
+						</p>
+
+						{% if criterion.description %}
 							<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
-								Description: {{ theme.description }}
+								Description: {{ criterion.description }}
 							</p>
 						{% else %}
 							<p class="mt-2 text-sm text-gray-400">
@@ -45,44 +50,25 @@
 							</p>
 						{% endif %}
 
-						{% if theme.aliases %}
+						{% if criterion.recommendation_guidance %}
 							<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
-								Aliases: {{ theme.aliases|join:", " }}
+								Recommendation: {{ criterion.recommendation_guidance }}
 							</p>
 						{% endif %}
-
-						<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
-							Source:
-							{% if theme.source %}
-								{{ theme.get_source_display }}
-							{% else %}
-								—
-							{% endif %}
-						</p>
-
-						<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
-							Status:
-							{% if theme.status %}
-								{{ theme.get_status_display }}
-							{% else %}
-								—
-							{% endif %}
-						</p>
-						
 					</div>
 
 					<div class="message-warning my-2">
-                        {% heroicon_outline "exclamation-circle" class="h-4 w-4"%}
+						{% heroicon_outline "exclamation-circle" class="h-4 w-4"%}
 						This action cannot be undone.
-                    </div>
+					</div>
 				</div>
 
 				<div class="flex justify-end gap-3">
 					<button type="submit" class="button-PRIMARY">
-						Delete Theme
+						Delete Criterion
 					</button>
 
-					<a href="{% url 'canonical_theme_catalogue_list' %}" class="button-TERTIARY">
+					<a href="{% url 'ux_framework_detail' framework.pk %}" class="button-TERTIARY">
 						Cancel
 					</a>
 				</div>

@@ -34,6 +34,8 @@ from .filters import (
 	filter_analysis_entries, 
 	filter_canonical_themes, 
 	filter_canonical_issues,
+	filter_ux_frameworks,
+	filter_ux_framework_criteria,
 	)
 
 from .forms import (
@@ -42,6 +44,8 @@ from .forms import (
 	DiaryEntryForm, 
 	DiaryEntryManualEvaluationForm,
 	StudyForm, 
+	UXFrameworkForm,
+	UXFrameworkCriterionForm,
 )
 
 from .models import (
@@ -59,6 +63,8 @@ from .models import (
 	CanonicalTheme, 
 	ThemeAndIssueSource, 
 	ThemeAndIssueStatus,
+	UXFramework,
+	UXFrameworkCriterion,
 )
 
 from .helpers import (
@@ -1702,4 +1708,404 @@ def refresh_analysis_run_metrics(request, study_pk, run_pk):
 		"machine_analysis_details",
 		study_pk=study.pk,
 		run_pk=run.pk,
+	)
+
+
+# ---------------------------- #
+# UX FRAMEWORK CATALOGUE LIST  #
+# ---------------------------- #
+@login_required
+def ux_framework_catalogue_list(request):
+	require_catalogue_manager(request.user)
+
+	context = filter_ux_frameworks(request)
+	context.update({
+		"page_title_heroicon": "bookmark-square",
+		"page_title": "UX Frameworks Catalogue",
+		"page_subtitle": "Manage usability frameworks used to ground UX issue and theme recommendations.",
+		"ux_frameworks_filter_url": reverse("ux_framework_catalogue_partial"),
+	})
+
+	return render(
+		request,
+		"studies/catalogues/ux_framework_list.html",
+		context,
+	)
+
+
+# ------------------------------ #
+# UX FRAMEWORK CATALOGUE PARTIAL #
+# ------------------------------ #
+@login_required
+def ux_framework_catalogue_partial(request):
+	require_catalogue_manager(request.user)
+
+	if request.headers.get("HX-Request") != "true":
+		url = reverse("ux_framework_catalogue_list")
+		querystring = request.GET.urlencode()
+
+		if querystring:
+			url = f"{url}?{querystring}"
+
+		return redirect(url)
+
+	context = filter_ux_frameworks(request)
+	context.update({
+		"ux_frameworks_filter_url": reverse("ux_framework_catalogue_partial"),
+	})
+
+	response = render(
+		request,
+		"studies/catalogues/partials/_ux_frameworks.html",
+		context,
+	)
+
+	full_page_url = reverse("ux_framework_catalogue_list")
+	querystring = request.GET.urlencode()
+
+	if querystring:
+		full_page_url = f"{full_page_url}?{querystring}"
+
+	response["HX-Push-Url"] = full_page_url
+
+	return response
+
+
+# --------------------- #
+# UX FRAMEWORK DETAIL   #
+# --------------------- #
+@login_required
+def ux_framework_detail(request, framework_pk):
+	require_catalogue_manager(request.user)
+
+	framework = get_object_or_404(
+		UXFramework.objects.prefetch_related("criteria"),
+		pk=framework_pk,
+	)
+
+	criteria = framework.criteria.all().order_by("code", "name")
+
+	return render(
+		request,
+		"studies/catalogues/ux_framework_detail.html",
+		{
+			"framework": framework,
+			"criteria": criteria,
+			"page_title_heroicon": "bookmark-square",
+			"page_title": framework.name,
+			"page_subtitle": "Review this framework and its criteria.",
+		},
+	)
+
+
+# ------------------- #
+# UX FRAMEWORK CREATE #
+# ------------------- #
+@login_required
+def ux_framework_create(request):
+	require_catalogue_manager(request.user)
+
+	if request.method == "POST":
+		form = UXFrameworkForm(request.POST)
+
+		if form.is_valid():
+			framework = form.save(commit=False)
+			framework.created_by = request.user
+			framework.save()
+
+			messages.success(request, "UX framework created.")
+			return redirect("ux_framework_catalogue_list")
+	else:
+		form = UXFrameworkForm()
+
+	return render(
+		request,
+		"studies/catalogues/ux_framework_form.html",
+		{
+			"form": form,
+			"page_title_heroicon": "bookmark-square",
+			"page_title": "Create UX Framework",
+			"page_subtitle": "Create a reusable usability framework such as Nielsen, ISO, WCAG, or a custom taxonomy.",
+			"submit_label": "Create",
+		},
+	)
+
+
+# ------------------- #
+# UX FRAMEWORK UPDATE #
+# ------------------- #
+@login_required
+def ux_framework_update(request, framework_pk):
+	require_catalogue_manager(request.user)
+
+	framework = get_object_or_404(UXFramework, pk=framework_pk)
+
+	if request.method == "POST":
+		form = UXFrameworkForm(request.POST, instance=framework)
+
+		if form.is_valid():
+			form.save()
+
+			messages.success(request, "UX framework updated.")
+			return redirect("ux_framework_detail", framework_pk=framework.pk)
+	else:
+		form = UXFrameworkForm(instance=framework)
+
+	return render(
+		request,
+		"studies/catalogues/ux_framework_form.html",
+		{
+			"framework": framework,
+			"form": form,
+			"page_title_heroicon": "bookmark-square",
+			"page_title": "Edit UX Framework",
+			"page_subtitle": "Update this reusable usability framework.",
+			"submit_label": "Save",
+		},
+	)
+
+
+# ------------------- #
+# UX FRAMEWORK DELETE #
+# ------------------- #
+@login_required
+def ux_framework_delete(request, framework_pk):
+	require_catalogue_manager(request.user)
+
+	framework = get_object_or_404(
+		UXFramework.objects.annotate(criteria_count=Count("criteria", distinct=True)),
+		pk=framework_pk,
+	)
+
+	if request.method == "POST":
+		framework.delete()
+
+		messages.success(request, "UX framework deleted.")
+		return redirect("ux_framework_catalogue_list")
+
+	return render(
+		request,
+		"studies/catalogues/ux_framework_confirm_delete.html",
+		{
+			"framework": framework,
+			"page_title_heroicon": "bookmark-square",
+			"page_title": "Delete UX Framework",
+			"page_subtitle": "Confirm whether this framework should be removed from the global catalogue.",
+		},
+	)
+
+
+# ------------------------------------- #
+# UX FRAMEWORK CRITERION CATALOGUE LIST #
+# ------------------------------------- #
+@login_required
+def ux_framework_criterion_catalogue_list(request, framework_pk):
+	require_catalogue_manager(request.user)
+
+	framework = get_object_or_404(UXFramework, pk=framework_pk)
+
+	context = filter_ux_framework_criteria(request, framework=framework)
+	context.update({
+		"framework": framework,
+		"page_title_heroicon": "rectangle-stack",
+		"page_title": f"{framework.name} Criteria",
+		"page_subtitle": "Manage framework criteria, heuristics, dimensions, principles, or guideline chunks used for recommendations.",
+		"ux_framework_criteria_filter_url": reverse(
+			"ux_framework_criterion_catalogue_partial",
+			kwargs={"framework_pk": framework.pk},
+		),
+	})
+
+	return render(
+		request,
+		"studies/catalogues/ux_framework_criterion_list.html",
+		context,
+	)
+
+# --------------------------------------- #
+# UX FRAMEWORK CRITERION CATALOGUE PARTIAL #
+# --------------------------------------- #
+@login_required
+def ux_framework_criterion_catalogue_partial(request):
+	require_catalogue_manager(request.user)
+
+	if request.headers.get("HX-Request") != "true":
+		url = reverse("ux_framework_criterion_catalogue_list")
+		querystring = request.GET.urlencode()
+
+		if querystring:
+			url = f"{url}?{querystring}"
+
+		return redirect(url)
+
+	context = filter_ux_framework_criteria(request)
+	context.update({
+		"ux_framework_criteria_filter_url": reverse("ux_framework_criterion_catalogue_partial"),
+	})
+
+	response = render(
+		request,
+		"studies/catalogues/partials/_ux_framework_criteria.html",
+		context,
+	)
+
+	full_page_url = reverse("ux_framework_criterion_catalogue_list")
+	querystring = request.GET.urlencode()
+
+	if querystring:
+		full_page_url = f"{full_page_url}?{querystring}"
+
+	response["HX-Push-Url"] = full_page_url
+
+	return response
+
+
+# ----------------------------- #
+# UX FRAMEWORK CRITERION DETAIL #
+# ----------------------------- #
+@login_required
+def ux_framework_criterion_detail(request, framework_pk, criterion_pk):
+	require_catalogue_manager(request.user)
+
+	framework = get_object_or_404(UXFramework, pk=framework_pk)
+
+	criterion = get_object_or_404(
+		UXFrameworkCriterion.objects.select_related("framework"),
+		pk=criterion_pk,
+		framework=framework,
+	)
+
+	context = {
+		"framework": framework,
+		"criterion": criterion,
+		"page_title_heroicon": "clipboard-document-list",
+		"page_title": criterion.name,
+		"page_subtitle": f"{framework.name} criterion details.",
+	}
+
+	return render(
+		request,
+		"studies/catalogues/ux_framework_criterion_detail.html",
+		context,
+	)
+
+
+# ----------------------------- #
+# UX FRAMEWORK CRITERION CREATE #
+# ----------------------------- #
+@login_required
+def ux_framework_criterion_create(request, framework_pk=None):
+	require_catalogue_manager(request.user)
+
+	framework = None
+	if framework_pk is not None:
+		framework = get_object_or_404(UXFramework, pk=framework_pk)
+
+	if request.method == "POST":
+		form = UXFrameworkCriterionForm(request.POST)
+
+		if form.is_valid():
+			criterion = form.save(commit=False)
+
+			if framework is not None:
+				criterion.framework = framework
+
+			criterion.save()
+
+			messages.success(request, "UX framework criterion created.")
+			return redirect("ux_framework_detail", framework_pk=criterion.framework.pk)
+	else:
+		initial = {}
+
+		if framework is not None:
+			initial["framework"] = framework
+
+		form = UXFrameworkCriterionForm(initial=initial)
+
+	return render(
+		request,
+		"studies/catalogues/ux_framework_criterion_form.html",
+		{
+			"framework": framework,
+			"form": form,
+			"page_title_heroicon": "rectangle-stack",
+			"page_title": "Create UX Framework Criterion",
+			"page_subtitle": "Create a reusable framework criterion with recommendation guidance.",
+			"submit_label": "Save",
+		},
+	)
+
+
+# ----------------------------- #
+# UX FRAMEWORK CRITERION UPDATE #
+# ----------------------------- #
+@login_required
+def ux_framework_criterion_update(request, framework_pk, criterion_pk):
+	require_catalogue_manager(request.user)
+
+	framework = get_object_or_404(UXFramework, pk=framework_pk)
+
+	criterion = get_object_or_404(
+		UXFrameworkCriterion.objects.select_related("framework"),
+		pk=criterion_pk,
+		framework=framework,
+	)
+
+	if request.method == "POST":
+		form = UXFrameworkCriterionForm(request.POST, instance=criterion)
+
+		if form.is_valid():
+			criterion = form.save()
+
+			messages.success(request, "UX framework criterion updated.")
+			return redirect("ux_framework_detail", framework_pk=framework.pk)
+	else:
+		form = UXFrameworkCriterionForm(instance=criterion)
+
+	return render(
+		request,
+		"studies/catalogues/ux_framework_criterion_form.html",
+		{
+			"criterion": criterion,
+			"framework": criterion.framework,
+			"form": form,
+			"page_title_heroicon": "rectangle-stack",
+			"page_title": "Edit UX Framework Criterion",
+			"page_subtitle": "Update this reusable framework criterion and its recommendation guidance.",
+			"submit_label": "Save",
+		},
+	)
+
+
+# ----------------------------- #
+# UX FRAMEWORK CRITERION DELETE #
+# ----------------------------- #
+@login_required
+def ux_framework_criterion_delete(request, framework_pk, criterion_pk):
+	require_catalogue_manager(request.user)
+
+	framework = get_object_or_404(UXFramework, pk=framework_pk)
+
+	criterion = get_object_or_404(
+		UXFrameworkCriterion.objects.select_related("framework"),
+		pk=criterion_pk,
+		framework=framework,
+	)
+
+	if request.method == "POST":
+		criterion.delete()
+
+		messages.success(request, "UX framework criterion deleted.")
+		return redirect("ux_framework_detail", framework_pk=framework.pk)
+
+	return render(
+		request,
+		"studies/catalogues/ux_framework_criterion_confirm_delete.html",
+		{
+			"criterion": criterion,
+			"framework": criterion.framework,
+			"page_title_heroicon": "rectangle-stack",
+			"page_title": "Delete UX Framework Criterion",
+			"page_subtitle": "Confirm whether this criterion should be removed from the framework catalogue.",
+		},
 	)

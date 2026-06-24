@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block title %}{{ page_title }} · ChronicleUX{% endblock %}
+
+{% block content %}
+
+<div class="sticky-top">
+	{% include "studies/partials/_header.html" with page_title=page_title page_subtitle=page_subtitle %}
+	{% include "studies/catalogues/partials/_menu_catalogues.html" %}
+</div>
+
+<div class="p-4">
+	{% include "studies/partials/_messages.html" %}
+
+	<div class="main-card">
+
+		<!-- CARD TITLE (I.E., SUMMARY) -->
+		<div class="card-summary">
+
+			<div class="flex flex-col">
+				<h3 class="card-summary-title">
+					{% heroicon_outline "rectangle-group" %}
+					UX Framework: {{ framework.name }}
+				</h3>
+
+				<p class="card-summary-subtitle">
+					Criteria, heuristics, principles, dimensions, or guideline chunks defined for {{ framework.name }}.
+				</p>
+			</div>
+
+			<div class="flex justify-end gap-3">
+				<a
+					href="{% url 'ux_framework_criterion_create' framework.pk %}"
+					class="button-PRIMARY"
+				>
+					{% heroicon_outline "plus-circle" class="h-4 w-4 shrink-0" %}
+					Add Criterion
+				</a>
+
+				<a
+					href="{% url 'ux_framework_detail' framework.pk %}"
+					class="button-TERTIARY"
+				>
+					{% heroicon_outline "arrow-left" class="h-4 w-4 shrink-0" %}
+					Return to Framework
+				</a>
+			</div>
+
+		</div>
+
+		<!-- HTMX PANEL -->
+		<div id="entries-panel">
+			{% include "studies/catalogues/partials/_ux_framework_criteria.html" %}
+		</div>
+
+	</div>
+
+</div>
+
+{% endblock %}
