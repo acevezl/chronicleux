@@ -444,8 +444,8 @@
     <!-- EVOLUTION OVER TIME -->
     <div class="main-card overflow-hidden">
 
-        <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
-            <h4 class="card-summary-title">
+        <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+            <h4 class="md-card-title">
                 {% heroicon_outline "arrow-trending-up" %}
                 Evolution Over Time
             </h4>
@@ -460,6 +460,28 @@
                 {% include "studies/partials/_evolution_sentiment.html" with run=run evolution=run.evolution_over_time %}
 
                 {% include "studies/partials/_evolution_sentiment_label.html" with run=run evolution=run.evolution_over_time %}
+
+        </div>
+
+    </div>
+
+    <!-- KEY SENTIMENT SIGNALS -->
+    <div class="main-card overflow-hidden">
+
+        <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+            <h4 class="md-card-title">
+                {% heroicon_outline "arrow-trending-up" %}
+                Top Representative Quotes
+            </h4>
+
+            <p class="xs-label">
+                Sentiment score and sentiment-label changes across the study timeline.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 p-4">
+
+                {% include "studies/partials/_top_sentiment_signals.html" with study_id=study.id top_quotes=run.top_representative_quotes %}
 
         </div>
 
