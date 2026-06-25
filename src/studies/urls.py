@@ -55,6 +55,7 @@ urlpatterns = [
     path("catalogues/frameworks/<int:framework_pk>/", views.ux_framework_detail, name="ux_framework_detail"),
     path("catalogues/frameworks/<int:framework_pk>/update/", views.ux_framework_update, name="ux_framework_update"),
     path("catalogues/frameworks/<int:framework_pk>/delete/", views.ux_framework_delete, name="ux_framework_delete"),
+    path("catalogues/frameworks/import/", views.ux_framework_import, name="ux_framework_import"),
 
     # Fremwork Criteria
     path("catalogues/frameworks/<int:framework_pk>/framework-criteria/", views.ux_framework_criterion_catalogue_list, name="ux_framework_criterion_catalogue_list"),

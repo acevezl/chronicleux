@@ -15,6 +15,9 @@ from .models import (
 	StudyMembership,
 	ThemeAndIssueSource,
 	ThemeAndIssueStatus,
+	UXFramework,
+	UXFrameworkCriterion,
+	UXFrameworkType,
 )
 
 User = get_user_model()
@@ -574,3 +577,191 @@ def normalize_optional_bool(value, default=True):
 		return False
 
 	raise ValueError(f"Invalid boolean value: {value}")
+
+# UX FRAMEWORK IMPORT HELPERS ---
+
+VALID_UX_FRAMEWORK_TYPES = {choice[0] for choice in UXFrameworkType.choices}
+
+
+# UX FRAMEWORK IMPORT HELPER: IMPORT UX FRAMEWORKS
+@transaction.atomic
+def import_ux_frameworks(rows, created_by_user):
+	created_framework_count = 0
+	updated_framework_count = 0
+	created_criterion_count = 0
+	updated_criterion_count = 0
+	skipped_count = 0
+
+	for index, row in enumerate(rows, start=1):
+		try:
+			if not row.get("framework_name"):
+				skipped_count += 1
+				continue
+
+			framework, framework_created = create_ux_framework_from_row(
+				row,
+				created_by_user,
+			)
+
+			if framework_created:
+				created_framework_count += 1
+			else:
+				updated_framework_count += 1
+
+			if not row.get("criterion_name"):
+				continue
+
+			criterion, criterion_created = create_ux_framework_criterion_from_row(
+				framework,
+				row,
+			)
+
+			if criterion_created:
+				created_criterion_count += 1
+			else:
+				updated_criterion_count += 1
+
+		except Exception as e:
+			raise ValueError(f"Row {index}: {e}")
+
+	return {
+		"frameworks_created": created_framework_count,
+		"frameworks_updated": updated_framework_count,
+		"criteria_created": created_criterion_count,
+		"criteria_updated": updated_criterion_count,
+		"skipped": skipped_count,
+	}
+
+
+# UX FRAMEWORK IMPORT HELPER: CREATE UX FRAMEWORK FROM DATA ROW
+def create_ux_framework_from_row(row, created_by_user):
+	framework_name = row.get("framework_name")
+
+	if not framework_name:
+		raise ValueError("Field `framework_name` is required in a UX framework import row.")
+
+	framework, created = UXFramework.objects.get_or_create(
+		name=framework_name,
+		defaults={
+			"description": row.get("framework_description") or "",
+			"framework_type": row.get("framework_type") or UXFrameworkType.CUSTOM,
+			"source": row.get("framework_source") or "",
+			"version": row.get("framework_version") or "",
+			"is_active": row.get("framework_is_active"),
+			"created_by": created_by_user,
+		},
+	)
+
+	if not created:
+		framework.description = row.get("framework_description") or ""
+		framework.framework_type = row.get("framework_type") or UXFrameworkType.CUSTOM
+		framework.source = row.get("framework_source") or ""
+		framework.version = row.get("framework_version") or ""
+		framework.is_active = row.get("framework_is_active")
+		framework.full_clean()
+		framework.save()
+
+	return framework, created
+
+
+# UX FRAMEWORK IMPORT HELPER: CREATE UX FRAMEWORK CRITERION FROM DATA ROW
+def create_ux_framework_criterion_from_row(framework, row):
+	criterion_name = row.get("criterion_name")
+
+	if not criterion_name:
+		raise ValueError("Field `criterion_name` is required to create a UX framework criterion.")
+
+	criterion, created = UXFrameworkCriterion.objects.update_or_create(
+		framework=framework,
+		name=criterion_name,
+		defaults={
+			"code": row.get("criterion_code") or "",
+			"description": row.get("criterion_description") or "",
+			"aliases": row.get("criterion_aliases") or [],
+			"examples": row.get("criterion_examples") or "",
+			"recommendation_guidance": row.get("criterion_recommendation_guidance") or "",
+			"evaluation_questions": row.get("criterion_evaluation_questions") or [],
+			"is_active": row.get("criterion_is_active"),
+		},
+	)
+
+	return criterion, created
+
+
+# UX FRAMEWORK IMPORT HELPER: PARSE UPLOADED UX FRAMEWORK FILE
+def parse_uploaded_ux_framework_file(uploaded_file):
+	if uploaded_file is None:
+		raise ValueError("Please choose a CSV file to import.")
+
+	filename = uploaded_file.name.lower()
+
+	if filename.endswith(".csv"):
+		return parse_ux_framework_csv(uploaded_file.file)
+
+	raise ValueError("Unsupported file type. Please upload a CSV file.")
+
+
+# UX FRAMEWORK IMPORT HELPER: PARSE UX FRAMEWORK CSV
+def parse_ux_framework_csv(file):
+	import csv
+	from io import TextIOWrapper
+
+	text_file = TextIOWrapper(file, encoding="utf-8-sig", newline="")
+	reader = csv.DictReader(text_file)
+
+	if not reader.fieldnames:
+		raise ValueError("The CSV file is empty or missing a header row.")
+
+	required_columns = {"framework_name"}
+	available_columns = {column.strip() for column in reader.fieldnames if column}
+	missing_columns = required_columns - available_columns
+
+	if missing_columns:
+		raise ValueError(
+			f"Missing required column(s): {', '.join(sorted(missing_columns))}."
+		)
+
+	rows = []
+	for row in reader:
+		rows.append(normalize_ux_framework_row(row))
+
+	return rows
+
+
+# UX FRAMEWORK IMPORT HELPER: NORMALIZE UX FRAMEWORK ROW
+def normalize_ux_framework_row(row):
+	return {
+		"framework_name": normalize_str(row.get("framework_name")),
+		"framework_description": normalize_str(row.get("framework_description")) or "",
+		"framework_type": normalize_ux_framework_type(row.get("framework_type")),
+		"framework_source": normalize_str(row.get("framework_source")) or "",
+		"framework_version": normalize_str(row.get("framework_version")) or "",
+		"framework_is_active": normalize_optional_bool(row.get("framework_is_active"), default=True),
+
+		"criterion_code": normalize_str(row.get("criterion_code")) or "",
+		"criterion_name": normalize_str(row.get("criterion_name")),
+		"criterion_description": normalize_str(row.get("criterion_description")) or "",
+		"criterion_aliases": normalize_aliases(row.get("criterion_aliases")),
+		"criterion_examples": normalize_str(row.get("criterion_examples")) or "",
+		"criterion_recommendation_guidance": normalize_str(row.get("criterion_recommendation_guidance")) or "",
+		"criterion_evaluation_questions": normalize_aliases(row.get("criterion_evaluation_questions")),
+		"criterion_is_active": normalize_optional_bool(row.get("criterion_is_active"), default=True),
+	}
+
+
+# UX FRAMEWORK IMPORT HELPER: NORMALIZE UX FRAMEWORK TYPE
+def normalize_ux_framework_type(value):
+	value = normalize_str(value)
+
+	if value is None:
+		return UXFrameworkType.CUSTOM
+
+	value = value.upper()
+
+	if value not in VALID_UX_FRAMEWORK_TYPES:
+		raise ValueError(
+			f"Invalid framework_type: {value}. "
+			f"Allowed values: {', '.join(sorted(VALID_UX_FRAMEWORK_TYPES))}"
+		)
+
+	return value

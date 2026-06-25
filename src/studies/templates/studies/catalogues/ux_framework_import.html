@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% load static %}
+{% load heroicons %}
+
+{% block title %}{{ page_title }} · ChronicleUX{% endblock %}
+
+{% block content %}
+
+<div class="sticky-top">
+	{% include "studies/partials/_header.html" with page_title=page_title page_subtitle=page_subtitle %}
+	{% include "studies/catalogues/partials/_menu_catalogues.html" %}
+</div>
+
+<div class="p-4">
+	{% include "studies/partials/_messages.html" %}
+
+	<div class="main-card">
+
+		<!-- CARD TITLE (I.E., SUMMARY) -->
+		<div class="card-summary">
+
+			<div class="flex flex-col">
+				<h3 class="card-summary-title">
+					{% heroicon_outline "arrow-up-tray" %}
+					Import UX Frameworks
+				</h3>
+
+				<p class="card-summary-subtitle">
+					Upload a CSV file containing UX frameworks and their criteria.
+				</p>
+			</div>
+
+			<div class="flex justify-end gap-3">
+				<a
+					href="{% url 'ux_framework_catalogue_list' %}"
+					class="button-TERTIARY"
+				>
+					{% heroicon_outline "arrow-left" class="h-4 w-4 shrink-0" %}
+					Return to UX Frameworks
+				</a>
+			</div>
+
+		</div>
+
+		<div class="p-4">
+
+			<form method="post" enctype="multipart/form-data" class="space-y-6">
+				{% csrf_token %}
+
+				<!-- FILE -->
+				<div>
+					<label for="file" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+						CSV File
+					</label>
+
+					<p class="message-default my-2">
+						{% heroicon_outline "chat-bubble-oval-left" class="h-4 w-4" %}
+						Upload a UTF-8 CSV file. Repeat the framework columns across rows to attach multiple criteria to the same framework.
+					</p>
+
+					<input
+						id="file"
+						type="file"
+						name="file"
+						accept=".csv,text/csv"
+						required
+						class="w-full rounded-sm border border-gray-300 dark:border-gray-600 p-2 text-sm text-gray-700 dark:text-gray-200"
+					>
+				</div>
+
+				<div class="flex gap-3">
+					<button type="submit" class="button-PRIMARY">
+						Import Frameworks
+					</button>
+
+					<a href="{% url 'ux_framework_catalogue_list' %}" class="button-TERTIARY">
+						Cancel
+					</a>
+				</div>
+
+				<!-- CSV FORMAT -->
+				<div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+
+					<h2 class="text-sm md-card-title">
+						Expected CSV format
+					</h2>
+
+					<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+						Required column: <span class="font-semibold">framework_name</span>
+					</p>
+
+					<p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+						Optional framework columns: framework_description, framework_type, framework_source, framework_version, framework_is_active
+					</p>
+
+					<p class="mt-1 text-sm text-gray-600 dark:text-gray-300">
+						Optional criterion columns: criterion_code, criterion_name, criterion_description, criterion_aliases, criterion_examples, criterion_recommendation_guidance, criterion_evaluation_questions, criterion_is_active
+					</p>
+
+					<div class="message-warning my-3">
+						{% heroicon_outline "exclamation-circle" class="h-4 w-4" %}
+						If a framework name already exists, the importer updates it. If a criterion name already exists inside that framework, the importer updates that criterion.
+					</div>
+
+					<div class="mt-4 overflow-x-auto">
+						<table class="w-full table-auto text-xs">
+							<thead class="bg-gray-100 dark:bg-gray-700 dark:text-gray-200 text-gray-600">
+								<tr class="border-b border-t border-gray-200 dark:border-gray-600">
+									<th>Column</th>
+									<th>Example</th>
+									<th>Notes</th>
+								</tr>
+							</thead>
+
+							<tbody class="divide-y divide-gray-200 dark:divide-gray-600 text-gray-600 dark:text-gray-200">
+								<tr>
+									<td class="px-4 py-3 font-medium">framework_name</td>
+									<td class="px-4 py-3">Nielsen's 10 Usability Heuristics</td>
+									<td class="px-4 py-3">Required. Used to create or update the framework.</td>
+								</tr>
+
+								<tr>
+									<td class="px-4 py-3 font-medium">framework_description</td>
+									<td class="px-4 py-3">A set of usability heuristics for evaluating interactive systems.</td>
+									<td class="px-4 py-3">Optional.</td>
+								</tr>
+
+								<tr>
+									<td class="px-4 py-3 font-medium">framework_type</td>
+									<td class="px-4 py-3">NIELSEN</td>
+									<td class="px-4 py-3">Allowed by the UXFrameworkType enum. Defaults to CUSTOM if blank.</td>
+								</tr>
+
+								<tr>
+									<td class="px-4 py-3 font-medium">framework_source</td>
+									<td class="px-4 py-3">Nielsen Norman Group</td>
+									<td class="px-4 py-3">Optional source, publication, standard, or reference.</td>
+								</tr>
+
+								<tr>
+									<td class="px-4 py-3 font-medium">framework_version</td>
+									<td class="px-4 py-3">2024</td>
+									<td class="px-4 py-3">Optional.</td>
+								</tr>
+
+								<tr>
+									<td class="px-4 py-3 font-medium">framework_is_active</td>
+									<td class="px-4 py-3">true</td>
+									<td class="px-4 py-3">Allowed: true, false, yes, no, 1, 0. Defaults to true.</td>
+								</tr>
+
+								<tr>
+									<td class="px-4 py-3 font-medium">criterion_code</td>
+									<td class="px-4 py-3">N1</td>
+									<td class="px-4 py-3">Optional framework code or ordering label.</td>
+								</tr>
+
+								<tr>
+									<td class="px-4 py-3 font-medium">criterion_name</td>
+									<td class="px-4 py-3">Visibility of System Status</td>
+									<td class="px-4 py-3">Optional. If blank, only the framework is imported or updated.</td>
+								</tr>
+
+								<tr>
+									<td class="px-4 py-3 font-medium">criterion_description</td>
+									<td class="px-4 py-3">The interface should keep users informed about what is going on through timely feedback.</td>
+									<td class="px-4 py-3">Optional.</td>
+								</tr>
+
+								<tr>
+									<td class="px-4 py-3 font-medium">criterion_aliases</td>
+									<td class="px-4 py-3">feedback | status visibility | system response</td>
+									<td class="px-4 py-3">Optional. Separate values with |</td>
+								</tr>
+
+								<tr>
+									<td class="px-4 py-3 font-medium">criterion_examples</td>
+									<td class="px-4 py-3">The user does not know whether the upload is still running.</td>
+									<td class="px-4 py-3">Optional.</td>
+								</tr>
+
+								<tr>
+									<td class="px-4 py-3 font-medium">criterion_recommendation_guidance</td>
+									<td class="px-4 py-3">Add visible loading, progress, success, and failure states.</td>
+									<td class="px-4 py-3">Optional.</td>
+								</tr>
+
+								<tr>
+									<td class="px-4 py-3 font-medium">criterion_evaluation_questions</td>
+									<td class="px-4 py-3">Does the user know what is happening? | Is feedback timely?</td>
+									<td class="px-4 py-3">Optional. Separate values with |</td>
+								</tr>
+
+								<tr>
+									<td class="px-4 py-3 font-medium">criterion_is_active</td>
+									<td class="px-4 py-3">true</td>
+									<td class="px-4 py-3">Allowed: true, false, yes, no, 1, 0. Defaults to true.</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+
+				</div>
+
+				<!-- EXAMPLE -->
+				<div>
+					<label for="csv-example" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+						Example CSV
+					</label>
+
+					<textarea
+						id="csv-example"
+						readonly
+						rows="7"
+						class="mt-2 w-full rounded-sm border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-2 text-xs text-gray-700 dark:text-gray-200"
+					>framework_name,framework_description,framework_type,framework_source,framework_version,framework_is_active,criterion_code,criterion_name,criterion_description,criterion_aliases,criterion_examples,criterion_recommendation_guidance,criterion_evaluation_questions,criterion_is_active
+Nielsen's 10 Usability Heuristics,"A set of usability heuristics for evaluating interactive systems.",NIELSEN,Nielsen Norman Group,2024,true,N1,Visibility of System Status,"The interface should keep users informed about what is going on through timely feedback.",feedback| status visibility| system response,The user does not know whether the upload is still running.,Add visible loading progress success and failure states.,Does the user know what is happening?| Is feedback timely?,true
+Nielsen's 10 Usability Heuristics,"A set of usability heuristics for evaluating interactive systems.",NIELSEN,Nielsen Norman Group,2024,true,N2,Match Between System and the Real World,"The interface should use concepts and language familiar to users.",plain language| familiar concepts| real world match,The label uses internal product jargon.,Use domain language users recognize.,Does the interface use user-facing language?| Are concepts familiar to the intended users?,true</textarea>
+				</div>
+
+			</form>
+
+		</div>
+
+	</div>
+</div>
+
+{% endblock %}

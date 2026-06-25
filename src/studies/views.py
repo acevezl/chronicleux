@@ -65,6 +65,7 @@ from .models import (
 	ThemeAndIssueStatus,
 	UXFramework,
 	UXFrameworkCriterion,
+	UXFrameworkType,
 )
 
 from .helpers import (
@@ -76,6 +77,8 @@ from .helpers import (
 	import_canonical_issues,
 	parse_uploaded_canonical_theme_file,
 	parse_uploaded_canonical_issue_file,
+	import_ux_frameworks,
+	parse_uploaded_ux_framework_file,
 )
 
 # ----------------------- STUDIES ----------------------- #
@@ -2108,4 +2111,46 @@ def ux_framework_criterion_delete(request, framework_pk, criterion_pk):
 			"page_title": "Delete UX Framework Criterion",
 			"page_subtitle": "Confirm whether this criterion should be removed from the framework catalogue.",
 		},
+	)
+
+
+# -------------------- #
+# UX IMPORT FRAMEWORKS #
+# -------------------- #
+@login_required
+def ux_framework_import(request):
+	require_catalogue_manager(request.user)
+
+	if request.method == "POST":
+		try:
+			rows = parse_uploaded_ux_framework_file(request.FILES.get("file"))
+			result = import_ux_frameworks(rows, request.user)
+
+			messages.success(
+				request,
+				(
+					"UX frameworks imported successfully. "
+					f"Frameworks created: {result['frameworks_created']}. "
+					f"Frameworks updated: {result['frameworks_updated']}. "
+					f"Criteria created: {result['criteria_created']}. "
+					f"Criteria updated: {result['criteria_updated']}. "
+					f"Rows skipped: {result['skipped']}."
+				),
+			)
+
+			return redirect("ux_framework_catalogue_list")
+
+		except ValueError as error:
+			messages.error(request, str(error))
+
+	context = {
+		"page_title_heroicon": "arrow-up-tray",
+		"page_title": "Import UX Frameworks",
+		"page_subtitle": "Upload a CSV file containing UX frameworks and their criteria.",
+	}
+
+	return render(
+		request,
+		"studies/catalogues/ux_framework_import.html",
+		context,
 	)
