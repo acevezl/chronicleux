@@ -683,7 +683,7 @@ class StudyAnalysisRun(models.Model):
 	
 
 # DIARY ENTRY ANALYSIS
-# Results of the analysis of each entry
+# Results of the machine analysis of each entry
 class DiaryEntryAnalysis(models.Model):
 	
 	run = models.ForeignKey(
@@ -741,50 +741,16 @@ class DiaryEntryAnalysis(models.Model):
 		default=ConfusionMatrixOutcome.NOT_AVAILABLE
 	)
 	
-	# HUMAN EVALUATION
-	# (and Evaluator Reference)
-	evaluator_sentiment_label = models.CharField(
-		max_length=20,
-		choices=EVALUATOR_SENTIMENT_CHOICES,
-		null=True,
-		blank=True,
-	)
-
+	# HUMAN EVALUATION MOVED TO SEPARATE CLASS 
+	# Linked now directly to the entry, not the entry analysis
+	# b/c entries can have many machine analysis and many human evaluators
+	
+	# Evaluator Confusion Matrix belongs here b/c each analysis is evaluated against the human evaluation(s)
 	evaluator_confusion_matrix_outcome = models.CharField(
 		max_length=32,
 		choices=ConfusionMatrixOutcome.choices,
 		default=ConfusionMatrixOutcome.NOT_AVAILABLE
 	)
-
-	# EVALUATOR THEMES
-	# Themes assigned by the evaluator during human review.
-	evaluator_themes = models.ManyToManyField(
-		"CanonicalTheme",
-		through="DiaryEntryAnalysisEvaluatorTheme",
-		related_name="evaluator_diary_entry_analyses",
-		blank=True,
-	)
-
-	# EVALUATOR ISSUES
-	# Issues assigned by the evaluator during human review.
-	evaluator_issues = models.ManyToManyField(
-		"CanonicalIssue",
-		through="DiaryEntryAnalysisEvaluatorIssue",
-		related_name="evaluator_diary_entry_analyses",
-		blank=True,
-	)
-
-	evaluator_notes = models.TextField(blank=True)
-
-	evaluated_by = models.ForeignKey(
-		settings.AUTH_USER_MODEL,
-		on_delete=models.SET_NULL,
-		blank=True,
-		null=True,
-		related_name="evaluated_entry_analyses"
-	)
-
-	evaluated_at = models.DateTimeField(null=True, blank=True)
 
 	@property
 	def is_manually_evaluated(self):
@@ -819,6 +785,77 @@ class DiaryEntryAnalysis(models.Model):
 	def __str__(self) -> str:
 		return f"DiaryEntryAnalysis {self.pk} · entry={self.entry_id} · run={self.run_id}"
 	
+
+# DIARY ENTRY EVALUATION
+# Results of the human evaluator assessment of a diary entry.
+class DiaryEntryEvaluation(models.Model):
+
+	entry = models.ForeignKey(
+		DiaryEntry,
+		on_delete=models.CASCADE,
+		related_name="entry_evaluations",
+	)
+
+	evaluator_sentiment_label = models.CharField(
+		max_length=20,
+		choices=EVALUATOR_SENTIMENT_CHOICES,
+		null=True,
+		blank=True,
+	)
+
+	evaluator_themes = models.ManyToManyField(
+		"CanonicalTheme",
+		through="DiaryEntryEvaluationTheme",
+		related_name="diary_entry_evaluations",
+		blank=True,
+	)
+
+	evaluator_issues = models.ManyToManyField(
+		"CanonicalIssue",
+		through="DiaryEntryEvaluationIssue",
+		related_name="diary_entry_evaluations",
+		blank=True,
+	)
+
+	evaluator_notes = models.TextField(blank=True)
+
+	evaluated_by = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.SET_NULL,
+		blank=True,
+		null=True,
+		related_name="diary_entry_evaluations",
+	)
+
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	@property
+	def is_complete(self):
+		return (
+			bool(self.evaluator_sentiment_label)
+			and self.evaluator_themes.exists()
+		)
+
+	class Meta:
+		ordering = ["-updated_at", "-created_at"]
+		constraints = [
+			models.UniqueConstraint(
+				fields=["entry", "evaluated_by"],
+				name="unique_diary_entry_evaluation_per_evaluator",
+			),
+		]
+		indexes = [
+			models.Index(fields=["entry"]),
+			models.Index(fields=["evaluated_by"]),
+			models.Index(fields=["updated_at"]),
+		]
+		verbose_name = "Diary Entry Evaluation"
+		verbose_name_plural = "Diary Entry Evaluations"
+
+	def __str__(self) -> str:
+		return f"DiaryEntryEvaluation {self.pk} · entry={self.entry_id}"
+
 
 # CANONICAL THEME
 # Global evaluator-defined theme catalog.
@@ -1034,12 +1071,12 @@ class DiaryEntryAnalysisCanonicalIssue(models.Model):
 		return f"{self.canonical_issue} · analysis={self.diary_entry_analysis_id}"
 	
 
-# DIARY ENTRY ANALYSIS EVALUATOR THEME
-# Canonical themes assigned by a human evaluator to an individual diary entry analysis.
-class DiaryEntryAnalysisEvaluatorTheme(models.Model):
+# DIARY ENTRY EVALUATION THEME
+# Canonical themes assigned by a human evaluator to an individual diary entry evaluation.
+class DiaryEntryEvaluationTheme(models.Model):
 
-	diary_entry_analysis = models.ForeignKey(
-		DiaryEntryAnalysis,
+	diary_entry_evaluation = models.ForeignKey(
+		DiaryEntryEvaluation,
 		on_delete=models.CASCADE,
 		related_name="evaluator_theme_assignments",
 	)
@@ -1047,7 +1084,7 @@ class DiaryEntryAnalysisEvaluatorTheme(models.Model):
 	canonical_theme = models.ForeignKey(
 		CanonicalTheme,
 		on_delete=models.PROTECT,
-		related_name="evaluator_entry_analysis_assignments",
+		related_name="diary_entry_evaluation_assignments",
 	)
 
 	rationale = models.TextField(blank=True)
@@ -1057,7 +1094,7 @@ class DiaryEntryAnalysisEvaluatorTheme(models.Model):
 		on_delete=models.SET_NULL,
 		null=True,
 		blank=True,
-		related_name="assigned_evaluator_entry_themes",
+		related_name="assigned_evaluator_entry_evaluation_themes",
 	)
 
 	assigned_at = models.DateTimeField(auto_now_add=True)
@@ -1066,27 +1103,27 @@ class DiaryEntryAnalysisEvaluatorTheme(models.Model):
 		ordering = ["canonical_theme__name"]
 		constraints = [
 			models.UniqueConstraint(
-				fields=["diary_entry_analysis", "canonical_theme"],
-				name="unique_evaluator_theme_per_entry_analysis",
+				fields=["diary_entry_evaluation", "canonical_theme"],
+				name="unique_evaluator_theme_per_entry_evaluation",
 			),
 		]
 		indexes = [
-			models.Index(fields=["diary_entry_analysis"]),
+			models.Index(fields=["diary_entry_evaluation"]),
 			models.Index(fields=["canonical_theme"]),
 		]
-		verbose_name = "Diary Entry Analysis Evaluator Theme"
-		verbose_name_plural = "Diary Entry Analysis Evaluator Themes"
+		verbose_name = "Diary Entry Evaluation Theme"
+		verbose_name_plural = "Diary Entry Evaluation Themes"
 
 	def __str__(self) -> str:
-		return f"{self.canonical_theme} · evaluator analysis={self.diary_entry_analysis_id}"
+		return f"{self.canonical_theme} · evaluator evaluation={self.diary_entry_evaluation_id}"
 	
 
-# DIARY ENTRY ANALYSIS EVALUATOR ISSUE
-# Canonical issues assigned by a human evaluator to an individual diary entry analysis.
-class DiaryEntryAnalysisEvaluatorIssue(models.Model):
+# DIARY ENTRY EVALUATION ISSUE
+# Canonical issues assigned by a human evaluator to an individual diary entry evaluation.
+class DiaryEntryEvaluationIssue(models.Model):
 
-	diary_entry_analysis = models.ForeignKey(
-		DiaryEntryAnalysis,
+	diary_entry_evaluation = models.ForeignKey(
+		DiaryEntryEvaluation,
 		on_delete=models.CASCADE,
 		related_name="evaluator_issue_assignments",
 	)
@@ -1094,7 +1131,7 @@ class DiaryEntryAnalysisEvaluatorIssue(models.Model):
 	canonical_issue = models.ForeignKey(
 		CanonicalIssue,
 		on_delete=models.PROTECT,
-		related_name="evaluator_entry_analysis_assignments",
+		related_name="diary_entry_evaluation_assignments",
 	)
 
 	rationale = models.TextField(blank=True)
@@ -1104,7 +1141,7 @@ class DiaryEntryAnalysisEvaluatorIssue(models.Model):
 		on_delete=models.SET_NULL,
 		null=True,
 		blank=True,
-		related_name="assigned_evaluator_entry_issues",
+		related_name="assigned_evaluator_entry_evaluation_issues",
 	)
 
 	assigned_at = models.DateTimeField(auto_now_add=True)
@@ -1113,19 +1150,20 @@ class DiaryEntryAnalysisEvaluatorIssue(models.Model):
 		ordering = ["canonical_issue__name"]
 		constraints = [
 			models.UniqueConstraint(
-				fields=["diary_entry_analysis", "canonical_issue"],
-				name="unique_evaluator_issue_per_entry_analysis",
+				fields=["diary_entry_evaluation", "canonical_issue"],
+				name="unique_evaluator_issue_per_entry_evaluation",
 			),
 		]
 		indexes = [
-			models.Index(fields=["diary_entry_analysis"]),
+			models.Index(fields=["diary_entry_evaluation"]),
 			models.Index(fields=["canonical_issue"]),
 		]
-		verbose_name = "Diary Entry Analysis Evaluator Issue"
-		verbose_name_plural = "Diary Entry Analysis Evaluator Issues"
+		verbose_name = "Diary Entry Evaluation Issue"
+		verbose_name_plural = "Diary Entry Evaluation Issues"
 
 	def __str__(self) -> str:
-		return f"{self.canonical_issue} · evaluator analysis={self.diary_entry_analysis_id}"
+		return f"{self.canonical_issue} · evaluator evaluation={self.diary_entry_evaluation_id}"
+	
 
 # STUDY ANALYSIS RUN CANONICAL THEME
 # Canonical themes found across all diary entry analyses in a run.

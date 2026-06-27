@@ -52,6 +52,7 @@ from .models import (
 	AnalysisRunStatus, 
 	DiaryEntry, 
 	DiaryEntryAnalysis, 
+	DiaryEntryEvaluation,
 	DiaryEntrySource, 
 	MembershipRole, 
 	SentimentCategory, 
@@ -853,19 +854,20 @@ def machine_analysis_details(request, study_pk, run_pk):
 		"j M Y, H:i"
 	)
 
-	pending_human_evaluation_count = (
+	completed_human_evaluation_count = (
 		DiaryEntryAnalysis.objects
-		.filter(run=run)
-		.annotate(evaluator_theme_count=Count("evaluator_themes", distinct=True))
 		.filter(
-			Q(evaluator_sentiment_label__isnull=True)
-			| Q(evaluator_sentiment_label="")
-			| Q(evaluator_theme_count=0)
+			run=run,
+			entry__entry_evaluations__evaluator_sentiment_label__isnull=False,
+			entry__entry_evaluations__evaluator_themes__isnull=False,
 		)
+		.exclude(entry__entry_evaluations__evaluator_sentiment_label="")
+		.values("pk")
+		.distinct()
 		.count()
 	)
 
-	completed_human_evaluation_count = run.total_entries - pending_human_evaluation_count
+	pending_human_evaluation_count = run.total_entries - completed_human_evaluation_count
 
 	context.update({
 		"page_title_heroicon":"book-open",
@@ -1592,14 +1594,20 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 		).prefetch_related(
 			"themes",
 			"issues",
-			"evaluator_themes",
-			"evaluator_issues",
+			"entry__entry_evaluations",
+			"entry__entry_evaluations__evaluator_themes",
+			"entry__entry_evaluations__evaluator_issues",
 		),
 		pk=analysis_pk,
 		run=run,
 	)
 
 	entry = entry_analysis.entry
+
+	entry_evaluation, _ = DiaryEntryEvaluation.objects.get_or_create(
+		entry=entry,
+		evaluated_by=request.user,
+	)
 
 	entry_analyses_qs = (
 		DiaryEntryAnalysis.objects
@@ -1636,7 +1644,7 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 	if request.method == "POST":
 		form = DiaryEntryManualEvaluationForm(
 			request.POST or None,
-			instance=entry_analysis,
+			instance=entry_evaluation,
 			evaluator=request.user,
 		)
 
@@ -1654,7 +1662,7 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 
 	else:
 		form = DiaryEntryManualEvaluationForm(
-			instance=entry_analysis,
+			instance=entry_evaluation,
 			evaluator=request.user,
 		)
 
@@ -1673,6 +1681,7 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 		"run": run,
 		"entry": entry_analysis.entry,
 		"entry_analysis": entry_analysis,
+		"entry_evaluation": entry_evaluation,
 		"previous_entry_analysis": previous_entry_analysis,
 		"next_entry_analysis": next_entry_analysis,
 		"form": form,

@@ -13,8 +13,9 @@ from .models import (
     CanonicalIssue,
     DiaryEntryAnalysisCanonicalTheme,
     DiaryEntryAnalysisCanonicalIssue,
-    DiaryEntryAnalysisEvaluatorTheme,
-    DiaryEntryAnalysisEvaluatorIssue,
+    DiaryEntryEvaluation,
+    DiaryEntryEvaluationTheme,
+    DiaryEntryEvaluationIssue,
     StudyAnalysisRunCanonicalTheme,
     StudyAnalysisRunCanonicalIssue,
 )
@@ -47,16 +48,16 @@ class DiaryEntryAnalysisCanonicalIssueInline(admin.TabularInline):
     autocomplete_fields = ("canonical_issue", "assigned_by")
 
 
-class DiaryEntryAnalysisEvaluatorThemeInline(admin.TabularInline):
-	model = DiaryEntryAnalysisEvaluatorTheme
-	extra = 0
-	autocomplete_fields = ("canonical_theme", "assigned_by")
+class DiaryEntryEvaluationThemeInline(admin.TabularInline):
+    model = DiaryEntryEvaluationTheme
+    extra = 0
+    autocomplete_fields = ("canonical_theme", "assigned_by")
 
 
-class DiaryEntryAnalysisEvaluatorIssueInline(admin.TabularInline):
-	model = DiaryEntryAnalysisEvaluatorIssue
-	extra = 0
-	autocomplete_fields = ("canonical_issue", "assigned_by")
+class DiaryEntryEvaluationIssueInline(admin.TabularInline):
+    model = DiaryEntryEvaluationIssue
+    extra = 0
+    autocomplete_fields = ("canonical_issue", "assigned_by")
 
 
 class StudyAnalysisRunCanonicalThemeInline(admin.TabularInline):
@@ -180,14 +181,12 @@ class DiaryEntryAnalysisAdmin(ModelAdmin):
         "sentiment_score",
         "participant_sentiment_label",
         "participant_confusion_matrix_outcome",
-        "evaluator_sentiment_label",
         "evaluator_confusion_matrix_outcome",
     )
     list_filter = (
         "sentiment_label",
         "participant_sentiment_label",
         "participant_confusion_matrix_outcome",
-        "evaluator_sentiment_label",
         "evaluator_confusion_matrix_outcome",
         "analyzed_at",
     )
@@ -201,8 +200,34 @@ class DiaryEntryAnalysisAdmin(ModelAdmin):
     inlines = [
         DiaryEntryAnalysisCanonicalThemeInline,
         DiaryEntryAnalysisCanonicalIssueInline,
-        DiaryEntryAnalysisEvaluatorThemeInline,
-        DiaryEntryAnalysisEvaluatorIssueInline,
+    ]
+
+
+@admin.register(DiaryEntryEvaluation)
+class DiaryEntryEvaluationAdmin(ModelAdmin):
+    list_display = (
+        "id",
+        "entry",
+        "evaluator_sentiment_label",
+        "evaluated_by",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = (
+        "evaluator_sentiment_label",
+        "created_at",
+        "updated_at",
+    )
+    search_fields = (
+        "entry__content",
+        "entry__participant_display_name",
+        "entry__study__title",
+        "evaluator_notes",
+    )
+    autocomplete_fields = ("entry", "evaluated_by")
+    inlines = [
+        DiaryEntryEvaluationThemeInline,
+        DiaryEntryEvaluationIssueInline,
     ]
 
 
@@ -276,6 +301,42 @@ class DiaryEntryAnalysisCanonicalIssueAdmin(ModelAdmin):
         "rationale",
     )
     autocomplete_fields = ("diary_entry_analysis", "canonical_issue", "assigned_by")
+
+
+@admin.register(DiaryEntryEvaluationTheme)
+class DiaryEntryEvaluationThemeAdmin(ModelAdmin):
+    list_display = (
+        "id",
+        "diary_entry_evaluation",
+        "canonical_theme",
+        "assigned_by",
+        "assigned_at",
+    )
+    list_filter = ("canonical_theme", "assigned_at")
+    search_fields = (
+        "canonical_theme__name",
+        "diary_entry_evaluation__entry__content",
+        "rationale",
+    )
+    autocomplete_fields = ("diary_entry_evaluation", "canonical_theme", "assigned_by")
+
+
+@admin.register(DiaryEntryEvaluationIssue)
+class DiaryEntryEvaluationIssueAdmin(ModelAdmin):
+    list_display = (
+        "id",
+        "diary_entry_evaluation",
+        "canonical_issue",
+        "assigned_by",
+        "assigned_at",
+    )
+    list_filter = ("canonical_issue", "assigned_at")
+    search_fields = (
+        "canonical_issue__name",
+        "diary_entry_evaluation__entry__content",
+        "rationale",
+    )
+    autocomplete_fields = ("diary_entry_evaluation", "canonical_issue", "assigned_by")
 
 
 @admin.register(StudyAnalysisRunCanonicalTheme)

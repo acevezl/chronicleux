@@ -1,6 +1,5 @@
 from django import forms
 
-from django.utils import timezone
 
 from .models import (
     Study,
@@ -8,8 +7,9 @@ from .models import (
     CanonicalTheme,
     DiaryEntry,
     DiaryEntryAnalysis,
-    DiaryEntryAnalysisEvaluatorTheme,
-    DiaryEntryAnalysisEvaluatorIssue,
+    DiaryEntryEvaluation,
+    DiaryEntryEvaluationTheme,
+    DiaryEntryEvaluationIssue,
     SentimentCategory,
     BinarySentimentCategory,
     UXFramework,
@@ -300,7 +300,7 @@ class CanonicalIssueForm(forms.ModelForm):
 class DiaryEntryManualEvaluationForm(forms.ModelForm):
 
     class Meta:
-        model = DiaryEntryAnalysis
+        model = DiaryEntryEvaluation
         fields = [
             "evaluator_sentiment_label",
             "evaluator_themes",
@@ -332,18 +332,19 @@ class DiaryEntryManualEvaluationForm(forms.ModelForm):
             "evaluator_notes": "Evaluator notes",
         }
 
-    def __init__(self, *args, evaluator=None, **kwargs):
+    def __init__(self, *args, evaluator=None, entry_analysis=None, **kwargs):
         self.evaluator = evaluator
+        self.entry_analysis = entry_analysis
         super().__init__(*args, **kwargs)
 
         sentiment_method = ""
 
-        if self.instance:
-            if getattr(self.instance, "methods", None):
-                sentiment_method = (self.instance.methods or {}).get("sentiment", "")
+        if self.entry_analysis:
+            if getattr(self.entry_analysis, "methods", None):
+                sentiment_method = (self.entry_analysis.methods or {}).get("sentiment", "")
 
-            if not sentiment_method and getattr(self.instance, "run", None):
-                sentiment_method = (self.instance.run.methods or {}).get("sentiment", "")
+            if not sentiment_method and getattr(self.entry_analysis, "run", None):
+                sentiment_method = (self.entry_analysis.run.methods or {}).get("sentiment", "")
 
         sentiment_method = str(sentiment_method).lower()
 
@@ -376,11 +377,16 @@ class DiaryEntryManualEvaluationForm(forms.ModelForm):
     def clean_evaluator_sentiment_label(self):
         value = self.cleaned_data.get("evaluator_sentiment_label")
 
-        sentiment_method = (
-            (self.instance.methods or {}).get("sentiment")
-            if self.instance and self.instance.pk
-            else None
-        )
+        sentiment_method = ""
+
+        if self.entry_analysis:
+            if getattr(self.entry_analysis, "methods", None):
+                sentiment_method = (self.entry_analysis.methods or {}).get("sentiment", "")
+
+            if not sentiment_method and getattr(self.entry_analysis, "run", None):
+                sentiment_method = (self.entry_analysis.run.methods or {}).get("sentiment", "")
+
+        sentiment_method = str(sentiment_method).lower()
 
         if not value:
             return value
@@ -401,32 +407,30 @@ class DiaryEntryManualEvaluationForm(forms.ModelForm):
         if self.evaluator:
             instance.evaluated_by = self.evaluator
 
-        instance.evaluated_at = timezone.now()
-
         if commit:
             instance.save()
 
             evaluator_themes = self.cleaned_data.get("evaluator_themes") or []
             evaluator_issues = self.cleaned_data.get("evaluator_issues") or []
 
-            DiaryEntryAnalysisEvaluatorTheme.objects.filter(
-                diary_entry_analysis=instance
+            DiaryEntryEvaluationTheme.objects.filter(
+                diary_entry_evaluation=instance
             ).delete()
 
-            DiaryEntryAnalysisEvaluatorIssue.objects.filter(
-                diary_entry_analysis=instance
+            DiaryEntryEvaluationIssue.objects.filter(
+                diary_entry_evaluation=instance
             ).delete()
 
             for theme in evaluator_themes:
-                DiaryEntryAnalysisEvaluatorTheme.objects.create(
-                    diary_entry_analysis=instance,
+                DiaryEntryEvaluationTheme.objects.create(
+                    diary_entry_evaluation=instance,
                     canonical_theme=theme,
                     assigned_by=self.evaluator,
                 )
 
             for issue in evaluator_issues:
-                DiaryEntryAnalysisEvaluatorIssue.objects.create(
-                    diary_entry_analysis=instance,
+                DiaryEntryEvaluationIssue.objects.create(
+                    diary_entry_evaluation=instance,
                     canonical_issue=issue,
                     assigned_by=self.evaluator,
                 )
