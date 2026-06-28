@@ -77,10 +77,10 @@
                     <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-sky-50 dark:bg-sky-800 p-3">
                         <dt class="xs-label">Average sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
-                            {% if run.participant_average_sentiment_label %}
-                                {% include "studies/partials/_badge_sentiment.html" with sentiment=run.participant_average_sentiment_label %}
+                            {% if study.participant_reported_average_sentiment_label %}
+                                {% include "studies/partials/_badge_sentiment.html" with sentiment=study.participant_reported_average_sentiment_label %}
                                 <span class="badge">
-                                    Score: {{ run.participant_average_sentiment_score|floatformat:3|default:"—" }}
+                                    Score: {{ study.participant_reported_average_sentiment_score|floatformat:3|default:"—" }}
                                 </span>
                             {% else %}
                                 <span class="badge">Not available</span>
@@ -91,10 +91,10 @@
                     <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-sky-50 dark:bg-sky-800 p-3">
                         <dt class="xs-label">Dominant sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
-                            {% if run.participant_dominant_sentiment_label %}
-                                {% include "studies/partials/_badge_sentiment.html" with sentiment=run.participant_dominant_sentiment_label %}
+                            {% if study.participant_reported_dominant_sentiment_label %}
+                                {% include "studies/partials/_badge_sentiment.html" with sentiment=study.participant_reported_dominant_sentiment_label %}
                                 <span class="badge">
-                                    Score: {{ run.participant_dominant_sentiment_score|floatformat:3|default:"—" }}
+                                    Score: {{ study.participant_reported_dominant_sentiment_score|floatformat:3|default:"—" }}
                                 </span>
                             {% else %}
                                 <span class="badge">Not available</span>
@@ -159,9 +159,9 @@
                     <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-emerald-50 dark:bg-emerald-800 p-3">
                         <dt class="xs-label">Average sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
-                            {% include "studies/partials/_badge_sentiment.html" with sentiment=run.evaluator_average_sentiment_label %}
+                            {% include "studies/partials/_badge_sentiment.html" with sentiment=study.evaluator_average_sentiment_label %}
                             <span class="badge">
-                                Score: {{ run.evaluator_average_sentiment_score|floatformat:3|default:"—" }}
+                                Score: {{ study.evaluator_average_sentiment_score|floatformat:3|default:"—" }}
                             </span>
                         </dd>
                     </div>
@@ -170,9 +170,9 @@
                         <dt class="xs-label">Dominant sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
                             
-                            {% include "studies/partials/_badge_sentiment.html" with sentiment=run.evaluator_dominant_sentiment_label %}
+                            {% include "studies/partials/_badge_sentiment.html" with sentiment=study.evaluator_dominant_sentiment_label %}
                             <span class="badge">
-                                Score: {{ run.evaluator_dominant_sentiment_score|floatformat:3|default:"—" }}
+                                Score: {{ study.evaluator_dominant_sentiment_score|floatformat:3|default:"—" }}
                             </span>
                         </dd>
                     </div>
@@ -197,14 +197,16 @@
     <div class="main-card overflow-hidden">
 
         <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
-            <h4 class="card-summary-title">
-                {% heroicon_outline "chart-pie" %}
-                Sentiment Distribution
-            </h4>
+            <div class="flex flex-col">
+                <h4 class="card-summary-title">
+                    {% heroicon_outline "chart-pie" %}
+                    Sentiment Distribution
+                </h4>
 
-            <p class="xs-label">
-                Comparison of sentiment polarity distributions across participant reports, evaluator assessments, and machine analysis.
-            </p>
+                <p class="xs-label">
+                    Comparison of sentiment polarity distributions across participant reports, evaluator assessments, and machine analysis.
+                </p>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 gap-4 p-4 xl:grid-cols-3">
@@ -217,7 +219,7 @@
                 </div>
 
                 <div class="p-4">
-                    {% include "studies/partials/_distribution_sentiment.html" with distribution=run.participant_sentiment_distribution chart_id="participantSentimentDistributionChart" %}
+                    {% include "studies/partials/_distribution_sentiment.html" with distribution=study.participant_sentiment_distribution chart_id="participantSentimentDistributionChart" %}
                 </div>
             </div>
 
@@ -241,7 +243,7 @@
                 </div>
 
                 <div class="p-4">
-                    {% include "studies/partials/_distribution_sentiment.html" with distribution=run.evaluator_sentiment_distribution chart_id="evaluatorSentimentDistributionChart" %}
+                    {% include "studies/partials/_distribution_sentiment.html" with distribution=study.evaluator_sentiment_distribution chart_id="evaluatorSentimentDistributionChart" %}
                 </div>
             </div>
 

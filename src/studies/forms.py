@@ -414,23 +414,23 @@ class EntryManualEvaluationForm(forms.ModelForm):
             evaluator_issues = self.cleaned_data.get("evaluator_issues") or []
 
             EntryEvaluationTheme.objects.filter(
-                diary_entry_evaluation=instance
+                entry_evaluation=instance
             ).delete()
 
             EntryEvaluationIssue.objects.filter(
-                diary_entry_evaluation=instance
+                entry_evaluation=instance
             ).delete()
 
             for theme in evaluator_themes:
                 EntryEvaluationTheme.objects.create(
-                    diary_entry_evaluation=instance,
-                    canonical_theme=theme,
+                    entry_evaluation=instance,
+                    theme=theme,
                     assigned_by=self.evaluator,
                 )
 
             for issue in evaluator_issues:
                 EntryEvaluationIssue.objects.create(
-                    diary_entry_evaluation=instance,
+                    entry_evaluation=instance,
                     canonical_issue=issue,
                     assigned_by=self.evaluator,
                 )

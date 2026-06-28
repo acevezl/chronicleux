@@ -13,6 +13,7 @@ urlpatterns = [
     path("<int:pk>/entries/", views.entries, name="entries"),
     path("<int:study_pk>/entries/partial/", views.study_entries_partial, name="diary_entries_partial"),
     path("<int:study_pk>/entries/<int:entry_pk>/", views.diary_entry_detail, name="diary_entry_detail"),
+    path("<int:study_pk>/entries/<int:entry_pk>/evaluate", views.evaluate_entry, name="evaluate_entry"),
     path("<int:pk>/import/", views.import_entries, name="import_entries"),
     path("<int:pk>/new-entry/", views.create_diary_entry, name="create_diary_entry"),
 

@@ -26,8 +26,9 @@ from studies.services.llm.client import get_available_llm_providers, get_llm_mod
 
 from studies.services.analysis_runner import create_study_analysis_run
 from studies.services.analysis_tasks import queue_study_analysis_run
-from studies.services.nlp.sentiment._confusion_matrix import refresh_sentiment_confusion_matrix_for_run
-from studies.services.nlp.sentiment._ordinal_distance import refresh_sentiment_ordinal_distance_for_run
+from studies.services._confusion_matrix_calculator import refresh_sentiment_confusion_matrix_for_run
+from studies.services._ordinal_distance_calculator import refresh_sentiment_ordinal_distance_for_run
+from studies.services._sentiment_summarizer import summarize_study_sentiment
 
 from .filters import (
 	filter_diary_entries, 
@@ -80,6 +81,7 @@ from .helpers import (
 	parse_uploaded_canonical_issue_file,
 	import_ux_frameworks,
 	parse_uploaded_ux_framework_file,
+	sync_run_evaluator_sentiment_from_study,
 )
 
 # ----------------------- STUDIES ----------------------- #
@@ -817,14 +819,14 @@ def run_machine_analysis(request, pk):
 
 	except Exception as e:
 		messages.error(request, f"Machine analysis could not be queued: {e}")
-		return redirect("diary_study_detail", pk=study.pk)
+		return redirect("analysis_runs", study_pk=study.pk)
 
 	messages.success(
 		request,
 		f"Machine analysis queued successfully. Run ID: {study_analysis_run.pk}"
 	)
 
-	return redirect("diary_study_detail", pk=study.pk)
+	return redirect("analysis_runs", study_pk=study.pk)
 
 
 # ------------------------ #
@@ -854,18 +856,20 @@ def machine_analysis_details(request, study_pk, run_pk):
 		"j M Y, H:i"
 	)
 
-	completed_human_evaluation_count = (
-		EntryAnalysis.objects
-		.filter(
-			run=run,
-			entry__entry_evaluations__evaluator_sentiment_label__isnull=False,
-			entry__entry_evaluations__evaluator_themes__isnull=False,
-		)
-		.exclude(entry__entry_evaluations__evaluator_sentiment_label="")
-		.values("pk")
-		.distinct()
-		.count()
-	)
+	completed_human_evaluation_count = 0
+
+	# completed_human_evaluation_count = (
+	# 	EntryAnalysis.objects
+	# 	.filter(
+	# 		run=run,
+	# 		entry__entry_evaluations__evaluator_sentiment_label__isnull=False,
+	# 		entry__entry_evaluations__evaluator_themes__isnull=False,
+	# 	)
+	# 	.exclude(entry__entry_evaluations__evaluator_sentiment_label="")
+	# 	.values("pk")
+	# 	.distinct()
+	# 	.count()
+	# )
 
 	pending_human_evaluation_count = run.total_entries - completed_human_evaluation_count
 
@@ -1037,7 +1041,7 @@ def analysis_runs(request, study_pk):
 @login_required
 def analysis_runs_partial(request, study_pk):
 
-	study = get_object_or_404(DiaryStudy, pk=study_pk)
+	study = get_object_or_404(Study, pk=study_pk)
 
 	if request.headers.get("HX-Request") != "true":
 		url = reverse(
@@ -1565,6 +1569,126 @@ def canonical_issue_import(request):
 		},
 	)
 
+# -------------- #
+# EVALUATE ENTRY #
+# -------------- #
+
+@login_required
+def evaluate_entry(request, study_pk, entry_pk):
+	study = get_object_or_404(Study, pk=study_pk)
+
+	entry = get_object_or_404(
+		Entry.objects.select_related(
+			"study",
+			"participant",
+		),
+		pk=entry_pk,
+		study=study,
+	)
+
+	if not user_can_evaluate_study(request.user, study):
+		return HttpResponseForbidden()
+
+	entry_evaluation, _created = EntryEvaluation.objects.get_or_create(
+		entry=entry,
+		evaluated_by=request.user,
+	)
+
+	entry_analyses = (
+		EntryAnalysis.objects
+		.filter(entry=entry)
+		.select_related(
+			"run",
+			"run__study",
+		)
+		.prefetch_related(
+			"themes",
+			"issues",
+		)
+		.order_by("-analyzed_at")
+	)
+
+	latest_entry_analysis = entry_analyses.first()
+
+	if request.method == "POST":
+		form = EntryManualEvaluationForm(
+			request.POST,
+			instance=entry_evaluation,
+			evaluator=request.user,
+		)
+
+		if form.is_valid():
+			entry_evaluation = form.save(commit=False)
+			entry_evaluation.entry = entry
+			entry_evaluation.evaluated_by = request.user
+			entry_evaluation.save()
+			form.save_m2m()
+
+			summarize_study_sentiment(study)
+
+			affected_runs = StudyAnalysis.objects.filter(
+				entry_analyses__entry=entry,
+			).distinct()
+
+			for run in affected_runs:
+				sync_run_evaluator_sentiment_from_study(run=run, study=study)
+				refresh_sentiment_ordinal_distance_for_run(study_analysis=run)
+				refresh_sentiment_confusion_matrix_for_run(study_analysis=run)
+
+			messages.success(request, "Human evaluation saved.")
+
+			return redirect(
+				"evaluate_entry",
+				study_pk=study.pk,
+				entry_pk=entry.pk,
+			)
+
+	else:
+		form = EntryManualEvaluationForm(
+			instance=entry_evaluation,
+			evaluator=request.user,
+		)
+
+	previous_entry = (
+		Entry.objects
+		.filter(study=study, pk__lt=entry.pk)
+		.order_by("-pk")
+		.first()
+	)
+
+	next_entry = (
+		Entry.objects
+		.filter(study=study, pk__gt=entry.pk)
+		.order_by("pk")
+		.first()
+	)
+
+	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
+
+	created_at = date_format(
+		timezone.localtime(study.created_at),
+		"j M Y, H:i"
+	)
+
+	context = {
+		"page_title_heroicon": "book-open",
+		"page_title": study.title,
+		"page_subtitle": f"Owner: {owner_name}, Created on: {created_at}",
+		"study": study,
+		"entry": entry,
+		"entry_evaluation": entry_evaluation,
+		"entry_analyses": entry_analyses,
+		"latest_entry_analysis": latest_entry_analysis,
+		"form": form,
+		"previous_entry": previous_entry,
+		"next_entry": next_entry,
+	}
+
+	return render(
+		request,
+		"studies/diary_entry_evaluate.html",
+		context,
+	)
 
 # ------------------------- #
 # EVALUATE ENTRY ANALYSIS   #
@@ -1711,9 +1835,10 @@ def refresh_analysis_run_metrics(request, study_pk, run_pk):
 	if not user_can_evaluate_study(request.user, study):
 		return HttpResponseForbidden()
 
-	refresh_sentiment_confusion_matrix_for_run(run)
+	summarize_study_sentiment(study)
 	refresh_sentiment_ordinal_distance_for_run(run)
-
+	refresh_sentiment_confusion_matrix_for_run(run)
+	
 	messages.success(request, "Metrics refreshed successfully.")
 
 	return redirect(

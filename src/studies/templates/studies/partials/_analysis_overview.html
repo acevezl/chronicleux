@@ -61,12 +61,17 @@
                     <dt class="xs-label">Issue detection method</dt>
                     <dd class="flex mt-1">
                         <span class="message-default">
-                        {% if run.methods.sentiment == "llm"%}
-                        LLM
-                        {% else %}
-                        Keyword
+                        {{ run.methods.issue|humanize_enum|upper|default:"—" }} 
+                        {% if run.methods.issue == "llm" %}
+                                {{ run.methods.provider|upper }}
                         {% endif %}
                         </span>
+
+                        {% if run.methods.theme == "llm" %}
+                            <span class="badge">
+                                {{ run.methods.model }}
+                            </span>
+                        {% endif %}
                     </dd>
                 </div>
 
@@ -171,7 +176,7 @@
                 class="button-PRIMARY"
             >
                 {% heroicon_outline "document-text" class="h-4 w-4 shrink-0" %}
-                Evaluate Entries
+                Entries
             </a>
         
             <form

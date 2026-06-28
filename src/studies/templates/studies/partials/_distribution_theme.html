@@ -16,7 +16,7 @@
             const themeData = [
                 {% for item in distribution %}
                     {
-                        label: "{{ item.canonical_theme.name|escapejs }}",
+                        label: "{{ item.theme.name|escapejs }}",
                         count: {{ item.entry_count|default:0 }}
                     },
                 {% endfor %}

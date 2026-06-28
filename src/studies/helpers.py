@@ -51,6 +51,25 @@ def user_can_evaluate_study(user, study):
 		role=MembershipRole.EVALUATOR,
 	).exists()
 
+
+# EVALUATE: SYNC EVALUATOR SENTIMENT FROM STUDY
+def sync_run_evaluator_sentiment_from_study(run, study):
+	run.evaluator_average_sentiment_score = study.evaluator_average_sentiment_score
+	run.evaluator_average_sentiment_label = study.evaluator_average_sentiment_label
+	run.evaluator_dominant_sentiment_score = study.evaluator_dominant_sentiment_score
+	run.evaluator_dominant_sentiment_label = study.evaluator_dominant_sentiment_label
+	run.evaluator_sentiment_distribution = study.evaluator_sentiment_distribution
+
+	run.save(
+		update_fields=[
+			"evaluator_average_sentiment_score",
+			"evaluator_average_sentiment_label",
+			"evaluator_dominant_sentiment_score",
+			"evaluator_dominant_sentiment_label",
+			"evaluator_sentiment_distribution",
+		]
+	)
+
 # IMPORT ENTRIES: IMPORT ROWS INTO STUDY
 @transaction.atomic
 def import_rows_into_study (study, rows):

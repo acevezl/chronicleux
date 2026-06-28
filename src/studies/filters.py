@@ -146,8 +146,6 @@ def filter_analysis_entries(request, study, run):
 		.prefetch_related(
 			"themes",
 			"issues",
-			"evaluator_themes",
-			"evaluator_issues",
 		)
 	)
 
@@ -185,9 +183,9 @@ def filter_analysis_entries(request, study, run):
 			issues__pk=issue_tag
 		)
 
-	entry_analyses = entry_analyses.annotate(
-		evaluator_theme_count=Count("evaluator_themes", distinct=True)
-	)
+	# entry_analyses = entry_analyses.annotate(
+	# 	evaluator_theme_count=Count("evaluator_themes", distinct=True)
+	# )
 
 	if human_evaluation == "pending":
 		entry_analyses = entry_analyses.filter(

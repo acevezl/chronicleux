@@ -17,19 +17,15 @@ from studies.models import (
 	StudyAnalysisTheme,
 	EntryAnalysisIssue,
 	StudyAnalysisIssue,
+	CanonicalTheme,
+	CanonicalIssue,
 )
 
+from studies.services._confusion_matrix_calculator import refresh_sentiment_confusion_matrix_for_run
+from studies.services._ordinal_distance_calculator import refresh_sentiment_ordinal_distance_for_run
+from studies.services._sentiment_summarizer import summarize_study_sentiment
 from studies.services.nlp.pipeline import analyze_study_entries
 from studies.services.llm.pipeline import analyze_study_entries_with_llm
-
-from studies.services.nlp.sentiment._confusion_matrix import (
-	refresh_sentiment_confusion_matrix_for_run,
-)
-
-from studies.services.nlp.sentiment._ordinal_distance import (
-	refresh_sentiment_ordinal_distance_for_run,
-)
-
 
 MAX_SUMMARY_LENGTH = 180
 
@@ -46,6 +42,10 @@ def normalize_entry_text(text: str) -> str:
 	analysis may rely on punctuation, casing, and phrasing.
 	"""
 	return " ".join((text or "").split())
+
+
+def normalize_for_term_matching(text: str) -> str:
+	return normalize_entry_text(text).casefold()
 
 
 def make_entry_summary(text: str, max_length: int = MAX_SUMMARY_LENGTH) -> str:
@@ -100,8 +100,8 @@ def serialize_analysis_tag(result) -> dict:
 		"name": result.label,
 		"label": result.label,
 		"weight": round(result.weight, 4) if result.weight is not None else None,
-		"canonical_theme_id": metadata.get("canonical_theme_id"),
-		"canonical_issue_id": metadata.get("canonical_issue_id"),
+		"theme_id": metadata.get("canonical_theme_id"),
+		"issue_id": metadata.get("canonical_issue_id"),
 		"metadata": metadata,
 	}
 
@@ -309,17 +309,20 @@ def attach_canonical_theme_from_analyzer_result(
 		return
 
 	metadata = theme_result.metadata or {}
-	canonical_theme_id = metadata.get("canonical_theme_id")
+	theme_id = metadata.get("canonical_theme_id")
 
-	if not canonical_theme_id:
+	if not theme_id:
 		return
 
+	theme = CanonicalTheme.objects.filter(pk=theme_id).first()
+
 	EntryAnalysisTheme.objects.update_or_create(
-		diary_entry_analysis=entry_analysis,
-		canonical_theme_id=canonical_theme_id,
+		entry_analysis=entry_analysis,
+		theme_id=theme_id,
 		defaults={
 			"confidence_score": theme_result.weight,
-			"rationale": "Assigned from NLP analyzer output.",
+			"rationale": build_theme_rationale(theme_result, theme),
+			"assigned_by_method": theme_result.method,
 		},
 	)
 
@@ -331,19 +334,110 @@ def attach_canonical_issue_from_analyzer_result(
 		return
 
 	metadata = issue_result.metadata or {}
-	canonical_issue_id = metadata.get("canonical_issue_id")
+	issue_id = metadata.get("canonical_issue_id")
 
-	if not canonical_issue_id:
+	if not issue_id:
 		return
 
 	EntryAnalysisIssue.objects.update_or_create(
-		diary_entry_analysis=entry_analysis,
-		canonical_issue_id=canonical_issue_id,
+		entry_analysis=entry_analysis,
+		issue_id=issue_id,
 		defaults={
 			"confidence_score": issue_result.weight,
-			"rationale": "Assigned from NLP analyzer output.",
+			"rationale": build_issue_rationale(entry_analysis.entry.content, issue_result),
+			"assigned_by_method": issue_result.method,
 		},
 	)
+
+
+def find_present_terms(entry_text: str, terms: list[str]) -> list[str]:
+	normalized_entry = normalize_for_term_matching(entry_text)
+
+	present_terms = []
+
+	for term in terms or []:
+		clean_term = normalize_entry_text(term)
+
+		if not clean_term:
+			continue
+
+		if normalize_for_term_matching(clean_term) in normalized_entry:
+			present_terms.append(clean_term)
+
+	return list(dict.fromkeys(present_terms))
+
+
+def build_theme_rationale(theme_result, canonical_theme=None) -> str:
+	if not theme_result:
+		return "Assigned from NLP analyzer output."
+
+	metadata = theme_result.metadata or {}
+
+	generated_topic = (
+		metadata.get("original_nmf_theme", {}).get("label")
+		or theme_result.label
+		or "Unknown topic"
+	)
+
+	canonical_theme_name = (
+		getattr(canonical_theme, "name", None)
+		or metadata.get("suggested_theme", {}).get("name")
+		or theme_result.label
+		or "Unknown canonical theme"
+	)
+
+	match_score = metadata.get("catalog_match_weight")
+
+	if match_score is not None:
+		return (
+			f'Selected because the generated topic "{generated_topic}" '
+			f'matched the canonical theme "{canonical_theme_name}" '
+			f"with a similarity score of {match_score:.2f}."
+		)
+
+	return (
+		f'Selected because the generated topic "{generated_topic}" '
+		f'matched the canonical theme "{canonical_theme_name}".'
+	)
+
+
+def build_issue_rationale(entry_text: str, issue_result) -> str:
+	if not issue_result:
+		return "Assigned from NLP analyzer output."
+
+	metadata = issue_result.metadata or {}
+
+	candidate_terms = []
+
+	candidate_terms.append(issue_result.label)
+	candidate_terms.extend(getattr(issue_result, "keywords", []) or [])
+	candidate_terms.extend(metadata.get("matched_keywords") or [])
+
+	original_candidate = metadata.get("original_candidate") or {}
+	candidate_terms.append(original_candidate.get("label"))
+	candidate_terms.extend(original_candidate.get("keywords") or [])
+
+	assignment = metadata.get("assignment") or {}
+	candidate_terms.append(assignment.get("source_candidate_label"))
+	candidate_terms.extend(assignment.get("source_candidate_keywords") or [])
+
+	present_terms = find_present_terms(entry_text, candidate_terms)
+
+	if present_terms:
+		quoted_terms = ", ".join(f'"{term}"' for term in present_terms[:5])
+		return f"Selected because this entry contains issue-related terms: {quoted_terms}."
+
+	match_type = metadata.get("match_type")
+	match_score = metadata.get("catalog_match_weight")
+
+	if match_type and match_score is not None:
+		return (
+			f"Selected because the generated issue candidate matched this canonical issue "
+			f"using {match_type} matching with a score of {match_score:.2f}."
+		)
+
+	return "Selected because the NLP analyzer associated this entry with the issue."
+
 
 # -------------------------------
 # Create queued analysis run
@@ -396,40 +490,52 @@ def refresh_run_canonical_themes(run: StudyAnalysis) -> None:
 
 	entry_theme_rows = (
 		EntryAnalysisTheme.objects
-		.filter(diary_entry_analysis__run=run)
-		.select_related("canonical_theme")
+		.filter(entry_analysis__run=run)
+		.select_related("theme", "entry_analysis")
 	)
 
 	grouped = {}
 
 	for row in entry_theme_rows:
-		theme_id = row.canonical_theme_id
+		theme_id = row.theme_id
 
 		if theme_id not in grouped:
 			grouped[theme_id] = {
 				"count": 0,
-				"scores": [],
+				"confidence_scores": [],
+				"sentiment_scores": [],
 			}
 
 		grouped[theme_id]["count"] += 1
 
 		if row.confidence_score is not None:
-			grouped[theme_id]["scores"].append(row.confidence_score)
+			grouped[theme_id]["confidence_scores"].append(row.confidence_score)
+
+		if row.entry_analysis.sentiment_score is not None:
+			grouped[theme_id]["sentiment_scores"].append(row.entry_analysis.sentiment_score)
 
 	for theme_id, data in grouped.items():
-		scores = data["scores"]
+		confidence_scores = data["confidence_scores"]
+		sentiment_scores = data["sentiment_scores"]
 
 		average_confidence_score = (
-			round(sum(scores) / len(scores), 4)
-			if scores
+			round(sum(confidence_scores) / len(confidence_scores), 4)
+			if confidence_scores
+			else None
+		)
+
+		average_sentiment_score = (
+			round(sum(sentiment_scores) / len(sentiment_scores), 4)
+			if sentiment_scores
 			else None
 		)
 
 		StudyAnalysisTheme.objects.create(
 			run=run,
-			canonical_theme_id=theme_id,
+			theme_id=theme_id,
 			entry_count=data["count"],
 			average_confidence_score=average_confidence_score,
+			average_sentiment_score=average_sentiment_score,
 		)
 
 def refresh_run_canonical_issues(run: StudyAnalysis) -> None:
@@ -437,52 +543,64 @@ def refresh_run_canonical_issues(run: StudyAnalysis) -> None:
 
 	entry_issue_rows = (
 		EntryAnalysisIssue.objects
-		.filter(diary_entry_analysis__run=run)
-		.select_related("canonical_issue")
+		.filter(entry_analysis__run=run)
+		.select_related("issue", "entry_analysis")
 	)
 
 	grouped = {}
 
 	for row in entry_issue_rows:
-		issue_id = row.canonical_issue_id
+		issue_id = row.issue_id
 
 		if issue_id not in grouped:
 			grouped[issue_id] = {
 				"count": 0,
-				"scores": [],
+				"confidence_scores": [],
+				"sentiment_scores": [],
 			}
 
 		grouped[issue_id]["count"] += 1
 
 		if row.confidence_score is not None:
-			grouped[issue_id]["scores"].append(row.confidence_score)
+			grouped[issue_id]["confidence_scores"].append(row.confidence_score)
+
+		if row.entry_analysis.sentiment_score is not None:
+			grouped[issue_id]["sentiment_scores"].append(row.entry_analysis.sentiment_score)
 
 	for issue_id, data in grouped.items():
-		scores = data["scores"]
+		confidence_scores = data["confidence_scores"]
+		sentiment_scores = data["sentiment_scores"]
 
 		average_confidence_score = (
-			round(sum(scores) / len(scores), 4)
-			if scores
+			round(sum(confidence_scores) / len(confidence_scores), 4)
+			if confidence_scores
+			else None
+		)
+
+		average_sentiment_score = (
+			round(sum(sentiment_scores) / len(sentiment_scores), 4)
+			if sentiment_scores
 			else None
 		)
 
 		StudyAnalysisIssue.objects.create(
 			run=run,
-			canonical_issue_id=issue_id,
+			issue_id=issue_id,
 			entry_count=data["count"],
 			average_confidence_score=average_confidence_score,
+			average_sentiment_score=average_sentiment_score,
 		)
 
 def set_run_dominant_theme(run: StudyAnalysis) -> None:
 	top_theme = (
 		StudyAnalysisTheme.objects
 		.filter(run=run)
-		.select_related("canonical_theme")
-		.order_by("-entry_count", "-average_confidence_score", "canonical_theme__name")
+		.select_related("theme")
+		.order_by("-entry_count", "-average_confidence_score", "theme__name")
 		.first()
 	)
 
-	run.dominant_theme = top_theme.canonical_theme if top_theme else None
+	run.dominant_theme = top_theme.theme if top_theme else None
 
 # -------------------------------
 # Process existing analysis run
@@ -508,6 +626,9 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysis:
 
 	try:
 		with transaction.atomic():
+
+			
+
 			entries = list(study.entries.all().order_by("created_at"))
 
 			entries_by_id = {
@@ -628,6 +749,14 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysis:
 
 			now = timezone.now()
 
+			summarize_study_sentiment(study)
+			
+			run.participant_average_sentiment_score = study.participant_reported_average_sentiment_score
+			run.participant_average_sentiment_label = study.participant_reported_average_sentiment_label
+			run.participant_dominant_sentiment_score = study.participant_reported_dominant_sentiment_score
+			run.participant_dominant_sentiment_label = study.participant_reported_dominant_sentiment_label
+			run.participant_sentiment_distribution = study.participant_sentiment_distribution
+
 			run.average_sentiment_label = study_analysis_result.average_sentiment_label
 			run.average_sentiment_score = (
 				round(study_analysis_result.average_sentiment_score, 4)
@@ -642,6 +771,9 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysis:
 				else None
 			)
 
+			refresh_sentiment_ordinal_distance_for_run(run)
+			refresh_sentiment_confusion_matrix_for_run(run)
+			
 			run.sentiment_distribution = build_sentiment_distribution(entry_results)
 
 			run.total_themes = study_analysis_result.total_themes
@@ -664,6 +796,11 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysis:
 
 			run.save(
 				update_fields=[
+					"participant_average_sentiment_score",
+					"participant_average_sentiment_label",
+					"participant_dominant_sentiment_score",
+					"participant_dominant_sentiment_label",
+					"participant_sentiment_distribution",
 					"average_sentiment_label",
 					"average_sentiment_score",
 					"dominant_sentiment_label",
@@ -684,9 +821,6 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysis:
 					"completed_at",
 				]
 			)
-
-			refresh_sentiment_confusion_matrix_for_run(run)
-			refresh_sentiment_ordinal_distance_for_run(run)
 
 			study.selected_study_run = run
 			study.status = StudyStatus.HUMAN_ANALYSIS

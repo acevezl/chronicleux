@@ -72,15 +72,15 @@
                 </div>
 
                 <div class="p-4">
-                    {% if run.canonical_theme_summaries.all %}
+                    {% if run.theme_summaries.all %}
                         <div class="flex flex-wrap gap-2">
-                            {% for item in run.canonical_theme_summaries.all %}
+                            {% for item in run.theme_summaries.all %}
                                 <a
-                                    href="{% url 'machine_analysis_details' study.pk run.pk %}?theme={{ item.canonical_theme.pk }}#entries"
+                                    href="{% url 'machine_analysis_details' study.pk run.pk %}?theme={{ item.theme.pk }}#entries"
                                     class="badge-THEME hover:underline"
-                                    title="View entries with theme: {{ item.canonical_theme.name }}"
+                                    title="View entries with theme: {{ item.theme.name }}"
                                 >
-                                    <span>{{ item.canonical_theme.name }}</span>
+                                    <span>{{ item.theme.name }}</span>
                                     <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
                                         {{ item.entry_count }}
                                     </span>
@@ -104,11 +104,11 @@
                 </div>
 
                 <div class="p-4">
-                    {% if run.evaluator_canonical_theme_summaries.all %}
+                    {% if run.evaluator_theme_summaries.all %}
                         <div class="flex flex-wrap gap-2">
-                            {% for item in run.evaluator_canonical_theme_summaries.all %}
+                            {% for item in run.evaluator_theme_summaries.all %}
                                 <span class="badge-THEME">
-                                    <span>{% firstof item.label item.name item.canonical_theme.name "Unnamed theme" %}</span>
+                                    <span>{% firstof item.label item.name item.theme.name "Unnamed theme" %}</span>
                                     <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
                                         {% firstof item.count item.entry_count item.frequency 0 %}
                                     </span>
@@ -153,7 +153,7 @@
                 </div>
 
                 <div class="p-4">
-                    {% include "studies/partials/_distribution_theme.html" with distribution=run.canonical_theme_summaries.all dominant_theme=run.dominant_theme chart_id="machineThemeDistributionChart" distribution_subtitle="Themes detected across analyzed entries." empty_text="No machine theme distribution available." %}
+                    {% include "studies/partials/_distribution_theme.html" with distribution=run.theme_summaries.all dominant_theme=run.dominant_theme chart_id="machineThemeDistributionChart" distribution_subtitle="Themes detected across analyzed entries." empty_text="No machine theme distribution available." %}
                 </div>
             </div>
 
@@ -165,7 +165,7 @@
                 </div>
 
                 <div class="p-4">
-                    {% include "studies/partials/_distribution_theme.html" with distribution=run.evaluator_canonical_theme_summaries.all dominant_theme=run.evaluator_dominant_theme chart_id="evaluatorThemeDistributionChart" distribution_subtitle="Themes assigned during human evaluation." empty_text="No evaluator theme distribution available." %}
+                    {% include "studies/partials/_distribution_theme.html" with distribution=run.evaluator_theme_summaries.all dominant_theme=run.evaluator_dominant_theme chart_id="evaluatorThemeDistributionChart" distribution_subtitle="Themes assigned during human evaluation." empty_text="No evaluator theme distribution available." %}
                 </div>
             </div>
 

@@ -72,15 +72,15 @@
                 </div>
 
                 <div class="p-4">
-                    {% if run.canonical_issue_summaries.all %}
+                    {% if run.issue_summaries.all %}
                         <div class="flex flex-wrap gap-2">
-                            {% for item in run.canonical_issue_summaries.all %}
+                            {% for item in run.issue_summaries.all %}
                                 <a
-                                    href="{% url 'machine_analysis_details' study.pk run.pk %}?issue_tag={{ item.canonical_issue.pk }}#entries"
+                                    href="{% url 'machine_analysis_details' study.pk run.pk %}?issue_tag={{ item.issue.pk }}#entries"
                                     class="badge-ISSUE hover:underline"
-                                    title="View entries with issue: {{ item.canonical_issue.name }}"
+                                    title="View entries with issue: {{ item.issue.name }}"
                                 >
-                                    <span>{{ item.canonical_issue.name }}</span>
+                                    <span>{{ item.issue.name }}</span>
                                     <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
                                         {{ item.entry_count }}
                                     </span>
@@ -104,11 +104,11 @@
                 </div>
 
                 <div class="p-4">
-                    {% if run.evaluator_canonical_issue_summaries.all %}
+                    {% if run.evaluator_issue_summaries.all %}
                         <div class="flex flex-wrap gap-2">
-                            {% for item in run.evaluator_canonical_issue_summaries.all %}
+                            {% for item in run.evaluator_issue_summaries.all %}
                                 <span class="badge-ISSUE">
-                                    <span>{% firstof item.label item.name item.canonical_issue.name "Unnamed issue" %}</span>
+                                    <span>{% firstof item.label item.name item.issue.name "Unnamed issue" %}</span>
                                     <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
                                         {% firstof item.count item.entry_count item.frequency 0 %}
                                     </span>
@@ -153,7 +153,7 @@
                 </div>
 
                 <div class="p-4">
-                    {% include "studies/partials/_distribution_issues.html" with distribution=run.canonical_issue_summaries.all dominant_issue=run.dominant_issue chart_id="machineIssueDistributionChart" distribution_subtitle="Issues detected across analyzed entries." empty_text="No machine issue distribution available." %}
+                    {% include "studies/partials/_distribution_issues.html" with distribution=run.issue_summaries.all dominant_issue=run.dominant_issue chart_id="machineIssueDistributionChart" distribution_subtitle="Issues detected across analyzed entries." empty_text="No machine issue distribution available." %}
                 </div>
             </div>
 
@@ -165,7 +165,7 @@
                 </div>
 
                 <div class="p-4">
-                    {% include "studies/partials/_distribution_issues.html" with distribution=run.evaluator_canonical_issue_summaries.all dominant_issue=run.evaluator_dominant_issue chart_id="evaluatorIssueDistributionChart" distribution_subtitle="Issues assigned during human evaluation." empty_text="No evaluator issue distribution available." %}
+                    {% include "studies/partials/_distribution_issues.html" with distribution=run.evaluator_issue_summaries.all dominant_issue=run.evaluator_dominant_issue chart_id="evaluatorIssueDistributionChart" distribution_subtitle="Issues assigned during human evaluation." empty_text="No evaluator issue distribution available." %}
                 </div>
             </div>
 

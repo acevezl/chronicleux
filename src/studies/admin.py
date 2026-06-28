@@ -37,15 +37,29 @@ class PromptResponseInline(admin.TabularInline):
 
 
 class EntryAnalysisThemeInline(admin.TabularInline):
-    model = EntryAnalysisTheme
-    extra = 0
-    autocomplete_fields = ("theme", "assigned_by")
+	model = EntryAnalysisTheme
+	extra = 0
+
+	autocomplete_fields = [
+		"theme",
+	]
+
+	readonly_fields = [
+		"assigned_at",
+	]
 
 
 class EntryAnalysisIssueInline(admin.TabularInline):
-    model = EntryAnalysisIssue
-    extra = 0
-    autocomplete_fields = ("issue", "assigned_by")
+	model = EntryAnalysisIssue
+	extra = 0
+
+	autocomplete_fields = [
+		"issue",
+	]
+
+	readonly_fields = [
+		"assigned_at",
+	]
 
 
 class EntryEvaluationThemeInline(admin.TabularInline):
@@ -272,7 +286,7 @@ class EntryAnalysisThemeAdmin(ModelAdmin):
         "entry_analysis",
         "theme",
         "confidence_score",
-        "assigned_by",
+        "assigned_by_method",
         "assigned_at",
     )
     list_filter = ("theme", "assigned_at")
@@ -281,7 +295,7 @@ class EntryAnalysisThemeAdmin(ModelAdmin):
         "entry_analysis__entry__content",
         "rationale",
     )
-    autocomplete_fields = ("entry_analysis", "theme", "assigned_by")
+    autocomplete_fields = ("entry_analysis", "theme")
 
 
 @admin.register(EntryAnalysisIssue)
@@ -291,7 +305,7 @@ class EntryAnalysisIssueAdmin(ModelAdmin):
         "entry_analysis",
         "issue",
         "confidence_score",
-        "assigned_by",
+        "assigned_by_method",
         "assigned_at",
     )
     list_filter = ("issue", "assigned_at")
@@ -300,7 +314,7 @@ class EntryAnalysisIssueAdmin(ModelAdmin):
         "entry_analysis__entry__content",
         "rationale",
     )
-    autocomplete_fields = ("entry_analysis", "issue", "assigned_by")
+    autocomplete_fields = ("entry_analysis", "issue")
 
 
 @admin.register(EntryEvaluationTheme)

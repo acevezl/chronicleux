@@ -16,7 +16,7 @@
             const issueData = [
                 {% for item in distribution %}
                     {
-                        label: "{{ item.canonical_issue.name|escapejs }}",
+                        label: "{{ item.issue.name|escapejs }}",
                         count: {{ item.entry_count|default:0 }}
                     },
                 {% endfor %}

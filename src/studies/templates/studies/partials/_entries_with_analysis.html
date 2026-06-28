@@ -284,6 +284,7 @@
                                             <p class="xs-label uppercase mb-2">
                                                 Evaluator assessment
                                             </p>
+                                            {% comment "" %}
 
                                             {% if entry_analysis.evaluator_sentiment_label or entry_analysis.evaluator_themes.all or entry_analysis.evaluator_issues.all %}
                                                 <div class="flex flex-col gap-2">
@@ -308,6 +309,8 @@
                                                     Pending human evaluation
                                                 </span>
                                             {% endif %}
+
+                                            {% endcomment %}
                                         </div>
                                     </div>
                                 {% else %}

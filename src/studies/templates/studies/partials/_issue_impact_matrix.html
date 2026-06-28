@@ -1,6 +1,6 @@
 <div class="p-4 justify-center rounded-sm border border-dashed border-gray-300 dark:border-gray-600 text-sm text-gray-500 dark:text-gray-400">
     <div>
-        {% if run.canonical_issue_summaries.all %}
+        {% if run.issue_summaries.all %}
             <div>
                 <div class="relative h-72 w-full">
                     <canvas id="issueImpactMatrixChart-{{ study.id }}-{{ run.id }}"></canvas>
@@ -8,7 +8,7 @@
             </div>
 
             <div class="mt-4 mx-4 text-xs text-gray-500 dark:text-gray-400">
-                Issues farther to the left are more frequent, while issues lower on the chart are associated with stronger negative sentiment and may require faster attention.
+                Issues farther to the right are more frequent, while issues lower on the chart are associated with stronger negative sentiment and may require faster attention.
             </div>
         {% else %}
             <div class="p-4 text-sm text-gray-500 dark:text-gray-400">
@@ -18,7 +18,7 @@
     </div>
 </div>
 
-{% if run.canonical_issue_summaries.all %}
+{% if run.issue_summaries.all %}
 <script>
     function prettifyImpactIssueLabel(label) {
         return label
@@ -29,11 +29,11 @@
     }
 
     const issueImpactData{{ run.id }} = [
-        {% for issue_summary in run.canonical_issue_summaries.all %}
+        {% for issue_summary in run.issue_summaries.all %}
             {
-                label: "{{ issue_summary.canonical_issue.name|escapejs }}",
+                label: "{{ issue_summary.issue.name|escapejs }}",
                 count: {{ issue_summary.entry_count|default:0 }},
-                confidence: {{ issue_summary.average_confidence_score|default:0 }}
+                impact: {{ issue_summary.average_sentiment_score|default:0 }}
             },
         {% endfor %}
     ];
@@ -48,7 +48,7 @@
             ? (item.count / issueImpactTotal{{ run.id }}) * 100
             : 0;
 
-        const negativeSentimentIntensity = -Math.abs(item.confidence);
+        const negativeSentimentIntensity = -item.impact;
 
         return {
             x: frequency,
@@ -72,6 +72,28 @@
                 datasets: [{
                     label: "Issues",
                     data: issueImpactPoints{{ run.id }},
+                    backgroundColor: function(context) {
+                        const item = context.raw;
+                        const maxCount = Math.max(...issueImpactPoints{{ run.id }}.map(point => point.count));
+                        const ratio = maxCount ? item.count / maxCount : 0;
+
+                        const red = Math.round(245 + (220 - 245) * ratio);
+                        const green = Math.round(158 + (38 - 158) * ratio);
+                        const blue = Math.round(11 + (38 - 11) * ratio);
+
+                        return `rgba(${red}, ${green}, ${blue}, 0.45)`;
+                    },
+                    borderColor: function(context) {
+                        const item = context.raw;
+                        const maxCount = Math.max(...issueImpactPoints{{ run.id }}.map(point => point.count));
+                        const ratio = maxCount ? item.count / maxCount : 0;
+
+                        const red = Math.round(180 + (153 - 180) * ratio);
+                        const green = Math.round(83 + (27 - 83) * ratio);
+                        const blue = Math.round(9 + (27 - 9) * ratio);
+
+                        return `rgba(${red}, ${green}, ${blue}, 0.95)`;
+                    },
                     borderWidth: 2,
                     clip: false
                 }]
@@ -91,7 +113,7 @@
                     x: {
                         min: 0,
                         max: 100,
-                        reverse: true,
+                        reverse: false,
                         position: "top",
                         title: {
                             display: true,

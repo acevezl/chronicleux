@@ -247,13 +247,20 @@
                             </div>
                         </td>
 
-                        <td class="whitespace-nowrap px-4 py-4 text-right text-sm font-medium">
+                        <td class="flex p-4 gap-2 text-right text-sm font-medium">
                             <a
                                 href="{% url 'diary_entry_detail' entry.study_id entry.pk %}"
                                 class="dark:text-gray-400 hover:dark:text-white text-gray-700 hover:text-gray-500"
                                 title="View diary entry"
                             >
                                 {% heroicon_outline "eye" %}
+                            </a>
+                            <a
+                                href="{% url 'evaluate_entry' entry.study_id entry.pk %}"
+                                class="dark:text-gray-400 hover:dark:text-white text-gray-700 hover:text-gray-500"
+                                title="Evaluate diary entry"
+                            >
+                                {% heroicon_outline "pencil-square" %}
                             </a>
                         </td>
 

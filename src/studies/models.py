@@ -196,15 +196,23 @@ class Study(models.Model):
 		help_text="The analysis run selected as the preferred interpretation for this study.",
 	)
 
+	# Participant-Self reported Sentiment
+	participant_reported_average_sentiment_score = models.FloatField(null=True, blank=True)
+	participant_reported_average_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
+	participant_reported_dominant_sentiment_score = models.FloatField(null=True, blank=True)
+	participant_reported_dominant_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
+	participant_sentiment_distribution = models.JSONField(default=dict, blank=True)
+
 	# Evaluator Analysis
 	# Consolidation of all EntryEvaluations by Evaluators
-	evaluated_average_sentiment_score = models.FloatField(null=True, blank=True)
-	evaluated_average_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
-	evaluated_dominant_sentiment_score = models.FloatField(null=True, blank=True)
-	evaluated_dominant_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
+	evaluator_average_sentiment_score = models.FloatField(null=True, blank=True)
+	evaluator_average_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
+	evaluator_dominant_sentiment_score = models.FloatField(null=True, blank=True)
+	evaluator_dominant_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
+	evaluator_sentiment_distribution = models.JSONField(default=dict, blank=True)
 
 	# evaluated_themes.evaluated_studies.all()
-	evaluated_themes = models.ManyToManyField(
+	evaluator_themes = models.ManyToManyField(
 		"CanonicalTheme",
 		through="StudyEvaluationTheme",
 		related_name="theme_evaluated_studies",
@@ -212,7 +220,7 @@ class Study(models.Model):
 	)
 
 	# evaluated_issues.evaluated_studies.all()
-	evaluated_issues = models.ManyToManyField(
+	evaluator_issues = models.ManyToManyField(
 		"CanonicalIssue",
 		through="StudyEvaluationIssue",
 		related_name="issue_evaluated_studies",
@@ -647,10 +655,11 @@ class StudyAnalysis(models.Model):
 	participant_average_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
 	participant_dominant_sentiment_score = models.FloatField(null=True, blank=True)
 	participant_dominant_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
-	participant_abs_distance_average_sentiment = models.IntegerField(null=True, blank=True)
-	participant_abs_distance_dominant_sentiment = models.IntegerField(null=True, blank=True)
 	participant_sentiment_distribution = models.JSONField(default=dict, blank=True)
 
+	participant_abs_distance_average_sentiment = models.IntegerField(null=True, blank=True)
+	participant_abs_distance_dominant_sentiment = models.IntegerField(null=True, blank=True)
+	
 	participant_sentiment_true_positives = models.PositiveIntegerField(default=0)
 	participant_sentiment_false_positives = models.PositiveIntegerField(default=0)
 	participant_sentiment_true_negatives = models.PositiveIntegerField(default=0)
@@ -675,9 +684,10 @@ class StudyAnalysis(models.Model):
 	evaluator_average_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
 	evaluator_dominant_sentiment_score = models.FloatField(null=True, blank=True)
 	evaluator_dominant_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
+	evaluator_sentiment_distribution = models.JSONField(default=dict, blank=True)
+
 	evaluator_abs_distance_average_sentiment = models.IntegerField(null=True, blank=True)
 	evaluator_abs_distance_dominant_sentiment = models.IntegerField(null=True, blank=True)
-	evaluator_sentiment_distribution = models.JSONField(default=dict, blank=True)
 
 	evaluator_sentiment_true_positives = models.PositiveIntegerField(default=0)
 	evaluator_sentiment_false_positives = models.PositiveIntegerField(default=0)
@@ -700,8 +710,8 @@ class StudyAnalysis(models.Model):
 
 	class Meta:
 		ordering = ["-started_at"]
-		verbose_name = "Study Analysis Run"
-		verbose_name_plural = "Study Analysis Runs"
+		verbose_name = "Study Analysis"
+		verbose_name_plural = "Study Analyses"
 
 	def __str__(self) -> str:
 		return f"StudyAnalysis {self.pk} · study={self.study_id} · {self.status}"
@@ -999,8 +1009,8 @@ class CanonicalIssue(models.Model):
 		return self.name
 	
 
-# ENTRY ANALYSIS CANONICAL THEME
-# Canonical themes assigned to an individual entry analysis.
+# ENTRY ANALYSIS THEME
+# Themes assigned to an individual entry analysis.
 class EntryAnalysisTheme(models.Model):
 
 	entry_analysis = models.ForeignKey(
@@ -1018,12 +1028,10 @@ class EntryAnalysisTheme(models.Model):
 	confidence_score = models.FloatField(null=True, blank=True)
 	rationale = models.TextField(blank=True)
 
-	assigned_by = models.ForeignKey(
-		User,
-		on_delete=models.SET_NULL,
-		null=True,
+	assigned_by_method = models.CharField(
+		max_length=100,
 		blank=True,
-		related_name="assigned_entry_themes",
+		help_text="Name of the NLP technique, LLM provider/model, or process that assigned this theme.",
 	)
 
 	assigned_at = models.DateTimeField(auto_now_add=True)
@@ -1040,15 +1048,15 @@ class EntryAnalysisTheme(models.Model):
 			models.Index(fields=["entry_analysis"]),
 			models.Index(fields=["theme"]),
 		]
-		verbose_name = "Entry Analysis Canonical Theme"
-		verbose_name_plural = "Entry Analysis Canonical Themes"
+		verbose_name = "Entry Analysis Theme"
+		verbose_name_plural = "Entry Analysis Themes"
 
 	def __str__(self) -> str:
 		return f"{self.theme} · analysis={self.entry_analysis_id}"
 
 
-# ENTRY ANALYSIS CANONICAL ISSUE
-# Canonical issues assigned to an individual entry analysis.
+# ENTRY ANALYSIS ISSUE
+# Issues assigned to an individual entry analysis.
 class EntryAnalysisIssue(models.Model):
 
 	entry_analysis = models.ForeignKey(
@@ -1066,12 +1074,10 @@ class EntryAnalysisIssue(models.Model):
 	confidence_score = models.FloatField(null=True, blank=True)
 	rationale = models.TextField(blank=True)
 
-	assigned_by = models.ForeignKey(
-		User,
-		on_delete=models.SET_NULL,
-		null=True,
+	assigned_by_method = models.CharField(
+		max_length=100,
 		blank=True,
-		related_name="assigned_entry_issues",
+		help_text="NLP technique, LLM provider/model, or process that assigned this issue.",
 	)
 
 	assigned_at = models.DateTimeField(auto_now_add=True)
@@ -1088,15 +1094,15 @@ class EntryAnalysisIssue(models.Model):
 			models.Index(fields=["entry_analysis"]),
 			models.Index(fields=["issue"]),
 		]
-		verbose_name = "Entry Analysis Canonical Issue"
-		verbose_name_plural = "Entry Analysis Canonical Issues"
+		verbose_name = "Entry Analysis Issue"
+		verbose_name_plural = "Entry Analysis Issues"
 
 	def __str__(self) -> str:
 		return f"{self.issue} · analysis={self.entry_analysis_id}"
 	
 
 # ENTRY EVALUATION THEME
-# Canonical themes assigned by a human evaluator to an individual entry evaluation.
+# Themes assigned by a human evaluator to an individual entry evaluation.
 class EntryEvaluationTheme(models.Model):
 
 	entry_evaluation = models.ForeignKey(
@@ -1143,7 +1149,7 @@ class EntryEvaluationTheme(models.Model):
 	
 
 # ENTRY EVALUATION ISSUE
-# Canonical issues assigned by a human evaluator to an individual entry evaluation.
+# Issues assigned by a human evaluator to an individual entry evaluation.
 class EntryEvaluationIssue(models.Model):
 
 	entry_evaluation = models.ForeignKey(
@@ -1190,7 +1196,7 @@ class EntryEvaluationIssue(models.Model):
 	
 
 # STUDY EVALUATION THEME
-# Canonical themes found across all entry evaluations in a study.
+# Themes found across all entry evaluations in a study.
 class StudyEvaluationTheme(models.Model):
 
 	study = models.ForeignKey(
@@ -1229,7 +1235,7 @@ class StudyEvaluationTheme(models.Model):
 
 
 # STUDY EVALUATION ISSUE
-# Canonical issues found across all entry evaluations in a study.
+# Issues found across all entry evaluations in a study.
 class StudyEvaluationIssue(models.Model):
 
 	study = models.ForeignKey(
@@ -1268,7 +1274,7 @@ class StudyEvaluationIssue(models.Model):
 	
 
 # STUDY ANALYSIS THEME
-# Canonical themes found across all entry analyses in a run.
+# Themes found across all entry analyses in a run.
 # So I don't have to recompute every time from the entries.
 class StudyAnalysisTheme(models.Model):
 
@@ -1286,6 +1292,7 @@ class StudyAnalysisTheme(models.Model):
 
 	entry_count = models.PositiveIntegerField(default=0)
 	average_confidence_score = models.FloatField(null=True, blank=True)
+	average_sentiment_score = models.FloatField(null=True, blank=True)
 
 	class Meta:
 		ordering = ["-entry_count", "theme__name"]
@@ -1300,15 +1307,15 @@ class StudyAnalysisTheme(models.Model):
 			models.Index(fields=["theme"]),
 			models.Index(fields=["run", "entry_count"]),
 		]
-		verbose_name = "Study Analysis Run Canonical Theme"
-		verbose_name_plural = "Study Analysis Run Canonical Themes"
+		verbose_name = "Study Analysis Theme"
+		verbose_name_plural = "Study Analysis Themes"
 
 	def __str__(self) -> str:
 		return f"{self.theme} · run={self.run_id} · entries={self.entry_count}"
 
 
 # STUDY ANALYSIS ISSUE
-# Canonical issues found across all entry analyses in a run.
+# Issues found across all entry analyses in a run.
 # So I don't have to recompute every time from the entries.
 class StudyAnalysisIssue(models.Model):
 
@@ -1326,6 +1333,7 @@ class StudyAnalysisIssue(models.Model):
 
 	entry_count = models.PositiveIntegerField(default=0)
 	average_confidence_score = models.FloatField(null=True, blank=True)
+	average_sentiment_score = models.FloatField(null=True, blank=True)
 
 	class Meta:
 		ordering = ["-entry_count", "issue__name"]
@@ -1340,8 +1348,8 @@ class StudyAnalysisIssue(models.Model):
 			models.Index(fields=["issue"]),
 			models.Index(fields=["run", "entry_count"]),
 		]
-		verbose_name = "Study Analysis Run Canonical Issue"
-		verbose_name_plural = "Study Analysis Run Canonical Issues"
+		verbose_name = "Study Analysis Issue"
+		verbose_name_plural = "Study Analysis Issues"
 
 	def __str__(self) -> str:
 		return f"{self.issue} · run={self.run_id} · entries={self.entry_count}"
