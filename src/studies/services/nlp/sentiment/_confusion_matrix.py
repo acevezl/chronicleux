@@ -1,7 +1,13 @@
 from dataclasses import dataclass
 from django.db import transaction
+from django.db.models import Prefetch
 
-from studies.models import DiaryEntryAnalysis, ConfusionMatrixOutcome, SentimentCategory
+from studies.models import (
+    EntryAnalysis,
+    EntryEvaluation,
+    ConfusionMatrixOutcome,
+    SentimentCategory,
+)
 
 # My target label to identify is "SENTIMENT=NEGATIVE"
 NEGATIVE_SENTIMENTS = {
@@ -136,6 +142,32 @@ def get_category_confusion_matrix_outcome(
     return ConfusionMatrixOutcome.TRUE_NEGATIVE
 
 
+def get_latest_entry_evaluation(entry):
+    prefetched_evaluations = getattr(
+        entry,
+        "prefetched_entry_evaluations",
+        None,
+    )
+
+    if prefetched_evaluations is not None:
+        return prefetched_evaluations[0] if prefetched_evaluations else None
+
+    return (
+        entry.entry_evaluations
+        .order_by("-updated_at", "-created_at")
+        .first()
+    )
+
+
+def get_evaluator_reference_label(entry) -> str | None:
+    entry_evaluation = get_latest_entry_evaluation(entry)
+
+    if not entry_evaluation:
+        return None
+
+    return entry_evaluation.evaluator_sentiment_label
+
+
 def calculate_metrics_by_sentiment_category(
         label_pairs: list[tuple[str | None, str | None]]
 ) -> dict:
@@ -172,8 +204,18 @@ def calculate_metrics_by_sentiment_category(
 def refresh_sentiment_confusion_matrix_for_run (study_analysis_run):
 
     entry_analyses = (
-        DiaryEntryAnalysis.objects
+        EntryAnalysis.objects
         .select_related("entry")
+        .prefetch_related(
+            Prefetch(
+                "entry__entry_evaluations",
+                queryset=EntryEvaluation.objects.order_by(
+                    "-updated_at",
+                    "-created_at",
+                ),
+                to_attr="prefetched_entry_evaluations",
+            )
+        )
         .filter(run=study_analysis_run)
     )
 
@@ -187,7 +229,7 @@ def refresh_sentiment_confusion_matrix_for_run (study_analysis_run):
         machine_sentiment_label = entry_analysis.sentiment_label
 
         participant_reference_label = entry_analysis.entry.sentiment_self_report
-        evaluator_reference_label = entry_analysis.evaluator_sentiment_label
+        evaluator_reference_label = get_evaluator_reference_label(entry_analysis.entry)
 
         participant_outcome = get_confusion_matrix_outcome(
             predicted_label=machine_sentiment_label,

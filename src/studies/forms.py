@@ -5,11 +5,11 @@ from .models import (
     Study,
     CanonicalIssue,
     CanonicalTheme,
-    DiaryEntry,
-    DiaryEntryAnalysis,
-    DiaryEntryEvaluation,
-    DiaryEntryEvaluationTheme,
-    DiaryEntryEvaluationIssue,
+    Entry,
+    EntryAnalysis,
+    EntryEvaluation,
+    EntryEvaluationTheme,
+    EntryEvaluationIssue,
     SentimentCategory,
     BinarySentimentCategory,
     UXFramework,
@@ -98,9 +98,9 @@ class StudyForm(forms.ModelForm):
 
         return cleaned_data
 
-class DiaryEntryForm(forms.ModelForm):
+class EntryForm(forms.ModelForm):
     class Meta:
-        model = DiaryEntry
+        model = Entry
         fields = ["sentiment_self_report", "issue_encountered", "content"]
         widgets = {
             "sentiment_self_report": forms.Select(
@@ -297,10 +297,10 @@ class CanonicalIssueForm(forms.ModelForm):
         return aliases
     
 # MANUAL EVALUATION FORM    
-class DiaryEntryManualEvaluationForm(forms.ModelForm):
+class EntryManualEvaluationForm(forms.ModelForm):
 
     class Meta:
-        model = DiaryEntryEvaluation
+        model = EntryEvaluation
         fields = [
             "evaluator_sentiment_label",
             "evaluator_themes",
@@ -413,23 +413,23 @@ class DiaryEntryManualEvaluationForm(forms.ModelForm):
             evaluator_themes = self.cleaned_data.get("evaluator_themes") or []
             evaluator_issues = self.cleaned_data.get("evaluator_issues") or []
 
-            DiaryEntryEvaluationTheme.objects.filter(
+            EntryEvaluationTheme.objects.filter(
                 diary_entry_evaluation=instance
             ).delete()
 
-            DiaryEntryEvaluationIssue.objects.filter(
+            EntryEvaluationIssue.objects.filter(
                 diary_entry_evaluation=instance
             ).delete()
 
             for theme in evaluator_themes:
-                DiaryEntryEvaluationTheme.objects.create(
+                EntryEvaluationTheme.objects.create(
                     diary_entry_evaluation=instance,
                     canonical_theme=theme,
                     assigned_by=self.evaluator,
                 )
 
             for issue in evaluator_issues:
-                DiaryEntryEvaluationIssue.objects.create(
+                EntryEvaluationIssue.objects.create(
                     diary_entry_evaluation=instance,
                     canonical_issue=issue,
                     assigned_by=self.evaluator,

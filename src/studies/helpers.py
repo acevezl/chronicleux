@@ -8,8 +8,8 @@ from django.utils.dateparse import parse_datetime
 from .models import (
 	CanonicalTheme,
 	CanonicalIssue,
-	DiaryEntry,
-	DiaryEntrySource,
+	Entry,
+	EntrySource,
 	MembershipRole,
 	SentimentCategory,
 	StudyMembership,
@@ -100,7 +100,7 @@ def create_diary_entry_from_row(study, row):
 	
 	created_at = parse_imported_datetime (row.get("created_at"))
 
-	entry = DiaryEntry(
+	entry = Entry(
 		study=study,
 		participant=participant,
 		participant_display_name=participant_display_name or "",
@@ -110,7 +110,7 @@ def create_diary_entry_from_row(study, row):
 		sentiment_self_report=sentiment_self_report,
 		issue_encountered=row.get("issue_encountered"),
 		created_at=created_at,
-		source=DiaryEntrySource.EXTERNAL,
+		source=EntrySource.EXTERNAL,
 	)
 
 	entry.full_clean()

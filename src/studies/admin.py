@@ -5,19 +5,19 @@ from .models import (
     Study,
     StudyMembership,
     Prompt,
-    DiaryEntry,
+    Entry,
     PromptResponse,
-    StudyAnalysisRun,
-    DiaryEntryAnalysis,
+    StudyAnalysis,
+    EntryAnalysis,
     CanonicalTheme,
     CanonicalIssue,
-    DiaryEntryAnalysisCanonicalTheme,
-    DiaryEntryAnalysisCanonicalIssue,
-    DiaryEntryEvaluation,
-    DiaryEntryEvaluationTheme,
-    DiaryEntryEvaluationIssue,
-    StudyAnalysisRunCanonicalTheme,
-    StudyAnalysisRunCanonicalIssue,
+    EntryAnalysisTheme,
+    EntryAnalysisIssue,
+    EntryEvaluation,
+    EntryEvaluationTheme,
+    EntryEvaluationIssue,
+    StudyAnalysisTheme,
+    StudyAnalysisIssue,
 )
 
 
@@ -36,40 +36,40 @@ class PromptResponseInline(admin.TabularInline):
     extra = 0
 
 
-class DiaryEntryAnalysisCanonicalThemeInline(admin.TabularInline):
-    model = DiaryEntryAnalysisCanonicalTheme
+class EntryAnalysisThemeInline(admin.TabularInline):
+    model = EntryAnalysisTheme
     extra = 0
-    autocomplete_fields = ("canonical_theme", "assigned_by")
+    autocomplete_fields = ("theme", "assigned_by")
 
 
-class DiaryEntryAnalysisCanonicalIssueInline(admin.TabularInline):
-    model = DiaryEntryAnalysisCanonicalIssue
+class EntryAnalysisIssueInline(admin.TabularInline):
+    model = EntryAnalysisIssue
     extra = 0
-    autocomplete_fields = ("canonical_issue", "assigned_by")
+    autocomplete_fields = ("issue", "assigned_by")
 
 
-class DiaryEntryEvaluationThemeInline(admin.TabularInline):
-    model = DiaryEntryEvaluationTheme
+class EntryEvaluationThemeInline(admin.TabularInline):
+    model = EntryEvaluationTheme
     extra = 0
-    autocomplete_fields = ("canonical_theme", "assigned_by")
+    autocomplete_fields = ("theme", "assigned_by")
 
 
-class DiaryEntryEvaluationIssueInline(admin.TabularInline):
-    model = DiaryEntryEvaluationIssue
+class EntryEvaluationIssueInline(admin.TabularInline):
+    model = EntryEvaluationIssue
     extra = 0
-    autocomplete_fields = ("canonical_issue", "assigned_by")
+    autocomplete_fields = ("issue", "assigned_by")
 
 
-class StudyAnalysisRunCanonicalThemeInline(admin.TabularInline):
-    model = StudyAnalysisRunCanonicalTheme
+class StudyAnalysisThemeInline(admin.TabularInline):
+    model = StudyAnalysisTheme
     extra = 0
-    autocomplete_fields = ("canonical_theme",)
+    autocomplete_fields = ("theme",)
 
 
-class StudyAnalysisRunCanonicalIssueInline(admin.TabularInline):
-    model = StudyAnalysisRunCanonicalIssue
+class StudyAnalysisIssueInline(admin.TabularInline):
+    model = StudyAnalysisIssue
     extra = 0
-    autocomplete_fields = ("canonical_issue",)
+    autocomplete_fields = ("issue",)
 
 
 @admin.register(Study)
@@ -106,8 +106,8 @@ class PromptAdmin(ModelAdmin):
     autocomplete_fields = ("study",)
 
 
-@admin.register(DiaryEntry)
-class DiaryEntryAdmin(ModelAdmin):
+@admin.register(Entry)
+class EntryAdmin(ModelAdmin):
     list_display = (
         "id",
         "study",
@@ -134,14 +134,14 @@ class DiaryEntryAdmin(ModelAdmin):
 
 @admin.register(PromptResponse)
 class PromptResponseAdmin(ModelAdmin):
-    list_display = ("id", "diary_entry", "prompt", "likert_value", "text_value")
+    list_display = ("id", "entry", "prompt", "likert_value", "text_value")
     list_filter = ("prompt__prompt_type",)
-    search_fields = ("diary_entry__content", "prompt__text", "text_value")
-    autocomplete_fields = ("diary_entry", "prompt")
+    search_fields = ("entry__content", "prompt__text", "text_value")
+    autocomplete_fields = ("entry", "prompt")
 
 
-@admin.register(StudyAnalysisRun)
-class StudyAnalysisRunAdmin(ModelAdmin):
+@admin.register(StudyAnalysis)
+class AnalysisAdmin(ModelAdmin):
     list_display = (
         "id",
         "study",
@@ -165,13 +165,13 @@ class StudyAnalysisRunAdmin(ModelAdmin):
     search_fields = ("study__title", "analysis_model", "analysis_version", "error_message")
     autocomplete_fields = ("study", "created_by")
     inlines = [
-        StudyAnalysisRunCanonicalThemeInline,
-        StudyAnalysisRunCanonicalIssueInline,
+        StudyAnalysisThemeInline,
+        StudyAnalysisIssueInline,
     ]
 
 
-@admin.register(DiaryEntryAnalysis)
-class DiaryEntryAnalysisAdmin(ModelAdmin):
+@admin.register(EntryAnalysis)
+class EntryAnalysisAdmin(ModelAdmin):
     list_display = (
         "id",
         "run",
@@ -198,13 +198,13 @@ class DiaryEntryAnalysisAdmin(ModelAdmin):
     )
     autocomplete_fields = ("run", "entry")
     inlines = [
-        DiaryEntryAnalysisCanonicalThemeInline,
-        DiaryEntryAnalysisCanonicalIssueInline,
+        EntryAnalysisThemeInline,
+        EntryAnalysisIssueInline,
     ]
 
 
-@admin.register(DiaryEntryEvaluation)
-class DiaryEntryEvaluationAdmin(ModelAdmin):
+@admin.register(EntryEvaluation)
+class EntryEvaluationAdmin(ModelAdmin):
     list_display = (
         "id",
         "entry",
@@ -226,8 +226,8 @@ class DiaryEntryEvaluationAdmin(ModelAdmin):
     )
     autocomplete_fields = ("entry", "evaluated_by")
     inlines = [
-        DiaryEntryEvaluationThemeInline,
-        DiaryEntryEvaluationIssueInline,
+        EntryEvaluationThemeInline,
+        EntryEvaluationIssueInline,
     ]
 
 
@@ -265,103 +265,103 @@ class CanonicalIssueAdmin(ModelAdmin):
     autocomplete_fields = ("created_by",)
 
 
-@admin.register(DiaryEntryAnalysisCanonicalTheme)
-class DiaryEntryAnalysisCanonicalThemeAdmin(ModelAdmin):
+@admin.register(EntryAnalysisTheme)
+class EntryAnalysisThemeAdmin(ModelAdmin):
     list_display = (
         "id",
-        "diary_entry_analysis",
-        "canonical_theme",
+        "entry_analysis",
+        "theme",
         "confidence_score",
         "assigned_by",
         "assigned_at",
     )
-    list_filter = ("canonical_theme", "assigned_at")
+    list_filter = ("theme", "assigned_at")
     search_fields = (
-        "canonical_theme__name",
-        "diary_entry_analysis__entry__content",
+        "theme__name",
+        "entry_analysis__entry__content",
         "rationale",
     )
-    autocomplete_fields = ("diary_entry_analysis", "canonical_theme", "assigned_by")
+    autocomplete_fields = ("entry_analysis", "theme", "assigned_by")
 
 
-@admin.register(DiaryEntryAnalysisCanonicalIssue)
-class DiaryEntryAnalysisCanonicalIssueAdmin(ModelAdmin):
+@admin.register(EntryAnalysisIssue)
+class EntryAnalysisIssueAdmin(ModelAdmin):
     list_display = (
         "id",
-        "diary_entry_analysis",
-        "canonical_issue",
+        "entry_analysis",
+        "issue",
         "confidence_score",
         "assigned_by",
         "assigned_at",
     )
-    list_filter = ("canonical_issue", "assigned_at")
+    list_filter = ("issue", "assigned_at")
     search_fields = (
-        "canonical_issue__name",
-        "diary_entry_analysis__entry__content",
+        "issue__name",
+        "entry_analysis__entry__content",
         "rationale",
     )
-    autocomplete_fields = ("diary_entry_analysis", "canonical_issue", "assigned_by")
+    autocomplete_fields = ("entry_analysis", "issue", "assigned_by")
 
 
-@admin.register(DiaryEntryEvaluationTheme)
-class DiaryEntryEvaluationThemeAdmin(ModelAdmin):
+@admin.register(EntryEvaluationTheme)
+class EntryEvaluationThemeAdmin(ModelAdmin):
     list_display = (
         "id",
-        "diary_entry_evaluation",
-        "canonical_theme",
+        "entry_evaluation",
+        "theme",
         "assigned_by",
         "assigned_at",
     )
-    list_filter = ("canonical_theme", "assigned_at")
+    list_filter = ("theme", "assigned_at")
     search_fields = (
-        "canonical_theme__name",
-        "diary_entry_evaluation__entry__content",
+        "theme__name",
+        "entry_evaluation__entry__content",
         "rationale",
     )
-    autocomplete_fields = ("diary_entry_evaluation", "canonical_theme", "assigned_by")
+    autocomplete_fields = ("entry_evaluation", "theme", "assigned_by")
 
 
-@admin.register(DiaryEntryEvaluationIssue)
-class DiaryEntryEvaluationIssueAdmin(ModelAdmin):
+@admin.register(EntryEvaluationIssue)
+class EntryEvaluationIssueAdmin(ModelAdmin):
     list_display = (
         "id",
-        "diary_entry_evaluation",
-        "canonical_issue",
+        "entry_evaluation",
+        "issue",
         "assigned_by",
         "assigned_at",
     )
-    list_filter = ("canonical_issue", "assigned_at")
+    list_filter = ("issue", "assigned_at")
     search_fields = (
-        "canonical_issue__name",
-        "diary_entry_evaluation__entry__content",
+        "issue__name",
+        "entry_evaluation__entry__content",
         "rationale",
     )
-    autocomplete_fields = ("diary_entry_evaluation", "canonical_issue", "assigned_by")
+    autocomplete_fields = ("entry_evaluation", "issue", "assigned_by")
 
 
-@admin.register(StudyAnalysisRunCanonicalTheme)
-class StudyAnalysisRunCanonicalThemeAdmin(ModelAdmin):
+@admin.register(StudyAnalysisTheme)
+class StudyAnalysisThemeAdmin(ModelAdmin):
     list_display = (
         "id",
         "run",
-        "canonical_theme",
+        "theme",
         "entry_count",
         "average_confidence_score",
     )
-    list_filter = ("canonical_theme",)
-    search_fields = ("run__study__title", "canonical_theme__name")
-    autocomplete_fields = ("run", "canonical_theme")
+    list_filter = ("theme",)
+    search_fields = ("run__study__title", "theme__name")
+    autocomplete_fields = ("run", "theme")
 
 
-@admin.register(StudyAnalysisRunCanonicalIssue)
-class StudyAnalysisRunCanonicalIssueAdmin(ModelAdmin):
+@admin.register(StudyAnalysisIssue)
+class StudyAnalysisIssueAdmin(ModelAdmin):
     list_display = (
         "id",
         "run",
-        "canonical_issue",
+        "issue",
         "entry_count",
         "average_confidence_score",
     )
-    list_filter = ("canonical_issue",)
-    search_fields = ("run__study__title", "canonical_issue__name")
-    autocomplete_fields = ("run", "canonical_issue")
+    list_filter = ("issue",)
+    search_fields = ("run__study__title", "issue__name")
+    autocomplete_fields = ("run", "issue")

@@ -9,14 +9,14 @@ from django.utils import timezone
 from studies.models import (
 	Study,
 	StudyStatus,
-	StudyAnalysisRun,
-	DiaryEntry,
-	DiaryEntryAnalysis,
-	AnalysisRunStatus,
-	DiaryEntryAnalysisCanonicalTheme,
-	StudyAnalysisRunCanonicalTheme,
-	DiaryEntryAnalysisCanonicalIssue,
-	StudyAnalysisRunCanonicalIssue,
+	StudyAnalysis,
+	Entry,
+	EntryAnalysis,
+	AnalysisStatus,
+	EntryAnalysisTheme,
+	StudyAnalysisTheme,
+	EntryAnalysisIssue,
+	StudyAnalysisIssue,
 )
 
 from studies.services.nlp.pipeline import analyze_study_entries
@@ -203,7 +203,7 @@ def build_evolution_over_time(entries_with_results: list[tuple]) -> list[dict]:
 	return output
 
 
-def get_entry_participant_display_name(entry: DiaryEntry) -> str:
+def get_entry_participant_display_name(entry: Entry) -> str:
 	"""
 	Return the human-readable participant name for an entry.
 	"""
@@ -228,7 +228,7 @@ def get_entry_participant_display_name(entry: DiaryEntry) -> str:
 	return "Anonymous"
 
 
-def serialize_dashboard_entry(entry: DiaryEntry, result: dict) -> dict:
+def serialize_dashboard_entry(entry: Entry, result: dict) -> dict:
 	"""
 	Serialize one entry for dashboard sentiment highlights.
 	"""
@@ -302,7 +302,7 @@ def build_top_sentiment_entries(entries_with_results: list[tuple]) -> dict:
 	}
 
 def attach_canonical_theme_from_analyzer_result(
-	entry_analysis: DiaryEntryAnalysis,
+	entry_analysis: EntryAnalysis,
 	theme_result,
 ) -> None:
 	if not theme_result:
@@ -314,7 +314,7 @@ def attach_canonical_theme_from_analyzer_result(
 	if not canonical_theme_id:
 		return
 
-	DiaryEntryAnalysisCanonicalTheme.objects.update_or_create(
+	EntryAnalysisTheme.objects.update_or_create(
 		diary_entry_analysis=entry_analysis,
 		canonical_theme_id=canonical_theme_id,
 		defaults={
@@ -324,7 +324,7 @@ def attach_canonical_theme_from_analyzer_result(
 	)
 
 def attach_canonical_issue_from_analyzer_result(
-	entry_analysis: DiaryEntryAnalysis,
+	entry_analysis: EntryAnalysis,
 	issue_result,
 ) -> None:
 	if not issue_result:
@@ -336,7 +336,7 @@ def attach_canonical_issue_from_analyzer_result(
 	if not canonical_issue_id:
 		return
 
-	DiaryEntryAnalysisCanonicalIssue.objects.update_or_create(
+	EntryAnalysisIssue.objects.update_or_create(
 		diary_entry_analysis=entry_analysis,
 		canonical_issue_id=canonical_issue_id,
 		defaults={
@@ -357,7 +357,7 @@ def create_study_analysis_run(
 	issue_method: str = "tfidf",
 	llm_provider: str | None = None,
 	llm_model: str | None = None,
-) -> StudyAnalysisRun:
+) -> StudyAnalysis:
 	study = Study.objects.get(pk=study_id)
 
 	is_llm_run = (
@@ -376,9 +376,9 @@ def create_study_analysis_run(
 		methods["provider"] = llm_provider
 		methods["model"] = llm_model
 
-	run = StudyAnalysisRun.objects.create(
+	run = StudyAnalysis.objects.create(
 		study=study,
-		status=AnalysisRunStatus.QUEUED,
+		status=AnalysisStatus.QUEUED,
 		analysis_model=f"{sentiment_method}_{theme_method}_{issue_method}",
 		analysis_version="v3",
 		methods=methods,
@@ -391,11 +391,11 @@ def create_study_analysis_run(
 	return run
 
 
-def refresh_run_canonical_themes(run: StudyAnalysisRun) -> None:
-	StudyAnalysisRunCanonicalTheme.objects.filter(run=run).delete()
+def refresh_run_canonical_themes(run: StudyAnalysis) -> None:
+	StudyAnalysisTheme.objects.filter(run=run).delete()
 
 	entry_theme_rows = (
-		DiaryEntryAnalysisCanonicalTheme.objects
+		EntryAnalysisTheme.objects
 		.filter(diary_entry_analysis__run=run)
 		.select_related("canonical_theme")
 	)
@@ -425,18 +425,18 @@ def refresh_run_canonical_themes(run: StudyAnalysisRun) -> None:
 			else None
 		)
 
-		StudyAnalysisRunCanonicalTheme.objects.create(
+		StudyAnalysisTheme.objects.create(
 			run=run,
 			canonical_theme_id=theme_id,
 			entry_count=data["count"],
 			average_confidence_score=average_confidence_score,
 		)
 
-def refresh_run_canonical_issues(run: StudyAnalysisRun) -> None:
-	StudyAnalysisRunCanonicalIssue.objects.filter(run=run).delete()
+def refresh_run_canonical_issues(run: StudyAnalysis) -> None:
+	StudyAnalysisIssue.objects.filter(run=run).delete()
 
 	entry_issue_rows = (
-		DiaryEntryAnalysisCanonicalIssue.objects
+		EntryAnalysisIssue.objects
 		.filter(diary_entry_analysis__run=run)
 		.select_related("canonical_issue")
 	)
@@ -466,16 +466,16 @@ def refresh_run_canonical_issues(run: StudyAnalysisRun) -> None:
 			else None
 		)
 
-		StudyAnalysisRunCanonicalIssue.objects.create(
+		StudyAnalysisIssue.objects.create(
 			run=run,
 			canonical_issue_id=issue_id,
 			entry_count=data["count"],
 			average_confidence_score=average_confidence_score,
 		)
 
-def set_run_dominant_theme(run: StudyAnalysisRun) -> None:
+def set_run_dominant_theme(run: StudyAnalysis) -> None:
 	top_theme = (
-		StudyAnalysisRunCanonicalTheme.objects
+		StudyAnalysisTheme.objects
 		.filter(run=run)
 		.select_related("canonical_theme")
 		.order_by("-entry_count", "-average_confidence_score", "canonical_theme__name")
@@ -488,18 +488,18 @@ def set_run_dominant_theme(run: StudyAnalysisRun) -> None:
 # Process existing analysis run
 # -------------------------------
 
-def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
-	run = StudyAnalysisRun.objects.select_related("study").get(pk=run_id)
+def process_study_analysis_run(run_id: int) -> StudyAnalysis:
+	run = StudyAnalysis.objects.select_related("study").get(pk=run_id)
 	study = run.study
 
-	if run.status == AnalysisRunStatus.COMPLETED:
+	if run.status == AnalysisStatus.COMPLETED:
 		return run
 
 	sentiment_method = run.methods.get("sentiment", "vader")
 	theme_method = run.methods.get("theme", "tfidf_nmf")
 	issue_method = run.methods.get("issue", "tfidf")
 
-	run.status = AnalysisRunStatus.RUNNING
+	run.status = AnalysisStatus.RUNNING
 	run.error_message = ""
 	run.save(update_fields=["status", "error_message"])
 
@@ -568,7 +568,7 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 				normalized_content = normalize_entry_text(entry.content)
 				entry_summary = make_entry_summary(normalized_content)
 
-				selected_entry_run = DiaryEntryAnalysis.objects.create(
+				selected_entry_run = EntryAnalysis.objects.create(
 					run=run,
 					entry=entry,
 
@@ -659,7 +659,7 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 			run.methods = study_analysis_result.methods
 			run.metadata = study_analysis_result.metadata
 
-			run.status = AnalysisRunStatus.COMPLETED
+			run.status = AnalysisStatus.COMPLETED
 			run.completed_at = now
 
 			run.save(
@@ -700,7 +700,7 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysisRun:
 		return run
 
 	except Exception as e:
-		run.status = AnalysisRunStatus.FAILED
+		run.status = AnalysisStatus.FAILED
 		run.error_message = str(e)
 		run.completed_at = timezone.now()
 		run.save(update_fields=["status", "error_message", "completed_at"])
@@ -720,7 +720,7 @@ def run_study_analysis(
 	issue_method: str = "tfidf",
 	llm_provider: str | None = None,
 	llm_model: str | None = None,
-) -> StudyAnalysisRun:
+) -> StudyAnalysis:
 	run = create_study_analysis_run(
 		study_id=study_id,
 		user_id=user_id,

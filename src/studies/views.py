@@ -41,24 +41,24 @@ from .filters import (
 from .forms import (
 	CanonicalIssueForm, 
 	CanonicalThemeForm,
-	DiaryEntryForm, 
-	DiaryEntryManualEvaluationForm,
+	EntryForm, 
+	EntryManualEvaluationForm,
 	StudyForm, 
 	UXFrameworkForm,
 	UXFrameworkCriterionForm,
 )
 
 from .models import (
-	AnalysisRunStatus, 
-	DiaryEntry, 
-	DiaryEntryAnalysis, 
-	DiaryEntryEvaluation,
-	DiaryEntrySource, 
+	AnalysisStatus, 
+	Entry, 
+	EntryAnalysis, 
+	EntryEvaluation,
+	EntrySource, 
 	MembershipRole, 
 	SentimentCategory, 
 	Study, 
 	StudyMembership, 
-	StudyAnalysisRun, 
+	StudyAnalysis, 
 	StudyStatus, 
 	CanonicalIssue, 
 	CanonicalTheme, 
@@ -133,12 +133,12 @@ def diary_study_detail(request, pk):
 		role=MembershipRole.EVALUATOR
 	).exists()
 
-	diary_entries = DiaryEntry.objects.filter(
+	diary_entries = Entry.objects.filter(
 		study=study
 	).select_related("participant").order_by("-created_at")
 
 	analysis_runs = (
-		StudyAnalysisRun.objects
+		StudyAnalysis.objects
 		.filter(study=study)
 		.select_related("dominant_theme")
 		.prefetch_related("themes", "issues")
@@ -273,12 +273,12 @@ def create_diary_entry(request, pk):
 	study = get_object_or_404(Study, pk=pk)
 
 	if request.method == "POST":
-		form = DiaryEntryForm(request.POST)
+		form = EntryForm(request.POST)
 		if form.is_valid():
 			entry = form.save(commit=False)
 			entry.study = study
 			entry.participant = request.user
-			entry.source = DiaryEntrySource.INTERNAL
+			entry.source = EntrySource.INTERNAL
 
 			try:
 				entry.full_clean()
@@ -297,7 +297,7 @@ def create_diary_entry(request, pk):
 				messages.success(request, "Your diary entry was submitted successfully.")
 				return redirect("diary_study_detail", pk=study.pk)
 	else:
-		form = DiaryEntryForm()
+		form = EntryForm()
 
 	context = {
 		"page_title_heroicon":"book-open",
@@ -411,13 +411,13 @@ def diary_entry_detail(request, study_pk, entry_pk):
 		return HttpResponseForbidden()
 
 	entry = get_object_or_404(
-		DiaryEntry.objects.select_related("study", "participant"),
+		Entry.objects.select_related("study", "participant"),
 		pk=entry_pk,
 		study=study,
 	)
 
 	# Pick up all the different analyses that exist for this entry
-	entry_runs = DiaryEntryAnalysis.objects.filter(entry=entry)
+	entry_runs = EntryAnalysis.objects.filter(entry=entry)
 
 	# Pick up the default / selected run for this entry
 	selected_run = entry.selected_entry_run
@@ -835,7 +835,7 @@ def machine_analysis_details(request, study_pk, run_pk):
 	study = get_object_or_404(Study, pk=study_pk)
 	
 	run = get_object_or_404(
-		StudyAnalysisRun.objects
+		StudyAnalysis.objects
 		.filter(study=study)
 		.select_related("dominant_theme")
 		.prefetch_related("themes", "issues"),
@@ -855,7 +855,7 @@ def machine_analysis_details(request, study_pk, run_pk):
 	)
 
 	completed_human_evaluation_count = (
-		DiaryEntryAnalysis.objects
+		EntryAnalysis.objects
 		.filter(
 			run=run,
 			entry__entry_evaluations__evaluator_sentiment_label__isnull=False,
@@ -898,7 +898,7 @@ def machine_analysis_entries_partial(request, study_pk, run_pk):
 	study = get_object_or_404(Study, pk=study_pk)
 	
 	run = get_object_or_404(
-		StudyAnalysisRun.objects
+		StudyAnalysis.objects
 		.select_related("dominant_theme")
 		.prefetch_related("themes", "issues"),
 		pk=run_pk,
@@ -933,7 +933,7 @@ def analysis_runs(request, study_pk):
 
 	study = get_object_or_404(Study, pk=study_pk)
 
-	runs = StudyAnalysisRun.objects.select_related(
+	runs = StudyAnalysis.objects.select_related(
 		"study",
 		"created_by",
 		"dominant_theme",
@@ -1021,7 +1021,7 @@ def analysis_runs(request, study_pk):
 		"sort": sort,
 		"sort_params": sort_params,
 		"page_params": page_params,
-		"status_choices": AnalysisRunStatus.choices,
+		"status_choices": AnalysisStatus.choices,
 		"analysis_runs_filter_url": reverse(
 			"analysis_runs_partial",
 			kwargs={"study_pk": study.pk},
@@ -1051,7 +1051,7 @@ def analysis_runs_partial(request, study_pk):
 
 		return redirect(url)
 
-	runs = StudyAnalysisRun.objects.select_related(
+	runs = StudyAnalysis.objects.select_related(
 		"study",
 		"created_by",
 		"dominant_theme",
@@ -1129,7 +1129,7 @@ def analysis_runs_partial(request, study_pk):
 		"sort": sort,
 		"sort_params": sort_params,
 		"page_params": page_params,
-		"status_choices": AnalysisRunStatus.choices,
+		"status_choices": AnalysisStatus.choices,
 		"analysis_runs_filter_url": reverse(
 			"analysis_runs_partial",
 			kwargs={"study_pk": study.pk},
@@ -1574,7 +1574,7 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 	study = get_object_or_404(Study, pk=study_pk)
 	
 	run = get_object_or_404(
-		StudyAnalysisRun.objects
+		StudyAnalysis.objects
 		.select_related("dominant_theme")
 		.prefetch_related("themes", "issues"),
 		pk=run_pk,
@@ -1585,7 +1585,7 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 		return HttpResponseForbidden()
 
 	entry_analysis = get_object_or_404(
-		DiaryEntryAnalysis.objects.select_related(
+		EntryAnalysis.objects.select_related(
 			"entry",
 			"entry__study",
 			"entry__participant",
@@ -1604,13 +1604,13 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 
 	entry = entry_analysis.entry
 
-	entry_evaluation, _ = DiaryEntryEvaluation.objects.get_or_create(
+	entry_evaluation, _ = EntryEvaluation.objects.get_or_create(
 		entry=entry,
 		evaluated_by=request.user,
 	)
 
 	entry_analyses_qs = (
-		DiaryEntryAnalysis.objects
+		EntryAnalysis.objects
 		.filter(run=run)
 		.select_related("entry")
 		.order_by("entry__created_at", "entry__pk", "pk")
@@ -1642,7 +1642,7 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 	)
 
 	if request.method == "POST":
-		form = DiaryEntryManualEvaluationForm(
+		form = EntryManualEvaluationForm(
 			request.POST or None,
 			instance=entry_evaluation,
 			evaluator=request.user,
@@ -1661,7 +1661,7 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 			)
 
 	else:
-		form = DiaryEntryManualEvaluationForm(
+		form = EntryManualEvaluationForm(
 			instance=entry_evaluation,
 			evaluator=request.user,
 		)
@@ -1703,7 +1703,7 @@ def refresh_analysis_run_metrics(request, study_pk, run_pk):
 	study = get_object_or_404(Study, pk=study_pk)
 
 	run = get_object_or_404(
-		StudyAnalysisRun,
+		StudyAnalysis,
 		pk=run_pk,
 		study=study,
 	)

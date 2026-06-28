@@ -3,7 +3,12 @@ from __future__ import annotations
 from collections import Counter
 from typing import Iterable
 
-from studies.models import DiaryEntryAnalysis, SentimentCategory, StudyAnalysisRun
+from studies.models import (
+    EntryAnalysis, 
+	SentimentCategory, 
+	StudyAnalysis
+)
+
 from studies.services.nlp.sentiment._thresholds import map_sentiment_score_to_label
 
 
@@ -106,10 +111,10 @@ def calculate_reference_sentiment_summary(labels: Iterable[str | None]) -> dict:
 
 
 def refresh_sentiment_ordinal_distance_for_run(
-	run: StudyAnalysisRun,
-) -> StudyAnalysisRun:
+	run: StudyAnalysis,
+) -> StudyAnalysis:
 	entry_analyses = (
-		DiaryEntryAnalysis.objects
+		EntryAnalysis.objects
 		.filter(run=run)
 		.select_related("entry")
 	)
@@ -200,7 +205,7 @@ def refresh_sentiment_ordinal_distance_for_run(
 def build_sentiment_distribution_from_labels(labels: Iterable[str | None]) -> list[dict]:
 	"""
 	Build sentiment label counts and percentages using the same shape as
-	StudyAnalysisRun.sentiment_distribution.
+	Analysis.sentiment_distribution.
 
 	Output:
 	[

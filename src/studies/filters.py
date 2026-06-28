@@ -2,8 +2,8 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Count
 
 from .models import (
-    DiaryEntry, 
-	DiaryEntryAnalysis, 
+    Entry, 
+	EntryAnalysis, 
 	CanonicalTheme, 
 	CanonicalIssue, 
 	ThemeAndIssueSource, 
@@ -36,7 +36,7 @@ def filter_diary_entries(request, study, run=None):
 	sort = request.GET.get("sort", "-created_at")
 
 	entries = (
-		DiaryEntry.objects
+		Entry.objects
 		.filter(study=study)
 		.select_related("participant")
 	)
@@ -90,7 +90,7 @@ def filter_diary_entries(request, study, run=None):
 	displayed_entries_count = len(page_obj.object_list)
 	total_filtered_entries_count = paginator.count
 	total_study_entries_count = (
-		DiaryEntry.objects
+		Entry.objects
 		.filter(study=study)
 		.count()
 	)
@@ -140,7 +140,7 @@ def filter_analysis_entries(request, study, run):
 	sort = request.GET.get("sort", "-entry__created_at")
 
 	entry_analyses = (
-		DiaryEntryAnalysis.objects
+		EntryAnalysis.objects
 		.filter(run=run, entry__study=study)
 		.select_related("entry", "entry__participant")
 		.prefetch_related(
@@ -213,7 +213,7 @@ def filter_analysis_entries(request, study, run):
 
 	total_filtered_entry_analyses_count = entry_analyses.count()
 	total_run_entry_analyses_count = (
-		DiaryEntryAnalysis.objects
+		EntryAnalysis.objects
 		.filter(run=run, entry__study=study)
 		.count()
 	)

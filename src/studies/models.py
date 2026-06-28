@@ -15,7 +15,7 @@ User = settings.AUTH_USER_MODEL
 # STUDY STATUS ENUM
 class StudyStatus(models.TextChoices):
 	PLANNING = "PLANNING", "Planning"
-	COLLECTING = "COLLECTING", "Collecting diary entries"
+	COLLECTING = "COLLECTING", "Collecting entries"
 	ANALYZING = "ANALYZING", "Analyzing study"
 	MACHINE_ANALYSIS = "MACHINE_ANALYSIS", "Machine analyzing study"
 	HUMAN_ANALYSIS = "HUMAN_ANALYSIS", "Pending human analysis"
@@ -42,7 +42,7 @@ class PromptType(models.TextChoices):
 	SHORT_TEXT = "SHORT_TEXT", "Short text"
 
 
-# SENTIMENT CATEGORIES (I.E., SENTIMENT LABELS) 
+# SENTIMENT CATEGORIES (I.E., SENTIMENT LABELS) ENUM
 # Used on both Diary Sentiment and Entry Sentiment
 class SentimentCategory(models.TextChoices):
 	VERY_NEGATIVE = "VERY_NEGATIVE", "Very negative"
@@ -52,34 +52,36 @@ class SentimentCategory(models.TextChoices):
 	VERY_POSITIVE = "VERY_POSITIVE", "Very positive"
 
 
-# SENTIMENT CATEGORIES (I.E., SENTIMENT LABELS) FOR BER
+# SENTIMENT CATEGORIES (I.E., SENTIMENT LABELS) FOR BERT ENUM
 # Because BERT's gonna BERT... (i.e., it is binary)
 class BinarySentimentCategory(models.TextChoices):
 	NEGATIVE = "NEGATIVE", "Negative"
 	NOT_NEGATIVE = "NOT_NEGATIVE", "Not Negative"
 
-# EVALUATOR SENTIMENT
-# Can be either binary or 5 categories (b/c of BERT)
-EVALUATOR_SENTIMENT_CHOICES = [
+# SENTIMENT CHOICES ENUM ARRAY
+# Used anywhere a stored sentiment label may come from either:
+# - a 5-level sentiment model
+# - a binary BERT model
+SENTIMENT_CHOICES = [
 	*SentimentCategory.choices,
 	(BinarySentimentCategory.NOT_NEGATIVE, BinarySentimentCategory.NOT_NEGATIVE.label),
 ]
 
-# DIARY ENTRY SOURCE ENUM
-class DiaryEntrySource(models.TextChoices):
+# ENTRY SOURCE ENUM
+class EntrySource(models.TextChoices):
 	INTERNAL = "INTERNAL", "ChronicleUX submission"
 	EXTERNAL = "EXTERNAL", "External submission imported into ChronicleUX"
 
 
-# ANALYSIS RUN STATUS
-class AnalysisRunStatus(models.TextChoices):
+# MACHINE ANALYSIS STATUS ENUM
+class AnalysisStatus(models.TextChoices):
 	QUEUED = "QUEUED", "Queued"
 	RUNNING = "RUNNING", "Running"
 	COMPLETED = "COMPLETED", "Completed"
 	FAILED = "FAILED", "Failed"
 
 
-# CONFUSION MATRIX OUTCOME - FOR METRICS
+# CONFUSION MATRIX OUTCOME ENUM
 class ConfusionMatrixOutcome(models.TextChoices):
 	TRUE_POSITIVE = "TRUE_POSITIVE", "True Positive"
 	FALSE_POSITIVE = "FALSE_POSITIVE", "False Positive"
@@ -94,7 +96,7 @@ class ThemeAndIssueSource(models.TextChoices):
 	NLP = "NLP", "NLP Model"
 	LLM = "LLM", "LLM Model"
 
-
+# THEME / ISSUE STATUS ENUM
 class ThemeAndIssueStatus(models.TextChoices):
 	SUGGESTED = "SUGGESTED", "Suggested"
 	APPROVED = "APPROVED", "Approved"
@@ -123,7 +125,7 @@ class FrameworkMappingStatus(models.TextChoices):
 	REJECTED = "REJECTED", "Rejected"
 
 
-# SENTIMENT SCORE THRESHOLDS
+# SENTIMENT SCORE THRESHOLDS ARRAYS
 # Used at the Study Level to label average sentiment score
 SENTIMENT_SCORE_THRESHOLDS = [
 	(-1.0, -0.7, SentimentCategory.VERY_NEGATIVE),
@@ -132,7 +134,6 @@ SENTIMENT_SCORE_THRESHOLDS = [
 	(0.2, 0.7, SentimentCategory.POSITIVE),
 	(0.7, 1.0, SentimentCategory.VERY_POSITIVE),
 ]
-
 # These one's are for binary methods, like BERT
 BINARY_SENTIMENT_SCORE_THRESHOLDS = [
 	(-1.0, 0.0, BinarySentimentCategory.NEGATIVE),
@@ -184,15 +185,38 @@ class Study(models.Model):
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
 
-	# Selected Analysis Run
-	# The ultimately-selected analysis to complete the diary study
+	# Selected Machine Analysis
+	# The ultimately-selected machine analysis run to complete the study
 	selected_study_run = models.ForeignKey(
-		"StudyAnalysisRun",
+		"StudyAnalysis",
 		on_delete=models.SET_NULL,
 		null=True,
 		blank=True,
 		related_name="preferred_by_studies",
 		help_text="The analysis run selected as the preferred interpretation for this study.",
+	)
+
+	# Evaluator Analysis
+	# Consolidation of all EntryEvaluations by Evaluators
+	evaluated_average_sentiment_score = models.FloatField(null=True, blank=True)
+	evaluated_average_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
+	evaluated_dominant_sentiment_score = models.FloatField(null=True, blank=True)
+	evaluated_dominant_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
+
+	# evaluated_themes.evaluated_studies.all()
+	evaluated_themes = models.ManyToManyField(
+		"CanonicalTheme",
+		through="StudyEvaluationTheme",
+		related_name="theme_evaluated_studies",
+		blank=True,
+	)
+
+	# evaluated_issues.evaluated_studies.all()
+	evaluated_issues = models.ManyToManyField(
+		"CanonicalIssue",
+		through="StudyEvaluationIssue",
+		related_name="issue_evaluated_studies",
+		blank=True,
 	)
 
 	class Meta:
@@ -266,8 +290,8 @@ class StudyMembership(models.Model):
 		return f"{self.user} · {self.study} · {self.role}"
 	
 
-# DIARY ENTRY
-class DiaryEntry(models.Model):
+# ENTRY
+class Entry(models.Model):
 
 	# Entry Study
 	study = models.ForeignKey(
@@ -279,28 +303,28 @@ class DiaryEntry(models.Model):
 	# Entry SOURCE (Internal vs. External)
 	source = models.CharField(
 		max_length=20,
-		choices=DiaryEntrySource.choices,
-		default=DiaryEntrySource.INTERNAL,
+		choices=EntrySource.choices,
+		default=EntrySource.INTERNAL,
 	)
 
 	# Entry participant (i.e., author of the entry)
 	participant = models.ForeignKey(
 		User, 
 		on_delete=models.SET_NULL, # Not CASCADE b/c evaluators need the ability to import external data that may not include system users
-		related_name="diary_entries",
+		related_name="entries",
 		null=True,
 		blank=True,
 	)
 
 	# Default / Selected Machine Analysis
-	# The ultimately-selected Machine Analysis for this entry (all entries have to have the same overarching Study Analysis Run)
+	# The ultimately-selected Machine Analysis run for this entry (all entries have to have the same overarching Study Analysis Run)
 	selected_entry_run = models.ForeignKey(
-		"DiaryEntryAnalysis",
+		"EntryAnalysis",
 		on_delete=models.SET_NULL,
 		null=True,
 		blank=True,
 		related_name="+",
-		help_text="The selected/default analysis for this diary entry.",
+		help_text="The selected/default analysis for this entry.",
 	)
 
 	# When participant is external, we need an id, display name and email (in the case of imported entries)
@@ -332,7 +356,7 @@ class DiaryEntry(models.Model):
 			models.Index(fields=["study", "participant", "created_at"]),
 			models.Index(fields=["study","participant_external_id", "created_at"]),
 		]
-		verbose_name = "Diary Entry"
+		verbose_name = "Entry"
 		verbose_name_plural = "Diary Entries"
 
 	def clean(self):
@@ -350,7 +374,7 @@ class DiaryEntry(models.Model):
 			raise ValidationError("Entries must have either a linked internal participant or an external participant identity.")
 
 		# Internal entries must always have a linked ChronicleUX participant
-		if self.source == DiaryEntrySource.INTERNAL and not has_internal_participant:
+		if self.source == EntrySource.INTERNAL and not has_internal_participant:
 			raise ValidationError("Entries submitted through ChronicleUX must have a linked internal participant")
 
 		# Even if entries have internal or external participant, the display name cannae be empty
@@ -380,11 +404,11 @@ class DiaryEntry(models.Model):
 				raise ValidationError("User is not an enrolled participant in this study.")
 			
 			# If entry was created through ChronicleUX (i.e., entry is INTERNAL to the system) follow the temporal validation logic
-			if self.source == DiaryEntrySource.INTERNAL:
+			if self.source == EntrySource.INTERNAL:
 
-				# Raise error if study is not collecting diary entries
+				# Raise error if study is not collecting entries
 				if not self.study.is_in_collection_window_now():
-					raise ValidationError("This study is not currently collecting diary entries.")
+					raise ValidationError("This study is not currently collecting entries.")
 
 				# Enforce max 1 per frequency window (server timezone)
 				# DAILY
@@ -393,7 +417,7 @@ class DiaryEntry(models.Model):
 						hour=0, minute=0, second=0, microsecond=0
 					)
 					end = start + timedelta(days=1)
-					exists = DiaryEntry.objects.filter(
+					exists = Entry.objects.filter(
 						study=self.study,
 						participant=self.participant,
 						created_at__gte=start,
@@ -409,7 +433,7 @@ class DiaryEntry(models.Model):
 					monday = now_local - timedelta(days=now_local.weekday())
 					week_start = monday.replace(hour=0, minute=0, second=0, microsecond=0)
 					week_end = week_start + timedelta(days=7)
-					exists = DiaryEntry.objects.filter(
+					exists = Entry.objects.filter(
 						study=self.study,
 						participant=self.participant,
 						created_at__gte=week_start,
@@ -481,7 +505,7 @@ class Prompt(models.Model):
 # PROMPT RESPONSE
 # This is the response per entry to the prompt
 class PromptResponse(models.Model):
-	diary_entry = models.ForeignKey(DiaryEntry, on_delete=models.CASCADE, related_name="prompt_responses")
+	entry = models.ForeignKey(Entry, on_delete=models.CASCADE, related_name="prompt_responses")
 	prompt = models.ForeignKey(Prompt, on_delete=models.PROTECT, related_name="responses")
 
 	# Only one of these should be set based on prompt_type
@@ -490,14 +514,14 @@ class PromptResponse(models.Model):
 
 	class Meta:
 		constraints = [
-			models.UniqueConstraint(fields=["diary_entry", "prompt"], name="unique_prompt_per_entry"),
+			models.UniqueConstraint(fields=["entry", "prompt"], name="unique_prompt_per_entry"),
 		]
 		verbose_name = "Prompt Response"
 		verbose_name_plural = "Prompt Responses"
 
 	def clean(self):
-		if self.prompt.study.pk != self.diary_entry.study.pk:
-			raise ValidationError("Prompt does not belong to the same study as the diary entry.")
+		if self.prompt.study.pk != self.entry.study.pk:
+			raise ValidationError("Prompt does not belong to the same study as the entry.")
 
 		if self.prompt.prompt_type == PromptType.LIKERT_7:
 			if self.likert_value is None:
@@ -514,12 +538,12 @@ class PromptResponse(models.Model):
 			self.likert_value = None
 
 	def __str__(self) -> str:
-		return f"Response · entry={self.diary_entry.pk} · prompt={self.prompt.pk}"
+		return f"Response · entry={self.entry.pk} · prompt={self.prompt.pk}"
 	
 
 # STUDY ANALYSIS RUN
 # Full-study analysis run
-class StudyAnalysisRun(models.Model):
+class StudyAnalysis(models.Model):
 
 	# Study
 	study = models.ForeignKey(
@@ -531,8 +555,8 @@ class StudyAnalysisRun(models.Model):
 	# Status
 	status = models.CharField(
 		max_length=20,
-		choices=AnalysisRunStatus.choices,
-		default=AnalysisRunStatus.QUEUED,
+		choices=AnalysisStatus.choices,
+		default=AnalysisStatus.QUEUED,
 	)
 
 	# Model and version
@@ -557,10 +581,10 @@ class StudyAnalysisRun(models.Model):
 
 	# SENTIMENT
 	# Detected average sentiment label and score
-	average_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
+	average_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
 	average_sentiment_score = models.FloatField(null=True, blank=True)
 	# Detected dominant sentiment label and score
-	dominant_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
+	dominant_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
 	dominant_sentiment_score = models.FloatField(null=True, blank=True)
 	# Detected sentiment distribution
 	sentiment_distribution = models.JSONField(default=dict, blank=True)
@@ -570,12 +594,13 @@ class StudyAnalysisRun(models.Model):
 	# This also works as theme distribution
 	themes = models.ManyToManyField(
 		"CanonicalTheme",
-		through="StudyAnalysisRunCanonicalTheme",
+		through="StudyAnalysisTheme",
 		related_name="analysis_runs",
 		blank=True,
 	)
 
 	# Dominant Theme identified in this run
+	# To be deprecated #fixlater
 	dominant_theme = models.ForeignKey(
 		"CanonicalTheme",
 		on_delete=models.SET_NULL,
@@ -589,7 +614,7 @@ class StudyAnalysisRun(models.Model):
 	# This also works as issue distribution
 	issues = models.ManyToManyField(
 		"CanonicalIssue",
-		through="StudyAnalysisRunCanonicalIssue",
+		through="StudyAnalysisIssue",
 		related_name="analysis_runs",
 		blank=True,
 	)
@@ -619,9 +644,9 @@ class StudyAnalysisRun(models.Model):
 
 	# Vs. Participant Reference
 	participant_average_sentiment_score = models.FloatField(null=True, blank=True)
-	participant_average_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
+	participant_average_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
 	participant_dominant_sentiment_score = models.FloatField(null=True, blank=True)
-	participant_dominant_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
+	participant_dominant_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
 	participant_abs_distance_average_sentiment = models.IntegerField(null=True, blank=True)
 	participant_abs_distance_dominant_sentiment = models.IntegerField(null=True, blank=True)
 	participant_sentiment_distribution = models.JSONField(default=dict, blank=True)
@@ -647,9 +672,9 @@ class StudyAnalysisRun(models.Model):
 
 	# Vs. Evaluator Reference
 	evaluator_average_sentiment_score = models.FloatField(null=True, blank=True)
-	evaluator_average_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
+	evaluator_average_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
 	evaluator_dominant_sentiment_score = models.FloatField(null=True, blank=True)
-	evaluator_dominant_sentiment_label = models.CharField(max_length=20, choices=SentimentCategory.choices, null=True, blank=True)
+	evaluator_dominant_sentiment_label = models.CharField(max_length=20, choices=SENTIMENT_CHOICES, null=True, blank=True)
 	evaluator_abs_distance_average_sentiment = models.IntegerField(null=True, blank=True)
 	evaluator_abs_distance_dominant_sentiment = models.IntegerField(null=True, blank=True)
 	evaluator_sentiment_distribution = models.JSONField(default=dict, blank=True)
@@ -679,30 +704,32 @@ class StudyAnalysisRun(models.Model):
 		verbose_name_plural = "Study Analysis Runs"
 
 	def __str__(self) -> str:
-		return f"StudyAnalysisRun {self.pk} · study={self.study_id} · {self.status}"
+		return f"StudyAnalysis {self.pk} · study={self.study_id} · {self.status}"
 	
 
-# DIARY ENTRY ANALYSIS
+# ENTRY ANALYSIS
 # Results of the machine analysis of each entry
-class DiaryEntryAnalysis(models.Model):
+class EntryAnalysis(models.Model):
 	
+	# run.entry_analyses.all() to get all entry analysis for a run
 	run = models.ForeignKey(
-		StudyAnalysisRun,
+		StudyAnalysis,
 		on_delete=models.CASCADE,
 		related_name="entry_analyses",
 	)
 
+	# entry.entry_analyses.all() to get all entry analysis for an entry
 	entry = models.ForeignKey(
-		DiaryEntry,
+		Entry,
 		on_delete=models.CASCADE,
-		related_name="entry",
+		related_name="entry_analyses",
 	)
 
 	# SENTIMENT ANALYSIS
 	sentiment_score = models.FloatField(null=True, blank=True)
 	sentiment_label = models.CharField(
 		max_length=20,
-		choices=SentimentCategory.choices,
+		choices=SENTIMENT_CHOICES,
 		null=True,
 		blank=True,
 	)
@@ -712,8 +739,8 @@ class DiaryEntryAnalysis(models.Model):
 	# Themes detected (extracted) in this entry
 	themes = models.ManyToManyField(
 		"CanonicalTheme",
-		through="DiaryEntryAnalysisCanonicalTheme",
-		related_name="diary_entry_analyses",
+		through="EntryAnalysisTheme",
+		related_name="entry_analyses",
 		blank=True,
 	)
 
@@ -721,17 +748,16 @@ class DiaryEntryAnalysis(models.Model):
 	# Issues detected in this entry
 	issues = models.ManyToManyField(
 		"CanonicalIssue",
-		through="DiaryEntryAnalysisCanonicalIssue",
-		related_name="diary_entry_analyses",
+		through="EntryAnalysisIssue",
+		related_name="entry_analyses",
 		blank=True,
 	)
-
 
 	# METRICS METADATA
 	# Participant Reference
 	participant_sentiment_label = models.CharField(
 		max_length=20,
-		choices=SentimentCategory.choices,
+		choices=SENTIMENT_CHOICES,
 		null=True,
 		blank=True,
 	)
@@ -754,11 +780,9 @@ class DiaryEntryAnalysis(models.Model):
 
 	@property
 	def is_manually_evaluated(self):
-		return (
-			bool(self.evaluator_sentiment_label)
-			and self.evaluator_themes.exists()
-			# and self.evaluator_issues.exists() - Decided to comment this b/c an entry may not have an issue. And that's OK. 
-		)
+		return self.entry.entry_evaluations.filter(
+			evaluator_sentiment_label__isnull=False,
+		).exists()
 
 	methods = models.JSONField(default=dict, blank=True)
 	metadata = models.JSONField(default=dict, blank=True)
@@ -779,41 +803,41 @@ class DiaryEntryAnalysis(models.Model):
 			models.Index(fields=["run"]),
 			models.Index(fields=["entry"])
 		]
-		verbose_name = "Diary Entry Analysis"
-		verbose_name_plural = "Diary Entry Analyses"
+		verbose_name = "Entry Analysis"
+		verbose_name_plural = "Entry Analyses"
 
 	def __str__(self) -> str:
-		return f"DiaryEntryAnalysis {self.pk} · entry={self.entry_id} · run={self.run_id}"
+		return f"EntryAnalysis {self.pk} · entry={self.entry_id} · run={self.run_id}"
 	
 
-# DIARY ENTRY EVALUATION
-# Results of the human evaluator assessment of a diary entry.
-class DiaryEntryEvaluation(models.Model):
+# ENTRY EVALUATION
+# Results of the human evaluator assessment of an entry.
+class EntryEvaluation(models.Model):
 
 	entry = models.ForeignKey(
-		DiaryEntry,
+		Entry,
 		on_delete=models.CASCADE,
 		related_name="entry_evaluations",
 	)
 
 	evaluator_sentiment_label = models.CharField(
 		max_length=20,
-		choices=EVALUATOR_SENTIMENT_CHOICES,
+		choices=SENTIMENT_CHOICES,
 		null=True,
 		blank=True,
 	)
 
 	evaluator_themes = models.ManyToManyField(
 		"CanonicalTheme",
-		through="DiaryEntryEvaluationTheme",
-		related_name="diary_entry_evaluations",
+		through="EntryEvaluationTheme",
+		related_name="entry_evaluations",
 		blank=True,
 	)
 
 	evaluator_issues = models.ManyToManyField(
 		"CanonicalIssue",
-		through="DiaryEntryEvaluationIssue",
-		related_name="diary_entry_evaluations",
+		through="EntryEvaluationIssue",
+		related_name="entry_evaluations",
 		blank=True,
 	)
 
@@ -824,7 +848,7 @@ class DiaryEntryEvaluation(models.Model):
 		on_delete=models.SET_NULL,
 		blank=True,
 		null=True,
-		related_name="diary_entry_evaluations",
+		related_name="entry_evaluations",
 	)
 
 	created_at = models.DateTimeField(auto_now_add=True)
@@ -842,7 +866,7 @@ class DiaryEntryEvaluation(models.Model):
 		constraints = [
 			models.UniqueConstraint(
 				fields=["entry", "evaluated_by"],
-				name="unique_diary_entry_evaluation_per_evaluator",
+				name="unique_entry_evaluation_per_evaluator",
 			),
 		]
 		indexes = [
@@ -850,11 +874,11 @@ class DiaryEntryEvaluation(models.Model):
 			models.Index(fields=["evaluated_by"]),
 			models.Index(fields=["updated_at"]),
 		]
-		verbose_name = "Diary Entry Evaluation"
-		verbose_name_plural = "Diary Entry Evaluations"
+		verbose_name = "Entry Evaluation"
+		verbose_name_plural = "Entry Evaluations"
 
 	def __str__(self) -> str:
-		return f"DiaryEntryEvaluation {self.pk} · entry={self.entry_id}"
+		return f"EntryEvaluation {self.pk} · entry={self.entry_id}"
 
 
 # CANONICAL THEME
@@ -890,7 +914,7 @@ class CanonicalTheme(models.Model):
 		on_delete=models.SET_NULL,
 		null=True,
 		blank=True,
-		related_name="created_canonical_themes",
+		related_name="created_themes",
 	)
 
 	created_at = models.DateTimeField(auto_now_add=True)
@@ -949,7 +973,7 @@ class CanonicalIssue(models.Model):
 		on_delete=models.SET_NULL,
 		null=True,
 		blank=True,
-		related_name="created_canonical_issues",
+		related_name="created_issues",
 	)
 
 	created_at = models.DateTimeField(auto_now_add=True)
@@ -975,17 +999,17 @@ class CanonicalIssue(models.Model):
 		return self.name
 	
 
-# DIARY ENTRY ANALYSIS CANONICAL THEME
-# Canonical themes assigned to an individual diary entry analysis.
-class DiaryEntryAnalysisCanonicalTheme(models.Model):
+# ENTRY ANALYSIS CANONICAL THEME
+# Canonical themes assigned to an individual entry analysis.
+class EntryAnalysisTheme(models.Model):
 
-	diary_entry_analysis = models.ForeignKey(
-		DiaryEntryAnalysis,
+	entry_analysis = models.ForeignKey(
+		EntryAnalysis,
 		on_delete=models.CASCADE,
-		related_name="canonical_theme_assignments",
+		related_name="theme_assignments",
 	)
 
-	canonical_theme = models.ForeignKey(
+	theme = models.ForeignKey(
 		CanonicalTheme,
 		on_delete=models.PROTECT,
 		related_name="entry_analysis_assignments",
@@ -999,41 +1023,41 @@ class DiaryEntryAnalysisCanonicalTheme(models.Model):
 		on_delete=models.SET_NULL,
 		null=True,
 		blank=True,
-		related_name="assigned_entry_canonical_themes",
+		related_name="assigned_entry_themes",
 	)
 
 	assigned_at = models.DateTimeField(auto_now_add=True)
 
 	class Meta:
-		ordering = ["canonical_theme__name"]
+		ordering = ["theme__name"]
 		constraints = [
 			models.UniqueConstraint(
-				fields=["diary_entry_analysis", "canonical_theme"],
-				name="unique_canonical_theme_per_entry_analysis",
+				fields=["entry_analysis", "theme"],
+				name="unique_theme_per_entry_analysis",
 			),
 		]
 		indexes = [
-			models.Index(fields=["diary_entry_analysis"]),
-			models.Index(fields=["canonical_theme"]),
+			models.Index(fields=["entry_analysis"]),
+			models.Index(fields=["theme"]),
 		]
-		verbose_name = "Diary Entry Analysis Canonical Theme"
-		verbose_name_plural = "Diary Entry Analysis Canonical Themes"
+		verbose_name = "Entry Analysis Canonical Theme"
+		verbose_name_plural = "Entry Analysis Canonical Themes"
 
 	def __str__(self) -> str:
-		return f"{self.canonical_theme} · analysis={self.diary_entry_analysis_id}"
+		return f"{self.theme} · analysis={self.entry_analysis_id}"
 
 
-# DIARY ENTRY ANALYSIS CANONICAL ISSUE
-# Canonical issues assigned to an individual diary entry analysis.
-class DiaryEntryAnalysisCanonicalIssue(models.Model):
+# ENTRY ANALYSIS CANONICAL ISSUE
+# Canonical issues assigned to an individual entry analysis.
+class EntryAnalysisIssue(models.Model):
 
-	diary_entry_analysis = models.ForeignKey(
-		DiaryEntryAnalysis,
+	entry_analysis = models.ForeignKey(
+		EntryAnalysis,
 		on_delete=models.CASCADE,
-		related_name="canonical_issue_assignments",
+		related_name="issue_assignments",
 	)
 
-	canonical_issue = models.ForeignKey(
+	issue = models.ForeignKey(
 		CanonicalIssue,
 		on_delete=models.PROTECT,
 		related_name="entry_analysis_assignments",
@@ -1047,44 +1071,44 @@ class DiaryEntryAnalysisCanonicalIssue(models.Model):
 		on_delete=models.SET_NULL,
 		null=True,
 		blank=True,
-		related_name="assigned_entry_canonical_issues",
+		related_name="assigned_entry_issues",
 	)
 
 	assigned_at = models.DateTimeField(auto_now_add=True)
 
 	class Meta:
-		ordering = ["canonical_issue__name"]
+		ordering = ["issue__name"]
 		constraints = [
 			models.UniqueConstraint(
-				fields=["diary_entry_analysis", "canonical_issue"],
-				name="unique_canonical_issue_per_entry_analysis",
+				fields=["entry_analysis", "issue"],
+				name="unique_issue_per_entry_analysis",
 			),
 		]
 		indexes = [
-			models.Index(fields=["diary_entry_analysis"]),
-			models.Index(fields=["canonical_issue"]),
+			models.Index(fields=["entry_analysis"]),
+			models.Index(fields=["issue"]),
 		]
-		verbose_name = "Diary Entry Analysis Canonical Issue"
-		verbose_name_plural = "Diary Entry Analysis Canonical Issues"
+		verbose_name = "Entry Analysis Canonical Issue"
+		verbose_name_plural = "Entry Analysis Canonical Issues"
 
 	def __str__(self) -> str:
-		return f"{self.canonical_issue} · analysis={self.diary_entry_analysis_id}"
+		return f"{self.issue} · analysis={self.entry_analysis_id}"
 	
 
-# DIARY ENTRY EVALUATION THEME
-# Canonical themes assigned by a human evaluator to an individual diary entry evaluation.
-class DiaryEntryEvaluationTheme(models.Model):
+# ENTRY EVALUATION THEME
+# Canonical themes assigned by a human evaluator to an individual entry evaluation.
+class EntryEvaluationTheme(models.Model):
 
-	diary_entry_evaluation = models.ForeignKey(
-		DiaryEntryEvaluation,
+	entry_evaluation = models.ForeignKey(
+		EntryEvaluation,
 		on_delete=models.CASCADE,
 		related_name="evaluator_theme_assignments",
 	)
 
-	canonical_theme = models.ForeignKey(
+	theme = models.ForeignKey(
 		CanonicalTheme,
 		on_delete=models.PROTECT,
-		related_name="diary_entry_evaluation_assignments",
+		related_name="entry_evaluation_assignments",
 	)
 
 	rationale = models.TextField(blank=True)
@@ -1100,38 +1124,38 @@ class DiaryEntryEvaluationTheme(models.Model):
 	assigned_at = models.DateTimeField(auto_now_add=True)
 
 	class Meta:
-		ordering = ["canonical_theme__name"]
+		ordering = ["theme__name"]
 		constraints = [
 			models.UniqueConstraint(
-				fields=["diary_entry_evaluation", "canonical_theme"],
+				fields=["entry_evaluation", "theme"],
 				name="unique_evaluator_theme_per_entry_evaluation",
 			),
 		]
 		indexes = [
-			models.Index(fields=["diary_entry_evaluation"]),
-			models.Index(fields=["canonical_theme"]),
+			models.Index(fields=["entry_evaluation"]),
+			models.Index(fields=["theme"]),
 		]
-		verbose_name = "Diary Entry Evaluation Theme"
-		verbose_name_plural = "Diary Entry Evaluation Themes"
+		verbose_name = "Entry Evaluation Theme"
+		verbose_name_plural = "Entry Evaluation Themes"
 
 	def __str__(self) -> str:
-		return f"{self.canonical_theme} · evaluator evaluation={self.diary_entry_evaluation_id}"
+		return f"{self.theme} · evaluator evaluation={self.entry_evaluation_id}"
 	
 
-# DIARY ENTRY EVALUATION ISSUE
-# Canonical issues assigned by a human evaluator to an individual diary entry evaluation.
-class DiaryEntryEvaluationIssue(models.Model):
+# ENTRY EVALUATION ISSUE
+# Canonical issues assigned by a human evaluator to an individual entry evaluation.
+class EntryEvaluationIssue(models.Model):
 
-	diary_entry_evaluation = models.ForeignKey(
-		DiaryEntryEvaluation,
+	entry_evaluation = models.ForeignKey(
+		EntryEvaluation,
 		on_delete=models.CASCADE,
 		related_name="evaluator_issue_assignments",
 	)
 
-	canonical_issue = models.ForeignKey(
+	issue = models.ForeignKey(
 		CanonicalIssue,
 		on_delete=models.PROTECT,
-		related_name="diary_entry_evaluation_assignments",
+		related_name="entry_evaluation_assignments",
 	)
 
 	rationale = models.TextField(blank=True)
@@ -1147,36 +1171,114 @@ class DiaryEntryEvaluationIssue(models.Model):
 	assigned_at = models.DateTimeField(auto_now_add=True)
 
 	class Meta:
-		ordering = ["canonical_issue__name"]
+		ordering = ["issue__name"]
 		constraints = [
 			models.UniqueConstraint(
-				fields=["diary_entry_evaluation", "canonical_issue"],
+				fields=["entry_evaluation", "issue"],
 				name="unique_evaluator_issue_per_entry_evaluation",
 			),
 		]
 		indexes = [
-			models.Index(fields=["diary_entry_evaluation"]),
-			models.Index(fields=["canonical_issue"]),
+			models.Index(fields=["entry_evaluation"]),
+			models.Index(fields=["issue"]),
 		]
-		verbose_name = "Diary Entry Evaluation Issue"
-		verbose_name_plural = "Diary Entry Evaluation Issues"
+		verbose_name = "Entry Evaluation Issue"
+		verbose_name_plural = "Entry Evaluation Issues"
 
 	def __str__(self) -> str:
-		return f"{self.canonical_issue} · evaluator evaluation={self.diary_entry_evaluation_id}"
+		return f"{self.issue} · evaluator evaluation={self.entry_evaluation_id}"
 	
 
-# STUDY ANALYSIS RUN CANONICAL THEME
-# Canonical themes found across all diary entry analyses in a run.
-# So I don't have to recompute every time from the entries.
-class StudyAnalysisRunCanonicalTheme(models.Model):
+# STUDY EVALUATION THEME
+# Canonical themes found across all entry evaluations in a study.
+class StudyEvaluationTheme(models.Model):
 
-	run = models.ForeignKey(
-		StudyAnalysisRun,
+	study = models.ForeignKey(
+		Study,
 		on_delete=models.CASCADE,
-		related_name="canonical_theme_summaries",
+		related_name="study_theme_summaries",
 	)
 
-	canonical_theme = models.ForeignKey(
+	theme = models.ForeignKey(
+		CanonicalTheme,
+		on_delete=models.PROTECT,
+		related_name="study_evaluation_summaries",
+	)
+
+	entry_count = models.PositiveIntegerField(default=0)
+	average_confidence_score = models.FloatField(null=True, blank=True)
+
+	class Meta:
+		ordering = ["-entry_count", "theme__name"]
+		constraints = [
+			models.UniqueConstraint(
+				fields=["study", "theme"],
+				name="unique_theme_per_study",
+			),
+		]
+		indexes = [
+			models.Index(fields=["study"]),
+			models.Index(fields=["theme"]),
+			models.Index(fields=["study", "entry_count"]),
+		]
+		verbose_name = "Study Evaluation Theme"
+		verbose_name_plural = "Study Evaluation Themes"
+
+	def __str__(self) -> str:
+		return f"{self.theme} · study={self.study_id} · entries={self.entry_count}"
+
+
+# STUDY EVALUATION ISSUE
+# Canonical issues found across all entry evaluations in a study.
+class StudyEvaluationIssue(models.Model):
+
+	study = models.ForeignKey(
+		Study,
+		on_delete=models.CASCADE,
+		related_name="study_issue_summaries",
+	)
+
+	issue = models.ForeignKey(
+		CanonicalIssue,
+		on_delete=models.PROTECT,
+		related_name="study_evaluation_summaries",
+	)
+
+	entry_count = models.PositiveIntegerField(default=0)
+	average_confidence_score = models.FloatField(null=True, blank=True)
+
+	class Meta:
+		ordering = ["-entry_count", "issue__name"]
+		constraints = [
+			models.UniqueConstraint(
+				fields=["study", "issue"],
+				name="unique_issue_per_study",
+			),
+		]
+		indexes = [
+			models.Index(fields=["study"]),
+			models.Index(fields=["issue"]),
+			models.Index(fields=["study", "entry_count"]),
+		]
+		verbose_name = "Study Evaluation Issue"
+		verbose_name_plural = "Study Evaluation Issues"
+
+	def __str__(self) -> str:
+		return f"{self.issue} · study={self.study_id} · entries={self.entry_count}"
+	
+
+# STUDY ANALYSIS THEME
+# Canonical themes found across all entry analyses in a run.
+# So I don't have to recompute every time from the entries.
+class StudyAnalysisTheme(models.Model):
+
+	run = models.ForeignKey(
+		StudyAnalysis,
+		on_delete=models.CASCADE,
+		related_name="theme_summaries",
+	)
+
+	theme = models.ForeignKey(
 		CanonicalTheme,
 		on_delete=models.PROTECT,
 		related_name="run_summaries",
@@ -1186,37 +1288,37 @@ class StudyAnalysisRunCanonicalTheme(models.Model):
 	average_confidence_score = models.FloatField(null=True, blank=True)
 
 	class Meta:
-		ordering = ["-entry_count", "canonical_theme__name"]
+		ordering = ["-entry_count", "theme__name"]
 		constraints = [
 			models.UniqueConstraint(
-				fields=["run", "canonical_theme"],
-				name="unique_canonical_theme_per_run",
+				fields=["run", "theme"],
+				name="unique_theme_per_run",
 			),
 		]
 		indexes = [
 			models.Index(fields=["run"]),
-			models.Index(fields=["canonical_theme"]),
+			models.Index(fields=["theme"]),
 			models.Index(fields=["run", "entry_count"]),
 		]
 		verbose_name = "Study Analysis Run Canonical Theme"
 		verbose_name_plural = "Study Analysis Run Canonical Themes"
 
 	def __str__(self) -> str:
-		return f"{self.canonical_theme} · run={self.run_id} · entries={self.entry_count}"
+		return f"{self.theme} · run={self.run_id} · entries={self.entry_count}"
 
 
-# STUDY ANALYSIS RUN CANONICAL ISSUE
-# Canonical issues found across all diary entry analyses in a run.
+# STUDY ANALYSIS ISSUE
+# Canonical issues found across all entry analyses in a run.
 # So I don't have to recompute every time from the entries.
-class StudyAnalysisRunCanonicalIssue(models.Model):
+class StudyAnalysisIssue(models.Model):
 
 	run = models.ForeignKey(
-		StudyAnalysisRun,
+		StudyAnalysis,
 		on_delete=models.CASCADE,
-		related_name="canonical_issue_summaries",
+		related_name="issue_summaries",
 	)
 
-	canonical_issue = models.ForeignKey(
+	issue = models.ForeignKey(
 		CanonicalIssue,
 		on_delete=models.PROTECT,
 		related_name="run_summaries",
@@ -1226,23 +1328,23 @@ class StudyAnalysisRunCanonicalIssue(models.Model):
 	average_confidence_score = models.FloatField(null=True, blank=True)
 
 	class Meta:
-		ordering = ["-entry_count", "canonical_issue__name"]
+		ordering = ["-entry_count", "issue__name"]
 		constraints = [
 			models.UniqueConstraint(
-				fields=["run", "canonical_issue"],
-				name="unique_canonical_issue_per_run",
+				fields=["run", "issue"],
+				name="unique_issue_per_run",
 			),
 		]
 		indexes = [
 			models.Index(fields=["run"]),
-			models.Index(fields=["canonical_issue"]),
+			models.Index(fields=["issue"]),
 			models.Index(fields=["run", "entry_count"]),
 		]
 		verbose_name = "Study Analysis Run Canonical Issue"
 		verbose_name_plural = "Study Analysis Run Canonical Issues"
 
 	def __str__(self) -> str:
-		return f"{self.canonical_issue} · run={self.run_id} · entries={self.entry_count}"
+		return f"{self.issue} · run={self.run_id} · entries={self.entry_count}"
 	
 
 # UX FRAMEWORK
@@ -1381,7 +1483,7 @@ class UXFrameworkCriterion(models.Model):
 # Maps canonical issues to framework criteria, either manually or through a framework matching engine.
 class CanonicalIssueToFrameworkMapping(models.Model):
 
-	canonical_issue = models.ForeignKey(
+	issue = models.ForeignKey(
 		CanonicalIssue,
 		on_delete=models.CASCADE,
 		related_name="framework_mappings",
@@ -1429,15 +1531,15 @@ class CanonicalIssueToFrameworkMapping(models.Model):
 	updated_at = models.DateTimeField(auto_now=True)
 
 	class Meta:
-		ordering = ["canonical_issue__name", "criterion__framework__name", "criterion__name"]
+		ordering = ["issue__name", "criterion__framework__name", "criterion__name"]
 		constraints = [
 			models.UniqueConstraint(
-				fields=["canonical_issue", "criterion"],
+				fields=["issue", "criterion"],
 				name="unique_issue_to_framework_criterion",
 			),
 		]
 		indexes = [
-			models.Index(fields=["canonical_issue"]),
+			models.Index(fields=["issue"]),
 			models.Index(fields=["criterion"]),
 			models.Index(fields=["method"]),
 			models.Index(fields=["status"]),
@@ -1450,14 +1552,14 @@ class CanonicalIssueToFrameworkMapping(models.Model):
 			self.approved_at = timezone.now()
 
 	def __str__(self) -> str:
-		return f"{self.canonical_issue} → {self.criterion}"
+		return f"{self.issue} → {self.criterion}"
 
 
 # CANONICAL THEME TO FRAMEWORK MAPPING
 # Maps canonical themes to framework criteria, either manually or through a framework matching engine.
 class CanonicalThemeToFrameworkMapping(models.Model):
 
-	canonical_theme = models.ForeignKey(
+	theme = models.ForeignKey(
 		CanonicalTheme,
 		on_delete=models.CASCADE,
 		related_name="framework_mappings",
@@ -1505,15 +1607,15 @@ class CanonicalThemeToFrameworkMapping(models.Model):
 	updated_at = models.DateTimeField(auto_now=True)
 
 	class Meta:
-		ordering = ["canonical_theme__name", "criterion__framework__name", "criterion__name"]
+		ordering = ["theme__name", "criterion__framework__name", "criterion__name"]
 		constraints = [
 			models.UniqueConstraint(
-				fields=["canonical_theme", "criterion"],
+				fields=["theme", "criterion"],
 				name="unique_theme_to_framework_criterion",
 			),
 		]
 		indexes = [
-			models.Index(fields=["canonical_theme"]),
+			models.Index(fields=["theme"]),
 			models.Index(fields=["criterion"]),
 			models.Index(fields=["method"]),
 			models.Index(fields=["status"]),
@@ -1526,4 +1628,4 @@ class CanonicalThemeToFrameworkMapping(models.Model):
 			self.approved_at = timezone.now()
 
 	def __str__(self) -> str:
-		return f"{self.canonical_theme} → {self.criterion}"
+		return f"{self.theme} → {self.criterion}"
