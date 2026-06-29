@@ -118,7 +118,7 @@
 	}
 
 	.xs-label {
-		@apply m-1 inline-flex flex-nowrap items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400
+		@apply items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400
 	}
 
 	.sm-label {

@@ -11,6 +11,7 @@ from studies.models import (
 	SENTIMENT_CHOICES,
 	SentimentCategory,
 	StudyAnalysis,
+	Study,
 )
 
 
@@ -239,6 +240,7 @@ def get_latest_evaluator_outcome(
 
 @transaction.atomic
 def refresh_sentiment_confusion_matrix_for_run(study_analysis: StudyAnalysis):
+
 	if isinstance(study_analysis, int):
 		study_analysis = StudyAnalysis.objects.get(pk=study_analysis)
 

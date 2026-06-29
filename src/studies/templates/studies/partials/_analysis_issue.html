@@ -104,9 +104,9 @@
                 </div>
 
                 <div class="p-4">
-                    {% if run.evaluator_issue_summaries.all %}
+                    {% if study.evaluator_issue_summaries.all %}
                         <div class="flex flex-wrap gap-2">
-                            {% for item in run.evaluator_issue_summaries.all %}
+                            {% for item in study.evaluator_issue_summaries.all %}
                                 <span class="badge-ISSUE">
                                     <span>{% firstof item.label item.name item.issue.name "Unnamed issue" %}</span>
                                     <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
@@ -165,7 +165,7 @@
                 </div>
 
                 <div class="p-4">
-                    {% include "studies/partials/_distribution_issues.html" with distribution=run.evaluator_issue_summaries.all dominant_issue=run.evaluator_dominant_issue chart_id="evaluatorIssueDistributionChart" distribution_subtitle="Issues assigned during human evaluation." empty_text="No evaluator issue distribution available." %}
+                    {% include "studies/partials/_distribution_issues.html" with distribution=study.evaluator_issue_summaries.all dominant_issue=run.evaluator_dominant_issue chart_id="evaluatorIssueDistributionChart" distribution_subtitle="Issues assigned during human evaluation." empty_text="No evaluator issue distribution available." %}
                 </div>
             </div>
 

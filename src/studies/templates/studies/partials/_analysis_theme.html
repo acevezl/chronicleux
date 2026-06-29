@@ -104,9 +104,9 @@
                 </div>
 
                 <div class="p-4">
-                    {% if run.evaluator_theme_summaries.all %}
+                    {% if study.evaluator_theme_summaries.all %}
                         <div class="flex flex-wrap gap-2">
-                            {% for item in run.evaluator_theme_summaries.all %}
+                            {% for item in study.evaluator_theme_summaries.all %}
                                 <span class="badge-THEME">
                                     <span>{% firstof item.label item.name item.theme.name "Unnamed theme" %}</span>
                                     <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
@@ -165,7 +165,7 @@
                 </div>
 
                 <div class="p-4">
-                    {% include "studies/partials/_distribution_theme.html" with distribution=run.evaluator_theme_summaries.all dominant_theme=run.evaluator_dominant_theme chart_id="evaluatorThemeDistributionChart" distribution_subtitle="Themes assigned during human evaluation." empty_text="No evaluator theme distribution available." %}
+                    {% include "studies/partials/_distribution_theme.html" with distribution=study.evaluator_theme_summaries.all dominant_theme=run.evaluator_dominant_theme chart_id="evaluatorThemeDistributionChart" distribution_subtitle="Themes assigned during human evaluation." empty_text="No evaluator theme distribution available." %}
                 </div>
             </div>
 

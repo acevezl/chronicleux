@@ -846,6 +846,10 @@ def machine_analysis_details(request, study_pk, run_pk):
 
 	if not user_can_evaluate_study(request.user, study):
 		return HttpResponseForbidden()
+	
+	summarize_study_sentiment(study)
+	refresh_sentiment_ordinal_distance_for_run(run, study)
+	refresh_sentiment_confusion_matrix_for_run(run)
 
 	context = filter_analysis_entries(request, study, run)
 
@@ -1836,7 +1840,7 @@ def refresh_analysis_run_metrics(request, study_pk, run_pk):
 		return HttpResponseForbidden()
 
 	summarize_study_sentiment(study)
-	refresh_sentiment_ordinal_distance_for_run(run)
+	refresh_sentiment_ordinal_distance_for_run(run, study)
 	refresh_sentiment_confusion_matrix_for_run(run)
 	
 	messages.success(request, "Metrics refreshed successfully.")

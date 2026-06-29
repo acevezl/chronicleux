@@ -771,7 +771,7 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysis:
 				else None
 			)
 
-			refresh_sentiment_ordinal_distance_for_run(run)
+			refresh_sentiment_ordinal_distance_for_run(run, study)
 			refresh_sentiment_confusion_matrix_for_run(run)
 			
 			run.sentiment_distribution = build_sentiment_distribution(entry_results)

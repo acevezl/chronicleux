@@ -4,6 +4,7 @@ from studies.models import (
 	BinarySentimentCategory,
 	SentimentCategory,
 	StudyAnalysis,
+	Study,
 )
 
 
@@ -56,29 +57,32 @@ def _absolute_ordinal_distance(detected_label, reference_label):
 
 
 @transaction.atomic
-def refresh_sentiment_ordinal_distance_for_run(study_analysis):
+def refresh_sentiment_ordinal_distance_for_run(study_analysis: StudyAnalysis, study: Study):
+
+	if isinstance(study, int):
+		study = Study.objects.get(pk=study)
 
 	if isinstance(study_analysis, int):
 		study_analysis = StudyAnalysis.objects.get(pk=study_analysis)
 
 	study_analysis.participant_abs_distance_average_sentiment = _absolute_ordinal_distance(
 		study_analysis.average_sentiment_label,
-		study_analysis.participant_average_sentiment_label,
+		study.participant_reported_average_sentiment_label,
 	)
 
 	study_analysis.participant_abs_distance_dominant_sentiment = _absolute_ordinal_distance(
 		study_analysis.dominant_sentiment_label,
-		study_analysis.participant_dominant_sentiment_label,
+		study.participant_reported_dominant_sentiment_label,
 	)
 
 	study_analysis.evaluator_abs_distance_average_sentiment = _absolute_ordinal_distance(
 		study_analysis.average_sentiment_label,
-		study_analysis.evaluator_average_sentiment_label,
+		study.evaluator_average_sentiment_label,
 	)
 
 	study_analysis.evaluator_abs_distance_dominant_sentiment = _absolute_ordinal_distance(
 		study_analysis.dominant_sentiment_label,
-		study_analysis.evaluator_dominant_sentiment_label,
+		study.evaluator_dominant_sentiment_label,
 	)
 
 	study_analysis.save(update_fields=STUDY_ORDINAL_DISTANCE_UPDATE_FIELDS)

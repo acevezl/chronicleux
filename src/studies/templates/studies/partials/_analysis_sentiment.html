@@ -155,7 +155,7 @@
                 </div>
 
                 <dl class="grid grid-cols-1 gap-3 p-3 ">
-                    {% if run.evaluator_dominant_sentiment_label %}
+                    {% if study.evaluator_dominant_sentiment_label %}
                     <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-emerald-50 dark:bg-emerald-800 p-3">
                         <dt class="xs-label">Average sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
@@ -362,11 +362,11 @@
                         </div>
                         
                         <dd class="grid grid-cols-1 gap-2 md:grid-cols-3 p-2">
-                            {% if run.evaluator_average_sentiment_label %}
+                            {% if study.evaluator_average_sentiment_label %}
                             <div class="main-card p-2 bg-emerald-50 dark:bg-emerald-800">
                                 <span class="xs-label">Assessed by evaluators</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
-                                    {% include "studies/partials/_badge_sentiment.html" with sentiment=run.evaluator_average_sentiment_label %}
+                                    {% include "studies/partials/_badge_sentiment.html" with sentiment=study.evaluator_average_sentiment_label %}
                                 </div>
                             </div>
 
@@ -402,11 +402,11 @@
                             <span class="sm-label">Absolute Median Distance on Dominant Sentiment </span>
                         </div>
                         <dd class="grid grid-cols-1 gap-2 md:grid-cols-3 p-2">
-                            {% if run.evaluator_dominant_sentiment_label %}
+                            {% if study.evaluator_dominant_sentiment_label %}
                             <div class="main-card p-2 bg-emerald-50 dark:bg-emerald-800">
                                 <span class="xs-label">Assessed by evaluators</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
-                                    {% include "studies/partials/_badge_sentiment.html" with sentiment=run.evaluator_dominant_sentiment_label %}
+                                    {% include "studies/partials/_badge_sentiment.html" with sentiment=study.evaluator_dominant_sentiment_label %}
                                 </div>
                             </div>
 

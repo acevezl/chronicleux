@@ -1,14 +1,14 @@
 {% load heroicons %}
 {% load formatters %}
 
-<div class="p-4">
-    <p class="text-sm text-gray-600 dark:text-gray-400">
+<div class="flex flex-col gap-4">
+    <p class="xs-label">
         One-vs-rest sentiment classification metrics comparing machine-detected labels against participant self-reported labels.
     </p>
     
     {% if run.participant_sentiment_metrics_by_category %}
 
-        <div class="grid grid-cols-1 gap-3 mt-4">
+        <div class="grid grid-cols-1 gap-3">
 
             {% for category, metrics in run.participant_sentiment_metrics_by_category.items %}
 

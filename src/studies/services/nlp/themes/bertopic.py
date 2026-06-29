@@ -11,10 +11,12 @@ from sklearn.metrics.pairwise import cosine_similarity
 from studies.models import CanonicalTheme, ThemeAndIssueSource, ThemeAndIssueStatus
 from studies.services.contracts import BaseThemeExtractor, ThemeResult
 
-
 MODEL_NAME = "BERTopic + Canonical Theme Matching"
 THEME_WEIGHT_THRESHOLD = 0.30
 
+# Debug imports
+from collections import Counter
+# Debug imports
 
 @dataclass(frozen=True)
 class CanonicalThemeDocument:
@@ -72,7 +74,7 @@ class BertopicThemeExtractor(BaseThemeExtractor):
 
         vectorizer_model = CountVectorizer(
             stop_words="english",
-            ngram_range=(2, 3),
+            ngram_range=(1, 3),
             min_df=1,
             max_df=1.0,
         )
@@ -81,10 +83,15 @@ class BertopicThemeExtractor(BaseThemeExtractor):
             vectorizer_model=vectorizer_model,
             language="english",
             calculate_probabilities=True,
+            min_topic_size=3,
             verbose=False,
         )
 
         topics, probabilities = topic_model.fit_transform(valid_documents)
+
+        # Debug
+        print("BERTopic topic counts:", Counter(topics))
+        # Debug
 
         bertopic_candidates = self._build_bertopic_theme_candidates(
             topic_model=topic_model,

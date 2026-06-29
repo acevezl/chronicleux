@@ -16,7 +16,7 @@
 
         <div class="p-4">
 
-            <p class="card-summary-subtitle">
+            <p class="xs-label">
                 Methods and configuration used for this machine analysis run.
             </p>
 
@@ -129,7 +129,7 @@
         </header>
 
         <div class="p-4">
-            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            <p class="xs-label">
                 This analysis run processed {{run.total_entries}} diary entries using 
                 {% if run.methods.sentiment != "llm" %}
                     <strong>{{run.methods.sentiment|upper}}</strong> for sentiment analysis and 
@@ -209,7 +209,7 @@
 
         <div class="p-4">
 
-            <span class="card-summary-subtitle">
+            <span class="xs-label">
                 High-level results of this analysis run.
             </span>
 
