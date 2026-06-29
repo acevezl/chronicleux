@@ -1,15 +1,12 @@
 <div class="p-4 justify-center rounded-sm border border-dashed border-gray-300 dark:border-gray-600 text-sm text-gray-500 dark:text-gray-400">
     <div>
-        {% if run.issue_summaries.all %}
+        {% if issues %}
             <div>
                 <div class="relative h-72 w-full">
-                    <canvas id="issueImpactMatrixChart-{{ study.id }}-{{ run.id }}"></canvas>
+                    <canvas id="issueImpactMatrixChart-{{ chart_id }}"></canvas>
                 </div>
             </div>
 
-            <div class="mt-4 mx-4 text-xs text-gray-500 dark:text-gray-400">
-                Issues farther to the right are more frequent, while issues lower on the chart are associated with stronger negative sentiment and may require faster attention.
-            </div>
         {% else %}
             <div class="p-4 text-sm text-gray-500 dark:text-gray-400">
                 No issue matrix data available.
@@ -18,7 +15,7 @@
     </div>
 </div>
 
-{% if run.issue_summaries.all %}
+{% if issues %}
 <script>
     function prettifyImpactIssueLabel(label) {
         return label
@@ -28,8 +25,8 @@
             .join(" ");
     }
 
-    const issueImpactData{{ run.id }} = [
-        {% for issue_summary in run.issue_summaries.all %}
+    const issueImpactData{{ chart_id }} = [
+        {% for issue_summary in issues %}
             {
                 label: "{{ issue_summary.issue.name|escapejs }}",
                 count: {{ issue_summary.entry_count|default:0 }},
@@ -38,14 +35,14 @@
         {% endfor %}
     ];
 
-    const issueImpactTotal{{ run.id }} = issueImpactData{{ run.id }}.reduce(
+    const issueImpactTotal{{ chart_id }} = issueImpactData{{ chart_id }}.reduce(
         (sum, item) => sum + item.count,
         0
     );
 
-    const issueImpactPoints{{ run.id }} = issueImpactData{{ run.id }}.map(item => {
-        const frequency = issueImpactTotal{{ run.id }}
-            ? (item.count / issueImpactTotal{{ run.id }}) * 100
+    const issueImpactPoints{{ chart_id }} = issueImpactData{{ chart_id }}.map(item => {
+        const frequency = issueImpactTotal{{ chart_id }}
+            ? (item.count / issueImpactTotal{{ chart_id }}) * 100
             : 0;
 
         const negativeSentimentIntensity = -item.impact;
@@ -61,20 +58,20 @@
         };
     });
 
-    const issueImpactCtx{{ run.id }} = document.getElementById(
-        "issueImpactMatrixChart-{{ study.id }}-{{ run.id }}"
+    const issueImpactCtx{{ chart_id }} = document.getElementById(
+        "issueImpactMatrixChart-{{ chart_id }}"
     );
 
-    if (issueImpactCtx{{ run.id }}) {
-        new Chart(issueImpactCtx{{ run.id }}, {
+    if (issueImpactCtx{{ chart_id }}) {
+        new Chart(issueImpactCtx{{ chart_id }}, {
             type: "bubble",
             data: {
                 datasets: [{
                     label: "Issues",
-                    data: issueImpactPoints{{ run.id }},
+                    data: issueImpactPoints{{ chart_id }},
                     backgroundColor: function(context) {
                         const item = context.raw;
-                        const maxCount = Math.max(...issueImpactPoints{{ run.id }}.map(point => point.count));
+                        const maxCount = Math.max(...issueImpactPoints{{ chart_id }}.map(point => point.count));
                         const ratio = maxCount ? item.count / maxCount : 0;
 
                         const red = Math.round(245 + (220 - 245) * ratio);
@@ -85,7 +82,7 @@
                     },
                     borderColor: function(context) {
                         const item = context.raw;
-                        const maxCount = Math.max(...issueImpactPoints{{ run.id }}.map(point => point.count));
+                        const maxCount = Math.max(...issueImpactPoints{{ chart_id }}.map(point => point.count));
                         const ratio = maxCount ? item.count / maxCount : 0;
 
                         const red = Math.round(180 + (153 - 180) * ratio);

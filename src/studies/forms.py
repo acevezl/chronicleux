@@ -431,7 +431,7 @@ class EntryManualEvaluationForm(forms.ModelForm):
             for issue in evaluator_issues:
                 EntryEvaluationIssue.objects.create(
                     entry_evaluation=instance,
-                    canonical_issue=issue,
+                    issue=issue,
                     assigned_by=self.evaluator,
                 )
 

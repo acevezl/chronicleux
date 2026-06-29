@@ -16,8 +16,14 @@ from .models import (
     EntryEvaluation,
     EntryEvaluationTheme,
     EntryEvaluationIssue,
+    StudyEvaluationTheme,
+    StudyEvaluationIssue,
     StudyAnalysisTheme,
     StudyAnalysisIssue,
+    UXFramework,
+    UXFrameworkCriterion,
+    CanonicalIssueToFrameworkMapping,
+    CanonicalThemeToFrameworkMapping,
 )
 
 
@@ -37,41 +43,43 @@ class PromptResponseInline(admin.TabularInline):
 
 
 class EntryAnalysisThemeInline(admin.TabularInline):
-	model = EntryAnalysisTheme
-	extra = 0
-
-	autocomplete_fields = [
-		"theme",
-	]
-
-	readonly_fields = [
-		"assigned_at",
-	]
+    model = EntryAnalysisTheme
+    extra = 0
+    autocomplete_fields = ("theme",)
+    readonly_fields = ("assigned_at",)
 
 
 class EntryAnalysisIssueInline(admin.TabularInline):
-	model = EntryAnalysisIssue
-	extra = 0
-
-	autocomplete_fields = [
-		"issue",
-	]
-
-	readonly_fields = [
-		"assigned_at",
-	]
+    model = EntryAnalysisIssue
+    extra = 0
+    autocomplete_fields = ("issue",)
+    readonly_fields = ("assigned_at",)
 
 
 class EntryEvaluationThemeInline(admin.TabularInline):
     model = EntryEvaluationTheme
     extra = 0
     autocomplete_fields = ("theme", "assigned_by")
+    readonly_fields = ("assigned_at",)
 
 
 class EntryEvaluationIssueInline(admin.TabularInline):
     model = EntryEvaluationIssue
     extra = 0
     autocomplete_fields = ("issue", "assigned_by")
+    readonly_fields = ("assigned_at",)
+
+
+class StudyEvaluationThemeInline(admin.TabularInline):
+    model = StudyEvaluationTheme
+    extra = 0
+    autocomplete_fields = ("theme",)
+
+
+class StudyEvaluationIssueInline(admin.TabularInline):
+    model = StudyEvaluationIssue
+    extra = 0
+    autocomplete_fields = ("issue",)
 
 
 class StudyAnalysisThemeInline(admin.TabularInline):
@@ -86,6 +94,23 @@ class StudyAnalysisIssueInline(admin.TabularInline):
     autocomplete_fields = ("issue",)
 
 
+class UXFrameworkCriterionInline(admin.TabularInline):
+    model = UXFrameworkCriterion
+    extra = 0
+
+
+class CanonicalIssueToFrameworkMappingInline(admin.TabularInline):
+    model = CanonicalIssueToFrameworkMapping
+    extra = 0
+    autocomplete_fields = ("criterion", "created_by", "approved_by")
+
+
+class CanonicalThemeToFrameworkMappingInline(admin.TabularInline):
+    model = CanonicalThemeToFrameworkMapping
+    extra = 0
+    autocomplete_fields = ("criterion", "created_by", "approved_by")
+
+
 @admin.register(Study)
 class StudyAdmin(ModelAdmin):
     list_display = (
@@ -94,6 +119,8 @@ class StudyAdmin(ModelAdmin):
         "status",
         "owner",
         "entry_frequency",
+        "evaluator_theme_count",
+        "evaluator_issue_count",
         "data_collection_start",
         "data_collection_end",
         "created_at",
@@ -101,7 +128,20 @@ class StudyAdmin(ModelAdmin):
     list_filter = ("status", "entry_frequency", "created_at")
     search_fields = ("title", "description", "goal", "owner__username", "owner__email")
     autocomplete_fields = ("owner", "selected_study_run")
-    inlines = [PromptInline, StudyMembershipInline]
+    inlines = [
+        PromptInline,
+        StudyMembershipInline,
+        StudyEvaluationThemeInline,
+        StudyEvaluationIssueInline,
+    ]
+
+    @admin.display(description="Evaluator themes")
+    def evaluator_theme_count(self, obj):
+        return obj.evaluator_themes.count()
+
+    @admin.display(description="Evaluator issues")
+    def evaluator_issue_count(self, obj):
+        return obj.evaluator_issues.count()
 
 
 @admin.register(StudyMembership)
@@ -166,6 +206,9 @@ class AnalysisAdmin(ModelAdmin):
         "completed_at",
         "total_entries",
         "total_themes",
+        "total_issues",
+        "average_sentiment_label",
+        "average_sentiment_score",
         "dominant_sentiment_label",
         "dominant_sentiment_score",
     )
@@ -173,11 +216,12 @@ class AnalysisAdmin(ModelAdmin):
         "status",
         "analysis_model",
         "analysis_version",
+        "average_sentiment_label",
         "dominant_sentiment_label",
         "started_at",
     )
     search_fields = ("study__title", "analysis_model", "analysis_version", "error_message")
-    autocomplete_fields = ("study", "created_by")
+    autocomplete_fields = ("study", "created_by", "dominant_theme")
     inlines = [
         StudyAnalysisThemeInline,
         StudyAnalysisIssueInline,
@@ -258,8 +302,9 @@ class CanonicalThemeAdmin(ModelAdmin):
         "updated_at",
     )
     list_filter = ("source", "status", "is_active", "created_at")
-    search_fields = ("name", "description", "examples")
+    search_fields = ("name", "description", "aliases", "examples")
     autocomplete_fields = ("created_by",)
+    inlines = [CanonicalThemeToFrameworkMappingInline]
 
 
 @admin.register(CanonicalIssue)
@@ -275,8 +320,9 @@ class CanonicalIssueAdmin(ModelAdmin):
         "updated_at",
     )
     list_filter = ("source", "status", "is_active", "created_at")
-    search_fields = ("name", "description", "examples")
+    search_fields = ("name", "description", "aliases", "examples")
     autocomplete_fields = ("created_by",)
+    inlines = [CanonicalIssueToFrameworkMappingInline]
 
 
 @admin.register(EntryAnalysisTheme)
@@ -353,6 +399,34 @@ class EntryEvaluationIssueAdmin(ModelAdmin):
     autocomplete_fields = ("entry_evaluation", "issue", "assigned_by")
 
 
+@admin.register(StudyEvaluationTheme)
+class StudyEvaluationThemeAdmin(ModelAdmin):
+    list_display = (
+        "id",
+        "study",
+        "theme",
+        "entry_count",
+        "average_confidence_score",
+    )
+    list_filter = ("theme",)
+    search_fields = ("study__title", "theme__name")
+    autocomplete_fields = ("study", "theme")
+
+
+@admin.register(StudyEvaluationIssue)
+class StudyEvaluationIssueAdmin(ModelAdmin):
+    list_display = (
+        "id",
+        "study",
+        "issue",
+        "entry_count",
+        "average_confidence_score",
+    )
+    list_filter = ("issue",)
+    search_fields = ("study__title", "issue__name")
+    autocomplete_fields = ("study", "issue")
+
+
 @admin.register(StudyAnalysisTheme)
 class StudyAnalysisThemeAdmin(ModelAdmin):
     list_display = (
@@ -361,6 +435,7 @@ class StudyAnalysisThemeAdmin(ModelAdmin):
         "theme",
         "entry_count",
         "average_confidence_score",
+        "average_sentiment_score",
     )
     list_filter = ("theme",)
     search_fields = ("run__study__title", "theme__name")
@@ -375,7 +450,101 @@ class StudyAnalysisIssueAdmin(ModelAdmin):
         "issue",
         "entry_count",
         "average_confidence_score",
+        "average_sentiment_score",
     )
     list_filter = ("issue",)
     search_fields = ("run__study__title", "issue__name")
     autocomplete_fields = ("run", "issue")
+
+
+@admin.register(UXFramework)
+class UXFrameworkAdmin(ModelAdmin):
+    list_display = (
+        "id",
+        "name",
+        "framework_type",
+        "version",
+        "source",
+        "is_active",
+        "created_by",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("framework_type", "is_active", "created_at")
+    search_fields = ("name", "description", "source", "version")
+    autocomplete_fields = ("created_by",)
+    inlines = [UXFrameworkCriterionInline]
+
+
+@admin.register(UXFrameworkCriterion)
+class UXFrameworkCriterionAdmin(ModelAdmin):
+    list_display = (
+        "id",
+        "framework",
+        "code",
+        "name",
+        "is_active",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("framework", "is_active", "created_at")
+    search_fields = (
+        "framework__name",
+        "code",
+        "name",
+        "description",
+        "aliases",
+        "examples",
+        "recommendation_guidance",
+    )
+    autocomplete_fields = ("framework",)
+
+
+@admin.register(CanonicalIssueToFrameworkMapping)
+class CanonicalIssueToFrameworkMappingAdmin(ModelAdmin):
+    list_display = (
+        "id",
+        "issue",
+        "criterion",
+        "method",
+        "status",
+        "score",
+        "created_by",
+        "approved_by",
+        "approved_at",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("method", "status", "created_at", "approved_at")
+    search_fields = (
+        "issue__name",
+        "criterion__framework__name",
+        "criterion__name",
+        "rationale",
+    )
+    autocomplete_fields = ("issue", "criterion", "created_by", "approved_by")
+
+
+@admin.register(CanonicalThemeToFrameworkMapping)
+class CanonicalThemeToFrameworkMappingAdmin(ModelAdmin):
+    list_display = (
+        "id",
+        "theme",
+        "criterion",
+        "method",
+        "status",
+        "score",
+        "created_by",
+        "approved_by",
+        "approved_at",
+        "created_at",
+        "updated_at",
+    )
+    list_filter = ("method", "status", "created_at", "approved_at")
+    search_fields = (
+        "theme__name",
+        "criterion__framework__name",
+        "criterion__name",
+        "rationale",
+    )
+    autocomplete_fields = ("theme", "criterion", "created_by", "approved_by")

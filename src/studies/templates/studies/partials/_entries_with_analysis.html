@@ -223,7 +223,7 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 items-center gap-4 p-4">
+        <div class="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 2xl:grid-cols-3 items-center gap-4 p-4">
             {% for entry_analysis in entry_analyses %}
                 {% with entry=entry_analysis.entry %}
                     <article class="flex flex-col h-full w-full justify-between rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
@@ -252,7 +252,7 @@
                                         Analyzed on {{ entry_analysis.analyzed_at|date:"M d, Y H:i" }}
                                     </span>
                                     <!-- Analysis chips -->
-                                    <div class="flex flex-col gap-3 justify-between text-xs">
+                                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-3 justify-between text-xs">
 
                                         <!-- MACHINE ANALYSIS -->
                                         <div class="rounded-md border border-gray-200 dark:border-gray-700 p-2">
@@ -284,33 +284,52 @@
                                             <p class="xs-label uppercase mb-2">
                                                 Evaluator assessment
                                             </p>
-                                            {% comment "" %}
 
-                                            {% if entry_analysis.evaluator_sentiment_label or entry_analysis.evaluator_themes.all or entry_analysis.evaluator_issues.all %}
-                                                <div class="flex flex-col gap-2">
-                                                    <div class="flex flex-wrap items-center gap-1">
-                                                        {% if entry_analysis.evaluator_sentiment_label %}
-                                                            {% include "studies/partials/_badge_sentiment.html" with sentiment=entry_analysis.evaluator_sentiment_label %}
-                                                        {% else %}
-                                                            <span class="badge">No sentiment assessed</span>
-                                                        {% endif %}
+                                            {% with evaluations=entry.entry_evaluations.all %}
+                                                {% if evaluations %}
+                                                    <div class="flex flex-col gap-3">
+                                                        {% for evaluation in evaluations %}
+                                                            <div class="flex flex-col gap-2 rounded-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-2">
+
+                                                                <div class="flex items-center justify-between gap-2">
+                                                                    <span class="xs-label">
+                                                                        {% firstof evaluation.evaluated_by.get_full_name evaluation.evaluated_by.username "Evaluator" %}
+                                                                    </span>
+                                                                </div>
+
+                                                                <div class="flex flex-wrap items-center gap-1">
+                                                                    {% if evaluation.evaluator_sentiment_label %}
+                                                                        {% include "studies/partials/_badge_sentiment.html" with sentiment=evaluation.evaluator_sentiment_label %}
+                                                                    {% else %}
+                                                                        <span class="badge">No sentiment assessed</span>
+                                                                    {% endif %}
+                                                                </div>
+
+                                                                <div class="flex flex-wrap items-center gap-1">
+                                                                    {% if evaluation.evaluator_themes.all %}
+                                                                        {% include "studies/partials/_badge_theme_labels.html" with themes=evaluation.evaluator_themes.all %}
+                                                                    {% else %}
+                                                                        <span class="badge">No themes assessed</span>
+                                                                    {% endif %}
+                                                                </div>
+
+                                                                <div class="flex flex-wrap items-center gap-1">
+                                                                    {% if evaluation.evaluator_issues.all %}
+                                                                        {% include "studies/partials/_badge_issue_tags.html" with issues=evaluation.evaluator_issues.all %}
+                                                                    {% else %}
+                                                                        <span class="badge">No issues assessed</span>
+                                                                    {% endif %}
+                                                                </div>
+
+                                                            </div>
+                                                        {% endfor %}
                                                     </div>
-
-                                                    <div class="flex flex-wrap items-center gap-1">
-                                                        {% include "studies/partials/_badge_theme_labels.html" with themes=entry_analysis.evaluator_themes.all %}
-                                                    </div>
-
-                                                    <div class="flex flex-wrap items-center gap-1">
-                                                        {% include "studies/partials/_badge_issue_tags.html" with issues=entry_analysis.evaluator_issues.all %}
-                                                    </div>
-                                                </div>
-                                            {% else %}
-                                                <span class="message-warning">
-                                                    Pending human evaluation
-                                                </span>
-                                            {% endif %}
-
-                                            {% endcomment %}
+                                                {% else %}
+                                                    <span class="message-warning">
+                                                        Pending human evaluation
+                                                    </span>
+                                                {% endif %}
+                                            {% endwith %}
                                         </div>
                                     </div>
                                 {% else %}

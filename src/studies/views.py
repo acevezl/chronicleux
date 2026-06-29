@@ -29,6 +29,8 @@ from studies.services.analysis_tasks import queue_study_analysis_run
 from studies.services._confusion_matrix_calculator import refresh_sentiment_confusion_matrix_for_run
 from studies.services._ordinal_distance_calculator import refresh_sentiment_ordinal_distance_for_run
 from studies.services._sentiment_summarizer import summarize_study_sentiment
+from studies.services._theme_summarizer import consolidate_themes_on_study
+from studies.services._issue_summarizer import consolidate_issues_on_study
 
 from .filters import (
 	filter_diary_entries, 
@@ -847,10 +849,6 @@ def machine_analysis_details(request, study_pk, run_pk):
 	if not user_can_evaluate_study(request.user, study):
 		return HttpResponseForbidden()
 	
-	summarize_study_sentiment(study)
-	refresh_sentiment_ordinal_distance_for_run(run, study)
-	refresh_sentiment_confusion_matrix_for_run(run)
-
 	context = filter_analysis_entries(request, study, run)
 
 	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
@@ -862,18 +860,17 @@ def machine_analysis_details(request, study_pk, run_pk):
 
 	completed_human_evaluation_count = 0
 
-	# completed_human_evaluation_count = (
-	# 	EntryAnalysis.objects
-	# 	.filter(
-	# 		run=run,
-	# 		entry__entry_evaluations__evaluator_sentiment_label__isnull=False,
-	# 		entry__entry_evaluations__evaluator_themes__isnull=False,
-	# 	)
-	# 	.exclude(entry__entry_evaluations__evaluator_sentiment_label="")
-	# 	.values("pk")
-	# 	.distinct()
-	# 	.count()
-	# )
+	completed_human_evaluation_count = (
+		EntryEvaluation.objects
+		.filter(
+			entry__study=study,
+			evaluator_sentiment_label__isnull=False,
+			evaluator_themes__isnull=False,
+		)
+		.exclude(evaluator_sentiment_label="")
+		.distinct()
+		.count()
+	)
 
 	pending_human_evaluation_count = run.total_entries - completed_human_evaluation_count
 
@@ -1629,6 +1626,8 @@ def evaluate_entry(request, study_pk, entry_pk):
 			form.save_m2m()
 
 			summarize_study_sentiment(study)
+			consolidate_themes_on_study(study)
+			consolidate_issues_on_study(study)
 
 			affected_runs = StudyAnalysis.objects.filter(
 				entry_analyses__entry=entry,
@@ -1636,7 +1635,7 @@ def evaluate_entry(request, study_pk, entry_pk):
 
 			for run in affected_runs:
 				sync_run_evaluator_sentiment_from_study(run=run, study=study)
-				refresh_sentiment_ordinal_distance_for_run(study_analysis=run)
+				refresh_sentiment_ordinal_distance_for_run(study_analysis=run, study=study)
 				refresh_sentiment_confusion_matrix_for_run(study_analysis=run)
 
 			messages.success(request, "Human evaluation saved.")
@@ -1779,6 +1778,13 @@ def evaluate_entry_analysis(request, study_pk, run_pk, analysis_pk):
 		if form.is_valid():
 			form.save()
 
+			summarize_study_sentiment(study)
+			consolidate_themes_on_study(study)
+			consolidate_issues_on_study(study)
+			sync_run_evaluator_sentiment_from_study(run=run, study=study)
+			refresh_sentiment_ordinal_distance_for_run(study_analysis=run, study=study)
+			refresh_sentiment_confusion_matrix_for_run(study_analysis=run)
+
 			messages.success(request, "Human evaluation saved.")
 
 			return redirect(
@@ -1840,6 +1846,8 @@ def refresh_analysis_run_metrics(request, study_pk, run_pk):
 		return HttpResponseForbidden()
 
 	summarize_study_sentiment(study)
+	consolidate_themes_on_study(study)
+	consolidate_issues_on_study(study)
 	refresh_sentiment_ordinal_distance_for_run(run, study)
 	refresh_sentiment_confusion_matrix_for_run(run)
 	

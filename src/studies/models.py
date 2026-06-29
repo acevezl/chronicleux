@@ -215,7 +215,7 @@ class Study(models.Model):
 	evaluator_themes = models.ManyToManyField(
 		"CanonicalTheme",
 		through="StudyEvaluationTheme",
-		related_name="theme_evaluated_studies",
+		related_name="evaluated_in_studies",
 		blank=True,
 	)
 
@@ -223,7 +223,7 @@ class Study(models.Model):
 	evaluator_issues = models.ManyToManyField(
 		"CanonicalIssue",
 		through="StudyEvaluationIssue",
-		related_name="issue_evaluated_studies",
+		related_name="evaluated_in_studies",
 		blank=True,
 	)
 
@@ -1202,7 +1202,7 @@ class StudyEvaluationTheme(models.Model):
 	study = models.ForeignKey(
 		Study,
 		on_delete=models.CASCADE,
-		related_name="study_theme_summaries",
+		related_name="evaluation_theme_summaries",
 	)
 
 	theme = models.ForeignKey(
@@ -1241,7 +1241,7 @@ class StudyEvaluationIssue(models.Model):
 	study = models.ForeignKey(
 		Study,
 		on_delete=models.CASCADE,
-		related_name="study_issue_summaries",
+		related_name="evaluation_issue_summaries",
 	)
 
 	issue = models.ForeignKey(

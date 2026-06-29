@@ -72,26 +72,28 @@
                 </div>
 
                 <div class="p-4">
-                    {% if run.issue_summaries.all %}
-                        <div class="flex flex-wrap gap-2">
-                            {% for item in run.issue_summaries.all %}
-                                <a
-                                    href="{% url 'machine_analysis_details' study.pk run.pk %}?issue_tag={{ item.issue.pk }}#entries"
-                                    class="badge-ISSUE hover:underline"
-                                    title="View entries with issue: {{ item.issue.name }}"
-                                >
-                                    <span>{{ item.issue.name }}</span>
-                                    <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
-                                        {{ item.entry_count }}
-                                    </span>
-                                </a>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-sm text-gray-500 dark:text-gray-400">
-                            No machine-detected issues available.
-                        </p>
-                    {% endif %}
+                    {% with issues=run.issue_summaries.all %}
+                        {% if issues %}
+                            <div class="flex flex-wrap gap-2">
+                                {% for item in issues %}
+                                    <a
+                                        href="{% url 'machine_analysis_details' study.pk run.pk %}?issue={{ item.issue.pk }}#entries"
+                                        class="badge-ISSUE hover:underline"
+                                        title="View entries with issue: {{ item.issue.name }}"
+                                    >
+                                        <span>{{ item.issue.name }}</span>
+                                        <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
+                                            {{ item.entry_count }}
+                                        </span>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                No machine-detected issues available.
+                            </p>
+                        {% endif %}
+                    {% endwith %}
                 </div>
             </div>
 
@@ -104,25 +106,27 @@
                 </div>
 
                 <div class="p-4">
-                    {% if study.evaluator_issue_summaries.all %}
-                        <div class="flex flex-wrap gap-2">
-                            {% for item in study.evaluator_issue_summaries.all %}
-                                <span class="badge-ISSUE">
-                                    <span>{% firstof item.label item.name item.issue.name "Unnamed issue" %}</span>
-                                    <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
-                                        {% firstof item.count item.entry_count item.frequency 0 %}
+                    {% with distribution=study.evaluation_issue_summaries.all %}
+                        {% if distribution %}
+                            <div class="flex flex-wrap gap-2">
+                                {% for item in distribution %}
+                                    <span class="badge-ISSUE">
+                                        <span>{% firstof item.issue.name "Unnamed issue" %}</span>
+                                        <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
+                                            {{ item.entry_count|default:0 }}
+                                        </span>
                                     </span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="flex h-20 items-center justify-center rounded-md border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+                                <span class="text-sm text-gray-500 dark:text-gray-400 text-center">
+                                    Evaluator-assessed issues are not yet available.<br>
+                                    Complete human evaluations and refresh metrics to see this data.
                                 </span>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="flex h-20 items-center justify-center rounded-md border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
-                            <span class="text-sm text-gray-500 dark:text-gray-400 text-center">
-                                Evaluator-assessed issues are not yet available.<br>
-                                Complete human evaluations and refresh metrics to see this data.
-                            </span>
-                        </div>
-                    {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
                 </div>
             </div>
 
@@ -165,7 +169,7 @@
                 </div>
 
                 <div class="p-4">
-                    {% include "studies/partials/_distribution_issues.html" with distribution=study.evaluator_issue_summaries.all dominant_issue=run.evaluator_dominant_issue chart_id="evaluatorIssueDistributionChart" distribution_subtitle="Issues assigned during human evaluation." empty_text="No evaluator issue distribution available." %}
+                    {% include "studies/partials/_distribution_issues.html" with distribution=study.evaluation_issue_summaries.all dominant_issue=run.evaluator_dominant_issue chart_id="evaluatorIssueDistributionChart" distribution_subtitle="Issues assigned during human evaluation." empty_text="No evaluator issue distribution available." %}
                 </div>
             </div>
 
@@ -173,6 +177,54 @@
 
     </div>
 
+    <!-- ISSUE-IMPACT MATRICES -->
+    <div class="main-card overflow-hidden">
+        <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+            <h4 class="card-summary-title">
+                {% heroicon_outline "arrows-up-down" %}
+                Issue-Impact Matrix
+            </h4>
+
+            <p class="xs-label">
+                Prioritizes detected issues by comparing how often they appeared with negative sentiment. Issues farther to the right are more frequent, while issues lower on the chart are associated with stronger negative sentiment and may require faster attention.
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 p-4 xl:grid-cols-2">
+            <div class="main-card overflow-hidden">
+                <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                    <h5 class="sm-label">
+                        As Detected by Machine Analysis
+                    </h5>
+                </div>
+
+                <div class="p-4">
+                    {% with study_id=study.id|stringformat:"s" %}
+                        {% with chart_id="machine_issues_"|add:study_id %}
+                            {% include "studies/partials/_issue_impact_matrix.html" with issues=run.issue_summaries.all chart_id=chart_id %}
+                        {% endwith %}
+                    {% endwith %}
+                </div>
+            </div>
+
+            <div class="main-card overflow-hidden">
+                <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                    <h5 class="sm-label">
+                        As Assessed by Evaluators
+                    </h5>
+                </div>
+
+                <div class="p-4">
+                    {% with study_id=study.id|stringformat:"s" %}
+                        {% with chart_id="evaluator_issues_"|add:study_id %}
+                            {% include "studies/partials/_issue_impact_matrix.html" with issues=study.evaluation_issue_summaries.all chart_id=chart_id %}
+                        {% endwith %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
     <!-- EVOLUTION OVER TIME -->
     <div class="main-card overflow-hidden">
         <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
@@ -190,22 +242,6 @@
             {% include "studies/partials/_evolution_issues.html" with run=run evolution=run.evolution_over_time %}
         </div>
     </div>
-
-    <!-- ISSUE-IMPACT MATRIX -->
-    <div class="main-card overflow-hidden">
-        <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
-            <h4 class="card-summary-title">
-                {% heroicon_outline "arrows-up-down" %}
-                Issue-Impact Matrix
-            </h4>
-
-            <p class="xs-label">
-                Prioritizes detected issues by comparing how often they appeared with negative sentiment. 
-        </div>
-
-        <div class="p-4">
-            {% include "studies/partials/_issue_impact_matrix.html" with run=run evolution=run.evolution_over_time %}
-        </div>
-    </div>
     
+
 </section>

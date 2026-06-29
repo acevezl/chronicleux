@@ -72,26 +72,28 @@
                 </div>
 
                 <div class="p-4">
-                    {% if run.theme_summaries.all %}
-                        <div class="flex flex-wrap gap-2">
-                            {% for item in run.theme_summaries.all %}
-                                <a
-                                    href="{% url 'machine_analysis_details' study.pk run.pk %}?theme={{ item.theme.pk }}#entries"
-                                    class="badge-THEME hover:underline"
-                                    title="View entries with theme: {{ item.theme.name }}"
-                                >
-                                    <span>{{ item.theme.name }}</span>
-                                    <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
-                                        {{ item.entry_count }}
-                                    </span>
-                                </a>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-sm text-gray-500 dark:text-gray-400">
-                            No machine-detected themes available.
-                        </p>
-                    {% endif %}
+                    {% with themes=run.theme_summaries.all %}
+                        {% if themes %}
+                            <div class="flex flex-wrap gap-2">
+                                {% for item in themes %}
+                                    <a
+                                        href="{% url 'machine_analysis_details' study.pk run.pk %}?theme={{ item.theme.pk }}#entries"
+                                        class="badge-THEME hover:underline"
+                                        title="View entries with theme: {{ item.theme.name }}"
+                                    >
+                                        <span>{{ item.theme.name }}</span>
+                                        <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
+                                            {{ item.entry_count }}
+                                        </span>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                No machine-detected themes available.
+                            </p>
+                        {% endif %}
+                    {% endwith %}
                 </div>
             </div>
 
@@ -104,25 +106,27 @@
                 </div>
 
                 <div class="p-4">
-                    {% if study.evaluator_theme_summaries.all %}
-                        <div class="flex flex-wrap gap-2">
-                            {% for item in study.evaluator_theme_summaries.all %}
-                                <span class="badge-THEME">
-                                    <span>{% firstof item.label item.name item.theme.name "Unnamed theme" %}</span>
-                                    <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
-                                        {% firstof item.count item.entry_count item.frequency 0 %}
+                    {% with distribution=study.evaluation_theme_summaries.all %}
+                        {% if distribution %}
+                            <div class="flex flex-wrap gap-2">
+                                {% for item in distribution %}
+                                    <span class="badge-THEME">
+                                        <span>{% firstof item.theme.name "Unnamed theme" %}</span>
+                                        <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
+                                            {{ item.entry_count|default:0 }}
+                                        </span>
                                     </span>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="flex h-20 items-center justify-center rounded-md border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+                                <span class="text-sm text-gray-500 dark:text-gray-400 text-center">
+                                    Evaluator-assessed themes are not yet available.<br>
+                                    Complete human evaluations and refresh metrics to see this data.
                                 </span>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="flex h-20 items-center justify-center rounded-md border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
-                            <span class="text-sm text-gray-500 dark:text-gray-400 text-center">
-                                Evaluator-assessed themes are not yet available.<br>
-                                Complete human evaluations and refresh metrics to see this data.
-                            </span>
-                        </div>
-                    {% endif %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
                 </div>
             </div>
 
@@ -165,7 +169,7 @@
                 </div>
 
                 <div class="p-4">
-                    {% include "studies/partials/_distribution_theme.html" with distribution=study.evaluator_theme_summaries.all dominant_theme=run.evaluator_dominant_theme chart_id="evaluatorThemeDistributionChart" distribution_subtitle="Themes assigned during human evaluation." empty_text="No evaluator theme distribution available." %}
+                    {% include "studies/partials/_distribution_theme.html" with distribution=study.evaluation_theme_summaries.all dominant_theme=run.evaluator_dominant_theme chart_id="evaluatorThemeDistributionChart" distribution_subtitle="Themes assigned during human evaluation." empty_text="No evaluator theme distribution available." %}
                 </div>
             </div>
 
