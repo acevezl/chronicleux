@@ -24,7 +24,7 @@
 
                 <div class="main-card p-2">
                     <dt class="xs-label">Sentiment analysis method</dt>
-                    <dd class="flex items-center mt-1">
+                    <dd class="flex items-center mt-1 gap-2">
                         <span class="message-default">
                             {{ run.methods.sentiment|humanize_enum|upper|default:"—" }} 
                             {% if run.methods.sentiment == "llm" %}
@@ -41,7 +41,7 @@
 
                 <div class="main-card p-2">
                     <dt class="xs-label">Theme analysis method</dt>
-                    <dd class="flex mt-1">
+                    <dd class="flex mt-1 gap-2">
                         <span class="message-default">
                             {{ run.methods.theme|humanize_enum|upper|default:"—" }} 
                             {% if run.methods.theme == "llm" %}
@@ -59,7 +59,7 @@
 
                 <div class="main-card p-2">
                     <dt class="xs-label">Issue detection method</dt>
-                    <dd class="flex mt-1">
+                    <dd class="flex mt-1 gap-2">
                         <span class="message-default">
                         {{ run.methods.issue|humanize_enum|upper|default:"—" }} 
                         {% if run.methods.issue == "llm" %}

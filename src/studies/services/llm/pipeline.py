@@ -72,6 +72,7 @@ def analyze_study_entries_with_llm(
 
         entry_analysis_results.append(entry_analysis_result)
 
+
     return build_study_analysis_result(
         study_id=study_id,
         entry_analysis_results=entry_analysis_results,
@@ -123,8 +124,6 @@ def build_study_analysis_result(
         )
 
     dominant_sentiment_score = None
-    dominant_sentiment_scores = []
-
     if dominant_sentiment_label:
         dominant_sentiment_scores = [
             result.sentiment.score
@@ -141,44 +140,54 @@ def build_study_analysis_result(
                 sum(dominant_sentiment_scores) / len(dominant_sentiment_scores)
             )
 
-    theme_labels = [
-        result.theme.label
+    entry_themes = [
+        theme
         for result in entry_analysis_results
-        if result.theme and result.theme.label
+        for theme in (result.themes or [])
+        if theme and theme.theme_id is not None
     ]
 
-    theme_distribution = dict(Counter(theme_labels))
+    theme_distribution = dict(
+        Counter(str(theme.theme_id) for theme in entry_themes)
+    )
 
-    dominant_theme_label = None
+    dominant_theme = None
     if theme_distribution:
-        dominant_theme_label = max(
+        dominant_theme_id = max(
             theme_distribution,
             key=theme_distribution.get,
         )
 
-    dominant_theme_weight = None
-    dominant_theme_weights = []
-
-    if dominant_theme_label:
-        dominant_theme_weights = [
-            result.theme.weight
-            for result in entry_analysis_results
-            if (
-                result.theme
-                and result.theme.label == dominant_theme_label
-                and result.theme.weight is not None
-            )
+        matching_theme_results = [
+            theme
+            for theme in entry_themes
+            if str(theme.theme_id) == dominant_theme_id
         ]
 
-        if dominant_theme_weights:
-            dominant_theme_weight = (
-                sum(dominant_theme_weights) / len(dominant_theme_weights)
-            )
+        if matching_theme_results:
+            average_weight = None
 
-    total_issues = sum(
-        1
+            weights = [
+                theme.weight
+                for theme in matching_theme_results
+                if theme.weight is not None
+            ]
+
+            if weights:
+                average_weight = sum(weights) / len(weights)
+
+            dominant_theme = matching_theme_results[0]
+            dominant_theme.weight = average_weight
+
+    entry_issues = [
+        issue
         for result in entry_analysis_results
-        if result.issue is not None
+        for issue in (result.issues or [])
+        if issue and issue.issue_id is not None
+    ]
+
+    issue_distribution = dict(
+        Counter(str(issue.issue_id) for issue in entry_issues)
     )
 
     return StudyAnalysisResult(
@@ -186,19 +195,20 @@ def build_study_analysis_result(
 
         average_sentiment_label=average_sentiment_label,
         average_sentiment_score=average_sentiment_score,
-
         dominant_sentiment_label=dominant_sentiment_label,
         dominant_sentiment_score=dominant_sentiment_score,
         sentiment_distribution=sentiment_distribution,
 
-        dominant_theme_label=dominant_theme_label,
-        dominant_theme_weight=dominant_theme_weight,
+        dominant_theme=dominant_theme,
         theme_distribution=theme_distribution,
+        total_themes=len(entry_themes),
 
-        # entry_analysis_results=entry_analysis_results,
+        issues=entry_issues,
+        issue_distribution=issue_distribution,
+        total_issues=len(entry_issues),
+
+        entry_analysis_results=entry_analysis_results,
         total_entries=len(entry_analysis_results),
-        total_themes=len(themes),
-        total_issues=total_issues,
 
         methods={
             "sentiment": "llm",

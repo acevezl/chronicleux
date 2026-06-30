@@ -1582,11 +1582,6 @@
       line-height: var(--tw-leading, var(--text-6xl--line-height));
     }
   }
-  .\32 xl\:grid-cols-3 {
-    @media (width >= 96rem) {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
   .\32 xl\:grid-cols-4 {
     @media (width >= 96rem) {
       grid-template-columns: repeat(4, minmax(0, 1fr));

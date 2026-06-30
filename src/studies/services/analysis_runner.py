@@ -627,8 +627,6 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysis:
 	try:
 		with transaction.atomic():
 
-			
-
 			entries = list(study.entries.all().order_by("created_at"))
 
 			entries_by_id = {
@@ -667,8 +665,6 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysis:
 					issue_method=issue_method,
 				)
 
-			study_analysis_result_data = asdict(study_analysis_result)
-
 			for entry_analysis_result in study_analysis_result.entry_analysis_results:
 				entry = entries_by_id.get(entry_analysis_result.entry_id)
 
@@ -676,6 +672,11 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysis:
 					continue
 
 				entry_analysis_result_data = asdict(entry_analysis_result)
+
+				# debug
+				print (entry_analysis_result)
+				print ("\n\n----\n\n")
+				print (entry_analysis_result_data)
 
 				sentiment_score = None
 				sentiment_label = None

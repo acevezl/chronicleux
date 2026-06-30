@@ -41,11 +41,6 @@ def compact_text(text: str, max_chars: int = MAX_THEME_ENTRY_CHARS) -> str:
 
 
 def get_canonical_theme_catalog() -> list[dict]:
-    fields = [
-        field.name
-        for field in CanonicalTheme._meta.concrete_fields
-    ]
-
     return list(
         CanonicalTheme.objects
         .filter(is_active=True)
@@ -57,7 +52,17 @@ def get_canonical_theme_catalog() -> list[dict]:
         )
         .annotate(canonical_theme_id=F("id"))
         .order_by("name")
-        .values("canonical_theme_id", *fields)
+        .values(
+            "canonical_theme_id",
+            "name",
+            "description",
+            "aliases",
+            "examples",
+            "source",
+            "status",
+            "is_active",
+            "created_by_id",
+        )
     )
 
 
@@ -72,6 +77,7 @@ def format_entries_for_theme_exploration(entries) -> str:
         ],
         ensure_ascii=False,
         separators=(",", ":"),
+        cls=DjangoJSONEncoder,
     )
 
 
@@ -99,34 +105,27 @@ Return the response using this exact JSON structure:
 {{
   "suggested_themes": [
     {{
-      "theme_id": 1,
-      "weight": 0.0,
-      "label": "short human-readable suggested theme label",
-      "keywords": ["keyword-1", "keyword-2", "keyword-3"],
-      "method": "llm",
-      "metadata": {{
-        "language": "english",
-        "num_keywords": 3,
-        "match_type": "suggested",
-        "is_catalog_suggestion": true,
-        "rationale": "why this theme is needed and not covered by the canonical catalog"
-      }}
+      "name": "short human-readable theme name",
+      "description": "brief explanation of what this theme captures",
+      "aliases": ["keyword-1", "keyword-2", "keyword-3"],
+      "examples": "short example phrase or sentence grounded in the diary entries"
     }}
   ]
 }}
+
 
 Rules:
 - Return only suggested themes that are clearly grounded in the entries.
 - Do not include canonical themes in suggested_themes.
 - Do not suggest a new theme if an existing canonical theme reasonably covers the meaning.
+- Do not include theme_id, id, canonical_theme_id, source, status, is_active, created_by, created_at, or updated_at.
 - Return at most {max_themes} suggested themes.
-- Label should be concise and useful to a UX evaluator.
-- Keywords should contain short phrases found in or strongly supported by the entries.
-- Weight should be 0.0 for now. Entry-level weights will be assigned later.
+- name should be concise and useful to a UX evaluator.
+- description should explain what the theme captures.
+- aliases should contain short searchable phrases found in or strongly supported by the entries.
+- examples should contain one short example phrase or sentence grounded in the diary entries.
 - If no additional themes are needed, return "suggested_themes": [].
-- Do not include entry-level analysis.
-- Do not include sentiment.
-- Return a JSON object only, do not return anything else.
+- Return a JSON object only.
 
 Canonical theme catalog:
 {canonical_theme_catalog_json}
@@ -162,64 +161,61 @@ def canonical_theme_catalog_to_theme_results(
     ]
 
 
-def parse_theme_explorer_response(
-    raw_content: str,
-    provider: str,
-    model: str,
-) -> list[ThemeResult]:
+def parse_theme_explorer_response(raw_content: str) -> list[dict]:
     data = json.loads(raw_content)
     suggested_themes = data.get("suggested_themes", [])
 
-    theme_results = []
+    parsed_themes = []
 
-    for index, theme in enumerate(suggested_themes, start=1):
-        keywords = theme.get("keywords", [])
-
-        metadata = theme.get("metadata", {})
-        metadata["model"] = model
-        metadata["provider"] = provider
-        metadata["num_keywords"] = len(keywords)
-        metadata["match_type"] = "suggested"
-        metadata["is_catalog_suggestion"] = True
-
-        theme_results.append(
-            ThemeResult(
-                theme_id=index,
-                weight=theme.get("weight", 0.0),
-                label=theme.get("label", ""),
-                keywords=keywords,
-                method="llm",
-                metadata=metadata,
-            )
-        )
-
-    return theme_results
-
-
-def create_suggested_canonical_themes(
-    suggested_theme_results: list[ThemeResult],
-) -> None:
-    for theme_result in suggested_theme_results:
-        name = (theme_result.label or "").strip()
+    for theme in suggested_themes:
+        name = (theme.get("name") or "").strip()
 
         if not name:
             continue
 
-        metadata = theme_result.metadata or {}
+        aliases = theme.get("aliases") or []
 
-        CanonicalTheme.objects.get_or_create(
-            name=name,
-            defaults={
-                "description": metadata.get("description")
-                or metadata.get("rationale")
-                or "",
-                "aliases": theme_result.keywords or [],
-                "examples": "",
+        if isinstance(aliases, str):
+            aliases = [aliases]
+
+        parsed_themes.append(
+            {
+                "name": name,
+                "description": (theme.get("description") or "").strip(),
+                "aliases": aliases,
+                "examples": (theme.get("examples") or "").strip(),
                 "source": ThemeAndIssueSource.LLM,
                 "status": ThemeAndIssueStatus.SUGGESTED,
                 "is_active": True,
+            }
+        )
+
+    return parsed_themes
+
+
+def create_suggested_canonical_themes(
+    suggested_themes: list[dict],
+) -> list[CanonicalTheme]:
+    canonical_themes = []
+
+    for suggested_theme in suggested_themes:
+        name = suggested_theme["name"]
+
+        canonical_theme, _ = CanonicalTheme.objects.get_or_create(
+            name=name,
+            defaults={
+                "description": suggested_theme.get("description", ""),
+                "aliases": suggested_theme.get("aliases", []),
+                "examples": suggested_theme.get("examples", ""),
+                "source": suggested_theme.get("source", ThemeAndIssueSource.LLM),
+                "status": suggested_theme.get("status", ThemeAndIssueStatus.SUGGESTED),
+                "is_active": suggested_theme.get("is_active", True),
             },
         )
+
+        canonical_themes.append(canonical_theme)
+
+    return canonical_themes
 
 
 def explore_themes_with_llm(
@@ -250,14 +246,12 @@ def explore_themes_with_llm(
 
     raw_content = response.choices[0].message.content or "{}"
 
-    suggested_theme_results = parse_theme_explorer_response(
+    suggested_themes = parse_theme_explorer_response(
         raw_content=raw_content,
-        provider=provider,
-        model=selected_model,
     )
 
     create_suggested_canonical_themes(
-        suggested_theme_results=suggested_theme_results,
+        suggested_themes=suggested_themes,
     )
 
     canonical_theme_catalog = get_canonical_theme_catalog()

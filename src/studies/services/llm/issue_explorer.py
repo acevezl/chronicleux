@@ -41,11 +41,6 @@ def compact_text(text: str, max_chars: int = MAX_ISSUE_ENTRY_CHARS) -> str:
 
 
 def get_canonical_issue_catalog() -> list[dict]:
-    fields = [
-        field.name
-        for field in CanonicalIssue._meta.concrete_fields
-    ]
-
     return list(
         CanonicalIssue.objects
         .filter(is_active=True)
@@ -57,7 +52,17 @@ def get_canonical_issue_catalog() -> list[dict]:
         )
         .annotate(canonical_issue_id=F("id"))
         .order_by("name")
-        .values("canonical_issue_id", *fields)
+        .values(
+            "canonical_issue_id",
+            "name",
+            "description",
+            "aliases",
+            "examples",
+            "source",
+            "status",
+            "is_active",
+            "created_by_id",
+        )
     )
 
 
@@ -72,6 +77,7 @@ def format_entries_for_issue_exploration(entries) -> str:
         ],
         ensure_ascii=False,
         separators=(",", ":"),
+        cls=DjangoJSONEncoder,
     )
 
 
@@ -99,18 +105,10 @@ Return the response using this exact JSON structure:
 {{
   "suggested_issues": [
     {{
-      "issue_id": 1,
-      "weight": 0.0,
-      "label": "short human-readable suggested issue label",
-      "keywords": ["keyword-1", "keyword-2", "keyword-3"],
-      "method": "llm",
-      "metadata": {{
-        "language": "english",
-        "num_keywords": 3,
-        "match_type": "suggested",
-        "is_catalog_suggestion": true,
-        "rationale": "why this issue is needed and not covered by the canonical catalog"
-      }}
+      "name": "short human-readable issue name",
+      "description": "brief explanation of what this issue captures",
+      "aliases": ["keyword-1", "keyword-2", "keyword-3"],
+      "examples": "short example phrase or sentence grounded in the diary entries"
     }}
   ]
 }}
@@ -119,16 +117,18 @@ Rules:
 - Return only suggested issues that are clearly grounded in the entries.
 - Do not include canonical issues in suggested_issues.
 - Do not suggest a new issue if an existing canonical issue reasonably covers the meaning.
+- Do not include issue_id, id, canonical_issue_id, source, status, is_active, created_by, created_at, or updated_at.
 - Return at most {max_issues} suggested issues.
-- Label should be concise and useful to a UX evaluator.
-- Keywords should contain short phrases found in or strongly supported by the entries.
-- Weight should be 0.0 for now. Entry-level weights will be assigned later.
+- name should be concise and useful to a UX evaluator.
+- description should explain what the issue captures.
+- aliases should contain short searchable phrases found in or strongly supported by the entries.
+- examples should contain one short example phrase or sentence grounded in the diary entries.
 - If no additional issues are needed, return "suggested_issues": [].
 - Do not include entry-level analysis.
 - Do not include sentiment.
 - Do not include themes.
 - Do not include recommendations.
-- Return a JSON object only, do not return anything else.
+- Return a JSON object only.
 
 Canonical issue catalog:
 {canonical_issue_catalog_json}
@@ -164,64 +164,61 @@ def canonical_issue_catalog_to_issue_results(
     ]
 
 
-def parse_issue_explorer_response(
-    raw_content: str,
-    provider: str,
-    model: str,
-) -> list[IssueResult]:
+def parse_issue_explorer_response(raw_content: str) -> list[dict]:
     data = json.loads(raw_content)
     suggested_issues = data.get("suggested_issues", [])
 
-    issue_results = []
+    parsed_issues = []
 
-    for index, issue in enumerate(suggested_issues, start=1):
-        keywords = issue.get("keywords", [])
-
-        metadata = issue.get("metadata", {})
-        metadata["model"] = model
-        metadata["provider"] = provider
-        metadata["num_keywords"] = len(keywords)
-        metadata["match_type"] = "suggested"
-        metadata["is_catalog_suggestion"] = True
-
-        issue_results.append(
-            IssueResult(
-                issue_id=index,
-                weight=issue.get("weight", 0.0),
-                label=issue.get("label", ""),
-                keywords=keywords,
-                method="llm",
-                metadata=metadata,
-            )
-        )
-
-    return issue_results
-
-
-def create_suggested_canonical_issues(
-    suggested_issue_results: list[IssueResult],
-) -> None:
-    for issue_result in suggested_issue_results:
-        name = (issue_result.label or "").strip()
+    for issue in suggested_issues:
+        name = (issue.get("name") or "").strip()
 
         if not name:
             continue
 
-        metadata = issue_result.metadata or {}
+        aliases = issue.get("aliases") or []
 
-        CanonicalIssue.objects.get_or_create(
-            name=name,
-            defaults={
-                "description": metadata.get("description")
-                or metadata.get("rationale")
-                or "",
-                "aliases": issue_result.keywords or [],
-                "examples": "",
+        if isinstance(aliases, str):
+            aliases = [aliases]
+
+        parsed_issues.append(
+            {
+                "name": name,
+                "description": (issue.get("description") or "").strip(),
+                "aliases": aliases,
+                "examples": (issue.get("examples") or "").strip(),
                 "source": ThemeAndIssueSource.LLM,
                 "status": ThemeAndIssueStatus.SUGGESTED,
                 "is_active": True,
+            }
+        )
+
+    return parsed_issues
+
+
+def create_suggested_canonical_issues(
+    suggested_issues: list[dict],
+) -> list[CanonicalIssue]:
+    canonical_issues = []
+
+    for suggested_issue in suggested_issues:
+        name = suggested_issue["name"]
+
+        canonical_issue, _ = CanonicalIssue.objects.get_or_create(
+            name=name,
+            defaults={
+                "description": suggested_issue.get("description", ""),
+                "aliases": suggested_issue.get("aliases", []),
+                "examples": suggested_issue.get("examples", ""),
+                "source": suggested_issue.get("source", ThemeAndIssueSource.LLM),
+                "status": suggested_issue.get("status", ThemeAndIssueStatus.SUGGESTED),
+                "is_active": suggested_issue.get("is_active", True),
             },
         )
+
+        canonical_issues.append(canonical_issue)
+
+    return canonical_issues
 
 
 def explore_issues_with_llm(
@@ -252,14 +249,12 @@ def explore_issues_with_llm(
 
     raw_content = response.choices[0].message.content or "{}"
 
-    suggested_issue_results = parse_issue_explorer_response(
+    suggested_issues = parse_issue_explorer_response(
         raw_content=raw_content,
-        provider=provider,
-        model=selected_model,
     )
 
     create_suggested_canonical_issues(
-        suggested_issue_results=suggested_issue_results,
+        suggested_issues=suggested_issues,
     )
 
     canonical_issue_catalog = get_canonical_issue_catalog()

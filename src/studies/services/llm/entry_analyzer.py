@@ -132,8 +132,8 @@ Theme rules:
 
 Issue rules:
 - Return an issue only if the entry clearly describes UX friction, confusion, failure, accessibility problems, errors, inefficiency, dissatisfaction, or another usability problem.
-- If no UX/usability issue is clearly present, return "issue": null.
-- If issue is not null, return issue.issue_id using only the issue_id field from the Issue catalog.
+- If no UX/usability issue is clearly present, return "issue": {{}}
+- If an UX/usability issue is clearly present, return issue.issue_id using only the issue_id field from the Issue catalog.
 - Do not use theme_id.
 - Do not use id.
 - Do not use canonical_theme_id.

@@ -708,6 +708,14 @@ class StudyAnalysis(models.Model):
 		),
 	)
 
+	raw_data = models.JSONField(
+		default=dict,
+		blank=True,
+		help_text =(
+			"Raw result of study analysis"
+		)
+	)
+
 	class Meta:
 		ordering = ["-started_at"]
 		verbose_name = "Study Analysis"
