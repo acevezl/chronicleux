@@ -1645,3 +1645,22 @@ class CanonicalThemeToFrameworkMapping(models.Model):
 
 	def __str__(self) -> str:
 		return f"{self.theme} → {self.criterion}"
+	
+
+# UX Recommendation Snapshot Model
+# Stores a report snapshot for later vieweing
+# fixlater - work in progress, for now saving a JSON object with the report - refinement could be future work
+class UXRecommendationReport(models.Model):
+    run = models.OneToOneField(
+        StudyAnalysis,
+        on_delete=models.CASCADE,
+        related_name="ux_recommendation_report",
+    )
+    generated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    generated_at = models.DateTimeField(auto_now_add=True)
+    report_data = models.JSONField(default=dict, blank=True)

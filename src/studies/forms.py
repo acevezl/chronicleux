@@ -2,16 +2,18 @@ from django import forms
 
 
 from .models import (
-    Study,
+    BinarySentimentCategory,
     CanonicalIssue,
     CanonicalTheme,
+    CanonicalIssueToFrameworkMapping,
+    CanonicalThemeToFrameworkMapping,
     Entry,
-    EntryAnalysis,
     EntryEvaluation,
-    EntryEvaluationTheme,
     EntryEvaluationIssue,
+    EntryEvaluationTheme,
+    FrameworkMappingStatus,
     SentimentCategory,
-    BinarySentimentCategory,
+    Study,
     UXFramework,
     UXFrameworkCriterion,
 )
@@ -227,6 +229,13 @@ class CanonicalIssueForm(forms.ModelForm):
         help_text="Alternative names or phrases that should map to this canonical issue.",
     )
 
+    framework_criteria = forms.ModelMultipleChoiceField(
+        queryset=UXFrameworkCriterion.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple(),
+        help_text="Select the UX framework criteria that this issue should support in recommendations reports.",
+    )
+
     class Meta:
         model = CanonicalIssue
         fields = [
@@ -279,8 +288,25 @@ class CanonicalIssueForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        if self.instance and self.instance.pk and isinstance(self.instance.aliases, list):
-            self.initial["aliases"] = ", ".join(self.instance.aliases)
+        self.fields["framework_criteria"].queryset = (
+            UXFrameworkCriterion.objects
+            .filter(is_active=True, framework__is_active=True)
+            .select_related("framework")
+            .order_by("framework__name", "code", "name")
+        )
+
+        if self.instance and self.instance.pk:
+            if isinstance(self.instance.aliases, list):
+                self.initial["aliases"] = ", ".join(self.instance.aliases)
+
+            self.initial["framework_criteria"] = (
+                UXFrameworkCriterion.objects
+                .filter(
+                    issue_mappings__issue=self.instance,
+                    issue_mappings__status=FrameworkMappingStatus.APPROVED,
+                )
+                .distinct()
+            )
 
     def clean_aliases(self):
         aliases_raw = self.cleaned_data.get("aliases", "")
@@ -296,6 +322,7 @@ class CanonicalIssueForm(forms.ModelForm):
 
         return aliases
     
+
 # MANUAL EVALUATION FORM    
 class EntryManualEvaluationForm(forms.ModelForm):
 
@@ -482,3 +509,5 @@ class UXFrameworkCriterionForm(forms.ModelForm):
 				"class": "w-full",
 			}),
 		}
+
+

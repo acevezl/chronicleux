@@ -144,6 +144,37 @@
 					{% endif %}
 				</div>
 
+				<!-- UX FRAMEWORK CRITERIA -->
+				<div>
+					<label for="{{ form.framework_criteria.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
+						UX Framework Criteria
+					</label>
+
+					{% if form.framework_criteria.help_text %}
+						<p class="message-default my-2">
+							{% heroicon_outline "chat-bubble-oval-left" class="h-4 w-4"%}
+							{{ form.framework_criteria.help_text }}
+						</p>
+					{% endif %}
+
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-3 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+						{% for checkbox in form.framework_criteria %}
+							<label class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-200">
+								{{ checkbox.tag }}
+								<span>{{ checkbox.choice_label }}</span>
+							</label>
+						{% empty %}
+							<p class="text-sm text-gray-500 dark:text-gray-400">
+								No active UX framework criteria available.
+							</p>
+						{% endfor %}
+					</div>
+
+					{% if form.framework_criteria.errors %}
+						<p class="message-error my-2">{{ form.framework_criteria.errors|join:", " }}</p>
+					{% endif %}
+				</div>
+
 				{% if form.non_field_errors %}
 					<div class="message-error my-2">
 						{% heroicon_outline "exclamation-triangle" class="h-4 w-4"%}

@@ -66,4 +66,7 @@ urlpatterns = [
     path("catalogues/frameworks/<int:framework_pk>/framework-criteria/<int:criterion_pk>/update/", views.ux_framework_criterion_update, name="ux_framework_criterion_update"),
     path("catalogues/frameworks/<int:framework_pk>/framework-criteria/<int:criterion_pk>/delete/", views.ux_framework_criterion_delete, name="ux_framework_criterion_delete"),
 
+    # UX Recommendations Report
+    path("studies/<int:study_pk>/analysis/<int:run_pk>/recommendations/", views.ux_recommendation_report, name="ux_recommendation_report"),
+    
 ]

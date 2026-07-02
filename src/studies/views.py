@@ -14,12 +14,12 @@ from django.utils import timezone
 from django.utils.formats import date_format
 
 from studies.services.nlp.registry import (
-	get_available_sentiment_methods,
-	get_available_theme_methods,
 	get_available_issue_methods,
+	get_available_issue_method_values,
+	get_available_sentiment_methods,
 	get_available_sentiment_method_values,
+	get_available_theme_methods,
 	get_available_theme_method_values,
-	get_available_issue_method_values
 )
 
 from studies.services.llm.client import get_available_llm_providers, get_llm_model
@@ -31,6 +31,7 @@ from studies.services._ordinal_distance_calculator import refresh_sentiment_ordi
 from studies.services._sentiment_summarizer import summarize_study_sentiment
 from studies.services._theme_summarizer import consolidate_themes_on_study
 from studies.services._issue_summarizer import consolidate_issues_on_study
+from studies.services.ux_recommendation_builder import build_ux_recommendation_report
 
 from .filters import (
 	filter_diary_entries, 
@@ -53,6 +54,8 @@ from .forms import (
 
 from .models import (
 	AnalysisStatus, 
+	CanonicalIssue, 
+	CanonicalTheme, 
 	Entry, 
 	EntryAnalysis, 
 	EntryEvaluation,
@@ -63,8 +66,6 @@ from .models import (
 	StudyMembership, 
 	StudyAnalysis, 
 	StudyStatus, 
-	CanonicalIssue, 
-	CanonicalTheme, 
 	ThemeAndIssueSource, 
 	ThemeAndIssueStatus,
 	UXFramework,
@@ -73,17 +74,18 @@ from .models import (
 )
 
 from .helpers import (
-	import_rows_into_study,
-	parse_uploaded_file,
-	user_can_evaluate_study,
-	require_catalogue_manager,
 	import_canonical_themes,
 	import_canonical_issues,
+	import_rows_into_study,
+	import_ux_frameworks,
 	parse_uploaded_canonical_theme_file,
 	parse_uploaded_canonical_issue_file,
-	import_ux_frameworks,
+	parse_uploaded_file,
 	parse_uploaded_ux_framework_file,
+	require_catalogue_manager,
 	sync_run_evaluator_sentiment_from_study,
+	sync_canonical_issue_framework_mappings,
+	user_can_evaluate_study,
 )
 
 # ----------------------- STUDIES ----------------------- #
@@ -1436,73 +1438,87 @@ def canonical_issue_catalogue_partial(request):
 # -----------------------#
 @login_required
 def canonical_issue_create(request):
-	require_catalogue_manager(request.user)
+    require_catalogue_manager(request.user)
 
-	if request.method == "POST":
-		form = CanonicalIssueForm(request.POST)
+    if request.method == "POST":
+        form = CanonicalIssueForm(request.POST)
 
-		if form.is_valid():
-			issue = form.save(commit=False)
-			issue.created_by = request.user
+        if form.is_valid():
+            issue = form.save(commit=False)
+            issue.created_by = request.user
 
-			if not issue.source:
-				issue.source = ThemeAndIssueSource.EVALUATOR
+            if not issue.source:
+                issue.source = ThemeAndIssueSource.EVALUATOR
 
-			if not issue.status:
-				issue.status = ThemeAndIssueStatus.APPROVED
+            if not issue.status:
+                issue.status = ThemeAndIssueStatus.APPROVED
 
-			issue.save()
+            issue.save()
 
-			messages.success(request, "Canonical issue created.")
-			return redirect("canonical_issue_catalogue_list")
-		
-	else:
-		form = CanonicalIssueForm()
+            sync_canonical_issue_framework_mappings(
+                issue=issue,
+                framework_criteria=form.cleaned_data["framework_criteria"],
+                user=request.user,
+            )
 
-	return render(
-		request,
-		"studies/catalogues/canonical_issue_form.html",
-		{
-			"form": form,
-			"page_title_heroicon":"exclamation-triangle",
-			"page_title": "Create Canonical Issue",
-			"page_subtitle": "Create and maintain reusable canonical issues for machine and evaluator analysis.",
-			"submit_label": "Create issue",
-		},
-	)
+            messages.success(request, "Canonical issue created.")
+            return redirect("canonical_issue_catalogue_list")
+        
+    else:
+        form = CanonicalIssueForm()
+
+    return render(
+        request,
+        "studies/catalogues/canonical_issue_form.html",
+        {
+            "form": form,
+            "page_title_heroicon":"exclamation-triangle",
+            "page_title": "Create Canonical Issue",
+            "page_subtitle": "Create and maintain reusable canonical issues for machine and evaluator analysis.",
+            "submit_label": "Create issue",
+        },
+    )
+
 
 # -----------------------#
 # CANONICAL ISSUE UPDATE #
 # -----------------------#
 @login_required
 def canonical_issue_update(request, issue_pk):
-	require_catalogue_manager(request.user)
+    require_catalogue_manager(request.user)
 
-	issue = get_object_or_404(CanonicalIssue, pk=issue_pk)
+    issue = get_object_or_404(CanonicalIssue, pk=issue_pk)
 
-	if request.method == "POST":
-		form = CanonicalIssueForm(request.POST, instance=issue)
+    if request.method == "POST":
+        form = CanonicalIssueForm(request.POST, instance=issue)
 
-		if form.is_valid():
-			form.save()
+        if form.is_valid():
+            issue = form.save()
 
-			messages.success(request, "Canonical issue updated.")
-			return redirect("canonical_issue_catalogue_list")
-	else:
-		form = CanonicalIssueForm(instance=issue)
+            sync_canonical_issue_framework_mappings(
+                issue=issue,
+                framework_criteria=form.cleaned_data["framework_criteria"],
+                user=request.user,
+            )
 
-	return render(
-		request,
-		"studies/catalogues/canonical_issue_form.html",
-		{
-			"issue": issue,
-			"form": form,
-			"page_title_heroicon":"exclamation-triangle",
-			"page_title": "Edit Canonical Issue",
-			"page_subtitle": "Update and maintain reusable canonical issues for machine and evaluator analysis.",
-			"submit_label": "Save issue",
-		},
-	)
+            messages.success(request, "Canonical issue updated.")
+            return redirect("canonical_issue_catalogue_list")
+    else:
+        form = CanonicalIssueForm(instance=issue)
+
+    return render(
+        request,
+        "studies/catalogues/canonical_issue_form.html",
+        {
+            "issue": issue,
+            "form": form,
+            "page_title_heroicon":"exclamation-triangle",
+            "page_title": "Edit Canonical Issue",
+            "page_subtitle": "Update and maintain reusable canonical issues for machine and evaluator analysis.",
+            "submit_label": "Save issue",
+        },
+    )
+
 
 # -----------------------#
 # CANONICAL ISSUE DELETE #
@@ -2300,3 +2316,36 @@ def ux_framework_import(request):
 		"studies/catalogues/ux_framework_import.html",
 		context,
 	)
+
+
+
+# ------------------------ #
+# UX Recommendation Report #
+# ------------------------ #
+@login_required
+def ux_recommendation_report(request, study_pk, run_pk):
+    study = get_object_or_404(Study, pk=study_pk)
+
+    run = get_object_or_404(
+        StudyAnalysis.objects.select_related("study"),
+        pk=run_pk,
+        study=study,
+    )
+
+    if not user_can_evaluate_study(request.user, study):
+        return HttpResponseForbidden()
+
+    report = build_ux_recommendation_report(run)
+
+    return render(
+        request,
+        "studies/ux_recommendation_report.html",
+        {
+            "study": study,
+            "run": run,
+            "report": report,
+            "page_title_heroicon": "light-bulb",
+            "page_title": "UX Recommendations Report",
+            "page_subtitle": "Framework-grounded recommendations generated from detected themes and issues.",
+        },
+    )

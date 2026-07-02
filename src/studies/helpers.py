@@ -3,11 +3,13 @@ from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.utils.dateparse import parse_datetime
-
+from django.utils import timezone
 
 from .models import (
-	CanonicalTheme,
 	CanonicalIssue,
+	CanonicalTheme,
+	CanonicalIssueToFrameworkMapping,
+	CanonicalThemeToFrameworkMapping,
 	Entry,
 	EntrySource,
 	MembershipRole,
@@ -18,6 +20,8 @@ from .models import (
 	UXFramework,
 	UXFrameworkCriterion,
 	UXFrameworkType,
+	FrameworkMappingMethod,
+    FrameworkMappingStatus,
 )
 
 User = get_user_model()
@@ -784,3 +788,49 @@ def normalize_ux_framework_type(value):
 		)
 
 	return value
+
+
+# UX FRAMEWORK: MAP ISSUE TO CRITERIA
+
+def sync_canonical_issue_framework_mappings(issue, framework_criteria, user):
+    selected_criterion_ids = set(
+        framework_criteria.values_list("id", flat=True)
+    )
+
+    existing_mappings = CanonicalIssueToFrameworkMapping.objects.filter(
+        issue=issue,
+    )
+
+    existing_criterion_ids = set(
+        existing_mappings.values_list("criterion_id", flat=True)
+    )
+
+    criterion_ids_to_remove = existing_criterion_ids - selected_criterion_ids
+    criterion_ids_to_add = selected_criterion_ids - existing_criterion_ids
+    criterion_ids_to_update = selected_criterion_ids & existing_criterion_ids
+
+    if criterion_ids_to_remove:
+        existing_mappings.filter(
+            criterion_id__in=criterion_ids_to_remove,
+        ).delete()
+
+    for criterion_id in criterion_ids_to_add:
+        CanonicalIssueToFrameworkMapping.objects.create(
+            issue=issue,
+            criterion_id=criterion_id,
+            method=FrameworkMappingMethod.MANUAL,
+            status=FrameworkMappingStatus.APPROVED,
+            created_by=user,
+            approved_by=user,
+            approved_at=timezone.now(),
+            rationale="Manually mapped from the canonical issue catalogue.",
+        )
+
+    if criterion_ids_to_update:
+        existing_mappings.filter(
+            criterion_id__in=criterion_ids_to_update,
+        ).update(
+            status=FrameworkMappingStatus.APPROVED,
+            approved_by=user,
+            approved_at=timezone.now(),
+        )
