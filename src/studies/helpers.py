@@ -12,6 +12,8 @@ from .models import (
 	CanonicalThemeToFrameworkMapping,
 	Entry,
 	EntrySource,
+	FrameworkMappingMethod,
+    FrameworkMappingStatus,
 	MembershipRole,
 	SentimentCategory,
 	StudyMembership,
@@ -20,8 +22,6 @@ from .models import (
 	UXFramework,
 	UXFrameworkCriterion,
 	UXFrameworkType,
-	FrameworkMappingMethod,
-    FrameworkMappingStatus,
 )
 
 User = get_user_model()
@@ -791,7 +791,6 @@ def normalize_ux_framework_type(value):
 
 
 # UX FRAMEWORK: MAP ISSUE TO CRITERIA
-
 def sync_canonical_issue_framework_mappings(issue, framework_criteria, user):
     selected_criterion_ids = set(
         framework_criteria.values_list("id", flat=True)
@@ -834,3 +833,47 @@ def sync_canonical_issue_framework_mappings(issue, framework_criteria, user):
             approved_by=user,
             approved_at=timezone.now(),
         )
+
+# UX FRAMEWORK: MAP THEME TO CRITERIA
+def sync_canonical_theme_framework_mappings(theme, framework_criteria, user):
+	selected_criterion_ids = set(
+		framework_criteria.values_list("id", flat=True)
+	)
+
+	existing_mappings = CanonicalThemeToFrameworkMapping.objects.filter(
+		theme=theme,
+	)
+
+	existing_criterion_ids = set(
+		existing_mappings.values_list("criterion_id", flat=True)
+	)
+
+	criterion_ids_to_remove = existing_criterion_ids - selected_criterion_ids
+	criterion_ids_to_add = selected_criterion_ids - existing_criterion_ids
+	criterion_ids_to_update = selected_criterion_ids & existing_criterion_ids
+
+	if criterion_ids_to_remove:
+		existing_mappings.filter(
+			criterion_id__in=criterion_ids_to_remove,
+		).delete()
+
+	for criterion_id in criterion_ids_to_add:
+		CanonicalThemeToFrameworkMapping.objects.create(
+			theme=theme,
+			criterion_id=criterion_id,
+			method=FrameworkMappingMethod.MANUAL,
+			status=FrameworkMappingStatus.APPROVED,
+			created_by=user,
+			approved_by=user,
+			approved_at=timezone.now(),
+			rationale="Manually mapped from the canonical theme catalogue.",
+		)
+
+	if criterion_ids_to_update:
+		existing_mappings.filter(
+			criterion_id__in=criterion_ids_to_update,
+		).update(
+			status=FrameworkMappingStatus.APPROVED,
+			approved_by=user,
+			approved_at=timezone.now(),
+		)

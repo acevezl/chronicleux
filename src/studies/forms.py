@@ -132,86 +132,110 @@ class EntryForm(forms.ModelForm):
 # CANONICAL THEME FORM
 class CanonicalThemeForm(forms.ModelForm):
 
-    aliases = forms.CharField(
-        required=False,
-        widget=forms.Textarea(
-            attrs={
-                "class": "",
-                "rows": 3,
-                "placeholder": "Optional aliases, separated by commas or line breaks.",
-            }
-        ),
-        help_text="Alternative names or phrases that should map to this canonical theme.",
-    )
+	aliases = forms.CharField(
+		required=False,
+		widget=forms.Textarea(
+			attrs={
+				"class": "",
+				"rows": 3,
+				"placeholder": "Optional aliases, separated by commas or line breaks.",
+			}
+		),
+		help_text="Alternative names or phrases that should map to this canonical theme.",
+	)
 
-    class Meta:
-        model = CanonicalTheme
-        fields = [
-            "name",
-            "description",
-            "aliases",
-            "source",
-            "status",
-            "examples",
-            "is_active",
-        ]
-        widgets = {
-            "name": forms.TextInput(
-                attrs={
-                    "class": "w-full",
-                    "placeholder": "Example: Message organization",
-                }
-            ),
-            "description": forms.Textarea(
-                attrs={
-                    "class": "",
-                    "rows": 4,
-                    "placeholder": "Describe what this canonical theme means.",
-                }
-            ),
-            "source": forms.Select(
-                attrs={
-                    "class": "",
-                }
-            ),
-            "status": forms.Select(
-                attrs={
-                    "class": "",
-                }
-            ),
-            "examples": forms.Textarea(
-                attrs={
-                    "class": "",
-                    "rows": 4,
-                    "placeholder": "Optional examples of entries, phrases, or situations that belong to this theme.",
-                }
-            ),
-            "is_active": forms.CheckboxInput(
-                attrs={
-                    "class": "form-checkbox",
-                }
-            ),
-        }
+	framework_criteria = forms.ModelMultipleChoiceField(
+		queryset=UXFrameworkCriterion.objects.none(),
+		required=False,
+		widget=forms.CheckboxSelectMultiple(),
+		help_text="Select the UX framework criteria that this theme should support in recommendations reports.",
+	)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+	class Meta:
+		model = CanonicalTheme
+		fields = [
+			"name",
+			"description",
+			"aliases",
+			"source",
+			"status",
+			"examples",
+			"is_active",
+		]
+		widgets = {
+			"name": forms.TextInput(
+				attrs={
+					"class": "w-full",
+					"placeholder": "Example: Message organization",
+				}
+			),
+			"description": forms.Textarea(
+				attrs={
+					"class": "",
+					"rows": 4,
+					"placeholder": "Describe what this canonical theme means.",
+				}
+			),
+			"source": forms.Select(
+				attrs={
+					"class": "",
+				}
+			),
+			"status": forms.Select(
+				attrs={
+					"class": "",
+				}
+			),
+			"examples": forms.Textarea(
+				attrs={
+					"class": "",
+					"rows": 4,
+					"placeholder": "Optional examples of entries, phrases, or situations that belong to this theme.",
+				}
+			),
+			"is_active": forms.CheckboxInput(
+				attrs={
+					"class": "form-checkbox",
+				}
+			),
+		}
 
-        if self.instance and self.instance.pk and isinstance(self.instance.aliases, list):
-            self.initial["aliases"] = ", ".join(self.instance.aliases)
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
 
-    def clean_aliases(self):
-        aliases_raw = self.cleaned_data.get("aliases", "")
+		self.fields["framework_criteria"].queryset = (
+			UXFrameworkCriterion.objects
+			.filter(is_active=True, framework__is_active=True)
+			.select_related("framework")
+			.order_by("framework__name", "code", "name")
+		)
 
-        if not aliases_raw:
-            return []
+		if self.instance and self.instance.pk:
+			if isinstance(self.instance.aliases, list):
+				self.initial["aliases"] = ", ".join(self.instance.aliases)
 
-        aliases = []
-        for value in aliases_raw.replace("\n", ",").split(","):
-            alias = value.strip()
-            if alias and alias not in aliases:
-                aliases.append(alias)
+			self.initial["framework_criteria"] = (
+				UXFrameworkCriterion.objects
+				.filter(
+					theme_mappings__theme=self.instance,
+					theme_mappings__status=FrameworkMappingStatus.APPROVED,
+				)
+				.distinct()
+			)
 
-        return aliases
+	def clean_aliases(self):
+		aliases_raw = self.cleaned_data.get("aliases", "")
+
+		if not aliases_raw:
+			return []
+
+		aliases = []
+		for value in aliases_raw.replace("\n", ",").split(","):
+			alias = value.strip()
+			if alias and alias not in aliases:
+				aliases.append(alias)
+
+		return aliases
 
 
 # CANONICAL ISSUE FORM

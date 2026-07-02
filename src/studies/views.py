@@ -85,6 +85,7 @@ from .helpers import (
 	require_catalogue_manager,
 	sync_run_evaluator_sentiment_from_study,
 	sync_canonical_issue_framework_mappings,
+	sync_canonical_theme_framework_mappings,
 	user_can_evaluate_study,
 )
 
@@ -1249,6 +1250,12 @@ def canonical_theme_create(request):
 
 			theme.save()
 
+			sync_canonical_theme_framework_mappings(
+				theme=theme,
+				framework_criteria=form.cleaned_data["framework_criteria"],
+				user=request.user,
+			)
+
 			messages.success(request, "Canonical theme created.")
 			return redirect("canonical_theme_catalogue_list")
 	else:
@@ -1266,9 +1273,11 @@ def canonical_theme_create(request):
 		},
 	)
 
+
 # -----------------------#
 # CANONICAL THEME UPDATE #
 # -----------------------#
+@login_required
 @login_required
 def canonical_theme_update(request, theme_pk):
 	require_catalogue_manager(request.user)
@@ -1279,7 +1288,13 @@ def canonical_theme_update(request, theme_pk):
 		form = CanonicalThemeForm(request.POST, instance=theme)
 
 		if form.is_valid():
-			form.save()
+			theme = form.save()
+
+			sync_canonical_theme_framework_mappings(
+				theme=theme,
+				framework_criteria=form.cleaned_data["framework_criteria"],
+				user=request.user,
+			)
 
 			messages.success(request, "Canonical theme updated.")
 			return redirect("canonical_theme_catalogue_list")
@@ -1298,6 +1313,7 @@ def canonical_theme_update(request, theme_pk):
 			"submit_label": "Save theme",
 		},
 	)
+
 
 # -----------------------#
 # CANONICAL THEME DELETE #
