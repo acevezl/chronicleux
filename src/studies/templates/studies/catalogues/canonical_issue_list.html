@@ -27,6 +27,19 @@
                 Import Issues
             </a>
 
+            <form
+                method="post"
+                action="{% url 'canonical_issue_framework_auto_map' %}"
+                class="inline"
+            >
+
+                {% csrf_token %}
+                <button type="submit" class="button-PRIMARY">
+                    Auto-map Issues to UX frameworks
+                </button>
+
+            </form>
+
             <a
                 href="{% url 'canonical_issue_create' %}"
                 class="button-SECONDARY h-10 inline-flex items-center"
@@ -34,6 +47,8 @@
                 {% heroicon_outline "plus-circle" class="h-4 w-4 shrink-0" %}
                 Add Issue
             </a>
+
+            
         </div>
 
         <!-- HTMX PANEL -->

@@ -144,6 +144,76 @@
 					{% endif %}
 				</div>
 
+				<!-- UX FRAMEWORK CRITERIA PENDING MAPPING APPROVAL -->
+				{% if pending_framework_mappings %}
+					<section class="rounded-xl border border-amber-200 bg-amber-50 p-4">
+						<div class="mb-3">
+							<h2 class="text-sm font-semibold text-amber-900">
+								UX Framework Criteria Pending Mapping Approval
+							</h2>
+							<p class="mt-1 text-sm text-amber-800">
+								Review suggested framework mappings. Your choices will be saved when you click Save issue.
+							</p>
+						</div>
+
+						<input type="hidden" name="approved_pending_mapping_ids" id="approved_pending_mapping_ids">
+						<input type="hidden" name="rejected_pending_mapping_ids" id="rejected_pending_mapping_ids">
+
+						<div class="space-y-2">
+							{% for mapping in pending_framework_mappings %}
+								<div
+									class="pending-framework-mapping flex items-start justify-between gap-4 rounded-lg border border-amber-200 bg-white p-3"
+									data-mapping-id="{{ mapping.pk }}"
+								>
+									<div>
+										<div class="text-sm font-medium text-slate-900">
+											{{ mapping.criterion.framework.name }}
+											{% if mapping.criterion.code %}
+												{{ mapping.criterion.code }}
+											{% endif %}
+											— {{ mapping.criterion.name }}
+										</div>
+
+										{% if mapping.criterion.description %}
+											<p class="mt-1 text-sm text-slate-600">
+												{{ mapping.criterion.description|truncatewords:28 }}
+											</p>
+										{% endif %}
+
+										<p class="mt-2 hidden text-xs font-medium" data-pending-status-message></p>
+									</div>
+
+									<div class="flex shrink-0 gap-2">
+										<button
+											type="button"
+											class="approve-pending-mapping rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
+											data-mapping-id="{{ mapping.pk }}"
+										>
+											Approve
+										</button>
+
+										<button
+											type="button"
+											class="reject-pending-mapping rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+											data-mapping-id="{{ mapping.pk }}"
+										>
+											Reject
+										</button>
+
+										<button
+											type="button"
+											class="clear-pending-mapping hidden rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+											data-mapping-id="{{ mapping.pk }}"
+										>
+											Undo
+										</button>
+									</div>
+								</div>
+							{% endfor %}
+						</div>
+					</section>
+				{% endif %}
+
 				<!-- UX FRAMEWORK CRITERIA -->
 				<div>
 					<label for="{{ form.framework_criteria.id_for_label }}" class="block text-lg font-medium text-gray-700 dark:text-gray-200">
@@ -198,5 +268,102 @@
 
 	</div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const approvedInput = document.getElementById("approved_pending_mapping_ids");
+        const rejectedInput = document.getElementById("rejected_pending_mapping_ids");
+
+        if (!approvedInput || !rejectedInput) {
+            return;
+        }
+
+        const approvedIds = new Set();
+        const rejectedIds = new Set();
+
+        function syncHiddenInputs() {
+            approvedInput.value = Array.from(approvedIds).join(",");
+            rejectedInput.value = Array.from(rejectedIds).join(",");
+        }
+
+        function getMappingCard(mappingId) {
+            return document.querySelector(
+                `.pending-framework-mapping[data-mapping-id="${mappingId}"]`
+            );
+        }
+
+        function setMappingStatus(mappingId, status) {
+            const card = getMappingCard(mappingId);
+
+            if (!card) {
+                return;
+            }
+
+            const approveButton = card.querySelector(".approve-pending-mapping");
+            const rejectButton = card.querySelector(".reject-pending-mapping");
+            const clearButton = card.querySelector(".clear-pending-mapping");
+            const statusMessage = card.querySelector("[data-pending-status-message]");
+
+            approvedIds.delete(mappingId);
+            rejectedIds.delete(mappingId);
+
+            card.classList.remove("border-emerald-300", "bg-emerald-50", "border-red-300", "bg-red-50");
+
+            if (status === "approved") {
+                approvedIds.add(mappingId);
+
+                card.classList.add("border-emerald-300", "bg-emerald-50");
+
+                statusMessage.textContent = "Will be approved when you save.";
+                statusMessage.classList.remove("hidden", "text-red-700");
+                statusMessage.classList.add("text-emerald-700");
+
+                approveButton.classList.add("hidden");
+                rejectButton.classList.remove("hidden");
+                clearButton.classList.remove("hidden");
+            } else if (status === "rejected") {
+                rejectedIds.add(mappingId);
+
+                card.classList.add("border-red-300", "bg-red-50");
+
+                statusMessage.textContent = "Will be rejected when you save.";
+                statusMessage.classList.remove("hidden", "text-emerald-700");
+                statusMessage.classList.add("text-red-700");
+
+                approveButton.classList.remove("hidden");
+                rejectButton.classList.add("hidden");
+                clearButton.classList.remove("hidden");
+            } else {
+                statusMessage.textContent = "";
+                statusMessage.classList.add("hidden");
+                statusMessage.classList.remove("text-emerald-700", "text-red-700");
+
+                approveButton.classList.remove("hidden");
+                rejectButton.classList.remove("hidden");
+                clearButton.classList.add("hidden");
+            }
+
+            syncHiddenInputs();
+        }
+
+        document.querySelectorAll(".approve-pending-mapping").forEach(function (button) {
+            button.addEventListener("click", function () {
+                setMappingStatus(button.dataset.mappingId, "approved");
+            });
+        });
+
+        document.querySelectorAll(".reject-pending-mapping").forEach(function (button) {
+            button.addEventListener("click", function () {
+                setMappingStatus(button.dataset.mappingId, "rejected");
+            });
+        });
+
+        document.querySelectorAll(".clear-pending-mapping").forEach(function (button) {
+            button.addEventListener("click", function () {
+                setMappingStatus(button.dataset.mappingId, null);
+            });
+        });
+    });
+</script>
 
 {% endblock %}

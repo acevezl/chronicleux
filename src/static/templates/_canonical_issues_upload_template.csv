@@ -1,0 +1,18 @@
+name,description,aliases,examples,source,is_active
+bug (example),"Functional problems where the interface or feature behaves incorrectly, fails, crashes, breaks, or produces unexpected results.",bug|bugs|error|errors|crash|crashed|crashes|broken|breaks|glitch|glitched|failed|failure|doesn't work|did not work|not working|stopped working|unexpected|wrong|issue|problem,The app crashed when I opened the workout summary. The reminder settings did not work after I saved them. I got an uknown error when trying to update my profile. The streak screen showed the wrong number of days. The search feature stopped working during the session.,,TRUE
+,,,,,
+,,,,,
+,,,,,
+,,,,,
+,,,,,
+,,,,,
+,,,,,
+,,,,,
+,,,,,
+,,,,,
+,,,,,
+,,,,,
+,,,,,
+,,,,,
+,,,,,
+,,,,,

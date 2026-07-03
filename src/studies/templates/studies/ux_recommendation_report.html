@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% load heroicons %}
+{% load formatters %}
+
+{% block title %}UX Recommendations Report · {{ study.title }} · ChronicleUX{% endblock %}
+
+{% block content %}
+
+<div class="sticky-top">
+	{% include "studies/partials/_header.html" with study=study page_title_heroicon=page_title_heroicon page_title=page_title page_subtitle=page_subtitle %}
+	{% include "studies/partials/_menu_evaluator.html" %}
+</div>
+
+<div class="p-4">
+	{% include "studies/partials/_messages.html" %}
+
+	<article class="main-card">
+
+		<!-- CARD TITLE -->
+		<div class="card-summary">
+			<div class="flex flex-col">
+				<h3 class="card-summary-title">
+					{% heroicon_outline "light-bulb" %}
+					UX Recommendations Report
+				</h3>
+
+				<p class="card-summary-subtitle">
+					Generated from Diary Analysis Run # {{ run.pk|stringformat:"03d" }}.
+				</p>
+			</div>
+
+			<div class="flex justify-end gap-3">
+				<a
+					href="{% url 'machine_analysis_details' study.pk run.pk %}"
+					class="button-TERTIARY"
+				>
+					{% heroicon_outline "arrow-left" class="h-4 w-4 shrink-0" %}
+					Back to analysis
+				</a>
+			</div>
+		</div>
+
+		<!-- REPORT META -->
+		<section class="grid grid-cols-1 gap-4 border-b border-gray-200 p-4 dark:border-gray-700 md:grid-cols-3">
+
+			<div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+				<div class="xs-label uppercase">Study</div>
+				<div class="mt-1 font-medium text-gray-900 dark:text-gray-100">
+					{{ study.title }}
+				</div>
+			</div>
+
+			<div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+				<div class="xs-label uppercase">Analysis Run</div>
+				<div class="mt-1 font-medium text-gray-900 dark:text-gray-100">
+					# {{ run.pk|stringformat:"03d" }}
+				</div>
+			</div>
+
+			<div class="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+				<div class="xs-label uppercase">Generated</div>
+				<div class="mt-1 font-medium text-gray-900 dark:text-gray-100">
+					{{ report.generated_at|date:"Y-m-d H:i" }}
+				</div>
+			</div>
+
+		</section>
+
+		<!-- EMPTY STATE -->
+		{% if not report_data.sections %}
+			<section class="p-6">
+				<div class="rounded-lg border border-dashed border-gray-300 p-6 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-300">
+					<div class="flex items-start gap-2">
+						{% heroicon_outline "information-circle" class="h-5 w-5 shrink-0" %}
+						<div>
+							<p class="font-medium text-gray-900 dark:text-gray-100">
+								No recommendations were generated.
+							</p>
+							<p class="mt-1">
+								This usually means the detected canonical themes or issues have not been mapped to approved UX framework criteria yet.
+							</p>
+						</div>
+					</div>
+				</div>
+			</section>
+		{% endif %}
+
+		<!-- REPORT SECTIONS -->
+		{% if report_data.sections %}
+			<section class="space-y-4 p-4">
+
+				{% for section in report_data.sections %}
+					<article class="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+
+						<header class="border-b border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+							<div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+								<div>
+									<div class="xs-label uppercase">
+										{{ section.framework }}
+									</div>
+
+									<h4 class="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
+										{% if section.criterion_code %}
+											{{ section.criterion_code }} ·
+										{% endif %}
+										{{ section.criterion_name }}
+									</h4>
+
+									{% if section.criterion_description %}
+										<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+											{{ section.criterion_description }}
+										</p>
+									{% endif %}
+								</div>
+
+								<div class="shrink-0 rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700">
+									<div class="xs-label uppercase">Priority</div>
+									<div class="mt-1 font-semibold text-gray-900 dark:text-gray-100">
+										{{ section.priority_score|floatformat:2 }}
+									</div>
+								</div>
+							</div>
+						</header>
+
+						<div class="space-y-4 p-4">
+
+							{% if section.recommendation_guidance %}
+								<section>
+									<h5 class="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+										Recommendation guidance
+									</h5>
+
+									<p class="text-sm text-gray-700 dark:text-gray-300">
+										{{ section.recommendation_guidance }}
+									</p>
+								</section>
+							{% endif %}
+
+							{% if section.issues %}
+								<section>
+									<h5 class="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+										Triggered by issues
+									</h5>
+
+									<div class="space-y-2">
+										{% for issue in section.issues %}
+											<div class="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+												<div class="flex flex-wrap items-center justify-between gap-2">
+													<div class="font-medium text-gray-900 dark:text-gray-100">
+														{{ issue.name }}
+													</div>
+
+													<div class="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+														<span class="badge">{{ issue.entry_count }} entries</span>
+														{% if issue.average_sentiment_score is not None %}
+															<span class="badge">Avg sentiment {{ issue.average_sentiment_score|floatformat:2 }}</span>
+														{% endif %}
+													</div>
+												</div>
+
+												{% if issue.mapping_rationale %}
+													<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+														{{ issue.mapping_rationale }}
+													</p>
+												{% endif %}
+											</div>
+										{% endfor %}
+									</div>
+								</section>
+							{% endif %}
+
+							{% if section.themes %}
+								<section>
+									<h5 class="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+										Supported by themes
+									</h5>
+
+									<div class="space-y-2">
+										{% for theme in section.themes %}
+											<div class="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+												<div class="flex flex-wrap items-center justify-between gap-2">
+													<div class="font-medium text-gray-900 dark:text-gray-100">
+														{{ theme.name }}
+													</div>
+
+													<div class="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+														<span class="badge">{{ theme.entry_count }} entries</span>
+														{% if theme.average_sentiment_score is not None %}
+															<span class="badge">Avg sentiment {{ theme.average_sentiment_score|floatformat:2 }}</span>
+														{% endif %}
+													</div>
+												</div>
+
+												{% if theme.mapping_rationale %}
+													<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+														{{ theme.mapping_rationale }}
+													</p>
+												{% endif %}
+											</div>
+										{% endfor %}
+									</div>
+								</section>
+							{% endif %}
+
+							{% if section.evidence %}
+								<section>
+									<h5 class="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+										Representative evidence
+									</h5>
+
+									<div class="space-y-2">
+										{% for evidence in section.evidence %}
+											<blockquote class="rounded-lg border-l-4 border-gray-300 bg-gray-50 p-3 text-sm dark:border-gray-600 dark:bg-gray-800">
+												<div class="mb-2 flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
+													<span class="badge">{{ evidence.type|capfirst }}</span>
+													<span class="badge">{{ evidence.label }}</span>
+													{% if evidence.sentiment_score is not None %}
+														<span class="badge">Sentiment {{ evidence.sentiment_score|floatformat:2 }}</span>
+													{% endif %}
+												</div>
+
+												<p class="text-gray-700 dark:text-gray-300">
+													{{ evidence.excerpt }}
+												</p>
+
+												{% if evidence.rationale %}
+													<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+														{{ evidence.rationale }}
+													</p>
+												{% endif %}
+											</blockquote>
+										{% endfor %}
+									</div>
+								</section>
+							{% endif %}
+
+							{% if section.evaluation_questions %}
+								<section>
+									<h5 class="mb-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+										Evaluator review questions
+									</h5>
+
+									<ul class="list-disc space-y-1 pl-5 text-sm text-gray-700 dark:text-gray-300">
+										{% for question in section.evaluation_questions %}
+											<li>{{ question }}</li>
+										{% endfor %}
+									</ul>
+								</section>
+							{% endif %}
+
+						</div>
+					</article>
+				{% endfor %}
+
+			</section>
+		{% endif %}
+
+	</article>
+</div>
+
+{% endblock %}

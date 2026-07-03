@@ -112,14 +112,14 @@ class UXFrameworkType(models.TextChoices):
 
 
 # FRAMEWORK MAPPING METHOD ENUM
-class FrameworkMappingMethod(models.TextChoices):
+class UXFrameworkMappingMethod(models.TextChoices):
 	MANUAL = "MANUAL", "Manual"
 	TFIDF = "TFIDF", "TF-IDF similarity"
 	EMBEDDING = "EMBEDDING", "Embedding similarity"
 
 
 # FRAMEWORK MAPPING STATUS ENUM
-class FrameworkMappingStatus(models.TextChoices):
+class UXFrameworkMappingStatus(models.TextChoices):
 	SUGGESTED = "SUGGESTED", "Suggested"
 	APPROVED = "APPROVED", "Approved"
 	REJECTED = "REJECTED", "Rejected"
@@ -1512,13 +1512,13 @@ class CanonicalIssueToFrameworkMapping(models.Model):
 
 	method = models.CharField(
 		max_length=20,
-		choices=FrameworkMappingMethod.choices,
-		default=FrameworkMappingMethod.MANUAL,
+		choices=UXFrameworkMappingMethod.choices,
+		default=UXFrameworkMappingMethod.MANUAL,
 	)
 	status = models.CharField(
 		max_length=20,
-		choices=FrameworkMappingStatus.choices,
-		default=FrameworkMappingStatus.SUGGESTED,
+		choices=UXFrameworkMappingStatus.choices,
+		default=UXFrameworkMappingStatus.SUGGESTED,
 	)
 	score = models.FloatField(
 		null=True,
@@ -1564,7 +1564,7 @@ class CanonicalIssueToFrameworkMapping(models.Model):
 		verbose_name_plural = "Canonical Issue to Framework Mappings"
 
 	def clean(self):
-		if self.status == FrameworkMappingStatus.APPROVED and not self.approved_at:
+		if self.status == UXFrameworkMappingStatus.APPROVED and not self.approved_at:
 			self.approved_at = timezone.now()
 
 	def __str__(self) -> str:
@@ -1588,13 +1588,13 @@ class CanonicalThemeToFrameworkMapping(models.Model):
 
 	method = models.CharField(
 		max_length=20,
-		choices=FrameworkMappingMethod.choices,
-		default=FrameworkMappingMethod.MANUAL,
+		choices=UXFrameworkMappingMethod.choices,
+		default=UXFrameworkMappingMethod.MANUAL,
 	)
 	status = models.CharField(
 		max_length=20,
-		choices=FrameworkMappingStatus.choices,
-		default=FrameworkMappingStatus.SUGGESTED,
+		choices=UXFrameworkMappingStatus.choices,
+		default=UXFrameworkMappingStatus.SUGGESTED,
 	)
 	score = models.FloatField(
 		null=True,
@@ -1640,7 +1640,7 @@ class CanonicalThemeToFrameworkMapping(models.Model):
 		verbose_name_plural = "Canonical Theme to Framework Mappings"
 
 	def clean(self):
-		if self.status == FrameworkMappingStatus.APPROVED and not self.approved_at:
+		if self.status == UXFrameworkMappingStatus.APPROVED and not self.approved_at:
 			self.approved_at = timezone.now()
 
 	def __str__(self) -> str:

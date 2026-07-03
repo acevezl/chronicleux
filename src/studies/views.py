@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponseNotAllowed
 from django.views.decorators.http import require_POST
 from django.urls import reverse
 from django.utils import timezone
@@ -32,6 +32,7 @@ from studies.services._sentiment_summarizer import summarize_study_sentiment
 from studies.services._theme_summarizer import consolidate_themes_on_study
 from studies.services._issue_summarizer import consolidate_issues_on_study
 from studies.services.ux_recommendation_builder import build_ux_recommendation_report
+from studies.services.issue_framework_mapper import map_all_canonical_issues_to_framework_criteria
 
 from .filters import (
 	filter_diary_entries, 
@@ -56,10 +57,13 @@ from .models import (
 	AnalysisStatus, 
 	CanonicalIssue, 
 	CanonicalTheme, 
+	CanonicalIssueToFrameworkMapping,
+	CanonicalThemeToFrameworkMapping,
 	Entry, 
 	EntryAnalysis, 
 	EntryEvaluation,
 	EntrySource, 
+	UXFrameworkMappingStatus,
 	MembershipRole, 
 	SentimentCategory, 
 	Study, 
@@ -71,6 +75,7 @@ from .models import (
 	UXFramework,
 	UXFrameworkCriterion,
 	UXFrameworkType,
+	UXRecommendationReport,
 )
 
 from .helpers import (
@@ -87,6 +92,7 @@ from .helpers import (
 	sync_canonical_issue_framework_mappings,
 	sync_canonical_theme_framework_mappings,
 	user_can_evaluate_study,
+	parse_csv_int_ids,
 )
 
 # ----------------------- STUDIES ----------------------- #
@@ -1517,6 +1523,31 @@ def canonical_issue_update(request, issue_pk):
                 user=request.user,
             )
 
+            approved_pending_mapping_ids = parse_csv_int_ids(
+                request.POST.get("approved_pending_mapping_ids")
+            )
+            rejected_pending_mapping_ids = parse_csv_int_ids(
+                request.POST.get("rejected_pending_mapping_ids")
+            )
+
+            if approved_pending_mapping_ids:
+                CanonicalIssueToFrameworkMapping.objects.filter(
+                    issue=issue,
+                    pk__in=approved_pending_mapping_ids,
+                    status=UXFrameworkMappingStatus.SUGGESTED,
+                ).update(
+                    status=UXFrameworkMappingStatus.APPROVED,
+                )
+
+            if rejected_pending_mapping_ids:
+                CanonicalIssueToFrameworkMapping.objects.filter(
+                    issue=issue,
+                    pk__in=rejected_pending_mapping_ids,
+                    status=UXFrameworkMappingStatus.SUGGESTED,
+                ).update(
+                    status=UXFrameworkMappingStatus.REJECTED,
+                )
+
             messages.success(request, "Canonical issue updated.")
             return redirect("canonical_issue_catalogue_list")
     else:
@@ -1528,10 +1559,11 @@ def canonical_issue_update(request, issue_pk):
         {
             "issue": issue,
             "form": form,
-            "page_title_heroicon":"exclamation-triangle",
+            "page_title_heroicon": "exclamation-triangle",
             "page_title": "Edit Canonical Issue",
             "page_subtitle": "Update and maintain reusable canonical issues for machine and evaluator analysis.",
             "submit_label": "Save issue",
+            "pending_framework_mappings": form.pending_framework_mappings,
         },
     )
 
@@ -2336,32 +2368,96 @@ def ux_framework_import(request):
 
 
 # ------------------------ #
-# UX Recommendation Report #
+# UX RECOMMENDATION REPORT #
 # ------------------------ #
 @login_required
 def ux_recommendation_report(request, study_pk, run_pk):
-    study = get_object_or_404(Study, pk=study_pk)
+	study = get_object_or_404(Study, pk=study_pk)
 
-    run = get_object_or_404(
-        StudyAnalysis.objects.select_related("study"),
-        pk=run_pk,
-        study=study,
-    )
+	run = get_object_or_404(
+		StudyAnalysis.objects
+		.select_related("study", "created_by")
+		.prefetch_related(
+			"theme_summaries__theme",
+			"issue_summaries__issue",
+		),
+		pk=run_pk,
+		study=study,
+	)
 
-    if not user_can_evaluate_study(request.user, study):
-        return HttpResponseForbidden()
+	if not user_can_evaluate_study(request.user, study):
+		return HttpResponseForbidden()
 
-    report = build_ux_recommendation_report(run)
+	report_data = build_ux_recommendation_report(run)
 
-    return render(
-        request,
-        "studies/ux_recommendation_report.html",
-        {
-            "study": study,
-            "run": run,
-            "report": report,
-            "page_title_heroicon": "light-bulb",
-            "page_title": "UX Recommendations Report",
-            "page_subtitle": "Framework-grounded recommendations generated from detected themes and issues.",
-        },
-    )
+	report, created = UXRecommendationReport.objects.update_or_create(
+		run=run,
+		defaults={
+			"generated_by": request.user,
+			"report_data": report_data,
+		},
+	)
+
+	return render(
+		request,
+		"studies/ux_recommendation_report.html",
+		{
+			"study": study,
+			"run": run,
+			"report": report,
+			"report_data": report_data,
+			"created": created,
+			"page_title_heroicon": "light-bulb",
+			"page_title": "UX Recommendations Report",
+			"page_subtitle": "Framework-grounded recommendations generated from detected themes and issues.",
+		},
+	)
+
+# --------------------------- #
+# ISSUE TO FRAMEWORK AUTO-MAP #
+# --------------------------- #
+@login_required
+def canonical_issue_framework_auto_map(request):
+
+	if request.method != "POST":
+		return HttpResponseNotAllowed(["POST"])
+
+	if not request.user.is_staff:
+		return HttpResponseForbidden()
+
+	result = map_all_canonical_issues_to_framework_criteria(
+		min_score=0.25,
+		max_mappings_per_issue=8,
+		created_by=request.user,
+		update_existing_system_suggestions=True,
+	)
+
+	if result.errors:
+		messages.warning(
+			request,
+			(
+				"Issue-to-framework mapping completed with "
+				f"{len(result.errors)} error(s). "
+				"Some mappings may not have been generated."
+			),
+		)
+	else:
+		messages.success(
+			request,
+			"Issue-to-framework mapping completed successfully.",
+		)
+
+	messages.info(
+		request,
+		(
+			f"Issues scanned: {result.issues_scanned}. "
+			f"Criteria scanned: {result.criteria_scanned}. "
+			f"Candidates scored: {result.candidates_scored}. "
+			f"Mappings created: {result.mappings_created}. "
+			f"Mappings updated: {result.mappings_updated}. "
+			f"Existing mappings skipped: {result.mappings_skipped_existing}. "
+			f"Below threshold: {result.mappings_below_threshold}."
+		),
+	)
+
+	return redirect("canonical_issue_catalogue_list")

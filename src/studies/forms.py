@@ -11,11 +11,11 @@ from .models import (
     EntryEvaluation,
     EntryEvaluationIssue,
     EntryEvaluationTheme,
-    FrameworkMappingStatus,
     SentimentCategory,
     Study,
     UXFramework,
     UXFrameworkCriterion,
+    UXFrameworkMappingStatus,
 )
 
 
@@ -218,7 +218,7 @@ class CanonicalThemeForm(forms.ModelForm):
 				UXFrameworkCriterion.objects
 				.filter(
 					theme_mappings__theme=self.instance,
-					theme_mappings__status=FrameworkMappingStatus.APPROVED,
+					theme_mappings__status=UXFrameworkMappingStatus.APPROVED,
 				)
 				.distinct()
 			)
@@ -319,17 +319,35 @@ class CanonicalIssueForm(forms.ModelForm):
             .order_by("framework__name", "code", "name")
         )
 
+        self.pending_framework_mappings = CanonicalIssueToFrameworkMapping.objects.none()
+
         if self.instance and self.instance.pk:
             if isinstance(self.instance.aliases, list):
                 self.initial["aliases"] = ", ".join(self.instance.aliases)
 
+            # Approved mappings
             self.initial["framework_criteria"] = (
                 UXFrameworkCriterion.objects
                 .filter(
                     issue_mappings__issue=self.instance,
-                    issue_mappings__status=FrameworkMappingStatus.APPROVED,
+                    issue_mappings__status=UXFrameworkMappingStatus.APPROVED,
                 )
                 .distinct()
+            )
+
+            # Suggested by NLP
+            self.pending_framework_mappings = (
+                CanonicalIssueToFrameworkMapping.objects
+                .filter(
+                    issue=self.instance,
+                    status=UXFrameworkMappingStatus.SUGGESTED,
+                )
+                .select_related("criterion", "criterion__framework")
+                .order_by(
+                    "criterion__framework__name",
+                    "criterion__code",
+                    "criterion__name",
+                )
             )
 
     def clean_aliases(self):

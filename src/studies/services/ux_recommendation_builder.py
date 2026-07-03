@@ -5,14 +5,14 @@ from studies.models import (
     CanonicalThemeToFrameworkMapping,
     EntryAnalysisIssue,
     EntryAnalysisTheme,
-    FrameworkMappingStatus,
     StudyAnalysis,
+    UXFrameworkMappingStatus,
 )
 
 
 def build_ux_recommendation_report(run: StudyAnalysis) -> dict:
     approved_issue_mappings = CanonicalIssueToFrameworkMapping.objects.filter(
-        status=FrameworkMappingStatus.APPROVED,
+        status=UXFrameworkMappingStatus.APPROVED,
         criterion__is_active=True,
         issue__is_active=True,
     ).select_related(
@@ -22,7 +22,7 @@ def build_ux_recommendation_report(run: StudyAnalysis) -> dict:
     )
 
     approved_theme_mappings = CanonicalThemeToFrameworkMapping.objects.filter(
-        status=FrameworkMappingStatus.APPROVED,
+        status=UXFrameworkMappingStatus.APPROVED,
         criterion__is_active=True,
         theme__is_active=True,
     ).select_related(

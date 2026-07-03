@@ -12,8 +12,8 @@ from .models import (
 	CanonicalThemeToFrameworkMapping,
 	Entry,
 	EntrySource,
-	FrameworkMappingMethod,
-    FrameworkMappingStatus,
+	UXFrameworkMappingMethod,
+    UXFrameworkMappingStatus,
 	MembershipRole,
 	SentimentCategory,
 	StudyMembership,
@@ -790,48 +790,40 @@ def normalize_ux_framework_type(value):
 	return value
 
 
-# UX FRAMEWORK: MAP ISSUE TO CRITERIA
+# UX FRAMEWORK: MAP ISSUE TO CRITERIA nth version now manages only APPROVED b/c the suggested must stay until approved or rejected
 def sync_canonical_issue_framework_mappings(issue, framework_criteria, user):
     selected_criterion_ids = set(
         framework_criteria.values_list("id", flat=True)
     )
 
-    existing_mappings = CanonicalIssueToFrameworkMapping.objects.filter(
+    approved_mappings = CanonicalIssueToFrameworkMapping.objects.filter(
         issue=issue,
+        status=UXFrameworkMappingStatus.APPROVED,
     )
 
-    existing_criterion_ids = set(
-        existing_mappings.values_list("criterion_id", flat=True)
+    existing_approved_criterion_ids = set(
+        approved_mappings.values_list("criterion_id", flat=True)
     )
 
-    criterion_ids_to_remove = existing_criterion_ids - selected_criterion_ids
-    criterion_ids_to_add = selected_criterion_ids - existing_criterion_ids
-    criterion_ids_to_update = selected_criterion_ids & existing_criterion_ids
+    criterion_ids_to_remove = existing_approved_criterion_ids - selected_criterion_ids
+    criterion_ids_to_add_or_update = selected_criterion_ids
 
     if criterion_ids_to_remove:
-        existing_mappings.filter(
+        approved_mappings.filter(
             criterion_id__in=criterion_ids_to_remove,
         ).delete()
 
-    for criterion_id in criterion_ids_to_add:
-        CanonicalIssueToFrameworkMapping.objects.create(
+    for criterion_id in criterion_ids_to_add_or_update:
+        CanonicalIssueToFrameworkMapping.objects.update_or_create(
             issue=issue,
             criterion_id=criterion_id,
-            method=FrameworkMappingMethod.MANUAL,
-            status=FrameworkMappingStatus.APPROVED,
-            created_by=user,
-            approved_by=user,
-            approved_at=timezone.now(),
-            rationale="Manually mapped from the canonical issue catalogue.",
-        )
-
-    if criterion_ids_to_update:
-        existing_mappings.filter(
-            criterion_id__in=criterion_ids_to_update,
-        ).update(
-            status=FrameworkMappingStatus.APPROVED,
-            approved_by=user,
-            approved_at=timezone.now(),
+            defaults={
+                "method": UXFrameworkMappingMethod.MANUAL,
+                "status": UXFrameworkMappingStatus.APPROVED,
+                "approved_by": user,
+                "approved_at": timezone.now(),
+                "rationale": "Manually mapped from the canonical issue catalogue.",
+            },
         )
 
 # UX FRAMEWORK: MAP THEME TO CRITERIA
@@ -861,8 +853,8 @@ def sync_canonical_theme_framework_mappings(theme, framework_criteria, user):
 		CanonicalThemeToFrameworkMapping.objects.create(
 			theme=theme,
 			criterion_id=criterion_id,
-			method=FrameworkMappingMethod.MANUAL,
-			status=FrameworkMappingStatus.APPROVED,
+			method=UXFrameworkMappingMethod.MANUAL,
+			status=UXFrameworkMappingStatus.APPROVED,
 			created_by=user,
 			approved_by=user,
 			approved_at=timezone.now(),
@@ -873,7 +865,28 @@ def sync_canonical_theme_framework_mappings(theme, framework_criteria, user):
 		existing_mappings.filter(
 			criterion_id__in=criterion_ids_to_update,
 		).update(
-			status=FrameworkMappingStatus.APPROVED,
+			status=UXFrameworkMappingStatus.APPROVED,
 			approved_by=user,
 			approved_at=timezone.now(),
 		)
+
+
+# UX FRAMEWORK: CSV separator helper for hidden fields with suggested mappings
+def parse_csv_int_ids(value):
+    if not value:
+        return []
+
+    ids = []
+
+    for raw_id in value.split(","):
+        raw_id = raw_id.strip()
+
+        if not raw_id:
+            continue
+
+        try:
+            ids.append(int(raw_id))
+        except ValueError:
+            continue
+
+    return ids

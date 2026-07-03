@@ -28,6 +28,13 @@
             </div>
             <div class="flex justify-end gap-3">
                 <a
+                    href="{% url 'ux_recommendation_report' study.pk run.pk %}"
+                    class="button-PRIMARY"
+                >
+                    {% heroicon_outline "light-bulb" class="h-4 w-4 shrink-0" %}
+                    UX Recommendations
+                </a>
+                <a
                 href="{% url 'analysis_runs' study.id %}"
                 class="button-TERTIARY"
                 >

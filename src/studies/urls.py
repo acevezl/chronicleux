@@ -48,6 +48,7 @@ urlpatterns = [
     path("catalogues/canonical-issues/<int:issue_pk>/delete/", views.canonical_issue_delete, name="canonical_issue_delete"),
     path("catalogues/canonical-issues/import/", views.canonical_issue_import, name="canonical_issue_import"),
     path("catalogues/canonical-issues/partial/", views.canonical_issue_catalogue_partial, name="canonical_issue_catalogue_partial"),
+    path("catalogues/canonical-issues/map-frameworks/", views.canonical_issue_framework_auto_map, name="canonical_issue_framework_auto_map"),
     
     # Frameworks
     path("catalogues/frameworks/", views.ux_framework_catalogue_list, name="ux_framework_catalogue_list"),
@@ -67,6 +68,7 @@ urlpatterns = [
     path("catalogues/frameworks/<int:framework_pk>/framework-criteria/<int:criterion_pk>/delete/", views.ux_framework_criterion_delete, name="ux_framework_criterion_delete"),
 
     # UX Recommendations Report
-    path("studies/<int:study_pk>/analysis/<int:run_pk>/recommendations/", views.ux_recommendation_report, name="ux_recommendation_report"),
+    path("<int:study_pk>/machine-analysis/<int:run_pk>/recommendations/", views.ux_recommendation_report, name="ux_recommendation_report"),
+
     
 ]
