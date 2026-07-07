@@ -41,9 +41,9 @@ staticfiles/
 htmlcov/
 .pytest_cache/
 
-# Migrations (optional — see note below)
-# **/migrations/*.py
-# !**/migrations/__init__.py
+# Migrations
+**/migrations/*.py
+!**/migrations/__init__.py
 
 # Type checkers
 .mypy_cache/
@@ -56,3 +56,6 @@ dist/
 # Personal Workspace
 *.code-workspace
 *.zip
+
+# Node 
+node_modules/
