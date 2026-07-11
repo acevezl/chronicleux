@@ -79,10 +79,12 @@ from .models import (
 )
 
 from .helpers import (
+	build_participant_analysis_data,
 	import_canonical_themes,
 	import_canonical_issues,
 	import_rows_into_study,
 	import_ux_frameworks,
+	parse_csv_int_ids,
 	parse_uploaded_canonical_theme_file,
 	parse_uploaded_canonical_issue_file,
 	parse_uploaded_file,
@@ -92,7 +94,6 @@ from .helpers import (
 	sync_canonical_issue_framework_mappings,
 	sync_canonical_theme_framework_mappings,
 	user_can_evaluate_study,
-	parse_csv_int_ids,
 )
 
 # ----------------------- STUDIES ----------------------- #
@@ -860,14 +861,18 @@ def machine_analysis_details(request, study_pk, run_pk):
 	
 	context = filter_analysis_entries(request, study, run)
 
+	participant_analysis_data = build_participant_analysis_data(
+
+		study,
+		run,
+	)
+
 	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
 
 	created_at = date_format(
 		timezone.localtime(study.created_at),
 		"j M Y, H:i"
 	)
-
-	completed_human_evaluation_count = 0
 
 	completed_human_evaluation_count = (
 		EntryEvaluation.objects
@@ -889,6 +894,7 @@ def machine_analysis_details(request, study_pk, run_pk):
 		"page_subtitle": f"Owner: {owner_name}, Created on: {created_at}",
 		"study": study,
 		"run": run,
+		"participant_analysis_data": participant_analysis_data,
 		"pending_human_evaluation_count":pending_human_evaluation_count,
 		"completed_human_evaluation_count":completed_human_evaluation_count,
 		"machine_analysis_entries_filter_url": reverse(

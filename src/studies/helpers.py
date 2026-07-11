@@ -1,9 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
-from django.core.paginator import Paginator
 from django.db import transaction
-from django.utils.dateparse import parse_datetime
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
+from django.utils.formats import date_format
 
 from .models import (
 	CanonicalIssue,
@@ -12,6 +12,7 @@ from .models import (
 	CanonicalThemeToFrameworkMapping,
 	Entry,
 	EntrySource,
+	EntryAnalysis,
 	UXFrameworkMappingMethod,
     UXFrameworkMappingStatus,
 	MembershipRole,
@@ -890,3 +891,208 @@ def parse_csv_int_ids(value):
             continue
 
     return ids
+
+
+# ANALYSIS BY PARTICIPANT: BUILD DATA
+def build_participant_analysis_data(study, run):
+	entry_analyses = (
+		EntryAnalysis.objects
+		.filter(
+			run=run,
+			entry__study=study,
+		)
+		.select_related(
+			"entry",
+			"entry__participant",
+		)
+		.prefetch_related(
+			"theme_assignments__theme",
+			"issue_assignments__issue",
+		)
+		.order_by(
+			"entry__participant_display_name",
+			"entry__created_at",
+			"entry__pk",
+		)
+	)
+
+	participants = {}
+
+	for entry_analysis in entry_analyses:
+		entry = entry_analysis.entry
+
+		# Use a stable identity rather than the display name alone, because
+		# two participants could theoretically share the same name.
+		if entry.participant_id:
+			participant_key = f"internal-{entry.participant_id}"
+		elif entry.participant_external_id:
+			participant_key = f"external-{entry.participant_external_id}"
+		elif entry.participant_email:
+			participant_key = f"email-{entry.participant_email.lower()}"
+		else:
+			participant_key = (
+				f"name-{entry.participant_display_name.strip().lower()}"
+			)
+
+		participant = participants.setdefault(
+			participant_key,
+			{
+				"key": participant_key,
+				"name": entry.participant_display_name,
+				"entries": [],
+			},
+		)
+
+		local_created_at = timezone.localtime(entry.created_at)
+
+		themes = []
+
+		for assignment in entry_analysis.theme_assignments.all():
+			themes.append({
+				"id": assignment.theme_id,
+				"name": assignment.theme.name,
+				"confidence_score": assignment.confidence_score,
+			})
+
+		issues = []
+
+		for assignment in entry_analysis.issue_assignments.all():
+			issues.append({
+				"id": assignment.issue_id,
+				"name": assignment.issue.name,
+				"confidence_score": assignment.confidence_score,
+
+				# The associated score is the sentiment of the entry where
+				# the issue was detected.
+				"sentiment_score": entry_analysis.sentiment_score,
+				"sentiment_label": entry_analysis.sentiment_label,
+			})
+
+		participant["entries"].append({
+			"entry_id": entry.pk,
+			"date": local_created_at.date().isoformat(),
+			"date_label": date_format(local_created_at, "j M Y"),
+			"datetime_label": date_format(
+				local_created_at,
+				"j M Y, H:i",
+			),
+			"sentiment_score": entry_analysis.sentiment_score,
+			"sentiment_label": entry_analysis.sentiment_label,
+			"themes": themes,
+			"issues": issues,
+		})
+
+	participant_analysis_data = []
+
+	for participant in participants.values():
+		entries = participant["entries"]
+
+		theme_names = sorted({
+			theme["name"]
+			for entry in entries
+			for theme in entry["themes"]
+		})
+
+		issue_names = sorted({
+			issue["name"]
+			for entry in entries
+			for issue in entry["issues"]
+		})
+
+		theme_name_indexes = {
+			name: index
+			for index, name in enumerate(theme_names)
+		}
+
+		issue_name_indexes = {
+			name: index
+			for index, name in enumerate(issue_names)
+		}
+
+		sentiment_labels = []
+		sentiment_scores = []
+		sentiment_points = []
+		theme_points = []
+		issue_points = []
+
+		for entry_index, entry in enumerate(entries):
+			sentiment_labels.append(entry["date_label"])
+			sentiment_scores.append(entry["sentiment_score"])
+
+			sentiment_points.append({
+				"x": entry_index,
+				"y": entry["sentiment_score"],
+				"date": entry["date"],
+				"date_label": entry["date_label"],
+				"datetime": entry["datetime_label"],
+				"sentiment_label": entry["sentiment_label"],
+				"entry_id": entry["entry_id"],
+			})
+
+			for theme in entry["themes"]:
+				confidence_score = theme["confidence_score"]
+
+				theme_points.append({
+					"x": entry_index,
+					"y": theme_name_indexes[theme["name"]],
+					"r": 7 + (
+						max(
+							0,
+							min(1, confidence_score),
+						) * 7
+						if confidence_score is not None
+						else 0
+					),
+					"date": entry["date"],
+					"date_label": entry["date_label"],
+					"datetime": entry["datetime_label"],
+					"name": theme["name"],
+					"confidence_score": confidence_score,
+					"entry_id": entry["entry_id"],
+				})
+
+			for issue in entry["issues"]:
+				confidence_score = issue["confidence_score"]
+
+				issue_points.append({
+					"x": entry_index,
+					"y": issue_name_indexes[issue["name"]],
+					"r": 7 + (
+						max(
+							0,
+							min(1, confidence_score),
+						) * 7
+						if confidence_score is not None
+						else 0
+					),
+					"date": entry["date"],
+					"date_label": entry["date_label"],
+					"datetime": entry["datetime_label"],
+					"name": issue["name"],
+					"confidence_score": confidence_score,
+					"sentiment_score": issue["sentiment_score"],
+					"sentiment_label": issue["sentiment_label"],
+					"entry_id": entry["entry_id"],
+				})
+
+		participant_analysis_data.append({
+			"key": participant["key"],
+			"name": participant["name"],
+			"entry_count": len(entries),
+			"date_labels": sentiment_labels,
+			"sentiment": {
+				"labels": sentiment_labels,
+				"scores": sentiment_scores,
+				"points": sentiment_points,
+			},
+			"themes": {
+				"labels": theme_names,
+				"points": theme_points,
+			},
+			"issues": {
+				"labels": issue_names,
+				"points": issue_points,
+			},
+		})
+
+	return participant_analysis_data

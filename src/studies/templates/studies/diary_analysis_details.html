@@ -120,6 +120,19 @@
                     <input
                         type="radio"
                         name="analysis_detail_tab"
+                        value="participant_analysis"
+                        class="peer sr-only"
+                    >
+
+                    <span class="tab-menu-item-label">
+                        Analysis by Participant
+                    </span>
+                </label>
+
+                <label class="tab-menu-item">
+                    <input
+                        type="radio"
+                        name="analysis_detail_tab"
                         value="entries"
                         class="peer sr-only"
                     >
@@ -157,6 +170,11 @@
             <!-- ISSUE DETECTION -->
             <section data-analysis-tab-panel="issue_detection" class="hidden">
                 {% include "studies/partials/_analysis_issue.html" with run=run study=study %}
+            </section>
+
+            <!-- PARTICIPANT ANALYSIS -->
+            <section data-analysis-tab-panel="participant_analysis" class="hidden">
+                {% include "studies/partials/_analysis_by_participant.html" with run=run study=study %}
             </section>
 
             <!-- ENTRIES -->

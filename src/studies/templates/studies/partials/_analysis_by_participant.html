@@ -1,0 +1,1450 @@
+{% load heroicons %}
+
+<section class="space-y-4">
+
+    <!-- SUMMARY -->
+    <div class="main-card overflow-hidden">
+
+        <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+            <div class="flex flex-col">
+                <h4 class="md-card-title">
+                    {% heroicon_outline "users" %}
+                    Analysis by Participant
+                </h4>
+
+                <p class="xs-label">
+                    Participant-level view of sentiment evolution, extracted themes, and detected issues across the study timeline.
+                </p>
+            </div>
+
+            <div class="mt-4 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+
+                    <div>
+                        <span class="xs-label uppercase">
+                            Participants Analyzed
+                        </span>
+
+                        <div class="mt-2">
+                            <span class="message-default">
+                                {{ participant_analysis_data|length }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div>
+                            <dt class="xs-label uppercase">
+                                Started
+                            </dt>
+
+                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                                {{ run.started_at|date:"M d, Y H:i"|default:"—" }}
+                            </dd>
+                        </div>
+
+                        <div>
+                            <dt class="xs-label uppercase">
+                                Completed
+                            </dt>
+
+                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                                {{ run.completed_at|date:"M d, Y H:i"|default:"—" }}
+                            </dd>
+                        </div>
+                    </dl>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PARTICIPANT ANALYSIS -->
+    <div class="main-card overflow-hidden">
+
+        <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+            <h4 class="card-summary-title">
+                {% heroicon_outline "chart-bar-square" %}
+                Participant Evolution
+            </h4>
+
+            <p class="xs-label">
+                Expand a participant to review changes in sentiment, extracted themes, and detected issues across their diary entries.
+            </p>
+        </div>
+
+        <div class="space-y-4 p-4">
+
+            {% if participant_analysis_data %}
+
+                {% for participant in participant_analysis_data %}
+
+                    <details
+                        class="main-card group overflow-hidden"
+                        {% if forloop.first %}open{% endif %}
+                    >
+
+                        <!-- PARTICIPANT HEADER -->
+                        <summary class="flex cursor-pointer list-none items-center justify-between gap-4 bg-gray-50 dark:bg-gray-800 p-4">
+
+                            <div class="flex min-w-0 items-center gap-3">
+
+                                <div class="flex size-9 shrink-0 items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">
+                                    {% heroicon_outline "user" %}
+                                </div>
+
+                                <div class="min-w-0">
+                                    <h5 class="sm-label truncate">
+                                        {{ participant.name|default:"Unnamed participant" }}
+                                    </h5>
+
+                                    <p class="xs-label">
+                                        {{ participant.entry_count }}
+                                        entr{{ participant.entry_count|pluralize:"y,ies" }}
+                                        analyzed
+                                    </p>
+                                </div>
+
+                            </div>
+
+                            <div class="flex shrink-0 items-center gap-2">
+
+                                <span class="message-default">
+                                    View analysis
+                                </span>
+
+                                <span class="text-gray-500 dark:text-gray-400 transition-transform group-open:rotate-180">
+                                    {% heroicon_outline "chevron-down" %}
+                                </span>
+
+                            </div>
+
+                        </summary>
+
+                        <!-- PARTICIPANT CHARTS -->
+                        <div class="border-t border-gray-200 dark:border-gray-700 p-4">
+
+                            <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
+
+                                <!-- SENTIMENT EVOLUTION -->
+                                <div class="main-card overflow-hidden">
+
+                                    <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                                        <h5 class="sm-label">
+                                            Sentiment Evolution
+                                        </h5>
+
+                                        <p class="xs-label">
+                                            Average detected sentiment across this participant's diary timeline.
+                                        </p>
+                                    </div>
+
+                                    <div class="p-4">
+
+                                        {% if participant.sentiment.points %}
+
+                                            <div class="flex gap-2 pb-4">
+                                                <button
+                                                    type="button"
+                                                    data-participant-sentiment-scale="daily"
+                                                    data-participant-index="{{ forloop.counter0 }}"
+                                                    class="participant-sentiment-scale-btn rounded-sm px-3 py-1 text-xs font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
+                                                >
+                                                    Daily
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    data-participant-sentiment-scale="weekly"
+                                                    data-participant-index="{{ forloop.counter0 }}"
+                                                    class="participant-sentiment-scale-btn rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                >
+                                                    Weekly
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    data-participant-sentiment-scale="monthly"
+                                                    data-participant-index="{{ forloop.counter0 }}"
+                                                    class="participant-sentiment-scale-btn rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                >
+                                                    Monthly
+                                                </button>
+                                            </div>
+
+                                            <div class="h-96 rounded-sm border border-dashed border-gray-300 dark:border-gray-600 p-4 text-sm text-gray-500 dark:text-gray-400">
+
+                                                <div class="mb-4 flex items-start justify-between gap-4">
+                                                    <div>
+                                                        <h3 class="text-sm md-card-title">
+                                                            Sentiment score evolution over time
+                                                        </h3>
+
+                                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                            Average detected sentiment by entry submission date.
+                                                        </p>
+                                                    </div>
+
+                                                    <div class="flex gap-1 text-right">
+                                                        <div class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                            Entries analyzed:
+                                                        </div>
+
+                                                        <div class="text-xs md-card-title">
+                                                            {{ participant.entry_count }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="relative h-72 w-full overflow-hidden">
+                                                    <canvas
+                                                        id="participantSentimentChart{{ forloop.counter0 }}"
+                                                        aria-label="Sentiment evolution for {{ participant.name }}"
+                                                        role="img"
+                                                    ></canvas>
+                                                </div>
+
+                                            </div>
+
+                                        {% else %}
+
+                                            <div class="flex h-96 items-center justify-center rounded-sm border border-dashed border-gray-300 dark:border-gray-700 p-4 text-center">
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                    No sentiment evolution data is available for this participant.
+                                                </p>
+                                            </div>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                </div>
+
+                                <!-- THEME EXTRACTION -->
+                                <div class="main-card overflow-hidden">
+
+                                    <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                                        <h5 class="sm-label">
+                                            Theme Extraction
+                                        </h5>
+
+                                        <p class="xs-label">
+                                            Theme frequency across this participant's diary timeline.
+                                        </p>
+                                    </div>
+
+                                    <div class="p-4">
+
+                                        {% if participant.themes.points %}
+
+                                            <div class="flex gap-2 pb-4">
+                                                <button
+                                                    type="button"
+                                                    data-participant-theme-scale="daily"
+                                                    data-participant-index="{{ forloop.counter0 }}"
+                                                    class="participant-theme-scale-btn rounded-sm px-3 py-1 text-xs font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
+                                                >
+                                                    Daily
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    data-participant-theme-scale="weekly"
+                                                    data-participant-index="{{ forloop.counter0 }}"
+                                                    class="participant-theme-scale-btn rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                >
+                                                    Weekly
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    data-participant-theme-scale="monthly"
+                                                    data-participant-index="{{ forloop.counter0 }}"
+                                                    class="participant-theme-scale-btn rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                >
+                                                    Monthly
+                                                </button>
+                                            </div>
+
+                                            <div class="h-96 rounded-sm border border-dashed border-gray-300 dark:border-gray-600 p-4 text-sm text-gray-500 dark:text-gray-400">
+
+                                                <div class="mb-4 flex items-start justify-between gap-4">
+                                                    <div>
+                                                        <h3 class="text-sm md-card-title">
+                                                            Theme detection timeline
+                                                        </h3>
+
+                                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                            Bubble size shows how often each theme appeared in each time period.
+                                                        </p>
+                                                    </div>
+
+                                                    <div class="flex gap-1 text-right">
+                                                        <div class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                            Entries analyzed:
+                                                        </div>
+
+                                                        <div class="text-xs md-card-title">
+                                                            {{ participant.entry_count }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="relative h-72 w-full overflow-hidden">
+                                                    <canvas
+                                                        id="participantThemeChart{{ forloop.counter0 }}"
+                                                        aria-label="Theme extraction timeline for {{ participant.name }}"
+                                                        role="img"
+                                                    ></canvas>
+                                                </div>
+
+                                            </div>
+
+                                        {% else %}
+
+                                            <div class="flex h-96 items-center justify-center rounded-sm border border-dashed border-gray-300 dark:border-gray-700 p-4 text-center">
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                    No theme detection data is available for this participant.
+                                                </p>
+                                            </div>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                </div>
+
+                                <!-- ISSUE DETECTION -->
+                                <div class="main-card overflow-hidden">
+
+                                    <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+                                        <h5 class="sm-label">
+                                            Issue Detection
+                                        </h5>
+
+                                        <p class="xs-label">
+                                            Issue frequency and associated sentiment across this participant's diary timeline.
+                                        </p>
+                                    </div>
+
+                                    <div class="p-4">
+
+                                        {% if participant.issues.points %}
+
+                                            <div class="flex gap-2 pb-4">
+                                                <button
+                                                    type="button"
+                                                    data-participant-issue-scale="daily"
+                                                    data-participant-index="{{ forloop.counter0 }}"
+                                                    class="participant-issue-scale-btn rounded-sm px-3 py-1 text-xs font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
+                                                >
+                                                    Daily
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    data-participant-issue-scale="weekly"
+                                                    data-participant-index="{{ forloop.counter0 }}"
+                                                    class="participant-issue-scale-btn rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                >
+                                                    Weekly
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    data-participant-issue-scale="monthly"
+                                                    data-participant-index="{{ forloop.counter0 }}"
+                                                    class="participant-issue-scale-btn rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                                >
+                                                    Monthly
+                                                </button>
+                                            </div>
+
+                                            <div class="h-96 rounded-sm border border-dashed border-gray-300 dark:border-gray-600 p-4 text-sm text-gray-500 dark:text-gray-400">
+
+                                                <div class="mb-4 flex items-start justify-between gap-4">
+                                                    <div>
+                                                        <h3 class="text-sm md-card-title">
+                                                            Issue detection timeline
+                                                        </h3>
+
+                                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                            Bubble size shows how often each issue appeared in each time period.
+                                                        </p>
+                                                    </div>
+
+                                                    <div class="flex gap-1 text-right">
+                                                        <div class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                            Entries analyzed:
+                                                        </div>
+
+                                                        <div class="text-xs md-card-title">
+                                                            {{ participant.entry_count }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="relative h-72 w-full overflow-hidden">
+                                                    <canvas
+                                                        id="participantIssueChart{{ forloop.counter0 }}"
+                                                        aria-label="Issue detection timeline for {{ participant.name }}"
+                                                        role="img"
+                                                    ></canvas>
+                                                </div>
+
+                                            </div>
+
+                                        {% else %}
+
+                                            <div class="flex h-96 items-center justify-center rounded-sm border border-dashed border-gray-300 dark:border-gray-700 p-4 text-center">
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                    No issue detection data is available for this participant.
+                                                </p>
+                                            </div>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </details>
+
+                {% endfor %}
+
+            {% else %}
+
+                <div class="flex min-h-32 items-center justify-center rounded-md border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-6">
+                    <span class="text-sm text-gray-500 dark:text-gray-400 text-center">
+                        No participant-level analysis is available for this run.
+                    </span>
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    {{ participant_analysis_data|json_script:"participant-analysis-data" }}
+
+</section>
+
+<script>
+    (() => {
+        const dataElement = document.getElementById(
+            "participant-analysis-data"
+        );
+
+        if (!dataElement || typeof Chart === "undefined") {
+            return;
+        }
+
+        const participants = JSON.parse(dataElement.textContent);
+        const chartInstances = new Map();
+
+        const activeButtonClass = [
+            "text-white",
+            "bg-fuchsia-800",
+            "hover:bg-fuchsia-700",
+        ];
+
+        const inactiveButtonClass = [
+            "border",
+            "border-gray-300",
+            "dark:border-gray-600",
+            "text-gray-700",
+            "dark:text-gray-200",
+            "hover:bg-gray-100",
+            "dark:hover:bg-gray-800",
+        ];
+
+        const themeColors = [
+            "#2563ebcc",
+            "#7c3aedcc",
+            "#0891b2cc",
+            "#db2777cc",
+            "#ea580ccc",
+            "#16a34acc",
+            "#4f46e5cc",
+            "#9333eacc",
+            "#0f766ecc",
+            "#ca8a04cc",
+        ];
+
+        const issueColors = [
+            "#dc2626cc",
+            "#ea580ccc",
+            "#ca8a04cc",
+            "#7c3aedcc",
+            "#2563ebcc",
+            "#0891b2cc",
+            "#0f766ecc",
+            "#16a34acc",
+            "#db2777cc",
+            "#4f46e5cc",
+        ];
+
+        function parseDate(dateString) {
+            return new Date(`${dateString}T00:00:00`);
+        }
+
+        function getISOWeekKey(dateString) {
+            const date = parseDate(dateString);
+
+            const tempDate = new Date(Date.UTC(
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate()
+            ));
+
+            const dayNumber = tempDate.getUTCDay() || 7;
+
+            tempDate.setUTCDate(
+                tempDate.getUTCDate() + 4 - dayNumber
+            );
+
+            const yearStart = new Date(
+                Date.UTC(tempDate.getUTCFullYear(), 0, 1)
+            );
+
+            const weekNumber = Math.ceil(
+                (
+                    (
+                        tempDate - yearStart
+                    ) / 86400000 + 1
+                ) / 7
+            );
+
+            return `${
+                tempDate.getUTCFullYear()
+            }-W${
+                String(weekNumber).padStart(2, "0")
+            }`;
+        }
+
+        function getMonthKey(dateString) {
+            return dateString.slice(0, 7);
+        }
+
+        function getBucketKey(dateString, scale) {
+            if (scale === "weekly") {
+                return getISOWeekKey(dateString);
+            }
+
+            if (scale === "monthly") {
+                return getMonthKey(dateString);
+            }
+
+            return dateString;
+        }
+
+        function sentimentLabel(score) {
+            if (score === null || score === undefined) {
+                return "Not available";
+            }
+
+            if (score < -0.7) {
+                return "Very negative";
+            }
+
+            if (score < -0.2) {
+                return "Negative";
+            }
+
+            if (score < 0.2) {
+                return "Neutral";
+            }
+
+            if (score < 0.7) {
+                return "Positive";
+            }
+
+            return "Very positive";
+        }
+
+        function setActiveButton(buttons, activeScale, dataAttribute) {
+            buttons.forEach(button => {
+                const isActive = (
+                    button.dataset[dataAttribute] === activeScale
+                );
+
+                button.classList.remove(
+                    ...activeButtonClass,
+                    ...inactiveButtonClass
+                );
+
+                if (isActive) {
+                    button.classList.add(...activeButtonClass);
+                } else {
+                    button.classList.add(...inactiveButtonClass);
+                }
+            });
+        }
+
+        function getParticipantButtons(selector, participantIndex) {
+            return document.querySelectorAll(
+                `${selector}[data-participant-index="${participantIndex}"]`
+            );
+        }
+
+        function getTopLabels(points, nameField, limit = 10) {
+            const totals = {};
+
+            points.forEach(point => {
+                const label = point[nameField];
+
+                if (!label) {
+                    return;
+                }
+
+                totals[label] = (totals[label] || 0) + 1;
+            });
+
+            return Object.entries(totals)
+                .sort((a, b) => b[1] - a[1])
+                .map(([label]) => label)
+                .slice(0, limit);
+        }
+
+        function aggregatePoints(
+            points,
+            scale,
+            categoryLabels,
+            categoryField,
+            includeSentiment = false
+        ) {
+            const buckets = {};
+
+            points.forEach(point => {
+                const key = getBucketKey(point.date, scale);
+                const category = point[categoryField];
+
+                if (
+                    !category
+                    || !categoryLabels.includes(category)
+                ) {
+                    return;
+                }
+
+                if (!buckets[key]) {
+                    buckets[key] = {
+                        label: key,
+                        categories: {},
+                    };
+                }
+
+                if (!buckets[key].categories[category]) {
+                    buckets[key].categories[category] = {
+                        count: 0,
+                        sentimentTotal: 0,
+                        sentimentCount: 0,
+                    };
+                }
+
+                const categoryData =
+                    buckets[key].categories[category];
+
+                categoryData.count += 1;
+
+                if (
+                    includeSentiment
+                    && point.sentiment_score !== null
+                    && point.sentiment_score !== undefined
+                ) {
+                    categoryData.sentimentTotal +=
+                        point.sentiment_score;
+
+                    categoryData.sentimentCount += 1;
+                }
+            });
+
+            return Object.values(buckets).sort((a, b) =>
+                a.label.localeCompare(b.label)
+            );
+        }
+
+        function aggregateParticipantSentiment(participant, scale) {
+            const points = participant.sentiment.points || [];
+
+            if (scale === "daily") {
+                const dailyBuckets = {};
+
+                points.forEach(point => {
+                    const key = point.date;
+
+                    if (!dailyBuckets[key]) {
+                        dailyBuckets[key] = {
+                            label: key,
+                            entryCount: 0,
+                            sentimentTotal: 0,
+                            sentimentCount: 0,
+                        };
+                    }
+
+                    dailyBuckets[key].entryCount += 1;
+
+                    if (
+                        point.y !== null
+                        && point.y !== undefined
+                    ) {
+                        dailyBuckets[key].sentimentTotal += point.y;
+                        dailyBuckets[key].sentimentCount += 1;
+                    }
+                });
+
+                return Object.values(dailyBuckets)
+                    .sort((a, b) => a.label.localeCompare(b.label))
+                    .map(bucket => ({
+                        label: bucket.label,
+                        entry_count: bucket.entryCount,
+                        avg_sentiment: bucket.sentimentCount
+                            ? Number(
+                                (
+                                    bucket.sentimentTotal
+                                    / bucket.sentimentCount
+                                ).toFixed(4)
+                            )
+                            : null,
+                    }));
+            }
+
+            const buckets = {};
+
+            points.forEach(point => {
+                const key = getBucketKey(point.date, scale);
+
+                if (!buckets[key]) {
+                    buckets[key] = {
+                        label: key,
+                        entryCount: 0,
+                        sentimentTotal: 0,
+                        sentimentCount: 0,
+                    };
+                }
+
+                buckets[key].entryCount += 1;
+
+                if (
+                    point.y !== null
+                    && point.y !== undefined
+                ) {
+                    buckets[key].sentimentTotal += point.y;
+                    buckets[key].sentimentCount += 1;
+                }
+            });
+
+            return Object.values(buckets)
+                .sort((a, b) => a.label.localeCompare(b.label))
+                .map(bucket => ({
+                    label: bucket.label,
+                    entry_count: bucket.entryCount,
+                    avg_sentiment: bucket.sentimentCount
+                        ? Number(
+                            (
+                                bucket.sentimentTotal
+                                / bucket.sentimentCount
+                            ).toFixed(4)
+                        )
+                        : null,
+                }));
+        }
+
+        function createSentimentChart(participant, index) {
+            const canvas = document.getElementById(
+                `participantSentimentChart${index}`
+            );
+
+            if (
+                !canvas
+                || !participant.sentiment.points.length
+            ) {
+                return null;
+            }
+
+            const existingChart = Chart.getChart(canvas);
+
+            if (existingChart) {
+                existingChart.destroy();
+            }
+
+            const chart = new Chart(canvas, {
+                type: "line",
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: "Average sentiment",
+                            data: [],
+                            tension: 0.35,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            yAxisID: "y",
+                        },
+                        {
+                            label: "Entry count",
+                            data: [],
+                            tension: 0.35,
+                            borderWidth: 1,
+                            pointRadius: 2,
+                            pointHoverRadius: 4,
+                            yAxisID: "y1",
+                            borderDash: [4, 4],
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: "index",
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            position: "bottom",
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: "line",
+                                pointStyleWidth: 15,
+                            },
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label(context) {
+                                    const label =
+                                        context.dataset.label || "";
+
+                                    const value = context.parsed.y;
+
+                                    if (
+                                        label === "Average sentiment"
+                                        && value !== null
+                                    ) {
+                                        return [
+                                            `${label}: ${value.toFixed(4)}`,
+                                            `Classification: ${sentimentLabel(value)}`,
+                                        ];
+                                    }
+
+                                    return `${label}: ${value}`;
+                                },
+                            },
+                        },
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: "Date",
+                            },
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 90,
+                            },
+                        },
+                        y: {
+                            type: "linear",
+                            position: "left",
+                            min: -1,
+                            max: 1,
+                            title: {
+                                display: true,
+                                text: "Sentiment",
+                            },
+                            ticks: {
+                                stepSize: 0.5,
+                            },
+                        },
+                        y1: {
+                            type: "linear",
+                            position: "right",
+                            beginAtZero: true,
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            title: {
+                                display: true,
+                                text: "Entries",
+                            },
+                            ticks: {
+                                precision: 0,
+                                stepSize: 1,
+                            },
+                        },
+                    },
+                },
+            });
+
+            const buttons = getParticipantButtons(
+                ".participant-sentiment-scale-btn",
+                index
+            );
+
+            function updateChart(scale) {
+                const aggregatedData =
+                    aggregateParticipantSentiment(
+                        participant,
+                        scale
+                    );
+
+                chart.data.labels = aggregatedData.map(
+                    item => item.label
+                );
+
+                chart.data.datasets[0].data =
+                    aggregatedData.map(
+                        item => item.avg_sentiment
+                    );
+
+                chart.data.datasets[1].data =
+                    aggregatedData.map(
+                        item => item.entry_count
+                    );
+
+                chart.update();
+
+                setActiveButton(
+                    buttons,
+                    scale,
+                    "participantSentimentScale"
+                );
+            }
+
+            buttons.forEach(button => {
+                button.addEventListener("click", function () {
+                    updateChart(
+                        this.dataset.participantSentimentScale
+                    );
+                });
+            });
+
+            updateChart("daily");
+
+            return chart;
+        }
+
+        function buildThemeBubbleData(participant, scale) {
+            const themeLabels = getTopLabels(
+                participant.themes.points,
+                "name"
+            );
+
+            const buckets = aggregatePoints(
+                participant.themes.points,
+                scale,
+                themeLabels,
+                "name"
+            );
+
+            const maxCount = Math.max(
+                1,
+                ...buckets.flatMap(bucket =>
+                    themeLabels.map(themeLabel =>
+                        bucket.categories[themeLabel]?.count || 0
+                    )
+                )
+            );
+
+            const points = [];
+
+            buckets.forEach(bucket => {
+                themeLabels.forEach((themeLabel, themeIndex) => {
+                    const count = (
+                        bucket.categories[themeLabel]?.count || 0
+                    );
+
+                    if (!count) {
+                        return;
+                    }
+
+                    points.push({
+                        x: bucket.label,
+                        y: themeLabel,
+                        r: Math.max(
+                            4,
+                            Math.round((count / maxCount) * 18)
+                        ),
+                        count,
+                        bucketLabel: bucket.label,
+                        themeLabel,
+                        backgroundColor:
+                            themeColors[
+                                themeIndex % themeColors.length
+                            ],
+                    });
+                });
+            });
+
+            return {
+                labels: buckets.map(bucket => bucket.label),
+                categoryLabels: themeLabels,
+                points,
+            };
+        }
+
+        function buildIssueBubbleData(participant, scale) {
+            const issueLabels = getTopLabels(
+                participant.issues.points,
+                "name"
+            );
+
+            const buckets = aggregatePoints(
+                participant.issues.points,
+                scale,
+                issueLabels,
+                "name",
+                true
+            );
+
+            const maxCount = Math.max(
+                1,
+                ...buckets.flatMap(bucket =>
+                    issueLabels.map(issueLabel =>
+                        bucket.categories[issueLabel]?.count || 0
+                    )
+                )
+            );
+
+            const points = [];
+
+            buckets.forEach(bucket => {
+                issueLabels.forEach((issueLabel, issueIndex) => {
+                    const issueData =
+                        bucket.categories[issueLabel];
+
+                    if (!issueData?.count) {
+                        return;
+                    }
+
+                    const averageSentiment = (
+                        issueData.sentimentCount
+                            ? (
+                                issueData.sentimentTotal
+                                / issueData.sentimentCount
+                            )
+                            : null
+                    );
+
+                    points.push({
+                        x: bucket.label,
+                        y: issueLabel,
+                        r: Math.max(
+                            4,
+                            Math.round(
+                                (
+                                    issueData.count
+                                    / maxCount
+                                ) * 18
+                            )
+                        ),
+                        count: issueData.count,
+                        bucketLabel: bucket.label,
+                        issueLabel,
+                        averageSentiment,
+                        backgroundColor:
+                            issueColors[
+                                issueIndex % issueColors.length
+                            ],
+                    });
+                });
+            });
+
+            return {
+                labels: buckets.map(bucket => bucket.label),
+                categoryLabels: issueLabels,
+                points,
+            };
+        }
+
+        function createThemeChart(participant, index) {
+            const canvas = document.getElementById(
+                `participantThemeChart${index}`
+            );
+
+            if (
+                !canvas
+                || !participant.themes.points.length
+            ) {
+                return null;
+            }
+
+            const existingChart = Chart.getChart(canvas);
+
+            if (existingChart) {
+                existingChart.destroy();
+            }
+
+            const chart = new Chart(canvas, {
+                type: "bubble",
+                data: {
+                    datasets: [{
+                        label: "Detected themes",
+                        data: [],
+                        backgroundColor: [],
+                        borderColor: "#ffffff",
+                        borderWidth: 1,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 10,
+                            right: 10,
+                            bottom: 10,
+                            left: 10,
+                        },
+                    },
+                    interaction: {
+                        mode: "nearest",
+                        intersect: true,
+                    },
+                    plugins: {
+                        legend: {
+                            display: false,
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label(context) {
+                                    const point = context.raw;
+
+                                    return (
+                                        `${point.themeLabel} · `
+                                        + `${point.bucketLabel}: `
+                                        + `${point.count}`
+                                    );
+                                },
+                            },
+                        },
+                    },
+                    scales: {
+                        x: {
+                            type: "category",
+                            position: "bottom",
+                            offset: true,
+                            title: {
+                                display: true,
+                                text: "Date",
+                            },
+                            ticks: {
+                                display: true,
+                                autoSkip: false,
+                                maxRotation: 90,
+                            },
+                            grid: {
+                                display: true,
+                            },
+                        },
+                        y: {
+                            type: "category",
+                            position: "left",
+                            offset: true,
+                            reverse: true,
+                            title: {
+                                display: true,
+                                text: "Theme",
+                            },
+                            ticks: {
+                                display: true,
+                                autoSkip: false,
+                            },
+                            grid: {
+                                display: true,
+                            },
+                        },
+                    },
+                },
+            });
+
+            const buttons = getParticipantButtons(
+                ".participant-theme-scale-btn",
+                index
+            );
+
+            function updateChart(scale) {
+                const bubbleData = buildThemeBubbleData(
+                    participant,
+                    scale
+                );
+
+                chart.data.labels = bubbleData.labels;
+                chart.data.datasets[0].data = bubbleData.points;
+
+                chart.data.datasets[0].backgroundColor =
+                    bubbleData.points.map(
+                        point => point.backgroundColor
+                    );
+
+                chart.options.scales.x.labels =
+                    bubbleData.labels;
+
+                chart.options.scales.y.labels =
+                    bubbleData.categoryLabels;
+
+                chart.update();
+
+                setActiveButton(
+                    buttons,
+                    scale,
+                    "participantThemeScale"
+                );
+            }
+
+            buttons.forEach(button => {
+                button.addEventListener("click", function () {
+                    updateChart(
+                        this.dataset.participantThemeScale
+                    );
+                });
+            });
+
+            updateChart("daily");
+
+            return chart;
+        }
+
+        function createIssueChart(participant, index) {
+            const canvas = document.getElementById(
+                `participantIssueChart${index}`
+            );
+
+            if (
+                !canvas
+                || !participant.issues.points.length
+            ) {
+                return null;
+            }
+
+            const existingChart = Chart.getChart(canvas);
+
+            if (existingChart) {
+                existingChart.destroy();
+            }
+
+            const chart = new Chart(canvas, {
+                type: "bubble",
+                data: {
+                    datasets: [{
+                        label: "Detected issues",
+                        data: [],
+                        backgroundColor: [],
+                        borderColor: "#ffffff",
+                        borderWidth: 1,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 10,
+                            right: 10,
+                            bottom: 10,
+                            left: 10,
+                        },
+                    },
+                    interaction: {
+                        mode: "nearest",
+                        intersect: true,
+                    },
+                    plugins: {
+                        legend: {
+                            display: false,
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label(context) {
+                                    const point = context.raw;
+
+                                    const sentiment = (
+                                        point.averageSentiment === null
+                                            ? "Not available"
+                                            : (
+                                                point.averageSentiment
+                                                    .toFixed(2)
+                                                + " · "
+                                                + sentimentLabel(
+                                                    point.averageSentiment
+                                                )
+                                            )
+                                    );
+
+                                    return [
+                                        (
+                                            `${point.issueLabel} · `
+                                            + `${point.bucketLabel}: `
+                                            + `${point.count}`
+                                        ),
+                                        `Average sentiment: ${sentiment}`,
+                                    ];
+                                },
+                            },
+                        },
+                    },
+                    scales: {
+                        x: {
+                            type: "category",
+                            position: "bottom",
+                            offset: true,
+                            title: {
+                                display: true,
+                                text: "Date",
+                            },
+                            ticks: {
+                                display: true,
+                                autoSkip: false,
+                                maxRotation: 90,
+                            },
+                            grid: {
+                                display: true,
+                            },
+                        },
+                        y: {
+                            type: "category",
+                            position: "left",
+                            offset: true,
+                            reverse: true,
+                            title: {
+                                display: true,
+                                text: "Issue category",
+                            },
+                            ticks: {
+                                display: true,
+                                autoSkip: false,
+                            },
+                            grid: {
+                                display: true,
+                            },
+                        },
+                    },
+                },
+            });
+
+            const buttons = getParticipantButtons(
+                ".participant-issue-scale-btn",
+                index
+            );
+
+            function updateChart(scale) {
+                const bubbleData = buildIssueBubbleData(
+                    participant,
+                    scale
+                );
+
+                chart.data.labels = bubbleData.labels;
+                chart.data.datasets[0].data = bubbleData.points;
+
+                chart.data.datasets[0].backgroundColor =
+                    bubbleData.points.map(
+                        point => point.backgroundColor
+                    );
+
+                chart.options.scales.x.labels =
+                    bubbleData.labels;
+
+                chart.options.scales.y.labels =
+                    bubbleData.categoryLabels;
+
+                chart.update();
+
+                setActiveButton(
+                    buttons,
+                    scale,
+                    "participantIssueScale"
+                );
+            }
+
+            buttons.forEach(button => {
+                button.addEventListener("click", function () {
+                    updateChart(
+                        this.dataset.participantIssueScale
+                    );
+                });
+            });
+
+            updateChart("daily");
+
+            return chart;
+        }
+
+        function renderParticipantCharts(participant, index) {
+            if (chartInstances.has(index)) {
+                return;
+            }
+
+            const charts = [
+                createSentimentChart(participant, index),
+                createThemeChart(participant, index),
+                createIssueChart(participant, index),
+            ].filter(Boolean);
+
+            chartInstances.set(index, charts);
+        }
+
+        function renderVisibleCharts() {
+            participants.forEach((participant, index) => {
+                const canvas = (
+                    document.getElementById(
+                        `participantSentimentChart${index}`
+                    )
+                    || document.getElementById(
+                        `participantThemeChart${index}`
+                    )
+                    || document.getElementById(
+                        `participantIssueChart${index}`
+                    )
+                );
+
+                if (
+                    canvas
+                    && canvas.offsetParent !== null
+                ) {
+                    renderParticipantCharts(
+                        participant,
+                        index
+                    );
+                }
+            });
+        }
+
+        renderVisibleCharts();
+
+        document
+            .querySelectorAll("details")
+            .forEach(detailsElement => {
+                detailsElement.addEventListener(
+                    "toggle",
+                    () => {
+                        if (detailsElement.open) {
+                            requestAnimationFrame(
+                                renderVisibleCharts
+                            );
+                        }
+                    }
+                );
+            });
+
+        document.addEventListener(
+            "analysis-tab-changed",
+            () => {
+                requestAnimationFrame(
+                    renderVisibleCharts
+                );
+            }
+        );
+
+        window.addEventListener("resize", () => {
+            chartInstances.forEach(charts => {
+                charts.forEach(chart => chart.resize());
+            });
+        });
+    })();
+</script>
