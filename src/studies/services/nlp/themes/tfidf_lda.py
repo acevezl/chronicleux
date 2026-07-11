@@ -3,16 +3,39 @@ from __future__ import annotations
 from dataclasses import dataclass
 import re
 
-from django.db.models import Q
 from sklearn.decomposition import LatentDirichletAllocation
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 from studies.models import CanonicalTheme, ThemeAndIssueSource, ThemeAndIssueStatus
 from studies.services.contracts import BaseThemeExtractor, ThemeResult
 
-MODEL_NAME = "TF-IDF + LDA + Canonical Theme Matching"
-THEME_WEIGHT_THRESHOLD = 0.30
+
+MODEL_NAME = "Count-LDA + Evidence-Vote Canonical Theme Matching"
+THEME_WEIGHT_THRESHOLD = 0.15
+NUM_THEMES = 12
+NUM_KEYWORDS = 10
+MAX_FEATURES = 1000
+MAX_MATCHING_EXAMPLES = 5
+
+SUGGESTION_CONTEXT_TERMS = {
+    "netflix",
+    "phone",
+    "smartphone",
+    "laptop",
+    "tablet",
+    "tv",
+    "smart",
+    "screen",
+    "evening",
+    "tonight",
+    "today",
+    "yesterday",
+    "session",
+    "started",
+    "start",
+    "did",
+}
 
 
 @dataclass(frozen=True)
@@ -26,20 +49,20 @@ class CanonicalThemeDocument:
 @dataclass(frozen=True)
 class LdaThemeCandidate:
     lda_theme_id: int
-    label: str
+    label: str | None
     weight: float
     keywords: list[str]
     match_text: str
 
 
-class TfidfLdaThemeExtractor(BaseThemeExtractor):
+class CountLdaThemeExtractor(BaseThemeExtractor):
     method_name = "tfidf_lda"
 
     def __init__(
         self,
-        num_themes: int = 5,
-        num_keywords: int = 8,
-        max_features: int = 1000,
+        num_themes: int = NUM_THEMES,
+        num_keywords: int = NUM_KEYWORDS,
+        max_features: int = MAX_FEATURES,
         theme_weight_threshold: float = THEME_WEIGHT_THRESHOLD,
     ):
         self.num_themes = num_themes
@@ -49,15 +72,12 @@ class TfidfLdaThemeExtractor(BaseThemeExtractor):
 
     def extract(self, documents: list[str]) -> tuple[list[ThemeResult], list[dict]]:
         """
-        Extract themes with TF-IDF + LDA, then resolve those LDA themes against
-        the canonical theme catalogue.
+        Extract latent themes with count-based LDA and resolve them against
+        the approved canonical theme catalogue.
 
-        Rule:
-        1. TF-IDF + LDA proposes themes from the diary entries.
-        2. Each proposed LDA theme is compared against the canonical catalogue.
-        3. If the catalogue match weight is greater than THEME_WEIGHT_THRESHOLD,
-           the catalogue theme is used.
-        4. Otherwise, the LDA theme remains a suggested theme.
+        Each topic is matched first against approved canonical themes using
+        topic keywords and representative-entry votes. A weak catalogue match
+        is rejected, and only then is the topic added as an NLP suggestion.
         """
         valid_items = [
             (index, document.strip())
@@ -71,15 +91,18 @@ class TfidfLdaThemeExtractor(BaseThemeExtractor):
         original_indices = [item[0] for item in valid_items]
         valid_documents = [item[1] for item in valid_items]
 
-        vectorizer = TfidfVectorizer(
+        vectorizer = CountVectorizer(
             stop_words="english",
             max_features=self.max_features,
-            min_df=1,
-            max_df=0.95,
-            ngram_range=(2, 3),
+            min_df=2,
+            max_df=0.75,
+            ngram_range=(1, 3),
         )
 
-        matrix = vectorizer.fit_transform(valid_documents)
+        try:
+            matrix = vectorizer.fit_transform(valid_documents)
+        except ValueError:
+            return [], []
 
         actual_num_themes = min(
             self.num_themes,
@@ -93,8 +116,10 @@ class TfidfLdaThemeExtractor(BaseThemeExtractor):
         model = LatentDirichletAllocation(
             n_components=actual_num_themes,
             random_state=42,
-            max_iter=20,
+            max_iter=75,
             learning_method="batch",
+            doc_topic_prior=0.10,
+            topic_word_prior=0.05,
         )
 
         document_theme_matrix = model.fit_transform(matrix)
@@ -138,7 +163,7 @@ class TfidfLdaThemeExtractor(BaseThemeExtractor):
         for lda_theme_id, topic in enumerate(model.components_):
             top_indices = topic.argsort()[-self.num_keywords:][::-1]
             keywords = [feature_names[index] for index in top_indices]
-            label = self._make_suggestion_label(keywords)
+            label = keywords[0].title() if keywords else "Suggested Theme"
             weight = float(topic[top_indices].mean()) if len(top_indices) else 0.0
 
             candidates.append(
@@ -159,19 +184,65 @@ class TfidfLdaThemeExtractor(BaseThemeExtractor):
         valid_documents: list[str],
         lda_candidates: list[LdaThemeCandidate],
     ) -> dict[int, list[str]]:
-        examples_by_theme_id = {
+        """Return the strongest representative diary entries for each topic."""
+        weighted_examples: dict[int, list[tuple[float, str]]] = {
             candidate.lda_theme_id: []
             for candidate in lda_candidates
         }
 
         for document_row_index, theme_weights in enumerate(document_theme_matrix):
             lda_theme_id = int(theme_weights.argmax())
+            topic_weight = float(theme_weights[lda_theme_id])
             document = valid_documents[document_row_index]
 
             if document:
-                examples_by_theme_id.setdefault(lda_theme_id, []).append(document)
+                weighted_examples.setdefault(lda_theme_id, []).append(
+                    (topic_weight, document)
+                )
+
+        examples_by_theme_id: dict[int, list[str]] = {}
+
+        for lda_theme_id, examples in weighted_examples.items():
+            examples.sort(key=lambda item: item[0], reverse=True)
+            examples_by_theme_id[lda_theme_id] = [
+                document
+                for _, document in examples
+            ]
 
         return examples_by_theme_id
+
+    def _is_catalog_match_accepted(self, catalog_match: dict | None) -> bool:
+        """
+        Decide whether the best approved-catalogue match is strong enough.
+
+        Matching is always attempted first. A topic is mapped to the approved
+        catalogue only when the combined score reaches the configured
+        threshold and the match has support from either the LDA keywords or
+        multiple representative diary entries. Otherwise, the topic falls
+        through to NLP suggestion creation.
+        """
+        if not catalog_match:
+            return False
+
+        combined_score = float(catalog_match.get("theme_weight") or 0.0)
+        keyword_score = float(
+            catalog_match.get("keyword_match_weight") or 0.0
+        )
+        example_vote_share = float(
+            catalog_match.get("example_vote_share") or 0.0
+        )
+        example_votes = int(catalog_match.get("example_votes") or 0)
+
+        if combined_score < self.theme_weight_threshold:
+            return False
+
+        has_keyword_support = keyword_score >= 0.05
+        has_repeated_entry_support = (
+            example_votes >= 2
+            and example_vote_share >= 0.40
+        )
+
+        return has_keyword_support or has_repeated_entry_support
 
     def _resolve_lda_themes(
         self,
@@ -186,14 +257,18 @@ class TfidfLdaThemeExtractor(BaseThemeExtractor):
         catalog_matches = self._match_lda_candidates_to_catalog(
             lda_candidates=lda_candidates,
             canonical_documents=canonical_documents,
+            lda_theme_id_to_examples=lda_theme_id_to_examples,
         )
 
         for candidate in lda_candidates:
             catalog_match = catalog_matches.get(candidate.lda_theme_id)
 
-            if catalog_match and catalog_match["theme_weight"] > self.theme_weight_threshold:
+            if self._is_catalog_match_accepted(catalog_match):
                 canonical_theme = catalog_match["canonical_theme"]
-                resolved_key = ("canonical", str(canonical_theme.canonical_theme_id))
+                resolved_key = (
+                    "canonical",
+                    str(canonical_theme.canonical_theme_id),
+                )
 
                 if resolved_key not in resolved_theme_key_to_theme_id:
                     resolved_theme_id = len(themes)
@@ -219,23 +294,34 @@ class TfidfLdaThemeExtractor(BaseThemeExtractor):
                                     "keywords": candidate.keywords,
                                 },
                                 "language": "english",
-                                "vectorizer": "tfidf",
+                                "vectorizer": "count",
                                 "topic_model": "lda",
-                                "ngram_range": [2, 3],
+                                "num_themes": self.num_themes,
+                                "num_keywords": self.num_keywords,
+                                "ngram_range": [1, 3],
                             },
                         )
                     )
 
-                lda_theme_id_to_resolved_theme_id[candidate.lda_theme_id] = resolved_theme_key_to_theme_id[resolved_key]
+                lda_theme_id_to_resolved_theme_id[candidate.lda_theme_id] = (
+                    resolved_theme_key_to_theme_id[resolved_key]
+                )
                 continue
 
-            examples = lda_theme_id_to_examples.get(candidate.lda_theme_id, [])
+            examples = lda_theme_id_to_examples.get(
+                candidate.lda_theme_id,
+                [],
+            )
+            suggestion_label = self._make_suggestion_label(
+                candidate.keywords,
+                examples,
+            )
 
             suggested_theme = self._get_or_create_suggested_canonical_theme(
                 candidate=candidate,
+                suggestion_label=suggestion_label,
                 examples=examples,
             )
-
             resolved_key = ("suggested", str(suggested_theme.id))
 
             if resolved_key not in resolved_theme_key_to_theme_id:
@@ -259,6 +345,36 @@ class TfidfLdaThemeExtractor(BaseThemeExtractor):
                                 if catalog_match
                                 else None
                             ),
+                            "attempted_canonical_theme_id": (
+                                catalog_match["canonical_theme"].canonical_theme_id
+                                if catalog_match
+                                else None
+                            ),
+                            "attempted_canonical_theme_label": (
+                                catalog_match["canonical_theme"].label
+                                if catalog_match
+                                else None
+                            ),
+                            "keyword_match_weight": (
+                                catalog_match.get("keyword_match_weight")
+                                if catalog_match
+                                else None
+                            ),
+                            "example_match_weight": (
+                                catalog_match.get("example_match_weight")
+                                if catalog_match
+                                else None
+                            ),
+                            "example_vote_share": (
+                                catalog_match.get("example_vote_share")
+                                if catalog_match
+                                else None
+                            ),
+                            "example_votes": (
+                                catalog_match.get("example_votes")
+                                if catalog_match
+                                else None
+                            ),
                             "theme_weight_threshold": self.theme_weight_threshold,
                             "suggested_theme": {
                                 "id": suggested_theme.id,
@@ -275,26 +391,42 @@ class TfidfLdaThemeExtractor(BaseThemeExtractor):
                                 "keywords": candidate.keywords,
                             },
                             "language": "english",
-                            "vectorizer": "tfidf",
+                            "vectorizer": "count",
                             "topic_model": "lda",
-                            "num_keywords": len(candidate.keywords),
-                            "ngram_range": [2, 3],
+                            "num_themes": self.num_themes,
+                            "num_keywords": self.num_keywords,
+                            "ngram_range": [1, 3],
                         },
                     )
                 )
 
-            lda_theme_id_to_resolved_theme_id[candidate.lda_theme_id] = resolved_theme_key_to_theme_id[resolved_key]
+            lda_theme_id_to_resolved_theme_id[candidate.lda_theme_id] = (
+                resolved_theme_key_to_theme_id[resolved_key]
+            )
+
+        unresolved_topic_ids = {
+            candidate.lda_theme_id
+            for candidate in lda_candidates
+            if candidate.lda_theme_id not in lda_theme_id_to_resolved_theme_id
+        }
+
+        if unresolved_topic_ids:
+            raise RuntimeError(
+                "Every LDA topic must resolve to a canonical or suggested "
+                f"theme. Unresolved topic ids: {sorted(unresolved_topic_ids)}"
+            )
 
         return themes, lda_theme_id_to_resolved_theme_id
 
     def _get_or_create_suggested_canonical_theme(
         self,
         candidate: LdaThemeCandidate,
+        suggestion_label: str,
         examples: list[str],
     ) -> CanonicalTheme:
         existing_theme = (
             CanonicalTheme.objects
-            .filter(name__iexact=candidate.label)
+            .filter(name__iexact=suggestion_label)
             .first()
         )
 
@@ -302,13 +434,14 @@ class TfidfLdaThemeExtractor(BaseThemeExtractor):
             return existing_theme
 
         return CanonicalTheme.objects.create(
-            name=candidate.label,
+            name=suggestion_label,
             description=(
                 "NLP-suggested theme produced by TF-IDF + LDA because "
-                "the generated theme did not strongly match the canonical theme catalog."
+                "the generated topic did not strongly match an approved "
+                "canonical theme."
             ),
             aliases=candidate.keywords,
-            examples="\n".join(examples[:5]),
+            examples="\n".join(examples[:MAX_MATCHING_EXAMPLES]),
             source=ThemeAndIssueSource.NLP,
             status=ThemeAndIssueStatus.SUGGESTED,
             is_active=True,
@@ -318,65 +451,128 @@ class TfidfLdaThemeExtractor(BaseThemeExtractor):
         self,
         lda_candidates: list[LdaThemeCandidate],
         canonical_documents: list[CanonicalThemeDocument],
+        lda_theme_id_to_examples: dict[int, list[str]],
     ) -> dict[int, dict]:
+        """
+        Match LDA topics to approved canonical themes using evidence voting.
+
+        Topic keywords are compared separately from representative diary
+        entries. Each diary entry votes for its strongest canonical match.
+        This avoids diluting canonical signals inside one oversized text blob.
+        """
         if not lda_candidates or not canonical_documents:
             return {}
 
-        candidate_texts = [candidate.match_text for candidate in lda_candidates]
         catalog_texts = [theme.text for theme in canonical_documents]
-
-        vectorizer = TfidfVectorizer(
-            stop_words="english",
-            max_features=self.max_features,
-            min_df=1,
-            max_df=1.0,
-            ngram_range=(1, 3),
-        )
-
-        matrix = vectorizer.fit_transform([*candidate_texts, *catalog_texts])
-
-        candidate_matrix = matrix[:len(candidate_texts)]
-        catalog_matrix = matrix[len(candidate_texts):]
-
-        similarity_matrix = cosine_similarity(candidate_matrix, catalog_matrix)
-
         matches: dict[int, dict] = {}
 
-        for candidate_index, similarities in enumerate(similarity_matrix):
-            best_catalog_index = int(similarities.argmax())
-            best_score = float(similarities[best_catalog_index])
-            candidate = lda_candidates[candidate_index]
+        for candidate in lda_candidates:
+            examples = lda_theme_id_to_examples.get(
+                candidate.lda_theme_id,
+                [],
+            )[:MAX_MATCHING_EXAMPLES]
 
-            top_match_indices = similarities.argsort()[-5:][::-1]
+            keyword_text = " ".join(candidate.keywords).strip()
+            evidence_texts = [keyword_text, *examples]
 
-            print("\nTFIDF_LDA CATALOG MATCH DEBUG")
-            print("--------------------------------")
-            print(f"LDA candidate id: {candidate.lda_theme_id}")
-            print(f"LDA candidate label: {candidate.label}")
-            print(f"LDA candidate weight: {candidate.weight:.4f}")
-            print(f"LDA candidate keywords: {candidate.keywords}")
-            print(f"LDA candidate match text: {candidate.match_text}")
-            print(f"Theme threshold: {self.theme_weight_threshold:.4f}")
-            print("Top catalogue matches:")
+            vectorizer = TfidfVectorizer(
+                stop_words="english",
+                max_features=self.max_features,
+                min_df=1,
+                max_df=1.0,
+                ngram_range=(1, 3),
+                sublinear_tf=True,
+            )
 
-            for rank, catalog_index in enumerate(top_match_indices, start=1):
-                catalog_theme = canonical_documents[int(catalog_index)]
-                score = float(similarities[int(catalog_index)])
+            try:
+                matrix = vectorizer.fit_transform(
+                    [*evidence_texts, *catalog_texts]
+                )
+            except ValueError:
+                continue
 
-                print(
-                    f"  {rank}. "
-                    f"id={catalog_theme.canonical_theme_id} | "
-                    f"label={catalog_theme.label!r} | "
-                    f"score={score:.4f} | "
-                    f"keywords={catalog_theme.keywords}"
+            evidence_matrix = matrix[:len(evidence_texts)]
+            catalog_matrix = matrix[len(evidence_texts):]
+            similarities = cosine_similarity(
+                evidence_matrix,
+                catalog_matrix,
+            )
+
+            keyword_scores = similarities[0]
+            example_scores = similarities[1:]
+
+            vote_counts = [0] * len(canonical_documents)
+            vote_strengths = [0.0] * len(canonical_documents)
+
+            for row in example_scores:
+                best_index = int(row.argmax())
+                best_score = float(row[best_index])
+                vote_counts[best_index] += 1
+                vote_strengths[best_index] += best_score
+
+            ranked_matches: list[dict] = []
+
+            for catalog_index, canonical_theme in enumerate(canonical_documents):
+                keyword_score = float(keyword_scores[catalog_index])
+                votes = vote_counts[catalog_index]
+                average_vote_strength = (
+                    vote_strengths[catalog_index] / votes
+                    if votes
+                    else 0.0
+                )
+                vote_share = (
+                    votes / len(examples)
+                    if examples
+                    else 0.0
                 )
 
-            print("--------------------------------\n")
+                combined_score = (
+                    (0.25 * keyword_score)
+                    + (0.50 * average_vote_strength)
+                    + (0.25 * vote_share)
+                )
 
-            matches[candidate.lda_theme_id] = {
-                "theme_weight": best_score,
-                "canonical_theme": canonical_documents[best_catalog_index],
-            }
+                ranked_matches.append(
+                    {
+                        "canonical_theme": canonical_theme,
+                        "theme_weight": combined_score,
+                        "keyword_match_weight": keyword_score,
+                        "example_match_weight": average_vote_strength,
+                        "example_vote_share": vote_share,
+                        "example_votes": votes,
+                    }
+                )
+
+            ranked_matches.sort(
+                key=lambda item: item["theme_weight"],
+                reverse=True,
+            )
+
+            best_match = ranked_matches[0]
+
+            print("\nCOUNT_LDA EVIDENCE-VOTE MATCH DEBUG")
+            print("------------------------------------")
+            print(f"LDA candidate id: {candidate.lda_theme_id}")
+            print(f"LDA candidate label: {candidate.label}")
+            print(f"LDA candidate keywords: {candidate.keywords}")
+            print(f"Representative examples: {len(examples)}")
+            print(f"Threshold: {self.theme_weight_threshold:.4f}")
+            print("Top catalogue matches:")
+
+            for rank, result in enumerate(ranked_matches[:5], start=1):
+                theme = result["canonical_theme"]
+                print(
+                    f"  {rank}. id={theme.canonical_theme_id} | "
+                    f"label={theme.label!r} | "
+                    f"combined={result['theme_weight']:.4f} | "
+                    f"keyword={result['keyword_match_weight']:.4f} | "
+                    f"entry={result['example_match_weight']:.4f} | "
+                    f"votes={result['example_votes']}/{len(examples)}"
+                )
+
+            print("------------------------------------\n")
+
+            matches[candidate.lda_theme_id] = best_match
 
         return matches
 
@@ -420,14 +616,12 @@ class TfidfLdaThemeExtractor(BaseThemeExtractor):
         return assignments
 
     def _get_canonical_theme_documents(self) -> list[CanonicalThemeDocument]:
+        """Build matching documents from approved, active catalogue themes only."""
         canonical_themes = (
             CanonicalTheme.objects
-            .filter(is_active=True)
             .filter(
-                Q(status=ThemeAndIssueStatus.APPROVED)
-                | Q(status=ThemeAndIssueStatus.SUGGESTED)
-                | Q(status__isnull=True)
-                | Q(status="")
+                is_active=True,
+                status=ThemeAndIssueStatus.APPROVED,
             )
             .order_by("name")
         )
@@ -450,19 +644,100 @@ class TfidfLdaThemeExtractor(BaseThemeExtractor):
                 CanonicalThemeDocument(
                     canonical_theme_id=theme.id,
                     label=theme.name,
-                    text=" ".join(part for part in text_parts if part).strip(),
+                    text=" ".join(
+                        part
+                        for part in text_parts
+                        if part
+                    ).strip(),
                     keywords=keywords,
                 )
             )
 
         return documents
 
-    def _make_suggestion_label(self, keywords: list[str]) -> str:
-        for keyword in keywords:
-            label = re.sub(r"\s+", " ", keyword).strip()
+    def _make_suggestion_label(
+        self,
+        keywords: list[str],
+        examples: list[str] | None = None,
+    ) -> str:
+        """
+        Create a deterministic label for an unmatched LDA topic.
 
-            if label:
-                return label.title()
+        Catalogue matching has already failed before this method is called.
+        The label is always derived from the topic's own LDA keywords:
+
+        1. Prefer a repeated, meaningful multi-word phrase.
+        2. Otherwise prefer the strongest meaningful multi-word phrase.
+        3. Otherwise combine the two strongest meaningful unigrams.
+        4. As a final fallback, use the strongest available LDA keyword.
+
+        This guarantees that every LDA topic can resolve to either a canonical
+        theme or a suggested theme, so no diary entry loses its assignment.
+        """
+        examples = examples or []
+        cleaned_keywords = [
+            re.sub(r"\s+", " ", keyword).strip()
+            for keyword in keywords
+            if keyword and keyword.strip()
+        ]
+        normalized_examples = [
+            re.sub(r"\s+", " ", example).casefold()
+            for example in examples
+            if example and example.strip()
+        ]
+
+        # Prefer a phrase that is repeated in representative diary evidence.
+        for keyword in cleaned_keywords:
+            tokens = keyword.casefold().split()
+
+            if len(tokens) < 2:
+                continue
+
+            if all(token in SUGGESTION_CONTEXT_TERMS for token in tokens):
+                continue
+
+            occurrence_count = sum(
+                1
+                for example in normalized_examples
+                if keyword.casefold() in example
+            )
+
+            if occurrence_count >= 2:
+                return keyword.title()
+
+        # Otherwise use the strongest meaningful multi-word LDA phrase.
+        for keyword in cleaned_keywords:
+            tokens = keyword.casefold().split()
+
+            if (
+                len(tokens) >= 2
+                and any(
+                    token not in SUGGESTION_CONTEXT_TERMS
+                    for token in tokens
+                )
+            ):
+                return keyword.title()
+
+        # Otherwise combine the two strongest meaningful unigrams.
+        meaningful_unigrams: list[str] = []
+
+        for keyword in cleaned_keywords:
+            tokens = keyword.casefold().split()
+
+            if (
+                len(tokens) == 1
+                and tokens[0] not in SUGGESTION_CONTEXT_TERMS
+                and tokens[0] not in meaningful_unigrams
+            ):
+                meaningful_unigrams.append(tokens[0])
+
+            if len(meaningful_unigrams) == 2:
+                return " ".join(meaningful_unigrams).title()
+
+        # Final fallback: preserve the strongest LDA keyword rather than
+        # dropping the topic and leaving entries without an assignment.
+        if cleaned_keywords:
+            return cleaned_keywords[0].title()
 
         return "Suggested Theme"
 
@@ -470,20 +745,35 @@ class TfidfLdaThemeExtractor(BaseThemeExtractor):
         if not value:
             return []
 
-        if isinstance(value, list):
-            return [str(item).strip() for item in value if str(item).strip()]
+        if isinstance(value, (list, tuple, set)):
+            return [
+                str(item).strip()
+                for item in value
+                if str(item).strip()
+            ]
 
         if isinstance(value, str):
-            return [item.strip() for item in value.split(",") if item.strip()]
+            return [
+                item.strip()
+                for item in re.split(r"[|,;\n]+", value)
+                if item.strip()
+            ]
 
         return []
 
-    def _split_examples(self, value: str) -> list[str]:
+    def _split_examples(self, value) -> list[str]:
         if not value:
             return []
 
+        if isinstance(value, (list, tuple, set)):
+            return [
+                str(example).strip()
+                for example in value
+                if str(example).strip()
+            ]
+
         return [
             example.strip()
-            for example in re.split(r"[\n;]+", value)
+            for example in re.split(r"[\n;]+", str(value))
             if example.strip()
         ]

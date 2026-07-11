@@ -9,7 +9,7 @@ from studies.services.nlp.sentiment.fivestar import StarRatingSentimentAnalyzer
 
 # Theme Extractors
 from studies.services.nlp.themes.tfidf_nmf import TfidfNmfThemeExtractor
-from studies.services.nlp.themes.tfidf_lda import TfidfLdaThemeExtractor
+from studies.services.nlp.themes.tfidf_lda import CountLdaThemeExtractor
 from studies.services.nlp.themes.bertopic import BertopicThemeExtractor
 
 # Issue Detectors
@@ -50,10 +50,10 @@ THEME_EXTRACTORS = {
         "long_description": "Use TF-IDF + NMF as a topic-modeling comparison. The analyzer first maps diary entries to approved canonical themes, then runs NMF only on weakly matched entries to suggest possible new catalog themes.",
     },
     "tfidf_lda": {
-        "class": TfidfLdaThemeExtractor,
-        "label": "TF-IDF + LDA",
-        "description": "Matches entries against the canonical theme catalog, then uses LDA to suggest missing themes when catalog matches are weak.",
-        "long_description": "Use TF-IDF + LDA as a probabilistic topic-modeling comparison. The analyzer first maps diary entries to approved canonical themes, then runs LDA only on weakly matched entries to suggest possible new catalog themes.",
+        "class": CountLdaThemeExtractor,
+        "label": "Count Vectorization + LDA",
+        "description": "Uses LDA to discover themes, matches them against the canonical theme catalog, and suggests new themes when matches are weak.",
+        "long_description": "Use count vectorization and Latent Dirichlet Allocation as a probabilistic topic-modeling approach. The analyzer discovers topics across the diary entries, compares each topic and its supporting entries against approved canonical themes using TF-IDF similarity, and creates suggested catalog themes only when the available evidence does not support a reliable canonical match.",
     },
     "bertopic": {
         "class": BertopicThemeExtractor,

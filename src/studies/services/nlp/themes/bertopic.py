@@ -4,7 +4,6 @@ from dataclasses import dataclass
 import re
 
 from bertopic import BERTopic
-from django.db.models import Q
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -12,11 +11,11 @@ from studies.models import CanonicalTheme, ThemeAndIssueSource, ThemeAndIssueSta
 from studies.services.contracts import BaseThemeExtractor, ThemeResult
 
 MODEL_NAME = "BERTopic + Canonical Theme Matching"
-THEME_WEIGHT_THRESHOLD = 0.30
+THEME_WEIGHT_THRESHOLD = 0.15
+NUM_KEYWORDS = 10
+MAX_FEATURES = 1000
+MAX_MATCHING_EXAMPLES = 5
 
-# Debug imports
-from collections import Counter
-# Debug imports
 
 @dataclass(frozen=True)
 class CanonicalThemeDocument:
@@ -40,8 +39,8 @@ class BertopicThemeExtractor(BaseThemeExtractor):
 
     def __init__(
         self,
-        num_keywords: int = 8,
-        max_features: int = 1000,
+        num_keywords: int = NUM_KEYWORDS,
+        max_features: int = MAX_FEATURES,
         theme_weight_threshold: float = THEME_WEIGHT_THRESHOLD,
     ):
         self.num_keywords = num_keywords
@@ -75,8 +74,8 @@ class BertopicThemeExtractor(BaseThemeExtractor):
         vectorizer_model = CountVectorizer(
             stop_words="english",
             ngram_range=(1, 3),
-            min_df=1,
-            max_df=1.0,
+            min_df=2,
+            max_df=0.85,
         )
 
         topic_model = BERTopic(
@@ -89,9 +88,6 @@ class BertopicThemeExtractor(BaseThemeExtractor):
 
         topics, probabilities = topic_model.fit_transform(valid_documents)
 
-        # Debug
-        print("BERTopic topic counts:", Counter(topics))
-        # Debug
 
         bertopic_candidates = self._build_bertopic_theme_candidates(
             topic_model=topic_model,
@@ -219,12 +215,16 @@ class BertopicThemeExtractor(BaseThemeExtractor):
         catalog_matches = self._match_bertopic_candidates_to_catalog(
             bertopic_candidates=bertopic_candidates,
             canonical_documents=canonical_documents,
+            bertopic_theme_id_to_examples=bertopic_theme_id_to_examples,
         )
 
         for candidate in bertopic_candidates:
             catalog_match = catalog_matches.get(candidate.bertopic_theme_id)
 
-            if catalog_match and catalog_match["theme_weight"] > self.theme_weight_threshold:
+            if (
+                catalog_match
+                and catalog_match["theme_weight"] >= self.theme_weight_threshold
+            ):
                 canonical_theme = catalog_match["canonical_theme"]
                 resolved_key = ("canonical", str(canonical_theme.canonical_theme_id))
 
@@ -255,7 +255,7 @@ class BertopicThemeExtractor(BaseThemeExtractor):
                                 "topic_model": "bertopic",
                                 "vectorizer": "count",
                                 "stop_words": "english",
-                                "ngram_range": [2, 3],
+                                "ngram_range": [1, 3],
                             },
                         )
                     )
@@ -313,7 +313,7 @@ class BertopicThemeExtractor(BaseThemeExtractor):
                             "vectorizer": "count",
                             "stop_words": "english",
                             "num_keywords": len(candidate.keywords),
-                            "ngram_range": [2, 3],
+                            "ngram_range": [1, 3],
                         },
                     )
                 )
@@ -343,7 +343,7 @@ class BertopicThemeExtractor(BaseThemeExtractor):
                 "the generated theme did not strongly match the canonical theme catalog."
             ),
             aliases=candidate.keywords,
-            examples="\n".join(examples[:5]),
+            examples="\n".join(examples[:MAX_MATCHING_EXAMPLES]),
             source=ThemeAndIssueSource.NLP,
             status=ThemeAndIssueStatus.SUGGESTED,
             is_active=True,
@@ -353,11 +353,26 @@ class BertopicThemeExtractor(BaseThemeExtractor):
         self,
         bertopic_candidates: list[BertopicThemeCandidate],
         canonical_documents: list[CanonicalThemeDocument],
+        bertopic_theme_id_to_examples: dict[int, list[str]],
     ) -> dict[int, dict]:
         if not bertopic_candidates or not canonical_documents:
             return {}
 
-        candidate_texts = [candidate.match_text for candidate in bertopic_candidates]
+        candidate_texts = []
+
+        for candidate in bertopic_candidates:
+            examples = bertopic_theme_id_to_examples.get(
+                candidate.bertopic_theme_id,
+                [],
+            )
+
+            candidate_text = " ".join([
+                candidate.label,
+                *candidate.keywords,
+                *examples[:MAX_MATCHING_EXAMPLES],
+            ]).strip()
+
+            candidate_texts.append(candidate_text)
         catalog_texts = [theme.text for theme in canonical_documents]
 
         vectorizer = TfidfVectorizer(
@@ -393,7 +408,7 @@ class BertopicThemeExtractor(BaseThemeExtractor):
                 f"{candidate.weight:.4f}" if candidate.weight is not None else "BERTopic candidate weight: None"
             )
             print(f"BERTopic candidate keywords: {candidate.keywords}")
-            print(f"BERTopic candidate match text: {candidate.match_text}")
+            print(f"BERTopic candidate match text: {candidate_texts[candidate_index]}")
             print(f"Theme threshold: {self.theme_weight_threshold:.4f}")
             print("Top catalogue matches:")
 
@@ -479,12 +494,9 @@ class BertopicThemeExtractor(BaseThemeExtractor):
     def _get_canonical_theme_documents(self) -> list[CanonicalThemeDocument]:
         canonical_themes = (
             CanonicalTheme.objects
-            .filter(is_active=True)
             .filter(
-                Q(status=ThemeAndIssueStatus.APPROVED)
-                | Q(status=ThemeAndIssueStatus.SUGGESTED)
-                | Q(status__isnull=True)
-                | Q(status="")
+                is_active=True,
+                status=ThemeAndIssueStatus.APPROVED,
             )
             .order_by("name")
         )
@@ -560,7 +572,11 @@ class BertopicThemeExtractor(BaseThemeExtractor):
             return [str(item).strip() for item in value if str(item).strip()]
 
         if isinstance(value, str):
-            return [item.strip() for item in value.split(",") if item.strip()]
+            return [
+                item.strip()
+                for item in re.split(r"[|,;\n]+", value)
+                if item.strip()
+            ]
 
         return []
 
