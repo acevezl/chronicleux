@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import re
 
-from django.db.models import Q
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -10,7 +9,8 @@ from studies.models import CanonicalIssue, ThemeAndIssueSource, ThemeAndIssueSta
 from studies.services.contracts import BaseIssueDetector, IssueResult
 
 
-MODEL_NAME = "TF-IDF + Canonical Issue Matching"
+MODEL_NAME = "TF-IDF + Canonical Issue Matching v2"
+EXTRACTOR_VERSION = "approved-only-controlled-suggestions-v2"
 ISSUE_MATCH_THRESHOLD = 0.25
 
 
@@ -23,6 +23,95 @@ ISSUE_CUES = [
     "not obvious","not intuitive","too many steps","took too long",
     "clutter","cluttered","hidden","lacks"
 ]
+
+
+# Cue words help determine whether an entry describes friction, but they are
+# too generic to become issue labels themselves. Grammatical variants are
+# intentionally grouped here so labels such as "Confused" and "Confusing"
+# are never created as separate catalogue suggestions.
+GENERIC_SUGGESTION_TERMS = {
+    "annoying", "annoyed", "bug", "broken", "cannot", "cant", "confused",
+    "confusing", "difficult", "error", "failed", "frustrated", "frustrating",
+    "hard", "issue", "lag", "missing", "problem", "slow", "stuck",
+    "trouble", "unclear", "work", "working",
+}
+
+# New issue suggestions must use controlled UX concepts. TF-IDF remains useful
+# for matching entries to approved catalogue issues, but raw TF-IDF phrases are
+# not suitable labels because they produce fragments such as "Rows Came Continue".
+SUGGESTION_CONCEPT_RULES = [
+    {
+        "label": "Playback performance problem",
+        "patterns": [
+            r"\bbuffer(?:ing|ed)?\b", r"\blag(?:ging|ged)?\b",
+            r"\bslow(?:ly)?\b", r"\bfroze|frozen|freezing\b",
+            r"\bcrash(?:ed|ing)?\b", r"\bloading\b",
+        ],
+    },
+    {
+        "label": "Playback control problem",
+        "patterns": [
+            r"\bpause|paused|pausing\b", r"\bplay button\b",
+            r"\brewind|fast forward|scrub(?:bing)?\b",
+            r"\bplayback control", r"\bvolume control",
+        ],
+    },
+    {
+        "label": "Recommendation relevance problem",
+        "patterns": [
+            r"\brecommend(?:ation|ations|ed)?\b", r"\bsuggest(?:ion|ions|ed)?\b",
+            r"\bnot relevant\b", r"\birrelevant\b", r"\bnot interested\b",
+        ],
+    },
+    {
+        "label": "Watchlist management problem",
+        "patterns": [
+            r"\bwatchlist\b", r"\bmy list\b", r"\bsaved titles?\b",
+            r"\bsave(?:d|ing)?\b.*\bshow|title|series|movie\b",
+            r"\bremove(?:d|ing)?\b.*\bshow|title|series|movie\b",
+        ],
+    },
+    {
+        "label": "Profile management problem",
+        "patterns": [
+            r"\bchildren'?s? profile\b", r"\bkids? profile\b",
+            r"\bcreate(?:d|ing)? profile\b", r"\bdelete(?:d|ing)? profile\b",
+            r"\bmanage(?:d|ing)? profile\b", r"\bprofile settings?\b",
+        ],
+    },
+    {
+        "label": "Content classification problem",
+        "patterns": [
+            r"\bage rating\b", r"\bmaturity rating\b",
+            r"\bappropriate (?:content|material|show|movie)\b",
+            r"\bparental control", r"\bcontent restriction",
+        ],
+    },
+    {
+        "label": "Viewing progress problem",
+        "patterns": [
+            r"\bcontinue watching\b", r"\bviewing progress\b",
+            r"\bresume(?:d|ing)?\b", r"\bstarted from\b",
+            r"\bwrong episode\b", r"\blost (?:my )?place\b",
+        ],
+    },
+    {
+        "label": "Input or remote-control problem",
+        "patterns": [
+            r"\bremote\b", r"\bkeyboard\b", r"\btouchscreen\b",
+            r"\bbutton(?:s)?\b", r"\bvoice control\b",
+        ],
+    },
+    {
+        "label": "Error recovery problem",
+        "patterns": [
+            r"\brecover(?:y|ed|ing)?\b", r"\bretry\b",
+            r"\bstart(?:ed)? over\b", r"\blost (?:the )?changes\b",
+            r"\bcould not get back\b", r"\breturn(?:ed|ing)? to\b",
+        ],
+    },
+]
+
 
 
 class TfidfIssueDetector(BaseIssueDetector):
@@ -83,12 +172,9 @@ class TfidfIssueDetector(BaseIssueDetector):
     def _get_issue_keyword_catalog(self) -> dict[int, dict]:
         canonical_issues = (
             CanonicalIssue.objects
-            .filter(is_active=True)
             .filter(
-                Q(status=ThemeAndIssueStatus.APPROVED)
-                | Q(status=ThemeAndIssueStatus.SUGGESTED)
-                | Q(status__isnull=True)
-                | Q(status="")
+                is_active=True,
+                status=ThemeAndIssueStatus.APPROVED,
             )
             .order_by("name")
         )
@@ -130,7 +216,7 @@ class TfidfIssueDetector(BaseIssueDetector):
             matched_keywords = [
                 keyword
                 for keyword in issue_data["keywords"]
-                if keyword and keyword in text
+                if keyword and self._contains_phrase(text, keyword)
             ]
 
             if not matched_keywords:
@@ -215,7 +301,10 @@ class TfidfIssueDetector(BaseIssueDetector):
                     "candidate_id": len(candidates),
                     "document_index": item["document_index"],
                     "document": item["document"],
-                    "label": self._make_suggestion_label(item["document"]),
+                    "label": self._make_suggestion_label(
+                        document=item["document"],
+                        keywords=keywords,
+                    ),
                     "keywords": keywords,
                     "match_text": " ".join([item["document"], *keywords]).strip(),
                     "catalogue_hits": item["catalogue_hits"],
@@ -377,8 +466,12 @@ class TfidfIssueDetector(BaseIssueDetector):
                 )
                 continue
 
-            # 3. Fallback: issue-like entry, but no confident catalogue match.
-            # Create a suggested CanonicalIssue for evaluator review.
+            # 3. Suggest only when the unmatched entry maps to a controlled
+            # UX concept. Generic friction language is not enough to create a
+            # catalogue issue and is deliberately left unassigned.
+            if not candidate.get("label"):
+                continue
+
             suggested_issue = self._get_or_create_suggested_canonical_issue(
                 candidate=candidate,
                 catalog_match=catalog_match,
@@ -519,7 +612,14 @@ class TfidfIssueDetector(BaseIssueDetector):
                 "canonical issue catalogue."
                 f"{nearest_match_text}"
             ),
-            aliases=candidate["keywords"],
+            aliases=[
+                keyword
+                for keyword in candidate["keywords"]
+                if not any(
+                    token in GENERIC_SUGGESTION_TERMS
+                    for token in self._tokenize(keyword)
+                )
+            ],
             examples=candidate["document"],
             source=ThemeAndIssueSource.NLP,
             status=ThemeAndIssueStatus.SUGGESTED,
@@ -529,12 +629,9 @@ class TfidfIssueDetector(BaseIssueDetector):
     def _get_canonical_issue_documents(self) -> list[dict]:
         canonical_issues = (
             CanonicalIssue.objects
-            .filter(is_active=True)
             .filter(
-                Q(status=ThemeAndIssueStatus.APPROVED)
-                | Q(status=ThemeAndIssueStatus.SUGGESTED)
-                | Q(status__isnull=True)
-                | Q(status="")
+                is_active=True,
+                status=ThemeAndIssueStatus.APPROVED,
             )
             .order_by("name")
         )
@@ -591,14 +688,41 @@ class TfidfIssueDetector(BaseIssueDetector):
 
         return keywords
 
-    def _make_suggestion_label(self, document: str) -> str:
+    def _make_suggestion_label(
+        self,
+        document: str,
+        keywords: list[str],
+    ) -> str | None:
+        """Return a controlled issue concept for an unmatched entry.
+
+        TF-IDF keywords are deliberately not used to construct labels. They are
+        retained only as supporting metadata and aliases. This prevents diary
+        fragments from becoming catalogue issues.
+        """
         text = self._normalize_text(document).lower()
 
-        for cue in ISSUE_CUES:
-            if cue in text:
-                return f"{cue.title()}"
+        for rule in SUGGESTION_CONCEPT_RULES:
+            if any(re.search(pattern, text) for pattern in rule["patterns"]):
+                return rule["label"]
 
-        return "Other"
+        # Generic words such as issue/problem/trouble/confusing indicate that
+        # friction may exist, but they do not identify what the UX issue is.
+        # Do not create a suggested canonical issue from them.
+        return None
+
+    def _contains_phrase(self, normalized_document: str, phrase: str) -> bool:
+        phrase_tokens = self._tokenize(phrase)
+
+        if not phrase_tokens:
+            return False
+
+        pattern = r"\b" + r"\s+".join(
+            re.escape(token) for token in phrase_tokens
+        ) + r"\b"
+        return re.search(pattern, normalized_document) is not None
+
+    def _tokenize(self, value: str) -> list[str]:
+        return re.findall(r"[a-z0-9]+", (value or "").lower())
 
     def _clean_list(self, value) -> list[str]:
         if not value:
