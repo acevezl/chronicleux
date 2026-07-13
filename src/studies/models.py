@@ -1260,6 +1260,7 @@ class StudyEvaluationIssue(models.Model):
 
 	entry_count = models.PositiveIntegerField(default=0)
 	average_confidence_score = models.FloatField(null=True, blank=True)
+	average_sentiment_score = models.FloatField(null=True, blank=True)
 
 	class Meta:
 		ordering = ["-entry_count", "issue__name"]
