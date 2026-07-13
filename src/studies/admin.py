@@ -421,6 +421,7 @@ class StudyEvaluationIssueAdmin(ModelAdmin):
         "issue",
         "entry_count",
         "average_confidence_score",
+        "average_sentiment_score",
     )
     list_filter = ("issue",)
     search_fields = ("study__title", "issue__name")

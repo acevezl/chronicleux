@@ -45,18 +45,31 @@
             ? (item.count / issueImpactTotal{{ chart_id }}) * 100
             : 0;
 
-        const negativeSentimentIntensity = -item.impact;
+        const sentimentScore = item.impact;
 
         return {
             x: frequency,
-            y: negativeSentimentIntensity,
+            y: sentimentScore,
             r: Math.max(6, Math.min(22, item.count * 2)),
             label: prettifyImpactIssueLabel(item.label),
             count: item.count,
             frequency: frequency,
-            negativeSentimentIntensity: negativeSentimentIntensity
+            sentimentScore: sentimentScore
         };
     });
+
+    const issueImpactMaxFrequency{{ chart_id }} = Math.max(
+        ...issueImpactPoints{{ chart_id }}.map(point => point.frequency),
+        0
+    );
+
+    const issueImpactXMax{{ chart_id }} = Math.min(
+        100,
+        Math.max(
+            10,
+            Math.ceil(issueImpactMaxFrequency{{ chart_id }} * 1.1 / 5) * 5
+        )
+    );
 
     const issueImpactCtx{{ chart_id }} = document.getElementById(
         "issueImpactMatrixChart-{{ chart_id }}"
@@ -71,23 +84,47 @@
                     data: issueImpactPoints{{ chart_id }},
                     backgroundColor: function(context) {
                         const item = context.raw;
-                        const maxCount = Math.max(...issueImpactPoints{{ chart_id }}.map(point => point.count));
-                        const ratio = maxCount ? item.count / maxCount : 0;
+                        const maxCount = Math.max(
+                            ...issueImpactPoints{{ chart_id }}.map(
+                                point => point.count
+                            )
+                        );
+                        const ratio = maxCount
+                            ? item.count / maxCount
+                            : 0;
 
-                        const red = Math.round(245 + (220 - 245) * ratio);
-                        const green = Math.round(158 + (38 - 158) * ratio);
-                        const blue = Math.round(11 + (38 - 11) * ratio);
+                        const red = Math.round(
+                            245 + (220 - 245) * ratio
+                        );
+                        const green = Math.round(
+                            158 + (38 - 158) * ratio
+                        );
+                        const blue = Math.round(
+                            11 + (38 - 11) * ratio
+                        );
 
                         return `rgba(${red}, ${green}, ${blue}, 0.45)`;
                     },
                     borderColor: function(context) {
                         const item = context.raw;
-                        const maxCount = Math.max(...issueImpactPoints{{ chart_id }}.map(point => point.count));
-                        const ratio = maxCount ? item.count / maxCount : 0;
+                        const maxCount = Math.max(
+                            ...issueImpactPoints{{ chart_id }}.map(
+                                point => point.count
+                            )
+                        );
+                        const ratio = maxCount
+                            ? item.count / maxCount
+                            : 0;
 
-                        const red = Math.round(180 + (153 - 180) * ratio);
-                        const green = Math.round(83 + (27 - 83) * ratio);
-                        const blue = Math.round(9 + (27 - 9) * ratio);
+                        const red = Math.round(
+                            180 + (153 - 180) * ratio
+                        );
+                        const green = Math.round(
+                            83 + (27 - 83) * ratio
+                        );
+                        const blue = Math.round(
+                            9 + (27 - 9) * ratio
+                        );
 
                         return `rgba(${red}, ${green}, ${blue}, 0.95)`;
                     },
@@ -109,7 +146,7 @@
                 scales: {
                     x: {
                         min: 0,
-                        max: 100,
+                        max: issueImpactXMax{{ chart_id }},
                         reverse: false,
                         position: "top",
                         title: {
@@ -127,18 +164,27 @@
                     },
                     y: {
                         min: -1,
-                        max: 0,
+                        max: 1,
                         title: {
                             display: true,
-                            text: "Negative Sentiment Intensity"
+                            text: "Sentiment Score"
                         },
                         ticks: {
+                            stepSize: 0.5,
                             callback: function(value) {
                                 return Number(value).toFixed(1);
                             }
                         },
                         grid: {
-                            drawBorder: false
+                            drawBorder: false,
+                            lineWidth: function(context) {
+                                return context.tick.value === 0 ? 3 : 1;
+                            },
+                            color: function(context) {
+                                return context.tick.value === 0
+                                    ? "rgba(107, 114, 128, 0.9)"
+                                    : "rgba(209, 213, 219, 0.5)";
+                            }
                         }
                     }
                 },
@@ -151,13 +197,15 @@
                             label: function(context) {
                                 const item = context.raw;
                                 const frequency = item.frequency.toFixed(1);
-                                const negativeSentimentIntensity = Number(item.negativeSentimentIntensity).toFixed(2);
+                                const sentimentScore = Number(
+                                    item.sentimentScore
+                                ).toFixed(2);
 
                                 return [
                                     `${item.label}`,
                                     `Frequency: ${frequency}%`,
                                     `Entries: ${item.count}`,
-                                    `Negative sentiment intensity: ${negativeSentimentIntensity}`
+                                    `Sentiment score: ${sentimentScore}`
                                 ];
                             }
                         }
