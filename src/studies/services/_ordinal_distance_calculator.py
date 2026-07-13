@@ -34,10 +34,12 @@ STUDY_ORDINAL_DISTANCE_UPDATE_FIELDS = [
 def _absolute_ordinal_distance(detected_label, reference_label):
 	if not detected_label or not reference_label:
 		return None
+	
+	print (f"Detected label: {detected_label}\nReference label: {reference_label}")
 
 	if (
 		detected_label in BINARY_SENTIMENT_LABEL_ORDINALS
-		or reference_label in BINARY_SENTIMENT_LABEL_ORDINALS
+		and reference_label in BINARY_SENTIMENT_LABEL_ORDINALS
 	):
 		detected_ordinal = BINARY_SENTIMENT_LABEL_ORDINALS.get(detected_label)
 		reference_ordinal = BINARY_SENTIMENT_LABEL_ORDINALS.get(reference_label)
@@ -79,6 +81,10 @@ def refresh_sentiment_ordinal_distance_for_run(study_analysis: StudyAnalysis, st
 		study_analysis.average_sentiment_label,
 		study.evaluator_average_sentiment_label,
 	)
+
+	# debug
+	print (f"Study Analysis Dominant Sentiment Label: {study_analysis.dominant_sentiment_label}")
+	print (f"Study Evaluator Dominant Sentiment Label: {study.evaluator_dominant_sentiment_label}")
 
 	study_analysis.evaluator_abs_distance_dominant_sentiment = _absolute_ordinal_distance(
 		study_analysis.dominant_sentiment_label,

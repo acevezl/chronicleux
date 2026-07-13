@@ -1,5 +1,5 @@
 from django.core.paginator import Paginator
-from django.db.models import Q, Count, Prefetch
+from django.db.models import Q, Count, Prefetch, Exists, OuterRef
 
 from .models import (
     Entry, 
@@ -35,6 +35,7 @@ def filter_diary_entries(request, study, run=None, evaluator=None):
 	date_to = request.GET.get("date_to", "").strip()
 	reported_sentiment = request.GET.get("reported_sentiment", "").strip()
 	issue_encountered = request.GET.get("issue_encountered", "").strip()
+	human_evaluation = request.GET.get("human_evaluation", "").strip()
 	sort = request.GET.get("sort", "-created_at")
 	entries = (
 		Entry.objects
@@ -51,6 +52,15 @@ def filter_diary_entries(request, study, run=None, evaluator=None):
 					.prefetch_related("evaluator_issues")
 				),
 				to_attr="current_user_evaluations",
+			)
+		)
+
+		entries = entries.annotate(
+			has_human_evaluation=Exists(
+				EntryEvaluation.objects.filter(
+					entry_id=OuterRef("pk"),
+					evaluated_by=evaluator,
+				)
 			)
 		)
 
@@ -76,10 +86,18 @@ def filter_diary_entries(request, study, run=None, evaluator=None):
 	if reported_sentiment:
 		entries = entries.filter(sentiment_self_report=reported_sentiment)
 
+	# Issue encountered
 	if issue_encountered == "yes":
 		entries = entries.filter(issue_encountered=True)
 	elif issue_encountered == "no":
 		entries = entries.filter(issue_encountered=False)
+
+
+	# Human evaluation status for the current evaluator
+	if human_evaluation == "pending":
+		entries = entries.filter(has_human_evaluation=False)
+	elif human_evaluation == "completed":
+		entries = entries.filter(has_human_evaluation=True)
 
 	# Sorting
 	if sort not in ALLOWED_ENTRY_SORTS:
@@ -128,6 +146,7 @@ def filter_diary_entries(request, study, run=None, evaluator=None):
 		"date_to": date_to,
 		"reported_sentiment": reported_sentiment,
 		"issue_encountered": issue_encountered,
+		"human_evaluation": human_evaluation,
 		"sort": sort,
 
 		"displayed_entries_count": displayed_entries_count,

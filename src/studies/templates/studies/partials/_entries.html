@@ -104,6 +104,32 @@
                     >
                 </div>
 
+                <div>
+                    <label for="human_evaluation" class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        Human evaluation
+                    </label>
+
+                    <select
+                        id="human_evaluation"
+                        name="human_evaluation"
+                        class="border border-gray-200 rounded-sm px-3 py-2 text-sm w-44 dark:text-white dark:border-gray-500"
+                    >
+                        <option value="">All entries</option>
+                        <option
+                            value="pending"
+                            {% if human_evaluation == "pending" %}selected{% endif %}
+                        >
+                            Pending human evaluation
+                        </option>
+                        <option
+                            value="completed"
+                            {% if human_evaluation == "completed" %}selected{% endif %}
+                        >
+                            Human evaluation completed
+                        </option>
+                    </select>
+                </div>
+
                 <button
                     type="submit"
                     class="button-FILTER h-10 self-end"
@@ -111,7 +137,7 @@
                     Filter
                 </button>
 
-                {% if q or reported_sentiment or issue_encountered or date_from or date_to %}
+                {% if q or reported_sentiment or issue_encountered or date_from or date_to or human_evaluation%}
                     <a
                         href="{{ diary_entries_filter_url }}"
                         hx-get="{{ diary_entries_filter_url }}"
@@ -191,7 +217,7 @@
                                 hx-push-url="true"
                                 class="hover:text-gray-900 dark:hover:text-white"
                             >
-                                Issue
+                                Issue Reported?
                                 {% if sort == "issue_encountered" %}↑{% elif sort == "-issue_encountered" %}↓{% endif %}
                             </a>
                         </th>
@@ -259,7 +285,7 @@
                             <div class="flex flex-col gap-2">
                                 <div class="flex items-center gap-2">
                                     <span class="text-xs text-gray-500 dark:text-gray-400">
-                                        Self-reported
+                                        By participant: 
                                     </span>
                                     {% if entry.issue_encountered %}
                                         <span class="badge-ISSUE">
@@ -274,7 +300,7 @@
                                 {% if entry.current_user_evaluation and entry.current_user_evaluation.evaluator_sentiment_label %}
                                     <div class="flex items-center gap-2">
                                         <span class="text-xs text-gray-500 dark:text-gray-400">
-                                            Evaluated
+                                            By evaluator:
                                         </span>
                                         {% if entry.current_user_evaluation.evaluator_issues.all %}
                                             <span class="badge-ISSUE">
