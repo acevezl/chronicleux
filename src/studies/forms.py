@@ -13,6 +13,7 @@ from .models import (
     EntryEvaluationTheme,
     SentimentCategory,
     Study,
+    ThemeAndIssueStatus,
     UXFramework,
     UXFrameworkCriterion,
     UXFrameworkMappingStatus,
@@ -430,13 +431,19 @@ class EntryManualEvaluationForm(forms.ModelForm):
 
         self.fields["evaluator_themes"].queryset = (
             CanonicalTheme.objects
-            .filter(is_active=True)
+            .filter(
+                is_active=True,
+                status=ThemeAndIssueStatus.APPROVED,
+            )
             .order_by("name")
         )
 
         self.fields["evaluator_issues"].queryset = (
             CanonicalIssue.objects
-            .filter(is_active=True)
+            .filter(
+                is_active=True,
+                status=ThemeAndIssueStatus.APPROVED,
+            )
             .order_by("name")
         )
 

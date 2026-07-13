@@ -30,6 +30,36 @@
 				</div>
 
 				<div class="flex flex-wrap justify-end gap-2">
+					{% if previous_entry %}
+						<a
+							href="{% url 'evaluate_entry' study.pk previous_entry.pk %}"
+							class="button-TERTIARY"
+						>
+							{% heroicon_outline "chevron-left" class="h-4 w-4 shrink-0" %}
+							Previous
+						</a>
+					{% else %}
+						<span class="button-TERTIARY opacity-40 cursor-not-allowed">
+							{% heroicon_outline "chevron-left" class="h-4 w-4 shrink-0" %}
+							Previous
+						</span>
+					{% endif %}
+
+					{% if next_entry %}
+						<a
+							href="{% url 'evaluate_entry' study.pk next_entry.pk %}"
+							class="button-TERTIARY"
+						>
+							Next
+							{% heroicon_outline "chevron-right" class="h-4 w-4 shrink-0" %}
+						</a>
+					{% else %}
+						<span class="button-TERTIARY opacity-40 cursor-not-allowed">
+							Next
+							{% heroicon_outline "chevron-right" class="h-4 w-4 shrink-0" %}
+						</span>
+					{% endif %}
+
 					<a
 						href="{% url 'diary_entry_detail' study.pk entry.pk %}"
 						class="button-TERTIARY"

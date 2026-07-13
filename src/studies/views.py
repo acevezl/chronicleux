@@ -333,7 +333,7 @@ def entries(request, pk):
 	if not user_can_evaluate_study(request.user, study):
 		return HttpResponseForbidden()
 
-	context = filter_diary_entries(request, study)
+	context = filter_diary_entries(request, study, evaluator=request.user)
 	context["study"] = study
 	context["diary_entries_filter_url"] = reverse(
 		"diary_entries_partial",
@@ -382,7 +382,7 @@ def study_entries_partial(request, study_pk):
 
 		return redirect(url)
 
-	context = filter_diary_entries(request, study)
+	context = filter_diary_entries(request, study, evaluator=request.user)
 	context["study"] = study
 	context["diary_entries_filter_url"] = reverse(
 		"diary_entries_partial",
@@ -430,6 +430,19 @@ def diary_entry_detail(request, study_pk, entry_pk):
 		study=study,
 	)
 
+	entry_evaluation = (
+		EntryEvaluation.objects
+		.filter(
+			entry=entry,
+			evaluated_by=request.user,
+		)
+		.prefetch_related(
+			"evaluator_themes",
+			"evaluator_issues",
+		)
+		.first()
+	)
+
 	# Pick up all the different analyses that exist for this entry
 	entry_runs = EntryAnalysis.objects.filter(entry=entry)
 
@@ -449,6 +462,7 @@ def diary_entry_detail(request, study_pk, entry_pk):
 		"page_subtitle": f"Owner: {owner_name}, Created on: {created_at}",
 		"study": study,
 		"entry": entry,
+		"entry_evaluation": entry_evaluation,
 		"selected_run": selected_run,
 		"entry_runs": entry_runs,
 	}

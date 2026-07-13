@@ -1,9 +1,10 @@
 from django.core.paginator import Paginator
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Prefetch
 
 from .models import (
     Entry, 
 	EntryAnalysis, 
+	EntryEvaluation,
 	CanonicalTheme, 
 	CanonicalIssue, 
 	ThemeAndIssueSource, 
@@ -27,19 +28,31 @@ ALLOWED_ENTRY_SORTS = {
 	"-issue_encountered",
 }
 
-def filter_diary_entries(request, study, run=None):
+def filter_diary_entries(request, study, run=None, evaluator=None):
+
 	q = request.GET.get("q", "").strip()
 	date_from = request.GET.get("date_from", "").strip()
 	date_to = request.GET.get("date_to", "").strip()
 	reported_sentiment = request.GET.get("reported_sentiment", "").strip()
 	issue_encountered = request.GET.get("issue_encountered", "").strip()
 	sort = request.GET.get("sort", "-created_at")
-
 	entries = (
 		Entry.objects
 		.filter(study=study)
 		.select_related("participant")
 	)
+	if evaluator:
+		entries = entries.prefetch_related(
+			Prefetch(
+				"entry_evaluations",
+				queryset=(
+					EntryEvaluation.objects
+					.filter(evaluated_by=evaluator)
+					.prefetch_related("evaluator_issues")
+				),
+				to_attr="current_user_evaluations",
+			)
+		)
 
 	# General search
 	if q:
@@ -78,6 +91,14 @@ def filter_diary_entries(request, study, run=None):
 	paginator = Paginator(entries, 10)
 	page_number = request.GET.get("page")
 	page_obj = paginator.get_page(page_number)
+
+	# Current evaluator user evals
+	for entry in page_obj.object_list:
+		entry.current_user_evaluation = (
+			entry.current_user_evaluations[0]
+			if getattr(entry, "current_user_evaluations", [])
+			else None
+		)
 
 	page_params = request.GET.copy()
 	page_params.pop("page", None)

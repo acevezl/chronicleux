@@ -177,7 +177,7 @@
                                 hx-push-url="true"
                                 class="hover:text-gray-900 dark:hover:text-white"
                             >
-                                Self-reported Sentiment
+                                Sentiment
                                 {% if sort == "sentiment_self_report" %}↑{% elif sort == "-sentiment_self_report" %}↓{% endif %}
                             </a>
                         </th>
@@ -191,7 +191,7 @@
                                 hx-push-url="true"
                                 class="hover:text-gray-900 dark:hover:text-white"
                             >
-                                Self-reported Issue
+                                Issue
                                 {% if sort == "issue_encountered" %}↑{% elif sort == "-issue_encountered" %}↓{% endif %}
                             </a>
                         </th>
@@ -230,21 +230,69 @@
                         </td>
 
                         <td class="px-4 py-3">
-                            {% include "studies/partials/_badge_sentiment.html" with sentiment=entry.sentiment_self_report %}
+
+                            <div class="flex flex-col gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                                        Self-reported
+                                    </span>
+                                    {% include "studies/partials/_badge_sentiment.html" with sentiment=entry.sentiment_self_report %}
+                                </div>
+                                {% if entry.current_user_evaluation and entry.current_user_evaluation.evaluator_sentiment_label %}
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                                            Evaluated
+                                        </span>
+                                        {% include "studies/partials/_badge_sentiment.html" with sentiment=entry.current_user_evaluation.evaluator_sentiment_label %}
+                                    </div>
+                                {% else %}
+                                    <span class="text-xs text-gray-400">
+                                        Pending human evaluation
+                                    </span>
+                                {% endif %}
+                            </div>
+
                         </td>
 
                         <td class="px-4 py-3">
-                                <div class="flex flex-wrap gap-2">
-                                {% if entry.issue_encountered %}
-                                <span class="badge-ISSUE">
-                                    Yes
-                                </span>
+
+                            <div class="flex flex-col gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                                        Self-reported
+                                    </span>
+                                    {% if entry.issue_encountered %}
+                                        <span class="badge-ISSUE">
+                                            Yes
+                                        </span>
+                                    {% else %}
+                                        <span class="badge-NONE">
+                                            No
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                {% if entry.current_user_evaluation and entry.current_user_evaluation.evaluator_sentiment_label %}
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                                            Evaluated
+                                        </span>
+                                        {% if entry.current_user_evaluation.evaluator_issues.all %}
+                                            <span class="badge-ISSUE">
+                                                Yes
+                                            </span>
+                                        {% else %}
+                                            <span class="badge-NONE">
+                                                No
+                                            </span>
+                                        {% endif %}
+                                    </div>
                                 {% else %}
-                                <span class="badge-NONE">
-                                    No
-                                </span>
-                                {% endif %}    
+                                    <span class="text-xs text-gray-400">
+                                        Pending human evaluation
+                                    </span>
+                                {% endif %}
                             </div>
+
                         </td>
 
                         <td class="flex p-4 gap-2 text-right text-sm font-medium">
