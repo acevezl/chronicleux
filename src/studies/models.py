@@ -128,11 +128,11 @@ class UXFrameworkMappingStatus(models.TextChoices):
 # SENTIMENT SCORE THRESHOLDS ARRAYS
 # Used at the Study Level to label average sentiment score
 SENTIMENT_SCORE_THRESHOLDS = [
-	(-1.0, -0.7, SentimentCategory.VERY_NEGATIVE),
-	(-0.7, -0.2, SentimentCategory.NEGATIVE),
-	(-0.2, 0.2, SentimentCategory.NEUTRAL),
-	(0.2, 0.7, SentimentCategory.POSITIVE),
-	(0.7, 1.0, SentimentCategory.VERY_POSITIVE),
+	(-1.0, -0.85, SentimentCategory.VERY_NEGATIVE),
+	(-0.85, -0.30, SentimentCategory.NEGATIVE),
+	(-0.30, 0.30, SentimentCategory.NEUTRAL),
+	(0.30, 0.85, SentimentCategory.POSITIVE),
+	(0.85, 1.0, SentimentCategory.VERY_POSITIVE),
 ]
 # These one's are for binary methods, like BERT
 BINARY_SENTIMENT_SCORE_THRESHOLDS = [

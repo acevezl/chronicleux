@@ -12,6 +12,8 @@
 
             {% for category, metrics in run.participant_sentiment_metrics_by_category.items %}
 
+                {% if category|humanize_enum|upper != "NOT NEGATIVE"%}
+
                 <article class="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
 
                     <!-- CATEGORY HEADER -->
@@ -144,6 +146,7 @@
                     </div>
 
                 </article>
+                {% endif %}
 
             {% endfor %}
 

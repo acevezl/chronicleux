@@ -14,8 +14,10 @@
 
                 {% for category, metrics in run.evaluator_sentiment_metrics_by_category.items %}
 
-                    <article class="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
+                    {% if category|humanize_enum|upper != "NOT NEGATIVE"%}
 
+                    <article class="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
+                        
                         <!-- CATEGORY HEADER -->
                         <header class="px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                             <h5 class="text-sm md-card-title">
@@ -146,6 +148,7 @@
                         </div>
 
                     </article>
+                    {% endif %}
 
                 {% endfor %}
 
