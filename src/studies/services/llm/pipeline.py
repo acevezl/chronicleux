@@ -46,6 +46,10 @@ def analyze_study_entries_with_llm(
         max_themes=max_themes,
     )
 
+    print("\n1ST PASS THEME IDENTIFICATION")
+    print("--------------------------------")
+    print(f"THEMES:\n\n {themes}")
+
     if not themes:
         raise RuntimeError("LLM theme exploration did not return any themes.")
 
@@ -57,6 +61,10 @@ def analyze_study_entries_with_llm(
         model=model,
         max_issues=max_issues,
     )
+
+    print("\n1ST PASS ISSUE IDENTIFICATION")
+    print("--------------------------------")
+    print(f"ISSUES:\n\n {issues}")
 
     # SECOND PASS: Analyze each entry using both catalogs.
     entry_analysis_results = []
