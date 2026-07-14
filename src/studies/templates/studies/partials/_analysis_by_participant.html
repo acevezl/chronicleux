@@ -80,10 +80,7 @@
 
                 {% for participant in participant_analysis_data %}
 
-                    <details
-                        class="main-card group overflow-hidden"
-                        {% if forloop.first %}open{% endif %}
-                    >
+                    <details class="main-card group overflow-hidden" closed>
 
                         <!-- PARTICIPANT HEADER -->
                         <summary class="flex cursor-pointer list-none items-center justify-between gap-4 bg-gray-50 dark:bg-gray-800 p-4">
@@ -125,7 +122,7 @@
                         <!-- PARTICIPANT CHARTS -->
                         <div class="border-t border-gray-200 dark:border-gray-700 p-4">
 
-                            <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
+                            <div class="grid grid-cols-1 gap-4">
 
                                 <!-- SENTIMENT EVOLUTION -->
                                 <div class="main-card overflow-hidden">
@@ -136,76 +133,15 @@
                                         </h5>
 
                                         <p class="xs-label">
-                                            Average detected sentiment across this participant's diary timeline.
+                                            Machine-detected, self-reported, and evaluator-assessed sentiment across this participant's diary timeline.
                                         </p>
                                     </div>
 
                                     <div class="p-4">
 
-                                        {% if participant.sentiment.points %}
+                                        {% if participant.sentiment.machine_points %}
 
-                                            <div class="flex gap-2 pb-4">
-                                                <button
-                                                    type="button"
-                                                    data-participant-sentiment-scale="daily"
-                                                    data-participant-index="{{ forloop.counter0 }}"
-                                                    class="participant-sentiment-scale-btn rounded-sm px-3 py-1 text-xs font-medium text-white bg-fuchsia-800 hover:bg-fuchsia-700"
-                                                >
-                                                    Daily
-                                                </button>
-
-                                                <button
-                                                    type="button"
-                                                    data-participant-sentiment-scale="weekly"
-                                                    data-participant-index="{{ forloop.counter0 }}"
-                                                    class="participant-sentiment-scale-btn rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                                >
-                                                    Weekly
-                                                </button>
-
-                                                <button
-                                                    type="button"
-                                                    data-participant-sentiment-scale="monthly"
-                                                    data-participant-index="{{ forloop.counter0 }}"
-                                                    class="participant-sentiment-scale-btn rounded-sm px-3 py-1 text-xs font-medium border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-                                                >
-                                                    Monthly
-                                                </button>
-                                            </div>
-
-                                            <div class="h-96 rounded-sm border border-dashed border-gray-300 dark:border-gray-600 p-4 text-sm text-gray-500 dark:text-gray-400">
-
-                                                <div class="mb-4 flex items-start justify-between gap-4">
-                                                    <div>
-                                                        <h3 class="text-sm md-card-title">
-                                                            Sentiment score evolution over time
-                                                        </h3>
-
-                                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                                            Average detected sentiment by entry submission date.
-                                                        </p>
-                                                    </div>
-
-                                                    <div class="flex gap-1 text-right">
-                                                        <div class="text-xs font-medium text-gray-500 dark:text-gray-400">
-                                                            Entries analyzed:
-                                                        </div>
-
-                                                        <div class="text-xs md-card-title">
-                                                            {{ participant.entry_count }}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="relative h-72 w-full overflow-hidden">
-                                                    <canvas
-                                                        id="participantSentimentChart{{ forloop.counter0 }}"
-                                                        aria-label="Sentiment evolution for {{ participant.name }}"
-                                                        role="img"
-                                                    ></canvas>
-                                                </div>
-
-                                            </div>
+                                            {% include "studies/partials/_evolution_sentiment_by_label.html" with chart_id=participant.sentiment_chart_id chart_title="Sentiment Evolution" chart_description="Machine-detected, self-reported, and evaluator-assessed sentiment for this participant." machine_evolution=participant.sentiment.machine_points participant_evolution=participant.sentiment.participant_points evaluator_evolution=participant.sentiment.evaluator_points total_entries=participant.entry_count %}
 
                                         {% else %}
 
@@ -669,51 +605,7 @@
             );
         }
 
-        function aggregateParticipantSentiment(participant, scale) {
-            const points = participant.sentiment.points || [];
-
-            if (scale === "daily") {
-                const dailyBuckets = {};
-
-                points.forEach(point => {
-                    const key = point.date;
-
-                    if (!dailyBuckets[key]) {
-                        dailyBuckets[key] = {
-                            label: key,
-                            entryCount: 0,
-                            sentimentTotal: 0,
-                            sentimentCount: 0,
-                        };
-                    }
-
-                    dailyBuckets[key].entryCount += 1;
-
-                    if (
-                        point.y !== null
-                        && point.y !== undefined
-                    ) {
-                        dailyBuckets[key].sentimentTotal += point.y;
-                        dailyBuckets[key].sentimentCount += 1;
-                    }
-                });
-
-                return Object.values(dailyBuckets)
-                    .sort((a, b) => a.label.localeCompare(b.label))
-                    .map(bucket => ({
-                        label: bucket.label,
-                        entry_count: bucket.entryCount,
-                        avg_sentiment: bucket.sentimentCount
-                            ? Number(
-                                (
-                                    bucket.sentimentTotal
-                                    / bucket.sentimentCount
-                                ).toFixed(4)
-                            )
-                            : null,
-                    }));
-            }
-
+        function aggregateSentimentPoints(points, scale) {
             const buckets = {};
 
             points.forEach(point => {
@@ -722,13 +614,13 @@
                 if (!buckets[key]) {
                     buckets[key] = {
                         label: key,
-                        entryCount: 0,
+                        entryIds: new Set(),
                         sentimentTotal: 0,
                         sentimentCount: 0,
                     };
                 }
 
-                buckets[key].entryCount += 1;
+                buckets[key].entryIds.add(point.entry_id);
 
                 if (
                     point.y !== null
@@ -743,7 +635,7 @@
                 .sort((a, b) => a.label.localeCompare(b.label))
                 .map(bucket => ({
                     label: bucket.label,
-                    entry_count: bucket.entryCount,
+                    entry_count: bucket.entryIds.size,
                     avg_sentiment: bucket.sentimentCount
                         ? Number(
                             (
@@ -755,14 +647,80 @@
                 }));
         }
 
+        function buildParticipantSentimentChartData(
+            participant,
+            scale
+        ) {
+            const machineData = aggregateSentimentPoints(
+                participant.sentiment.machine_points || [],
+                scale
+            );
+
+            const participantData = aggregateSentimentPoints(
+                participant.sentiment.participant_points || [],
+                scale
+            );
+
+            const evaluatorData = aggregateSentimentPoints(
+                participant.sentiment.evaluator_points || [],
+                scale
+            );
+
+            const labels = Array.from(
+                new Set([
+                    ...machineData.map(item => item.label),
+                    ...participantData.map(item => item.label),
+                    ...evaluatorData.map(item => item.label),
+                ])
+            ).sort((a, b) => a.localeCompare(b));
+
+            function valuesByLabel(data) {
+                const dataMap = new Map(
+                    data.map(item => [
+                        item.label,
+                        item.avg_sentiment,
+                    ])
+                );
+
+                return labels.map(label =>
+                    dataMap.has(label)
+                        ? dataMap.get(label)
+                        : null
+                );
+            }
+
+            return {
+                labels,
+                machine: valuesByLabel(machineData),
+                participant: valuesByLabel(participantData),
+                evaluator: valuesByLabel(evaluatorData),
+            };
+        }
+
         function createSentimentChart(participant, index) {
             const canvas = document.getElementById(
                 `participantSentimentChart${index}`
             );
 
+            const hasMachineData = (
+                participant.sentiment.machine_points || []
+            ).length > 0;
+
+            const hasParticipantData = (
+                participant.sentiment.participant_points || []
+            ).length > 0;
+
+            const hasEvaluatorData = (
+                participant.sentiment.evaluator_points || []
+            ).length > 0;
+
             if (
                 !canvas
-                || !participant.sentiment.points.length
+                || (
+                    !hasMachineData
+                    && !hasParticipantData
+                    && !hasEvaluatorData
+                )
             ) {
                 return null;
             }
@@ -779,23 +737,32 @@
                     labels: [],
                     datasets: [
                         {
-                            label: "Average sentiment",
+                            label: "Machine-detected",
                             data: [],
                             tension: 0.35,
                             borderWidth: 2,
                             pointRadius: 3,
                             pointHoverRadius: 5,
-                            yAxisID: "y",
+                            spanGaps: true,
                         },
                         {
-                            label: "Entry count",
+                            label: "Self-reported",
                             data: [],
                             tension: 0.35,
-                            borderWidth: 1,
-                            pointRadius: 2,
-                            pointHoverRadius: 4,
-                            yAxisID: "y1",
-                            borderDash: [4, 4],
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            spanGaps: true,
+                        },
+                        {
+                            label: "Evaluator-assessed",
+                            data: [],
+                            tension: 0.35,
+                            borderWidth: 2,
+                            pointRadius: 3,
+                            pointHoverRadius: 5,
+                            borderDash: [5, 4],
+                            spanGaps: true,
                         },
                     ],
                 },
@@ -824,16 +791,16 @@
                                     const value = context.parsed.y;
 
                                     if (
-                                        label === "Average sentiment"
-                                        && value !== null
+                                        value === null
+                                        || value === undefined
                                     ) {
-                                        return [
-                                            `${label}: ${value.toFixed(4)}`,
-                                            `Classification: ${sentimentLabel(value)}`,
-                                        ];
+                                        return `${label}: Not available`;
                                     }
 
-                                    return `${label}: ${value}`;
+                                    return [
+                                        `${label}: ${value.toFixed(4)}`,
+                                        `Classification: ${sentimentLabel(value)}`,
+                                    ];
                                 },
                             },
                         },
@@ -862,22 +829,6 @@
                                 stepSize: 0.5,
                             },
                         },
-                        y1: {
-                            type: "linear",
-                            position: "right",
-                            beginAtZero: true,
-                            grid: {
-                                drawOnChartArea: false,
-                            },
-                            title: {
-                                display: true,
-                                text: "Entries",
-                            },
-                            ticks: {
-                                precision: 0,
-                                stepSize: 1,
-                            },
-                        },
                     },
                 },
             });
@@ -888,25 +839,16 @@
             );
 
             function updateChart(scale) {
-                const aggregatedData =
-                    aggregateParticipantSentiment(
+                const chartData =
+                    buildParticipantSentimentChartData(
                         participant,
                         scale
                     );
 
-                chart.data.labels = aggregatedData.map(
-                    item => item.label
-                );
-
-                chart.data.datasets[0].data =
-                    aggregatedData.map(
-                        item => item.avg_sentiment
-                    );
-
-                chart.data.datasets[1].data =
-                    aggregatedData.map(
-                        item => item.entry_count
-                    );
+                chart.data.labels = chartData.labels;
+                chart.data.datasets[0].data = chartData.machine;
+                chart.data.datasets[1].data = chartData.participant;
+                chart.data.datasets[2].data = chartData.evaluator;
 
                 chart.update();
 

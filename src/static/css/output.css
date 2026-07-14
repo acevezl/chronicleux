@@ -897,6 +897,9 @@
   .bg-blue-50 {
     background-color: var(--color-blue-50);
   }
+  .bg-blue-100 {
+    background-color: var(--color-blue-100);
+  }
   .bg-emerald-50 {
     background-color: var(--color-emerald-50);
   }
@@ -944,6 +947,9 @@
   }
   .bg-green-50 {
     background-color: var(--color-green-50);
+  }
+  .bg-green-100 {
+    background-color: var(--color-green-100);
   }
   .bg-indigo-50 {
     background-color: var(--color-indigo-50);

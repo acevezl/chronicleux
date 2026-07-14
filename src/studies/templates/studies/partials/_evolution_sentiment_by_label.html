@@ -1,0 +1,1359 @@
+{% with source_id=chart_id|default:"sentimentEvolutionByLabelChart" %}
+    {% with machine_data_id=source_id|add:"MachineData" participant_data_id=source_id|add:"ParticipantData" evaluator_data_id=source_id|add:"EvaluatorData" %}
+
+        <div class="rounded-sm border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 p-4">
+
+            <!-- TIME SCALE -->
+            <div
+                class="flex gap-2 pb-4"
+                data-sentiment-label-chart-controls="{{ source_id }}"
+            >
+                <button
+                    type="button"
+                    data-sentiment-label-scale="daily"
+                    class="sentiment-label-scale-btn rounded-sm bg-fuchsia-800 px-3 py-1 text-xs font-medium text-white hover:bg-fuchsia-700"
+                >
+                    Daily
+                </button>
+
+                <button
+                    type="button"
+                    data-sentiment-label-scale="weekly"
+                    class="sentiment-label-scale-btn rounded-sm border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                >
+                    Weekly
+                </button>
+
+                <button
+                    type="button"
+                    data-sentiment-label-scale="monthly"
+                    class="sentiment-label-scale-btn rounded-sm border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                >
+                    Monthly
+                </button>
+            </div>
+
+            <!-- CHART -->
+            <div class="h-96 rounded-sm border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
+
+                <!-- HEADER -->
+                <div class="mb-4 flex items-start justify-between gap-4">
+
+                    <div>
+                        <h3 class="text-sm md-card-title">
+                            {{ chart_title|default:"Sentiment label evolution over time" }}
+                        </h3>
+
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            {{ chart_description|default:"Comparison of participant-reported, machine-detected, and evaluator-assessed sentiment labels over time." }}
+                        </p>
+                    </div>
+
+                    {% if total_entries or run.total_entries %}
+                        <div class="flex gap-1 text-right">
+
+                            <div class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                                Entries represented:
+                            </div>
+
+                            <div class="text-xs md-card-title">
+                                {{ total_entries|default:run.total_entries }}
+                            </div>
+
+                        </div>
+                    {% endif %}
+
+                </div>
+
+                {% if machine_evolution or participant_evolution or evaluator_evolution or evolution %}
+
+                    <div class="relative h-72 w-full overflow-hidden">
+
+                        <canvas
+                            id="{{ source_id }}"
+                            aria-label="{{ chart_title|default:'Sentiment label evolution over time' }}"
+                            role="img"
+                        ></canvas>
+
+                        <!--
+                            `evolution` remains supported as a backwards-compatible
+                            alias for machine evolution.
+                        -->
+                        {% if machine_evolution %}
+                            {{ machine_evolution|json_script:machine_data_id }}
+                        {% elif evolution %}
+                            {{ evolution|json_script:machine_data_id }}
+                        {% endif %}
+
+                        {% if participant_evolution %}
+                            {{ participant_evolution|json_script:participant_data_id }}
+                        {% endif %}
+
+                        {% if evaluator_evolution %}
+                            {{ evaluator_evolution|json_script:evaluator_data_id }}
+                        {% endif %}
+
+                    </div>
+
+                {% else %}
+
+                    <div class="flex h-72 items-center justify-center rounded-sm border border-dashed border-gray-300 p-4 text-center dark:border-gray-700">
+
+                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                            No sentiment label evolution data is available yet.
+                        </p>
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        {% if machine_evolution or participant_evolution or evaluator_evolution or evolution %}
+        <script>
+            (() => {
+                const chartId =
+                    "{{ source_id|escapejs }}";
+
+                const machineDataId =
+                    "{{ machine_data_id|escapejs }}";
+
+                const participantDataId =
+                    "{{ participant_data_id|escapejs }}";
+
+                const evaluatorDataId =
+                    "{{ evaluator_data_id|escapejs }}";
+
+                const isBinaryMachineMethod =
+                    "{{ run.methods.sentiment|default:''|escapejs }}" === "bert";
+
+                const canvas =
+                    document.getElementById(chartId);
+
+                const controls =
+                    document.querySelector(
+                        `[data-sentiment-label-chart-controls="${chartId}"]`
+                    );
+
+                if (
+                    !canvas
+                    || !controls
+                    || typeof Chart === "undefined"
+                ) {
+                    return;
+                }
+
+                /*
+                * These exactly mirror the thresholds defined in models.py - note for future Luigi: If model thresholds change I need to change them here too!
+                */
+                const sentimentThresholds = [
+                    {
+                        min: -1.0,
+                        max: -0.85,
+                        label: "VERY_NEGATIVE",
+                    },
+                    {
+                        min: -0.85,
+                        max: -0.30,
+                        label: "NEGATIVE",
+                    },
+                    {
+                        min: -0.30,
+                        max: 0.30,
+                        label: "NEUTRAL",
+                    },
+                    {
+                        min: 0.30,
+                        max: 0.85,
+                        label: "POSITIVE",
+                    },
+                    {
+                        min: 0.85,
+                        max: 1.0,
+                        label: "VERY_POSITIVE",
+                    },
+                ];
+
+                const binarySentimentThresholds = [
+                    {
+                        min: -1.0,
+                        max: 0.0,
+                        label: "NEGATIVE",
+                    },
+                    {
+                        min: 0.0,
+                        max: 1.0,
+                        label: "NOT_NEGATIVE",
+                    },
+                ];
+
+                const sentimentDisplayLabels = {
+                    VERY_NEGATIVE: "Very negative",
+                    NEGATIVE: "Negative",
+                    NEUTRAL: "Neutral",
+                    POSITIVE: "Positive",
+                    VERY_POSITIVE: "Very positive",
+                    NOT_NEGATIVE: "Not negative",
+                };
+
+                const scaleButtons =
+                    controls.querySelectorAll(
+                        ".sentiment-label-scale-btn"
+                    );
+
+                const activeButtonClass = [
+                    "text-white",
+                    "bg-fuchsia-800",
+                    "hover:bg-fuchsia-700",
+                ];
+
+                const inactiveButtonClass = [
+                    "border",
+                    "border-gray-300",
+                    "dark:border-gray-600",
+                    "text-gray-700",
+                    "dark:text-gray-200",
+                    "hover:bg-gray-100",
+                    "dark:hover:bg-gray-800",
+                ];
+
+                function readJsonData(elementId) {
+                    const element =
+                        document.getElementById(elementId);
+
+                    if (!element) {
+                        return [];
+                    }
+
+                    try {
+                        const parsedData =
+                            JSON.parse(element.textContent);
+
+                        return Array.isArray(parsedData)
+                            ? parsedData
+                            : [];
+                    } catch (error) {
+                        console.error(
+                            `Could not parse sentiment data from ${elementId}.`,
+                            error
+                        );
+
+                        return [];
+                    }
+                }
+
+                const rawSeries = {
+                    machine:
+                        readJsonData(machineDataId),
+
+                    participant:
+                        readJsonData(participantDataId),
+
+                    evaluator:
+                        readJsonData(evaluatorDataId),
+                };
+
+                function parseDate(dateString) {
+                    return new Date(
+                        `${dateString}T00:00:00`
+                    );
+                }
+
+                function getISOWeekKey(dateString) {
+                    const date =
+                        parseDate(dateString);
+
+                    const tempDate =
+                        new Date(
+                            Date.UTC(
+                                date.getFullYear(),
+                                date.getMonth(),
+                                date.getDate()
+                            )
+                        );
+
+                    const dayNumber =
+                        tempDate.getUTCDay() || 7;
+
+                    tempDate.setUTCDate(
+                        tempDate.getUTCDate()
+                        + 4
+                        - dayNumber
+                    );
+
+                    const yearStart =
+                        new Date(
+                            Date.UTC(
+                                tempDate.getUTCFullYear(),
+                                0,
+                                1
+                            )
+                        );
+
+                    const weekNumber =
+                        Math.ceil(
+                            (
+                                (
+                                    tempDate - yearStart
+                                ) / 86400000 + 1
+                            ) / 7
+                        );
+
+                    return (
+                        `${tempDate.getUTCFullYear()}`
+                        + `-W${String(weekNumber).padStart(2, "0")}`
+                    );
+                }
+
+                function getMonthKey(dateString) {
+                    return dateString.slice(0, 7);
+                }
+
+                function getBucketKey(dateString, scale) {
+                    if (scale === "weekly") {
+                        return getISOWeekKey(
+                            dateString
+                        );
+                    }
+
+                    if (scale === "monthly") {
+                        return getMonthKey(
+                            dateString
+                        );
+                    }
+
+                    return dateString;
+                }
+
+                function normalizeSentimentLabel(label) {
+                    if (!label) {
+                        return null;
+                    }
+
+                    return String(label)
+                        .trim()
+                        .toUpperCase()
+                        .replaceAll(" ", "_")
+                        .replaceAll("-", "_");
+                }
+
+                function getThresholdMidpoint(label, isBinary = false) {
+                    const normalizedLabel =
+                        normalizeSentimentLabel(label);
+
+                    const thresholds =
+                        isBinary
+                            ? binarySentimentThresholds
+                            : sentimentThresholds;
+
+                    const threshold =
+                        thresholds.find(
+                            item =>
+                                item.label === normalizedLabel
+                        );
+
+                    if (!threshold) {
+                        return null;
+                    }
+
+                    return Number(
+                        (
+                            (
+                                threshold.min
+                                + threshold.max
+                            ) / 2
+                        ).toFixed(4)
+                    );
+                }
+
+                function scoreToLabel(score, isBinary = false) {
+                    if (
+                        score === null
+                        || score === undefined
+                        || Number.isNaN(Number(score))
+                    ) {
+                        return null;
+                    }
+
+                    const numericScore =
+                        Number(score);
+
+                    const thresholds =
+                        isBinary
+                            ? binarySentimentThresholds
+                            : sentimentThresholds;
+
+                    for (
+                        let index = 0;
+                        index < thresholds.length;
+                        index += 1
+                    ) {
+                        const threshold =
+                            thresholds[index];
+
+                        const isLastThreshold =
+                            index === thresholds.length - 1;
+
+                        const isWithinRange =
+                            numericScore >= threshold.min
+                            && (
+                                numericScore < threshold.max
+                                || (
+                                    isLastThreshold
+                                    && numericScore <= threshold.max
+                                )
+                            );
+
+                        if (isWithinRange) {
+                            return threshold.label;
+                        }
+                    }
+
+                    return null;
+                }
+
+                function getPointRawScore(point) {
+                    if (
+                        point.raw_score !== null
+                        && point.raw_score !== undefined
+                    ) {
+                        return Number(
+                            point.raw_score
+                        );
+                    }
+
+                    if (
+                        point.sentiment_score !== null
+                        && point.sentiment_score !== undefined
+                    ) {
+                        return Number(
+                            point.sentiment_score
+                        );
+                    }
+
+                    if (
+                        point.avg_sentiment !== null
+                        && point.avg_sentiment !== undefined
+                    ) {
+                        return Number(
+                            point.avg_sentiment
+                        );
+                    }
+
+                    if (
+                        point.y !== null
+                        && point.y !== undefined
+                    ) {
+                        return Number(point.y);
+                    }
+
+                    return null;
+                }
+
+                function getPointLabel(
+                    point,
+                    source
+                ) {
+                    const directLabel =
+                        normalizeSentimentLabel(
+                            point.sentiment_label
+                            || point.label
+                            || point.average_sentiment_label
+                            || point.dominant_sentiment_label
+                        );
+
+                    if (directLabel) {
+                        return directLabel;
+                    }
+
+                    /*
+                    * Some evaluator points may carry an array because multiple
+                    * evaluators assessed the same entry.
+                    */
+                    if (
+                        source === "evaluator"
+                        && Array.isArray(
+                            point.sentiment_labels
+                        )
+                        && point.sentiment_labels.length
+                    ) {
+                        return getDominantLabel(
+                            point.sentiment_labels
+                        );
+                    }
+
+                    const rawScore =
+                        getPointRawScore(point);
+
+                    return scoreToLabel(
+                        rawScore,
+                        source === "machine"
+                            && isBinaryMachineMethod
+                    );
+                }
+
+                function getPointWeight(point) {
+                    if (
+                        point.entry_count !== null
+                        && point.entry_count !== undefined
+                    ) {
+                        return Math.max(
+                            1,
+                            Number(point.entry_count)
+                        );
+                    }
+
+                    return 1;
+                }
+
+                function getDominantLabel(labels) {
+                    const counts = {};
+
+                    labels.forEach(label => {
+                        const normalizedLabel =
+                            normalizeSentimentLabel(label);
+
+                        if (!normalizedLabel) {
+                            return;
+                        }
+
+                        counts[normalizedLabel] =
+                            (
+                                counts[normalizedLabel]
+                                || 0
+                            ) + 1;
+                    });
+
+                    const tiePriority = [
+                        "NEUTRAL",
+                        "POSITIVE",
+                        "NEGATIVE",
+                        "VERY_POSITIVE",
+                        "VERY_NEGATIVE",
+                        "NOT_NEGATIVE",
+                    ];
+
+                    const candidates =
+                        Object.keys(counts);
+
+                    if (!candidates.length) {
+                        return null;
+                    }
+
+                    return candidates.sort(
+                        (firstLabel, secondLabel) => {
+                            const countDifference =
+                                counts[secondLabel]
+                                - counts[firstLabel];
+
+                            if (countDifference !== 0) {
+                                return countDifference;
+                            }
+
+                            return (
+                                tiePriority.indexOf(
+                                    firstLabel
+                                )
+                                - tiePriority.indexOf(
+                                    secondLabel
+                                )
+                            );
+                        }
+                    )[0];
+                }
+
+                function normalizeDailySeries(
+                    points,
+                    source
+                ) {
+                    const dailyBuckets = {};
+
+                    points.forEach(point => {
+                        if (!point.date) {
+                            return;
+                        }
+
+                        const label =
+                            getPointLabel(
+                                point,
+                                source
+                            );
+
+                        if (!label) {
+                            return;
+                        }
+
+                        const rawScore =
+                            getPointRawScore(point);
+
+                        const weight =
+                            getPointWeight(point);
+
+                        const dateKey =
+                            point.date;
+
+                        if (!dailyBuckets[dateKey]) {
+                            dailyBuckets[dateKey] = {
+                                label:
+                                    dateKey,
+
+                                labels:
+                                    [],
+
+                                entryIds:
+                                    new Set(),
+
+                                fallbackEntryCount:
+                                    0,
+
+                                rawScoreTotal:
+                                    0,
+
+                                rawScoreWeight:
+                                    0,
+                            };
+                        }
+
+                        const bucket =
+                            dailyBuckets[dateKey];
+
+                        for (
+                            let count = 0;
+                            count < weight;
+                            count += 1
+                        ) {
+                            bucket.labels.push(
+                                label
+                            );
+                        }
+
+                        if (
+                            point.entry_id !== null
+                            && point.entry_id !== undefined
+                        ) {
+                            bucket.entryIds.add(
+                                point.entry_id
+                            );
+                        } else {
+                            bucket.fallbackEntryCount +=
+                                weight;
+                        }
+
+                        if (
+                            rawScore !== null
+                            && !Number.isNaN(rawScore)
+                        ) {
+                            bucket.rawScoreTotal +=
+                                rawScore * weight;
+
+                            bucket.rawScoreWeight +=
+                                weight;
+                        }
+                    });
+
+                    return Object.values(dailyBuckets)
+                        .sort((first, second) =>
+                            first.label.localeCompare(
+                                second.label
+                            )
+                        )
+                        .map(bucket => {
+                            const dominantLabel =
+                                getDominantLabel(
+                                    bucket.labels
+                                );
+
+                            const rawScore =
+                                bucket.rawScoreWeight
+                                    ? Number(
+                                        (
+                                            bucket.rawScoreTotal
+                                            / bucket.rawScoreWeight
+                                        ).toFixed(4)
+                                    )
+                                    : null;
+
+                            return {
+                                label:
+                                    bucket.label,
+
+                                sentiment_label:
+                                    dominantLabel,
+
+                                plot_score:
+                                    getThresholdMidpoint(
+                                        dominantLabel,
+                                        source === "machine"
+                                            && isBinaryMachineMethod
+                                    ),
+
+                                raw_score:
+                                    rawScore,
+
+                                entry_count:
+                                    bucket.entryIds.size
+                                    || bucket.fallbackEntryCount,
+                            };
+                        });
+                }
+
+                function aggregateSeries(
+                    points,
+                    source,
+                    scale
+                ) {
+                    const dailySeries =
+                        normalizeDailySeries(
+                            points,
+                            source
+                        );
+
+                    if (scale === "daily") {
+                        return dailySeries;
+                    }
+
+                    const buckets = {};
+
+                    dailySeries.forEach(point => {
+                        const bucketKey =
+                            getBucketKey(
+                                point.label,
+                                scale
+                            );
+
+                        if (!buckets[bucketKey]) {
+                            buckets[bucketKey] = {
+                                label:
+                                    bucketKey,
+
+                                labels:
+                                    [],
+
+                                entryCount:
+                                    0,
+
+                                rawScoreTotal:
+                                    0,
+
+                                rawScoreWeight:
+                                    0,
+                            };
+                        }
+
+                        const bucket =
+                            buckets[bucketKey];
+
+                        const entryCount =
+                            Math.max(
+                                1,
+                                Number(
+                                    point.entry_count || 1
+                                )
+                            );
+
+                        bucket.entryCount +=
+                            entryCount;
+
+                        for (
+                            let count = 0;
+                            count < entryCount;
+                            count += 1
+                        ) {
+                            bucket.labels.push(
+                                point.sentiment_label
+                            );
+                        }
+
+                        if (
+                            point.raw_score !== null
+                            && point.raw_score !== undefined
+                        ) {
+                            bucket.rawScoreTotal +=
+                                point.raw_score
+                                * entryCount;
+
+                            bucket.rawScoreWeight +=
+                                entryCount;
+                        }
+                    });
+
+                    return Object.values(buckets)
+                        .sort((first, second) =>
+                            first.label.localeCompare(
+                                second.label
+                            )
+                        )
+                        .map(bucket => {
+                            const dominantLabel =
+                                getDominantLabel(
+                                    bucket.labels
+                                );
+
+                            return {
+                                label:
+                                    bucket.label,
+
+                                sentiment_label:
+                                    dominantLabel,
+
+                                plot_score:
+                                    getThresholdMidpoint(
+                                        dominantLabel,
+                                        source === "machine"
+                                            && isBinaryMachineMethod
+                                    ),
+
+                                raw_score:
+                                    bucket.rawScoreWeight
+                                        ? Number(
+                                            (
+                                                bucket.rawScoreTotal
+                                                / bucket.rawScoreWeight
+                                            ).toFixed(4)
+                                        )
+                                        : null,
+
+                                entry_count:
+                                    bucket.entryCount,
+                            };
+                        });
+                }
+
+                function alignSeries(
+                    participantSeries,
+                    machineSeries,
+                    evaluatorSeries
+                ) {
+                    const labels =
+                        Array.from(
+                            new Set([
+                                ...participantSeries.map(
+                                    point => point.label
+                                ),
+
+                                ...machineSeries.map(
+                                    point => point.label
+                                ),
+
+                                ...evaluatorSeries.map(
+                                    point => point.label
+                                ),
+                            ])
+                        ).sort((first, second) =>
+                            first.localeCompare(second)
+                        );
+
+                    function mapPoints(series) {
+                        const pointsByLabel =
+                            new Map(
+                                series.map(point => [
+                                    point.label,
+                                    point,
+                                ])
+                            );
+
+                        return labels.map(label => {
+                            if (!pointsByLabel.has(label)) {
+                                return null;
+                            }
+
+                            const point =
+                                pointsByLabel.get(label);
+
+                            return {
+                                x:
+                                    label,
+
+                                y:
+                                    point.plot_score,
+
+                                sentimentLabel:
+                                    point.sentiment_label,
+
+                                rawScore:
+                                    point.raw_score,
+
+                                entryCount:
+                                    point.entry_count,
+                            };
+                        });
+                    }
+
+                    return {
+                        labels,
+
+                        participant:
+                            mapPoints(
+                                participantSeries
+                            ),
+
+                        machine:
+                            mapPoints(
+                                machineSeries
+                            ),
+
+                        evaluator:
+                            mapPoints(
+                                evaluatorSeries
+                            ),
+                    };
+                }
+
+                function setActiveButton(scale) {
+                    scaleButtons.forEach(button => {
+                        const isActive = (
+                            button.dataset
+                                .sentimentLabelScale
+                            === scale
+                        );
+
+                        button.classList.remove(
+                            ...activeButtonClass,
+                            ...inactiveButtonClass
+                        );
+
+                        if (isActive) {
+                            button.classList.add(
+                                ...activeButtonClass
+                            );
+                        } else {
+                            button.classList.add(
+                                ...inactiveButtonClass
+                            );
+                        }
+                    });
+                }
+
+                const existingChart =
+                    Chart.getChart(canvas);
+
+                if (existingChart) {
+                    existingChart.destroy();
+                }
+
+                const sentimentBackgroundBands = {
+                    id: `sentimentLabelBackgroundBands-${chartId}`,
+
+                    beforeDraw(chart) {
+                        const {
+                            ctx,
+                            chartArea,
+                            scales,
+                        } = chart;
+
+                        if (
+                            !chartArea
+                            || !scales.y
+                        ) {
+                            return;
+                        }
+
+                        const yScale =
+                            scales.y;
+
+                        const bands =
+                            isBinaryMachineMethod
+                                ? [
+                                    {
+                                        min: -1.0,
+                                        max: 0.0,
+                                        color: "#fef2f2", // red-50
+                                    },
+                                    {
+                                        min: 0.0,
+                                        max: 1.0,
+                                        color: "#f0fdf4", // green-50
+                                    },
+                                ]
+                                : [
+                                    {
+                                        min: -1.0,
+                                        max: -0.85,
+                                        color: "#fecaca", // red-200
+                                    },
+                                    {
+                                        min: -0.85,
+                                        max: -0.30,
+                                        color: "#fef2f2", // red-50
+                                    },
+                                    {
+                                        min: -0.30,
+                                        max: 0.30,
+                                        color: "#fffbeb", // amber-50
+                                    },
+                                    {
+                                        min: 0.30,
+                                        max: 0.85,
+                                        color: "#f0fdf4", // green-50
+                                    },
+                                    {
+                                        min: 0.85,
+                                        max: 1.0,
+                                        color: "#dcfce7", // green-100
+                                    },
+                                ];
+
+                        ctx.save();
+
+                        bands.forEach(band => {
+                            const top =
+                                yScale.getPixelForValue(
+                                    band.max
+                                );
+
+                            const bottom =
+                                yScale.getPixelForValue(
+                                    band.min
+                                );
+
+                            ctx.fillStyle =
+                                band.color;
+
+                            ctx.fillRect(
+                                chartArea.left,
+                                top,
+                                chartArea.right
+                                    - chartArea.left,
+                                bottom - top
+                            );
+                        });
+
+                        ctx.restore();
+                    },
+                };
+
+                const chart =
+                    new Chart(
+                        canvas,
+                        {
+                            type: "line",
+                            plugins: [
+                                sentimentBackgroundBands,
+                            ],
+
+                            data: {
+                                labels: [],
+
+                                datasets: [
+                                    {
+                                        label:
+                                            "Self-reported by participant",
+
+                                        data: [],
+                                        tension: 0,
+                                        borderWidth: 2,
+                                        pointRadius: 3,
+                                        pointHoverRadius: 6,
+                                        spanGaps: true,
+                                        borderColor:"#60a5fa",
+                                        backgroundColor:"#60a5fa",
+                                        pointBackgroundColor:"#60a5fa",
+                                        pointBorderColor:"#60a5fa",
+                                    },
+                                    {
+                                        label:
+                                            "Machine-detected",
+
+                                        data: [],
+                                        tension: 0,
+                                        borderWidth: 2,
+                                        pointRadius: 3,
+                                        pointHoverRadius: 6,
+                                        spanGaps: true,
+                                        borderColor: "#a21caf",
+                                        backgroundColor: "#a21caf",
+                                        pointBackgroundColor: "#a21caf",
+                                        pointBorderColor: "#a21caf",
+                                    },
+                                    {
+                                        label:
+                                            "Assessed by evaluator",
+
+                                        data: [],
+                                        tension: 0,
+                                        borderWidth: 2,
+                                        pointRadius: 3,
+                                        pointHoverRadius: 6,
+                                        borderDash: [8, 5,],
+                                        spanGaps: true,
+                                        borderColor: "#4ade80",
+                                        backgroundColor: "#4ade80",
+                                        pointBackgroundColor: "#4ade80",
+                                        pointBorderColor: "#4ade80",
+                                    },
+                                ],
+                            },
+
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+
+                                interaction: {
+                                    mode: "index",
+                                    intersect: false,
+                                },
+
+                                plugins: {
+                                    legend: {
+                                        position: "bottom",
+
+                                        labels: {
+                                            usePointStyle: true,
+                                            pointStyle: "line",
+                                            pointStyleWidth: 15,
+                                        },
+                                    },
+
+                                    tooltip: {
+                                        callbacks: {
+                                            label(context) {
+                                                const datasetLabel =
+                                                    context.dataset
+                                                        .label || "";
+
+                                                const point =
+                                                    context.raw;
+
+                                                if (
+                                                    !point
+                                                    || !point.sentimentLabel
+                                                ) {
+                                                    return (
+                                                        `${datasetLabel}: `
+                                                        + "Not available"
+                                                    );
+                                                }
+
+                                                const displayLabel =
+                                                    sentimentDisplayLabels[
+                                                        point.sentimentLabel
+                                                    ]
+                                                    || point.sentimentLabel;
+
+                                                const lines = [
+                                                    (
+                                                        `${datasetLabel}: `
+                                                        + displayLabel
+                                                    ),
+                                                ];
+
+                                                if (
+                                                    datasetLabel
+                                                    === "Machine-detected"
+                                                    && point.rawScore !== null
+                                                    && point.rawScore !== undefined
+                                                ) {
+                                                    lines.push(
+                                                        (
+                                                            "Machine score: "
+                                                            + Number(
+                                                                point.rawScore
+                                                            ).toFixed(4)
+                                                        )
+                                                    );
+                                                }
+
+                                                if (
+                                                    point.entryCount !== null
+                                                    && point.entryCount !== undefined
+                                                ) {
+                                                    lines.push(
+                                                        (
+                                                            "Entries represented: "
+                                                            + point.entryCount
+                                                        )
+                                                    );
+                                                }
+
+                                                return lines;
+                                            },
+                                        },
+                                    },
+                                },
+
+                                scales: {
+                                    x: {
+                                        type: "category",
+
+                                        title: {
+                                            display: true,
+                                            text: "Date",
+                                        },
+
+                                        ticks: {
+                                            autoSkip: false,
+                                            maxRotation: 90,
+                                        },
+                                    },
+
+                                    y: {
+                                        type: "linear",
+                                        position: "left",
+                                        min: -1,
+                                        max: 1,
+
+                                        title: {
+                                            display: true,
+                                            text: "Sentiment label",
+                                        },
+
+                                        afterBuildTicks(axis) {
+                                            if (isBinaryMachineMethod) {
+                                                axis.ticks = [
+                                                    {
+                                                        value: -1.0,
+                                                    },
+                                                    {
+                                                        value: 0.0,
+                                                    },
+                                                    {
+                                                        value: 1.0,
+                                                    },
+                                                ];
+
+                                                return;
+                                            }
+
+                                            axis.ticks = [
+                                                {
+                                                    value: -1.0,
+                                                },
+                                                {
+                                                    value: -0.85,
+                                                },
+                                                {
+                                                    value: -0.30,
+                                                },
+                                                {
+                                                    value: 0.0,
+                                                },
+                                                {
+                                                    value: 0.30,
+                                                },
+                                                {
+                                                    value: 0.85,
+                                                },
+                                                {
+                                                    value: 1.0,
+                                                },
+                                            ];
+                                        },
+
+                                        ticks: {
+                                            callback(value) {
+                                                return Number(value).toFixed(2);
+                                            },
+                                        },
+
+                                        grid: {
+                                            color(context) {
+                                                const value =
+                                                    context.tick?.value;
+
+                                                if (value === undefined) {
+                                                    return (
+                                                        "rgba(107, 114, 128, 0.15)"
+                                                    );
+                                                }
+
+                                                if (
+                                                    Math.abs(value)
+                                                    < 0.0001
+                                                ) {
+                                                    return (
+                                                        "rgba(107, 114, 128, 0.95)"
+                                                    );
+                                                }
+
+                                                return (
+                                                    "rgba(107, 114, 128, 0.35)"
+                                                );
+                                            },
+
+                                            lineWidth(context) {
+                                                const value =
+                                                    context.tick?.value;
+
+                                                if (
+                                                    value !== undefined
+                                                    && Math.abs(value) < 0.0001
+                                                ) {
+                                                    return 2;
+                                                }
+
+                                                return 1;
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        }
+                    );
+
+                function updateChart(scale) {
+                    const participantSeries =
+                        aggregateSeries(
+                            rawSeries.participant,
+                            "participant",
+                            scale
+                        );
+
+                    const machineSeries =
+                        aggregateSeries(
+                            rawSeries.machine,
+                            "machine",
+                            scale
+                        );
+
+                    const evaluatorSeries =
+                        aggregateSeries(
+                            rawSeries.evaluator,
+                            "evaluator",
+                            scale
+                        );
+
+                    const alignedSeries =
+                        alignSeries(
+                            participantSeries,
+                            machineSeries,
+                            evaluatorSeries
+                        );
+
+                    chart.data.labels =
+                        alignedSeries.labels;
+
+                    chart.data.datasets[0].data =
+                        alignedSeries.participant;
+
+                    chart.data.datasets[1].data =
+                        alignedSeries.machine;
+
+                    chart.data.datasets[2].data =
+                        alignedSeries.evaluator;
+
+                    chart.update();
+
+                    setActiveButton(scale);
+                }
+
+                scaleButtons.forEach(button => {
+                    button.addEventListener(
+                        "click",
+                        function () {
+                            updateChart(
+                                this.dataset
+                                    .sentimentLabelScale
+                            );
+                        }
+                    );
+                });
+
+                updateChart("daily");
+            })();
+        </script>
+        {% endif %}
+
+    {% endwith %}
+{% endwith %}

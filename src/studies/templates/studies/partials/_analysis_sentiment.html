@@ -74,7 +74,7 @@
 
                 <dl class="grid grid-cols-1 gap-3 p-3">
 
-                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-sky-50 dark:bg-sky-800 p-3">
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-blue-100 dark:bg-sky-800 p-3">
                         <dt class="xs-label">Average sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
                             {% if study.participant_reported_average_sentiment_label %}
@@ -88,7 +88,7 @@
                         </dd>
                     </div>
 
-                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-sky-50 dark:bg-sky-800 p-3">
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-blue-100 dark:bg-sky-800 p-3">
                         <dt class="xs-label">Dominant sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
                             {% if study.participant_reported_dominant_sentiment_label %}
@@ -115,7 +115,7 @@
 
                 <dl class="grid grid-cols-1 gap-3 p-3 ">
 
-                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-fuchsia-50 dark:bg-fuchsia-800 p-3">
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-fuchsia-100 dark:bg-fuchsia-800 p-3">
                         <dt class="xs-label">Average sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
                             {% if run.average_sentiment_label %}
@@ -129,7 +129,7 @@
                         </dd>
                     </div>
 
-                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-fuchsia-50 dark:bg-fuchsia-800 p-3">
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-fuchsia-100 dark:bg-fuchsia-800 p-3">
                         <dt class="xs-label">Dominant sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
                             {% if run.dominant_sentiment_label %}
@@ -156,7 +156,7 @@
 
                 <dl class="grid grid-cols-1 gap-3 p-3 ">
                     {% if study.evaluator_dominant_sentiment_label %}
-                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-emerald-50 dark:bg-emerald-800 p-3">
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-green-100 dark:bg-emerald-800 p-3">
                         <dt class="xs-label">Average sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
                             {% include "studies/partials/_badge_sentiment.html" with sentiment=study.evaluator_average_sentiment_label %}
@@ -166,7 +166,7 @@
                         </dd>
                     </div>
 
-                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-emerald-50 dark:bg-emerald-800 p-3">
+                    <div class="rounded-md border border-gray-200 dark:border-gray-700 bg-green-100 dark:bg-emerald-800 p-3">
                         <dt class="xs-label">Dominant sentiment</dt>
                         <dd class="mt-2 flex flex-wrap items-center gap-2">
                             
@@ -278,14 +278,14 @@
                         </div>
                         <dd class="grid grid-cols-1 gap-2 md:grid-cols-3 p-2">
 
-                            <div class="main-card p-2 bg-sky-50 dark:bg-sky-800">
+                            <div class="main-card p-2 bg-blue-100 dark:bg-sky-800">
                                 <span class="xs-label">Self-reported by Participants</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=run.participant_average_sentiment_label %}
                                 </div>
                             </div>
 
-                            <div class="main-card p-2 bg-fuchsia-50 dark:bg-fuchsia-800">
+                            <div class="main-card p-2 bg-fuchsia-100 dark:bg-fuchsia-800">
                                 <span class="xs-label">Detected by Machine Analysis</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=run.average_sentiment_label %}
@@ -309,14 +309,14 @@
                         </div>
                         <dd class="grid grid-cols-1 gap-2 md:grid-cols-3 p-2">
 
-                            <div class="main-card p-2 bg-sky-50 dark:bg-sky-800">
+                            <div class="main-card p-2 bg-blue-100 dark:bg-sky-800">
                                 <span class="xs-label">Self-reported by Participants</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=run.participant_dominant_sentiment_label %}
                                 </div>
                             </div>
 
-                            <div class="main-card p-2 bg-fuchsia-50 dark:bg-fuchsia-800">
+                            <div class="main-card p-2 bg-fuchsia-100 dark:bg-fuchsia-800">
                                 <span class="xs-label">Detected by Machine Analysis</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=run.dominant_sentiment_label %}
@@ -363,14 +363,14 @@
                         
                         <dd class="grid grid-cols-1 gap-2 md:grid-cols-3 p-2">
                             {% if study.evaluator_average_sentiment_label %}
-                            <div class="main-card p-2 bg-emerald-50 dark:bg-emerald-800">
+                            <div class="main-card p-2 bg-green-100 dark:bg-emerald-800">
                                 <span class="xs-label">Assessed by evaluators</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=study.evaluator_average_sentiment_label %}
                                 </div>
                             </div>
 
-                            <div class="main-card p-2 bg-fuchsia-50 dark:bg-fuchsia-800">
+                            <div class="main-card p-2 bg-fuchsia-100 dark:bg-fuchsia-800">
                                 <span class="xs-label">Detected by Machine Analysis</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=run.average_sentiment_label %}
@@ -403,14 +403,14 @@
                         </div>
                         <dd class="grid grid-cols-1 gap-2 md:grid-cols-3 p-2">
                             {% if study.evaluator_dominant_sentiment_label %}
-                            <div class="main-card p-2 bg-emerald-50 dark:bg-emerald-800">
+                            <div class="main-card p-2 bg-green-100 dark:bg-emerald-800">
                                 <span class="xs-label">Assessed by evaluators</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=study.evaluator_dominant_sentiment_label %}
                                 </div>
                             </div>
 
-                            <div class="main-card p-2 bg-fuchsia-50 dark:bg-fuchsia-800">
+                            <div class="main-card p-2 bg-fuchsia-100 dark:bg-fuchsia-800">
                                 <span class="xs-label">Detected by Machine Analysis</span>
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=run.dominant_sentiment_label %}
@@ -443,25 +443,53 @@
 
     </div>
 
-    <!-- EVOLUTION OVER TIME -->
+    <!-- AVG EVOLUTION OVER TIME -->
     <div class="main-card overflow-hidden">
 
         <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
             <h4 class="md-card-title">
                 {% heroicon_outline "arrow-trending-up" %}
-                Evolution Over Time
+                Evolution of Average Sentiment Over Time
             </h4>
 
             <p class="xs-label">
-                Sentiment score and sentiment-label changes across the study timeline.
+                Comparison of machine-detected, participant-reported,
+                and evaluator-assessed sentiment average across the study timeline.
             </p>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 p-4 xl:grid-cols-2">
+        <div class="grid grid-cols-2 gap-4 p-4">
 
-                {% include "studies/partials/_evolution_sentiment.html" with run=run evolution=run.evolution_over_time %}
+            {% include "studies/partials/_evolution_sentiment.html" with chart_id="studySentimentEvolutionChart" chart_title="Overall Sentiment Evolution" chart_description="Comparison of machine-detected, participant-reported, and evaluator-assessed sentiment across the study timeline." machine_evolution=run.evolution_over_time participant_evolution=participant_sentiment_evolution evaluator_evolution=evaluator_sentiment_evolution total_entries=run.total_entries %}
 
-                {% include "studies/partials/_evolution_sentiment_label.html" with run=run evolution=run.evolution_over_time %}
+        
+            {% include "studies/partials/_evolution_sentiment_by_label.html" with chart_id="studySentimentEvolutionByLabelChart" chart_title="Sentiment Evolution by Label" chart_description="Comparison of participant-reported, machine-detected, and evaluator-assessed sentiment labels across the study timeline. Machine scores are converted using the configured sentiment thresholds." machine_evolution=run.evolution_over_time participant_evolution=participant_sentiment_evolution evaluator_evolution=evaluator_sentiment_evolution total_entries=run.total_entries %}
+
+        </div>
+
+    </div>
+
+     <!-- DOMINANT EVOLUTION OVER TIME -->
+    <div class="main-card overflow-hidden">
+
+        <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
+            <h4 class="md-card-title">
+                {% heroicon_outline "arrow-trending-up" %}
+                Evolution of Dominant Sentiment Over Time
+            </h4>
+
+            <p class="xs-label">
+                Comparison of machine-detected, participant-reported,
+                and evaluator-assessed dominant sentiment across the study timeline.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 p-4">
+
+            {% include "studies/partials/_evolution_sentiment.html" with chart_id="studySentimentEvolutionChart" chart_title="Overall Sentiment Evolution" chart_description="Comparison of machine-detected, participant-reported, and evaluator-assessed sentiment across the study timeline." machine_evolution=run.evolution_over_time participant_evolution=participant_sentiment_evolution evaluator_evolution=evaluator_sentiment_evolution total_entries=run.total_entries %}
+
+        
+            {% include "studies/partials/_evolution_sentiment_by_label.html" with chart_id="studySentimentEvolutionByLabelChart" chart_title="Sentiment Evolution by Label" chart_description="Comparison of participant-reported, machine-detected, and evaluator-assessed sentiment labels across the study timeline. Machine scores are converted using the configured sentiment thresholds." machine_evolution=run.evolution_over_time participant_evolution=participant_sentiment_evolution evaluator_evolution=evaluator_sentiment_evolution total_entries=run.total_entries %}
 
         </div>
 

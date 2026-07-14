@@ -80,6 +80,7 @@ from .models import (
 
 from .helpers import (
 	build_participant_analysis_data,
+	build_study_sentiment_evolution,
 	import_canonical_themes,
 	import_canonical_issues,
 	import_rows_into_study,
@@ -876,9 +877,13 @@ def machine_analysis_details(request, study_pk, run_pk):
 	context = filter_analysis_entries(request, study, run)
 
 	participant_analysis_data = build_participant_analysis_data(
-
 		study,
 		run,
+	)
+
+	# builds the sentiment evolution for both the self-reported by participant, and the assessed by evaluator.
+	study_sentiment_evolution = build_study_sentiment_evolution(
+		study
 	)
 
 	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
@@ -909,6 +914,8 @@ def machine_analysis_details(request, study_pk, run_pk):
 		"study": study,
 		"run": run,
 		"participant_analysis_data": participant_analysis_data,
+		"participant_sentiment_evolution":study_sentiment_evolution["participant"],
+		"evaluator_sentiment_evolution":study_sentiment_evolution["evaluator"],
 		"pending_human_evaluation_count":pending_human_evaluation_count,
 		"completed_human_evaluation_count":completed_human_evaluation_count,
 		"machine_analysis_entries_filter_url": reverse(

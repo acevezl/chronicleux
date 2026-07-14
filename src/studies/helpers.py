@@ -5,7 +5,11 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.utils.formats import date_format
 
+from collections import defaultdict
+
 from .models import (
+	BinarySentimentCategory,
+	BINARY_SENTIMENT_SCORE_THRESHOLDS,
 	CanonicalIssue,
 	CanonicalTheme,
 	CanonicalIssueToFrameworkMapping,
@@ -13,15 +17,17 @@ from .models import (
 	Entry,
 	EntrySource,
 	EntryAnalysis,
-	UXFrameworkMappingMethod,
-    UXFrameworkMappingStatus,
+	EntryEvaluation,
 	MembershipRole,
+	SENTIMENT_SCORE_THRESHOLDS,
 	SentimentCategory,
 	StudyMembership,
 	ThemeAndIssueSource,
 	ThemeAndIssueStatus,
 	UXFramework,
 	UXFrameworkCriterion,
+	UXFrameworkMappingMethod,
+    UXFrameworkMappingStatus,
 	UXFrameworkType,
 )
 
@@ -893,6 +899,135 @@ def parse_csv_int_ids(value):
     return ids
 
 
+# ANALYSIS SENTIMENT EVOLUTION: LABEL TO NUMERIC SCORE
+def sentiment_label_to_score(label):
+	if not label:
+		return None
+
+	thresholds = (
+		BINARY_SENTIMENT_SCORE_THRESHOLDS
+		if label == BinarySentimentCategory.NOT_NEGATIVE
+		else SENTIMENT_SCORE_THRESHOLDS
+	)
+
+	for min_score, max_score, threshold_label in thresholds:
+		if threshold_label == label:
+			return round((min_score + max_score) / 2, 4)
+
+	return None
+
+
+# ANALYSIS SENTIMENT EVOLUTION: BUILD DAILY DATA
+# Supports both self-reported (i.e., participants) or assessed by evaluator
+def build_sentiment_evolution(entries, source):
+
+	if source not in {"participant", "evaluator"}:
+		raise ValueError(
+			"source must be either 'participant' or 'evaluator'"
+		)
+
+	daily_data = defaultdict(
+		lambda: {
+			"entry_ids": set(),
+			"scores": [],
+		}
+	)
+
+	if source == "participant":
+		for entry in entries:
+			label = entry.sentiment_self_report
+			score = sentiment_label_to_score(label)
+
+			if score is None:
+				continue
+
+			local_created_at = timezone.localtime(entry.created_at)
+			date_key = local_created_at.date().isoformat()
+
+			daily_data[date_key]["entry_ids"].add(entry.pk)
+			daily_data[date_key]["scores"].append(score)
+
+	else:
+		entry_ids = [entry.pk for entry in entries]
+
+		evaluations = (
+			EntryEvaluation.objects
+			.filter(entry_id__in=entry_ids)
+			.exclude(evaluator_sentiment_label__isnull=True)
+			.exclude(evaluator_sentiment_label="")
+			.select_related("entry")
+			.order_by(
+				"entry__created_at",
+				"entry_id",
+				"created_at",
+			)
+		)
+
+		for evaluation in evaluations:
+			score = sentiment_label_to_score(
+				evaluation.evaluator_sentiment_label
+			)
+
+			if score is None:
+				continue
+
+			local_created_at = timezone.localtime(
+				evaluation.entry.created_at
+			)
+
+			date_key = local_created_at.date().isoformat()
+
+			daily_data[date_key]["entry_ids"].add(
+				evaluation.entry_id
+			)
+
+			daily_data[date_key]["scores"].append(score)
+
+	return [
+		{
+			"date": date_key,
+			"entry_count": len(data["entry_ids"]),
+			"avg_sentiment": (
+				round(
+					sum(data["scores"]) / len(data["scores"]),
+					4,
+				)
+				if data["scores"]
+				else None
+			),
+		}
+		for date_key, data in sorted(daily_data.items())
+	]
+
+
+# ANALYSIS SENTIMENT EVOLUTION: OVERALL STUDY DATA
+def build_study_sentiment_evolution(study):
+	entries = list(
+		Entry.objects
+		.filter(study=study)
+		.only(
+			"pk",
+			"created_at",
+			"sentiment_self_report",
+		)
+		.order_by(
+			"created_at",
+			"pk",
+		)
+	)
+
+	return {
+		"participant": build_sentiment_evolution(
+			entries,
+			source="participant",
+		),
+		"evaluator": build_sentiment_evolution(
+			entries,
+			source="evaluator",
+		),
+	}
+
+
 # ANALYSIS BY PARTICIPANT: BUILD DATA
 def build_participant_analysis_data(study, run):
 	entry_analyses = (
@@ -906,6 +1041,7 @@ def build_participant_analysis_data(study, run):
 			"entry__participant",
 		)
 		.prefetch_related(
+			"entry__entry_evaluations",
 			"theme_assignments__theme",
 			"issue_assignments__issue",
 		)
@@ -921,17 +1057,20 @@ def build_participant_analysis_data(study, run):
 	for entry_analysis in entry_analyses:
 		entry = entry_analysis.entry
 
-		# Use a stable identity rather than the display name alone, because
-		# two participants could theoretically share the same name.
 		if entry.participant_id:
 			participant_key = f"internal-{entry.participant_id}"
 		elif entry.participant_external_id:
-			participant_key = f"external-{entry.participant_external_id}"
+			participant_key = (
+				f"external-{entry.participant_external_id}"
+			)
 		elif entry.participant_email:
-			participant_key = f"email-{entry.participant_email.lower()}"
+			participant_key = (
+				f"email-{entry.participant_email.lower()}"
+			)
 		else:
 			participant_key = (
-				f"name-{entry.participant_display_name.strip().lower()}"
+				f"name-"
+				f"{entry.participant_display_name.strip().lower()}"
 			)
 
 		participant = participants.setdefault(
@@ -961,23 +1100,73 @@ def build_participant_analysis_data(study, run):
 				"id": assignment.issue_id,
 				"name": assignment.issue.name,
 				"confidence_score": assignment.confidence_score,
-
-				# The associated score is the sentiment of the entry where
-				# the issue was detected.
 				"sentiment_score": entry_analysis.sentiment_score,
 				"sentiment_label": entry_analysis.sentiment_label,
 			})
 
+		participant_score = sentiment_label_to_score(
+			entry.sentiment_self_report
+		)
+
+		evaluator_labels = [
+			evaluation.evaluator_sentiment_label
+			for evaluation in entry.entry_evaluations.all()
+			if evaluation.evaluator_sentiment_label
+		]
+
+		evaluator_scores = [
+			sentiment_label_to_score(label)
+			for label in evaluator_labels
+		]
+
+		evaluator_scores = [
+			score
+			for score in evaluator_scores
+			if score is not None
+		]
+
+		evaluator_average_score = (
+			round(
+				sum(evaluator_scores) / len(evaluator_scores),
+				4,
+			)
+			if evaluator_scores
+			else None
+		)
+
 		participant["entries"].append({
 			"entry_id": entry.pk,
 			"date": local_created_at.date().isoformat(),
-			"date_label": date_format(local_created_at, "j M Y"),
+			"date_label": date_format(
+				local_created_at,
+				"j M Y",
+			),
 			"datetime_label": date_format(
 				local_created_at,
 				"j M Y, H:i",
 			),
-			"sentiment_score": entry_analysis.sentiment_score,
-			"sentiment_label": entry_analysis.sentiment_label,
+
+			"machine_sentiment_score":
+				entry_analysis.sentiment_score,
+
+			"machine_sentiment_label":
+				entry_analysis.sentiment_label,
+
+			"participant_sentiment_score":
+				participant_score,
+
+			"participant_sentiment_label":
+				entry.sentiment_self_report,
+
+			"evaluator_sentiment_score":
+				evaluator_average_score,
+
+			"evaluator_sentiment_labels":
+				evaluator_labels,
+
+			"evaluator_count":
+				len(evaluator_scores),
+
 			"themes": themes,
 			"issues": issues,
 		})
@@ -1011,23 +1200,52 @@ def build_participant_analysis_data(study, run):
 
 		sentiment_labels = []
 		sentiment_scores = []
-		sentiment_points = []
+
+		machine_sentiment_points = []
+		participant_sentiment_points = []
+		evaluator_sentiment_points = []
+
 		theme_points = []
 		issue_points = []
 
 		for entry_index, entry in enumerate(entries):
 			sentiment_labels.append(entry["date_label"])
-			sentiment_scores.append(entry["sentiment_score"])
 
-			sentiment_points.append({
+			sentiment_scores.append(
+				entry["machine_sentiment_score"]
+			)
+
+			common_sentiment_point = {
 				"x": entry_index,
-				"y": entry["sentiment_score"],
 				"date": entry["date"],
 				"date_label": entry["date_label"],
 				"datetime": entry["datetime_label"],
-				"sentiment_label": entry["sentiment_label"],
 				"entry_id": entry["entry_id"],
+			}
+
+			machine_sentiment_points.append({
+				**common_sentiment_point,
+				"y": entry["machine_sentiment_score"],
+				"sentiment_label":
+					entry["machine_sentiment_label"],
 			})
+
+			participant_sentiment_points.append({
+				**common_sentiment_point,
+				"y": entry["participant_sentiment_score"],
+				"sentiment_label":
+					entry["participant_sentiment_label"],
+			})
+
+			if entry["evaluator_sentiment_score"] is not None:
+				evaluator_sentiment_points.append({
+					**common_sentiment_point,
+					"y": entry["evaluator_sentiment_score"],
+					"sentiment_labels":
+						entry["evaluator_sentiment_labels"],
+					"evaluator_count":
+						entry["evaluator_count"],
+				})
 
 			for theme in entry["themes"]:
 				confidence_score = theme["confidence_score"]
@@ -1080,15 +1298,30 @@ def build_participant_analysis_data(study, run):
 			"name": participant["name"],
 			"entry_count": len(entries),
 			"date_labels": sentiment_labels,
+			"sentiment_chart_id": (
+				f"participantSentimentEvolutionChart"
+				f"{len(participant_analysis_data)}"
+			),
+
 			"sentiment": {
 				"labels": sentiment_labels,
 				"scores": sentiment_scores,
-				"points": sentiment_points,
+
+				"machine_points":
+					machine_sentiment_points,
+
+				"participant_points":
+					participant_sentiment_points,
+
+				"evaluator_points":
+					evaluator_sentiment_points,
 			},
+
 			"themes": {
 				"labels": theme_names,
 				"points": theme_points,
 			},
+
 			"issues": {
 				"labels": issue_names,
 				"points": issue_points,
