@@ -52,31 +52,6 @@ Rules:
 - Return only valid JSON.
 """.strip()
 
-# Deprecated, will break themes vs. issues to avoid confusing the LLM (see THEME_ANALYZER_ AND ISSUE_ANALYZER_SYSTEM_PROMPT)
-# NVM creating a separate file now...
-ENTRY_ANALYZER_SYSTEM_PROMPT = """
-You are acting as an entry-level analyzer of diary study entries for UX research.
-
-Your task is to analyze ONE diary entry at a time.
-
-You must:
-1. Analyze the sentiment of the entry, and score its polarity between -1 and 1.
-2. Assign the best matching theme from the provided theme catalog.
-3. Detect whether the entry describes a UX/usability issue.
-4. If an issue is present, assign the best matching issue from the provided issue catalog.
-
-Rules:
-- You must only use theme_id values from the provided theme catalog.
-- You must only use issue_id values from the provided issue catalog.
-- The theme catalog may include canonical themes and suggested themes. Both are valid choices.
-- The issue catalog may include canonical issues and suggested issues. Both are valid choices.
-- Do not create new themes at entry-analysis time.
-- Do not create new issues at entry-analysis time.
-- Do not invent recommendations.
-- If no UX/usability issue is clearly present, return null for issue.
-- Return only valid JSON.
-""".strip()
-
 
 def format_theme_catalog(theme_catalog: list[ThemeResult]) -> str:
 	return json.dumps(
@@ -110,13 +85,11 @@ def format_issue_catalog(issue_catalog: list[IssueResult]) -> str:
 	)
 
 
-def build_entry_analyzer_prompt(
+def build_sentiment_theme_prompt(
 	entry,
 	theme_catalog: list[ThemeResult],
-	issue_catalog: list[IssueResult],
 ) -> str:
 	theme_catalog_json = format_theme_catalog(theme_catalog)
-	issue_catalog_json = format_issue_catalog(issue_catalog)
 
 	return f"""
 Analyze the following diary study entry.
@@ -139,16 +112,8 @@ Return the response using this exact JSON structure:
 	"theme_id": "THEME_1",
 	"weight": 0.75,
 	"metadata": {{
-		"language": "english",
-		"rationale": "short explanation of why this theme matches the entry"
-	}}
-  }},
-  "issue": {{
-	"issue_id": "ISSUE_1",
-	"weight": 0.80,
-	"metadata": {{
-		"language": "english",
-		"rationale": "short explanation of why this issue matches the entry"
+	  "language": "english",
+	  "rationale": "short explanation of why this theme matches the entry"
 	}}
   }},
   "metadata": {{
@@ -166,31 +131,80 @@ Theme rules:
 - You must choose exactly one theme from the Theme catalog.
 - Return theme.theme_id exactly as shown in the Theme catalog.
 - Every valid theme identifier begins with "THEME_".
-- Never return an identifier beginning with "ISSUE_" inside theme.
+- Copy the complete identifier from the catalog.
+- Never construct a theme identifier from a number.
+- Never return a theme identifier that is absent from the Theme catalog.
 - Do not use canonical_theme_id.
 - Do not use canonical_issue_id.
-- If you cannot choose confidently, choose the closest THEME_ identifier from the Theme catalog.
+- If you cannot choose confidently, choose the closest valid theme from the Theme catalog.
 - Never invent a theme identifier.
-
-Issue rules:
-- Return an issue only if the entry clearly describes UX friction, confusion, failure, accessibility problems, errors, inefficiency, dissatisfaction, or another usability problem.
-- If no UX/usability issue is clearly present, return "issue": {{}}
-- If a UX/usability issue is clearly present, return issue.issue_id exactly as shown in the Issue catalog.
-- Every valid issue identifier begins with "ISSUE_".
-- Never return an identifier beginning with "THEME_" inside issue.
-- Do not use canonical_theme_id.
-- Do not use canonical_issue_id.
-- Never invent an issue identifier.
 
 Metadata rules:
 - Keep metadata concise.
 - Do not include recommendations.
 - Do not include extra top-level keys.
 
-Return a JSON object only, do not return anything else.
+Return a JSON object only. Do not return anything else.
 
 Theme catalog:
 {theme_catalog_json}
+
+Diary entry:
+{{
+  "entry_id": {entry.id},
+  "text": {json.dumps(entry.content, ensure_ascii=False)}
+}}
+""".strip()
+
+
+def build_issue_analyzer_prompt(
+	entry,
+	issue_catalog: list[IssueResult],
+) -> str:
+	issue_catalog_json = format_issue_catalog(issue_catalog)
+
+	return f"""
+Analyze the following diary study entry for UX or usability issues.
+
+Return the response using one of these exact JSON structures.
+
+When an issue is present:
+
+{{
+  "entry_id": {entry.id},
+  "issue": {{
+	"issue_id": "ISSUE_1",
+	"weight": 0.80,
+	"metadata": {{
+	  "language": "english",
+	  "rationale": "short explanation of why this issue matches the entry"
+	}}
+  }}
+}}
+
+When no UX or usability issue is present:
+
+{{
+  "entry_id": {entry.id},
+  "issue": {{}}
+}}
+
+Issue rules:
+- Return an issue only if the entry clearly describes UX friction, confusion, failure, accessibility problems, errors, inefficiency, dissatisfaction, or another usability problem.
+- If no UX or usability issue is clearly present, return "issue": {{}}
+- If an issue is present, choose exactly one issue from the Issue catalog.
+- Return issue.issue_id exactly as shown in the Issue catalog.
+- Every valid issue identifier begins with "ISSUE_".
+- Copy the complete identifier from the catalog.
+- Never construct an issue identifier from a number.
+- Never return an issue identifier that is absent from the Issue catalog.
+- Do not use canonical_issue_id.
+- Never invent an issue identifier.
+- Keep metadata concise.
+- Do not include recommendations.
+- Do not include extra top-level keys.
+
+Return a JSON object only. Do not return anything else.
 
 Issue catalog:
 {issue_catalog_json}
@@ -289,7 +303,6 @@ def parse_sentiment_result(
 def parse_theme_result(
 	theme_data: dict,
 	theme_catalog: list[ThemeResult],
-	issue_catalog: list[IssueResult],
 	provider: str,
 	model: str,
 	entry_id: int,
@@ -301,35 +314,7 @@ def parse_theme_result(
 
 	if not selected_theme:
 		raw_theme_id = theme_data.get("theme_id")
-
-		valid_theme_ids = [
-			theme.theme_id
-			for theme in theme_catalog
-		]
-
-		valid_issue_ids = [
-			issue.issue_id
-			for issue in issue_catalog
-		]
-
-		normalized_theme_id = raw_theme_id
-
-		if isinstance(normalized_theme_id, str):
-			normalized_theme_id = normalized_theme_id.removeprefix("THEME_")
-			normalized_theme_id = normalized_theme_id.removeprefix("ISSUE_")
-
-		try:
-			normalized_theme_id = int(normalized_theme_id)
-		except (TypeError, ValueError):
-			normalized_theme_id = None
-
-		if normalized_theme_id in valid_issue_ids:
-			raise RuntimeError(
-				f"LLM returned issue_id '{raw_theme_id}' as a theme_id "
-				f"for entry {entry_id}. "
-				f"Valid theme_ids: {valid_theme_ids}. "
-				f"Raw theme payload: {theme_data}."
-			)
+		valid_theme_ids = [theme.theme_id for theme in theme_catalog]
 
 		raise RuntimeError(
 			f"LLM returned invalid theme_id '{raw_theme_id}' "
@@ -357,7 +342,6 @@ def parse_theme_result(
 def parse_issue_result(
 	issue_data: dict,
 	issue_catalog: list[IssueResult],
-	theme_catalog: list[ThemeResult],
 	provider: str,
 	model: str,
 	entry_id: int,
@@ -372,35 +356,7 @@ def parse_issue_result(
 
 	if not selected_issue:
 		raw_issue_id = issue_data.get("issue_id")
-
-		valid_issue_ids = [
-			issue.issue_id
-			for issue in issue_catalog
-		]
-
-		valid_theme_ids = [
-			theme.theme_id
-			for theme in theme_catalog
-		]
-
-		normalized_issue_id = raw_issue_id
-
-		if isinstance(normalized_issue_id, str):
-			normalized_issue_id = normalized_issue_id.removeprefix("ISSUE_")
-			normalized_issue_id = normalized_issue_id.removeprefix("THEME_")
-
-		try:
-			normalized_issue_id = int(normalized_issue_id)
-		except (TypeError, ValueError):
-			normalized_issue_id = None
-
-		if normalized_issue_id in valid_theme_ids:
-			raise RuntimeError(
-				f"LLM returned theme_id '{raw_issue_id}' as an issue_id "
-				f"for entry {entry_id}. "
-				f"Valid issue_ids: {valid_issue_ids}. "
-				f"Raw issue payload: {issue_data}."
-			)
+		valid_issue_ids = [issue.issue_id for issue in issue_catalog]
 
 		raise RuntimeError(
 			f"LLM returned invalid issue_id '{raw_issue_id}' "
@@ -425,14 +381,13 @@ def parse_issue_result(
 	)
 
 
-def parse_entry_analyzer_response(
+def parse_sentiment_theme_response(
 	raw_content: str,
 	entry,
 	theme_catalog: list[ThemeResult],
-	issue_catalog: list[IssueResult],
 	provider: str,
 	model: str,
-) -> EntryAnalysisResult:
+) -> tuple[SentimentResult, ThemeResult, dict]:
 	data = json.loads(raw_content)
 
 	sentiment_result = parse_sentiment_result(
@@ -444,31 +399,31 @@ def parse_entry_analyzer_response(
 	theme_result = parse_theme_result(
 		theme_data=data.get("theme") or {},
 		theme_catalog=theme_catalog,
-		issue_catalog=issue_catalog,
-		provider=provider,
-		model=model,
-		entry_id=entry.id,
-	)
-
-	issue_result = parse_issue_result(
-		issue_data=data.get("issue") or {},
-		issue_catalog=issue_catalog,
-		theme_catalog=theme_catalog,
 		provider=provider,
 		model=model,
 		entry_id=entry.id,
 	)
 
 	metadata = dict(data.get("metadata") or {})
-	metadata["model"] = model
-	metadata["provider"] = provider
 
-	return EntryAnalysisResult(
+	return sentiment_result, theme_result, metadata
+
+
+def parse_issue_analyzer_response(
+	raw_content: str,
+	entry,
+	issue_catalog: list[IssueResult],
+	provider: str,
+	model: str,
+) -> IssueResult | None:
+	data = json.loads(raw_content)
+
+	return parse_issue_result(
+		issue_data=data.get("issue") or {},
+		issue_catalog=issue_catalog,
+		provider=provider,
+		model=model,
 		entry_id=entry.id,
-		sentiment=sentiment_result,
-		themes=[theme_result] if theme_result else [],
-		issues=[issue_result] if issue_result else [],
-		metadata=metadata,
 	)
 
 
@@ -479,31 +434,82 @@ def analyze_entry_with_llm(
 	provider: str,
 	model: str | None = None,
 ) -> EntryAnalysisResult:
-	client, selected_model = connect_to_llm(provider=provider, model=model)
-
-	prompt = build_entry_analyzer_prompt(
-		entry=entry,
-		theme_catalog=theme_catalog,
-		issue_catalog=issue_catalog,
+	client, selected_model = connect_to_llm(
+		provider=provider,
+		model=model,
 	)
 
-	response = client.chat.completions.create(
+	sentiment_theme_prompt = build_sentiment_theme_prompt(
+		entry=entry,
+		theme_catalog=theme_catalog,
+	)
+
+	sentiment_theme_response = client.chat.completions.create(
 		model=selected_model,
 		temperature=0,
 		response_format={"type": "json_object"},
 		messages=[
-			{"role": "system", "content": ENTRY_ANALYZER_SYSTEM_PROMPT},
-			{"role": "user", "content": prompt},
+			{
+				"role": "system",
+				"content": SENTIMENT_THEME_ANALYZER_SYSTEM_PROMPT,
+			},
+			{
+				"role": "user",
+				"content": sentiment_theme_prompt,
+			},
 		],
 	)
 
-	raw_content = response.choices[0].message.content or "{}"
+	sentiment_theme_raw_content = (
+		sentiment_theme_response.choices[0].message.content or "{}"
+	)
 
-	return parse_entry_analyzer_response(
-		raw_content=raw_content,
+	sentiment_result, theme_result, metadata = parse_sentiment_theme_response(
+		raw_content=sentiment_theme_raw_content,
 		entry=entry,
 		theme_catalog=theme_catalog,
+		provider=provider,
+		model=selected_model,
+	)
+
+	issue_prompt = build_issue_analyzer_prompt(
+		entry=entry,
+		issue_catalog=issue_catalog,
+	)
+
+	issue_response = client.chat.completions.create(
+		model=selected_model,
+		temperature=0,
+		response_format={"type": "json_object"},
+		messages=[
+			{
+				"role": "system",
+				"content": ISSUE_ANALYZER_SYSTEM_PROMPT,
+			},
+			{
+				"role": "user",
+				"content": issue_prompt,
+			},
+		],
+	)
+
+	issue_raw_content = issue_response.choices[0].message.content or "{}"
+
+	issue_result = parse_issue_analyzer_response(
+		raw_content=issue_raw_content,
+		entry=entry,
 		issue_catalog=issue_catalog,
 		provider=provider,
 		model=selected_model,
+	)
+
+	metadata["model"] = selected_model
+	metadata["provider"] = provider
+
+	return EntryAnalysisResult(
+		entry_id=entry.id,
+		sentiment=sentiment_result,
+		themes=[theme_result],
+		issues=[issue_result] if issue_result else [],
+		metadata=metadata,
 	)

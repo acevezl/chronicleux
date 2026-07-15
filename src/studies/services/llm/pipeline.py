@@ -83,7 +83,7 @@ from studies.services.contracts import (
     StudyAnalysisResult,
     ThemeResult,
 )
-from studies.services.llm.entry_analyzer import analyze_entry_with_llm
+from studies.services.llm.entry_analyzer_split import analyze_entry_with_llm
 from studies.services.llm.issue_explorer import explore_issues_with_llm
 from studies.services.llm.theme_explorer import explore_themes_with_llm
 from studies.services.nlp.sentiment._thresholds import map_sentiment_score_to_label
