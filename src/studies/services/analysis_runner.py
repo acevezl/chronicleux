@@ -673,11 +673,6 @@ def process_study_analysis_run(run_id: int) -> StudyAnalysis:
 
 				entry_analysis_result_data = asdict(entry_analysis_result)
 
-				# debug
-				print (entry_analysis_result)
-				print ("\n\n----\n\n")
-				print (entry_analysis_result_data)
-
 				sentiment_score = None
 				sentiment_label = None
 

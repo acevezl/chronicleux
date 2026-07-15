@@ -260,14 +260,14 @@
                             <div class="flex flex-col gap-2">
                                 <div class="flex items-center gap-2">
                                     <span class="text-xs text-gray-500 dark:text-gray-400">
-                                        Self-reported
+                                        Participant-reported
                                     </span>
                                     {% include "studies/partials/_badge_sentiment.html" with sentiment=entry.sentiment_self_report %}
                                 </div>
                                 {% if entry.current_user_evaluation and entry.current_user_evaluation.evaluator_sentiment_label %}
                                     <div class="flex items-center gap-2">
                                         <span class="text-xs text-gray-500 dark:text-gray-400">
-                                            Evaluated
+                                            Evaluator-assessed
                                         </span>
                                         {% include "studies/partials/_badge_sentiment.html" with sentiment=entry.current_user_evaluation.evaluator_sentiment_label %}
                                     </div>

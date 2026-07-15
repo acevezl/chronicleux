@@ -68,7 +68,9 @@ from .models import (
 	SentimentCategory, 
 	Study, 
 	StudyMembership, 
-	StudyAnalysis, 
+	StudyAnalysis,
+	StudyEvaluationTheme,
+	StudyEvaluationIssue, 
 	StudyStatus, 
 	ThemeAndIssueSource, 
 	ThemeAndIssueStatus,
@@ -80,7 +82,8 @@ from .models import (
 
 from .helpers import (
 	build_participant_analysis_data,
-	build_study_sentiment_evolution,
+	build_study_dominant_sentiment_evolution,
+	build_study_average_sentiment_evolution,
 	import_canonical_themes,
 	import_canonical_issues,
 	import_rows_into_study,
@@ -160,6 +163,18 @@ def diary_study_detail(request, pk):
 		.order_by("-started_at")
 	)
 
+	evaluator_themes = (
+		StudyEvaluationTheme.objects
+		.filter(study=study)
+		.order_by("-entry_count", "theme")
+	)
+
+	evaluator_issues = (
+		StudyEvaluationIssue.objects
+		.filter(study=study)
+		.order_by("-entry_count", "issue")
+	)
+
 	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
 
 	created_at = date_format(
@@ -176,6 +191,8 @@ def diary_study_detail(request, pk):
 		"is_evaluator": is_evaluator,
 		"diary_entries": diary_entries,
 		"analysis_runs": analysis_runs,
+		"evaluator_themes": evaluator_themes,
+		"evaluator_issues": evaluator_issues,
 	}
 
 	return render(request, "studies/diary_study_detail.html", context)
@@ -881,9 +898,14 @@ def machine_analysis_details(request, study_pk, run_pk):
 		run,
 	)
 
-	# builds the sentiment evolution for both the self-reported by participant, and the assessed by evaluator.
-	study_sentiment_evolution = build_study_sentiment_evolution(
+	# builds the average sentiment evolution for both the self-reported by participant, and the assessed by evaluator.
+	study_average_sentiment_evolution = build_study_average_sentiment_evolution(
 		study
+	)
+
+	# builds the sentiment evolution for both the self-reported by participant, and the assessed by evaluator.
+	study_dominant_sentiment_evolution = build_study_dominant_sentiment_evolution (
+		study, run
 	)
 
 	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
@@ -914,8 +936,11 @@ def machine_analysis_details(request, study_pk, run_pk):
 		"study": study,
 		"run": run,
 		"participant_analysis_data": participant_analysis_data,
-		"participant_sentiment_evolution":study_sentiment_evolution["participant"],
-		"evaluator_sentiment_evolution":study_sentiment_evolution["evaluator"],
+		"participant_average_sentiment_evolution":study_average_sentiment_evolution["participant"],
+		"evaluator_average_sentiment_evolution":study_average_sentiment_evolution["evaluator"],
+		"participant_dominant_sentiment_evolution":study_dominant_sentiment_evolution["participant"],
+		"evaluator_dominant_sentiment_evolution":study_dominant_sentiment_evolution["evaluator"],
+		"machine_dominant_sentiment_evolution":study_dominant_sentiment_evolution["machine"],
 		"pending_human_evaluation_count":pending_human_evaluation_count,
 		"completed_human_evaluation_count":completed_human_evaluation_count,
 		"machine_analysis_entries_filter_url": reverse(
@@ -1013,6 +1038,18 @@ def analysis_runs(request, study_pk):
 	if theme_method:
 		runs = runs.filter(methods__theme=theme_method)
 
+	evaluator_themes = (
+		StudyEvaluationTheme.objects
+		.filter(study=study)
+		.order_by("-entry_count", "theme")
+	)
+
+	evaluator_issues = (
+		StudyEvaluationIssue.objects
+		.filter(study=study)
+		.order_by("-entry_count", "issue")
+	)
+
 	# Sorting
 	sort = request.GET.get("sort", "-started_at")
 
@@ -1067,6 +1104,8 @@ def analysis_runs(request, study_pk):
 			"analysis_runs_partial",
 			kwargs={"study_pk": study.pk},
 		),
+		"evaluator_themes": evaluator_themes,
+		"evaluator_issues": evaluator_issues,
 	}
 
 	return render(request, "studies/diary_analysis_list.html", context)

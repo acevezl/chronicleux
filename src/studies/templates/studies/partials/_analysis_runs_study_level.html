@@ -33,8 +33,258 @@
 		{% endif %}
 	</div>
 
-	<!-- ANALYSIS RUNS -->
+	<!-- STUDY-LEVEL REFERENCE ANALYSIS -->
+	<details class="border-b border-gray-200 dark:border-gray-700" closed>
+
+		<summary class="flex cursor-pointer list-none items-center justify-between gap-4 bg-gray-50 dark:bg-gray-800 p-4">
+			<div class="flex flex-col min-w-0 gap-1">
+				<h4 class="card-summary-title">
+					{% heroicon_outline "newspaper" %}
+					Study Reference Data
+				</h4>
+
+				<p class="xs-label">
+					Participant-reported sentiment and consolidated evaluator findings used as reference data for the machine-analysis runs.
+				</p>
+			</div>
+
+			<span class="text-gray-500 dark:text-gray-400 transition-transform group-open:rotate-180">
+				{% heroicon_outline "chevron-down" %}
+			</span>
+		</summary>
+
+		<div class="grid grid-cols-1 gap-4 xl:grid-cols-3 p-4">
+
+			<!-- SENTIMENT -->
+			<div class="main-card overflow-hidden">
+
+				<div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+					<h5 class="sm-label">
+						Study Sentiment
+					</h5>
+
+					<p class="xs-label">
+						Sentiment sentiment as reported by participants and assessed by evaluators.
+					</p>
+				</div>
+
+				<div class="grid grid-cols-1 gap-3 p-3 md:grid-cols-2">
+
+					<!-- PARTICIPANT SENTIMENT -->
+					<div class="rounded-md border border-gray-200 dark:border-gray-700 bg-blue-100 dark:bg-sky-800 p-3">
+
+						<div class="xs-label">
+							Self-reported by participants
+						</div>
+
+						<dl class="mt-3 grid grid-cols-1 gap-3">
+
+							<div>
+								<dt class="xs-label">
+									Average sentiment
+								</dt>
+
+								<dd class="mt-1 flex flex-wrap items-center gap-2">
+									{% if study.participant_reported_average_sentiment_label %}
+										{% include "studies/partials/_badge_sentiment.html" with sentiment=study.participant_reported_average_sentiment_label %}
+
+										<span class="badge">
+											Score:
+											{{ study.participant_reported_average_sentiment_score|floatformat:3|default:"—" }}
+										</span>
+									{% else %}
+										<span class="badge">
+											Not available
+										</span>
+									{% endif %}
+								</dd>
+							</div>
+
+							<div>
+								<dt class="xs-label">
+									Dominant sentiment
+								</dt>
+
+								<dd class="mt-1 flex flex-wrap items-center gap-2">
+									{% if study.participant_reported_dominant_sentiment_label %}
+										{% include "studies/partials/_badge_sentiment.html" with sentiment=study.participant_reported_dominant_sentiment_label %}
+
+										<span class="badge">
+											Score:
+											{{ study.participant_reported_dominant_sentiment_score|floatformat:3|default:"—" }}
+										</span>
+									{% else %}
+										<span class="badge">
+											Not available
+										</span>
+									{% endif %}
+								</dd>
+							</div>
+
+						</dl>
+
+					</div>
+
+					<!-- EVALUATOR SENTIMENT -->
+					<div class="rounded-md border border-gray-200 dark:border-gray-700 bg-green-100 dark:bg-emerald-800 p-3">
+
+						<div class="xs-label">
+							Assessed by evaluators
+						</div>
+
+						<dl class="mt-3 grid grid-cols-1 gap-3">
+
+							<div>
+								<dt class="xs-label">
+									Average sentiment
+								</dt>
+
+								<dd class="mt-1 flex flex-wrap items-center gap-2">
+									{% if study.evaluator_average_sentiment_label %}
+										{% include "studies/partials/_badge_sentiment.html" with sentiment=study.evaluator_average_sentiment_label %}
+
+										<span class="badge">
+											Score:
+											{{ study.evaluator_average_sentiment_score|floatformat:3|default:"—" }}
+										</span>
+									{% else %}
+										<span class="badge">
+											Not available
+										</span>
+									{% endif %}
+								</dd>
+							</div>
+
+							<div>
+								<dt class="xs-label">
+									Dominant sentiment
+								</dt>
+
+								<dd class="mt-1 flex flex-wrap items-center gap-2">
+									{% if study.evaluator_dominant_sentiment_label %}
+										{% include "studies/partials/_badge_sentiment.html" with sentiment=study.evaluator_dominant_sentiment_label %}
+
+										<span class="badge">
+											Score:
+											{{ study.evaluator_dominant_sentiment_score|floatformat:3|default:"—" }}
+										</span>
+									{% else %}
+										<span class="badge">
+											Not available
+										</span>
+									{% endif %}
+								</dd>
+							</div>
+
+						</dl>
+
+					</div>
+
+				</div>
+
+			</div>
+
+			<!-- EVALUATOR THEMES -->
+			<div class="main-card overflow-hidden">
+
+				<div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+					<h5 class="sm-label">
+						Themes Extracted by Evaluators
+					</h5>
+
+					<p class="xs-label">
+						Consolidated themes identified during human evaluation.
+					</p>
+				</div>
+
+				<div class="p-3">
+
+					{% if evaluator_themes %}
+						<div class="flex flex-wrap gap-2">
+
+							{% for theme in evaluator_themes %}
+								<span
+									class="badge"
+									title="{{ theme.entry_count }} entr{{ theme.entry_count|pluralize:'y,ies' }}"
+								>
+									{{ theme.theme }}
+
+									{% if theme.entry_count %}
+										<span class="ml-1 text-gray-500 dark:text-gray-400">
+											{{ theme.entry_count }}
+										</span>
+									{% endif %}
+								</span>
+							{% endfor %}
+
+						</div>
+					{% else %}
+						<div class="rounded-sm border border-dashed border-gray-300 dark:border-gray-600 p-3">
+							<p class="text-sm text-gray-500 dark:text-gray-400">
+								No evaluator themes are available yet.
+							</p>
+						</div>
+					{% endif %}
+
+				</div>
+
+			</div>
+
+			<!-- EVALUATOR ISSUES -->
+			<div class="main-card overflow-hidden">
+
+				<div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+					<h5 class="sm-label">
+						Issues Detected by Evaluator
+					</h5>
+
+					<p class="xs-label">
+						Consolidated UX issues identified during human evaluation.
+					</p>
+				</div>
+
+				<div class="p-3">
+
+					{% if evaluator_issues %}
+						<div class="flex flex-wrap gap-2">
+
+							{% for issue in evaluator_issues %}
+								<span
+									class="badge"
+									title="{{ issue.entry_count }} entr{{ issue.entry_count|pluralize:'y,ies' }}"
+								>
+									{{ issue.issue }}
+
+									{% if issue.entry_count %}
+										<span class="ml-1 text-gray-500 dark:text-gray-400">
+											{{ issue.entry_count }}
+										</span>
+									{% endif %}
+								</span>
+							{% endfor %}
+
+						</div>
+					{% else %}
+						<div class="rounded-sm border border-dashed border-gray-300 dark:border-gray-600 p-3">
+							<p class="text-sm text-gray-500 dark:text-gray-400">
+								No evaluator issues are available yet.
+							</p>
+						</div>
+					{% endif %}
+
+				</div>
+
+			</div>
+
+		</div>
+
+	</details>
+
+	
+	
 	<div class="min-h-0 flex-1 overflow-y-auto p-4">
+
+		<!-- ANALYSIS RUNS -->
 		{% if analysis_runs %}
 			<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 				{% for run in analysis_runs %}

@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.utils.formats import date_format
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 from .models import (
 	BinarySentimentCategory,
@@ -917,9 +917,59 @@ def sentiment_label_to_score(label):
 	return None
 
 
+# ANALYSIS SENTIMENT EVOLUTION: GET DOMINANT LABEL
+def get_dominant_sentiment_label(labels):
+	valid_labels = [
+		label
+		for label in labels
+		if label
+	]
+
+	if not valid_labels:
+		return None
+
+	label_counts = Counter(valid_labels)
+	highest_count = max(label_counts.values())
+
+	tied_labels = [
+		label
+		for label, count in label_counts.items()
+		if count == highest_count
+	]
+
+	if len(tied_labels) == 1:
+		return tied_labels[0]
+
+	label_scores = [
+		sentiment_label_to_score(label)
+		for label in valid_labels
+	]
+
+	label_scores = [
+		score
+		for score in label_scores
+		if score is not None
+	]
+
+	if not label_scores:
+		return sorted(tied_labels)[0]
+
+	average_score = (
+		sum(label_scores)
+		/ len(label_scores)
+	)
+
+	return min(
+		tied_labels,
+		key=lambda label: abs(
+			sentiment_label_to_score(label)
+			- average_score
+		),
+	)
+
 # ANALYSIS SENTIMENT EVOLUTION: BUILD DAILY DATA
 # Supports both self-reported (i.e., participants) or assessed by evaluator
-def build_sentiment_evolution(entries, source):
+def build_average_sentiment_evolution(entries, source):
 
 	if source not in {"participant", "evaluator"}:
 		raise ValueError(
@@ -1001,7 +1051,7 @@ def build_sentiment_evolution(entries, source):
 
 
 # ANALYSIS SENTIMENT EVOLUTION: OVERALL STUDY DATA
-def build_study_sentiment_evolution(study):
+def build_study_average_sentiment_evolution(study):
 	entries = list(
 		Entry.objects
 		.filter(study=study)
@@ -1017,11 +1067,11 @@ def build_study_sentiment_evolution(study):
 	)
 
 	return {
-		"participant": build_sentiment_evolution(
+		"participant": build_average_sentiment_evolution(
 			entries,
 			source="participant",
 		),
-		"evaluator": build_sentiment_evolution(
+		"evaluator": build_average_sentiment_evolution(
 			entries,
 			source="evaluator",
 		),
@@ -1329,3 +1379,285 @@ def build_participant_analysis_data(study, run):
 		})
 
 	return participant_analysis_data
+
+
+
+# ANALYSIS SENTIMENT EVOLUTION: BUILD DAILY DOMINANT DATA
+# Basically same as above but for dominant sentiment
+def build_dominant_sentiment_evolution(
+	entries,
+	source,
+	run=None,
+):
+	if source not in {
+		"participant",
+		"machine",
+		"evaluator",
+	}:
+		raise ValueError(
+			"source must be 'participant', "
+			"'machine', or 'evaluator'"
+		)
+
+	daily_data = defaultdict(
+		lambda: {
+			"entry_ids": set(),
+			"labels": [],
+			"raw_scores": [],
+		}
+	)
+
+	if source == "participant":
+		for entry in entries:
+			label = entry.sentiment_self_report
+
+			if not label:
+				continue
+
+			local_created_at = timezone.localtime(
+				entry.created_at
+			)
+
+			date_key = (
+				local_created_at
+				.date()
+				.isoformat()
+			)
+
+			daily_data[date_key][
+				"entry_ids"
+			].add(
+				entry.pk
+			)
+
+			daily_data[date_key][
+				"labels"
+			].append(
+				label
+			)
+
+	elif source == "machine":
+		if run is None:
+			raise ValueError(
+				"run is required for machine "
+				"dominant sentiment evolution"
+			)
+
+		entry_ids = [
+			entry.pk
+			for entry in entries
+		]
+
+		entry_analyses = (
+			EntryAnalysis.objects
+			.filter(
+				run=run,
+				entry_id__in=entry_ids,
+			)
+			.exclude(
+				sentiment_label__isnull=True
+			)
+			.exclude(
+				sentiment_label=""
+			)
+			.select_related("entry")
+			.order_by(
+				"entry__created_at",
+				"entry_id",
+			)
+		)
+
+		for entry_analysis in entry_analyses:
+			local_created_at = timezone.localtime(
+				entry_analysis.entry.created_at
+			)
+
+			date_key = (
+				local_created_at
+				.date()
+				.isoformat()
+			)
+
+			daily_data[date_key][
+				"entry_ids"
+			].add(
+				entry_analysis.entry_id
+			)
+
+			daily_data[date_key][
+				"labels"
+			].append(
+				entry_analysis.sentiment_label
+			)
+
+			if (
+				entry_analysis.sentiment_score
+				is not None
+			):
+				daily_data[date_key][
+					"raw_scores"
+				].append(
+					entry_analysis.sentiment_score
+				)
+
+	else:
+		entry_ids = [
+			entry.pk
+			for entry in entries
+		]
+
+		evaluations = (
+			EntryEvaluation.objects
+			.filter(
+				entry_id__in=entry_ids
+			)
+			.exclude(
+				evaluator_sentiment_label__isnull=True
+			)
+			.exclude(
+				evaluator_sentiment_label=""
+			)
+			.select_related("entry")
+			.order_by(
+				"entry__created_at",
+				"entry_id",
+				"created_at",
+			)
+		)
+
+		for evaluation in evaluations:
+			local_created_at = timezone.localtime(
+				evaluation.entry.created_at
+			)
+
+			date_key = (
+				local_created_at
+				.date()
+				.isoformat()
+			)
+
+			daily_data[date_key][
+				"entry_ids"
+			].add(
+				evaluation.entry_id
+			)
+
+			daily_data[date_key][
+				"labels"
+			].append(
+				evaluation.evaluator_sentiment_label
+			)
+
+	evolution = []
+
+	for date_key, data in sorted(
+		daily_data.items()
+	):
+		dominant_label = (
+			get_dominant_sentiment_label(
+				data["labels"]
+			)
+		)
+
+		dominant_score = (
+			sentiment_label_to_score(
+				dominant_label
+			)
+		)
+
+		raw_score = (
+			round(
+				sum(data["raw_scores"])
+				/ len(data["raw_scores"]),
+				4,
+			)
+			if data["raw_scores"]
+			else None
+		)
+
+		evolution.append({
+			"date": date_key,
+			"entry_count": len(
+				data["entry_ids"]
+			),
+			"avg_sentiment": dominant_score,
+			"sentiment_label": dominant_label,
+			"dominant_sentiment_label":
+				dominant_label,
+			"dominant_sentiment_score":
+				dominant_score,
+			"raw_score": raw_score,
+		})
+
+		if date_key == "2026-07-01":
+			print(
+				f"\n{source.upper()} — {date_key}"
+			)
+
+			print(
+				"ENTRY COUNT:",
+				len(data["entry_ids"]),
+			)
+
+			print(
+				"LABEL COUNT:",
+				len(data["labels"]),
+			)
+
+			print(
+				"LABELS:",
+				data["labels"],
+			)
+
+			print(
+				"COUNTS:",
+				Counter(data["labels"]),
+			)
+
+			print(
+				"ENTRY IDS:",
+				sorted(data["entry_ids"]),
+			)
+
+	return evolution
+
+
+# ANALYSIS SENTIMENT EVOLUTION: OVERALL STUDY DOMINANT DATA
+def build_study_dominant_sentiment_evolution(
+	study,
+	run,
+):
+	entries = list(
+		Entry.objects
+		.filter(study=study)
+		.only(
+			"pk",
+			"created_at",
+			"sentiment_self_report",
+		)
+		.order_by(
+			"created_at",
+			"pk",
+		)
+	)
+
+	return {
+		"participant":
+			build_dominant_sentiment_evolution(
+				entries,
+				source="participant",
+			),
+
+		"machine":
+			build_dominant_sentiment_evolution(
+				entries,
+				source="machine",
+				run=run,
+			),
+
+		"evaluator":
+			build_dominant_sentiment_evolution(
+				entries,
+				source="evaluator",
+			),
+	}

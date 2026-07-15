@@ -9,6 +9,72 @@
 ####### LLM PIPELINE #######
 ############################
 
+### DEBUG STUFF ###
+
+from datetime import datetime
+from pathlib import Path
+from pprint import pformat
+
+def _write_first_pass_debug(
+    *,
+    study_id: int,
+    provider: str,
+    model: str | None,
+    themes: list[ThemeResult],
+    issues: list[IssueResult],
+) -> Path:
+    debug_directory = Path("debug")
+    debug_directory.mkdir(parents=True, exist_ok=True)
+
+    debug_file = debug_directory / f"llm_first_pass_study_{study_id}.log"
+
+    timestamp = datetime.now().astimezone().isoformat(timespec="seconds")
+
+    theme_ids = [
+        theme.theme_id
+        for theme in themes
+        if theme and theme.theme_id is not None
+    ]
+
+    issue_ids = [
+        issue.issue_id
+        for issue in issues
+        if issue and issue.issue_id is not None
+    ]
+
+    with debug_file.open("a", encoding="utf-8") as file:
+        file.write("\n")
+        file.write("=" * 100)
+        file.write("\n")
+        file.write(f"TIMESTAMP: {timestamp}\n")
+        file.write(f"STUDY ID: {study_id}\n")
+        file.write(f"PROVIDER: {provider}\n")
+        file.write(f"MODEL: {model or 'DEFAULT'}\n")
+        file.write("=" * 100)
+        file.write("\n\n")
+
+        file.write("1ST PASS THEME IDENTIFICATION\n")
+        file.write("-" * 100)
+        file.write("\n")
+        file.write(f"THEME COUNT: {len(themes)}\n")
+        file.write(f"VALID THEME IDS: {theme_ids}\n\n")
+        file.write("THEMES:\n\n")
+        file.write(pformat(themes, width=140, sort_dicts=False))
+        file.write("\n\n")
+
+        file.write("1ST PASS ISSUE IDENTIFICATION\n")
+        file.write("-" * 100)
+        file.write("\n")
+        file.write(f"ISSUE COUNT: {len(issues)}\n")
+        file.write(f"VALID ISSUE IDS: {issue_ids}\n\n")
+        file.write("ISSUES:\n\n")
+        file.write(pformat(issues, width=140, sort_dicts=False))
+        file.write("\n\n")
+
+    return debug_file
+
+### DEBUG STUFF ###
+
 from collections import Counter
 
 from studies.services.contracts import (
@@ -37,8 +103,7 @@ def analyze_study_entries_with_llm(
     if not entry_list:
         raise RuntimeError("No diary entries available for LLM analysis.")
 
-    # FIRST PASS: Build the study-level theme catalog
-    # This returns canonical themes + LLM-suggested themes.
+    # FIRST PASS: Build the study-level theme catalog.
     themes = explore_themes_with_llm(
         entries=entry_list,
         provider=provider,
@@ -46,15 +111,10 @@ def analyze_study_entries_with_llm(
         max_themes=max_themes,
     )
 
-    print("\n1ST PASS THEME IDENTIFICATION")
-    print("--------------------------------")
-    print(f"THEMES:\n\n {themes}")
-
     if not themes:
         raise RuntimeError("LLM theme exploration did not return any themes.")
 
-    # FIRST PASS: Build the study-level issue catalog
-    # This returns canonical issues + LLM-suggested issues.
+    # FIRST PASS: Build the study-level issue catalog.
     issues = explore_issues_with_llm(
         entries=entry_list,
         provider=provider,
@@ -62,9 +122,39 @@ def analyze_study_entries_with_llm(
         max_issues=max_issues,
     )
 
+    debug_file = _write_first_pass_debug(
+        study_id=study_id,
+        provider=provider,
+        model=model,
+        themes=themes,
+        issues=issues,
+    )
+
+    print("\n1ST PASS THEME IDENTIFICATION")
+    print("--------------------------------")
+    print(f"THEMES: {len(themes)}")
+    print(
+        "VALID THEME IDS:",
+        [
+            theme.theme_id
+            for theme in themes
+            if theme and theme.theme_id is not None
+        ],
+    )
+
     print("\n1ST PASS ISSUE IDENTIFICATION")
     print("--------------------------------")
-    print(f"ISSUES:\n\n {issues}")
+    print(f"ISSUES: {len(issues)}")
+    print(
+        "VALID ISSUE IDS:",
+        [
+            issue.issue_id
+            for issue in issues
+            if issue and issue.issue_id is not None
+        ],
+    )
+
+    print(f"\nFull first-pass debug written to: {debug_file.resolve()}")
 
     # SECOND PASS: Analyze each entry using both catalogs.
     entry_analysis_results = []

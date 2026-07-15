@@ -443,7 +443,7 @@
 
     </div>
 
-    <!-- AVG EVOLUTION OVER TIME -->
+    <!-- AVERAGE EVOLUTION OVER TIME -->
     <div class="main-card overflow-hidden">
 
         <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
@@ -454,42 +454,16 @@
 
             <p class="xs-label">
                 Comparison of machine-detected, participant-reported,
-                and evaluator-assessed sentiment average across the study timeline.
+                and evaluator-assessed average sentiment across the study timeline.
             </p>
         </div>
 
         <div class="grid grid-cols-2 gap-4 p-4">
 
-            {% include "studies/partials/_evolution_sentiment.html" with chart_id="studySentimentEvolutionChart" chart_title="Overall Sentiment Evolution" chart_description="Comparison of machine-detected, participant-reported, and evaluator-assessed sentiment across the study timeline." machine_evolution=run.evolution_over_time participant_evolution=participant_sentiment_evolution evaluator_evolution=evaluator_sentiment_evolution total_entries=run.total_entries %}
+            {% include "studies/partials/_evolution_sentiment.html" with chart_id="studyAverageSentimentEvolutionChart" chart_title="Average Sentiment Evolution" chart_description="Comparison of machine-detected, participant-reported, and evaluator-assessed average sentiment across the study timeline." machine_evolution=run.evolution_over_time participant_evolution=participant_average_sentiment_evolution evaluator_evolution=evaluator_average_sentiment_evolution total_entries=run.total_entries %}
 
         
-            {% include "studies/partials/_evolution_sentiment_by_label.html" with chart_id="studySentimentEvolutionByLabelChart" chart_title="Sentiment Evolution by Label" chart_description="Comparison of participant-reported, machine-detected, and evaluator-assessed sentiment labels across the study timeline. Machine scores are converted using the configured sentiment thresholds." machine_evolution=run.evolution_over_time participant_evolution=participant_sentiment_evolution evaluator_evolution=evaluator_sentiment_evolution total_entries=run.total_entries %}
-
-        </div>
-
-    </div>
-
-     <!-- DOMINANT EVOLUTION OVER TIME -->
-    <div class="main-card overflow-hidden">
-
-        <div class="flex flex-col border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
-            <h4 class="md-card-title">
-                {% heroicon_outline "arrow-trending-up" %}
-                Evolution of Dominant Sentiment Over Time
-            </h4>
-
-            <p class="xs-label">
-                Comparison of machine-detected, participant-reported,
-                and evaluator-assessed dominant sentiment across the study timeline.
-            </p>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4 p-4">
-
-            {% include "studies/partials/_evolution_sentiment.html" with chart_id="studySentimentEvolutionChart" chart_title="Overall Sentiment Evolution" chart_description="Comparison of machine-detected, participant-reported, and evaluator-assessed sentiment across the study timeline." machine_evolution=run.evolution_over_time participant_evolution=participant_sentiment_evolution evaluator_evolution=evaluator_sentiment_evolution total_entries=run.total_entries %}
-
-        
-            {% include "studies/partials/_evolution_sentiment_by_label.html" with chart_id="studySentimentEvolutionByLabelChart" chart_title="Sentiment Evolution by Label" chart_description="Comparison of participant-reported, machine-detected, and evaluator-assessed sentiment labels across the study timeline. Machine scores are converted using the configured sentiment thresholds." machine_evolution=run.evolution_over_time participant_evolution=participant_sentiment_evolution evaluator_evolution=evaluator_sentiment_evolution total_entries=run.total_entries %}
+            {% include "studies/partials/_evolution_sentiment_by_label.html" with chart_id="studyAverageSentimentEvolutionByLabelChart" chart_title="Average Sentiment Evolution by Label" chart_description="Comparison of participant-reported, machine-detected, and evaluator-assessed average sentiment labels across the study timeline. Machine scores are converted using the configured sentiment thresholds." machine_evolution=run.evolution_over_time participant_evolution=participant_average_sentiment_evolution evaluator_evolution=evaluator_average_sentiment_evolution total_entries=run.total_entries %}
 
         </div>
 

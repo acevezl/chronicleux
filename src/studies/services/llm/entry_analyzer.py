@@ -4,10 +4,10 @@ from typing import Any
 from django.core.serializers.json import DjangoJSONEncoder
 
 from studies.services.contracts import (
-    EntryAnalysisResult,
-    IssueResult,
-    SentimentResult,
-    ThemeResult,
+	EntryAnalysisResult,
+	IssueResult,
+	SentimentResult,
+	ThemeResult,
 )
 from studies.services.llm.client import connect_to_llm
 from studies.services.nlp.sentiment._thresholds import map_sentiment_score_to_label
@@ -38,46 +38,46 @@ Rules:
 
 
 def format_theme_catalog(theme_catalog: list[ThemeResult]) -> str:
-    return json.dumps(
-        [
-            {
-                "theme_id": theme.theme_id,
-                "label": theme.label,
-                "keywords": theme.keywords,
-            }
-            for theme in theme_catalog
-        ],
-        ensure_ascii=False,
-        separators=(",", ":"),
-        cls=DjangoJSONEncoder,
-    )
+	return json.dumps(
+		[
+			{
+				"theme_id": f"THEME_{theme.theme_id}",
+				"label": theme.label,
+				"keywords": theme.keywords,
+			}
+			for theme in theme_catalog
+		],
+		ensure_ascii=False,
+		separators=(",", ":"),
+		cls=DjangoJSONEncoder,
+	)
 
 
 def format_issue_catalog(issue_catalog: list[IssueResult]) -> str:
-    return json.dumps(
-        [
-            {
-                "issue_id": issue.issue_id,
-                "label": issue.label,
-                "keywords": issue.keywords,
-            }
-            for issue in issue_catalog
-        ],
-        ensure_ascii=False,
-        separators=(",", ":"),
-        cls=DjangoJSONEncoder,
-    )
+	return json.dumps(
+		[
+			{
+				"issue_id": f"ISSUE_{issue.issue_id}",
+				"label": issue.label,
+				"keywords": issue.keywords,
+			}
+			for issue in issue_catalog
+		],
+		ensure_ascii=False,
+		separators=(",", ":"),
+		cls=DjangoJSONEncoder,
+	)
 
 
 def build_entry_analyzer_prompt(
-    entry,
-    theme_catalog: list[ThemeResult],
-    issue_catalog: list[IssueResult],
+	entry,
+	theme_catalog: list[ThemeResult],
+	issue_catalog: list[IssueResult],
 ) -> str:
-    theme_catalog_json = format_theme_catalog(theme_catalog)
-    issue_catalog_json = format_issue_catalog(issue_catalog)
+	theme_catalog_json = format_theme_catalog(theme_catalog)
+	issue_catalog_json = format_issue_catalog(issue_catalog)
 
-    return f"""
+	return f"""
 Analyze the following diary study entry.
 
 Return the response using this exact JSON structure:
@@ -85,34 +85,34 @@ Return the response using this exact JSON structure:
 {{
   "entry_id": {entry.id},
   "sentiment": {{
-    "score": -0.62,
-    "method": "llm",
-    "metadata": {{
-      "positive": 0.05,
-      "neutral": 0.55,
-      "negative": 0.40,
-      "compound": -0.62
-    }}
+	"score": -0.62,
+	"method": "llm",
+	"metadata": {{
+	  "positive": 0.05,
+	  "neutral": 0.55,
+	  "negative": 0.40,
+	  "compound": -0.62
+	}}
   }},
   "theme": {{
-    "theme_id": 1,
-    "weight": 0.75,
-    "metadata": {{
-      "language": "english",
-      "rationale": "short explanation of why this theme matches the entry"
-    }}
+	"theme_id": "THEME_1",
+	"weight": 0.75,
+	"metadata": {{
+		"language": "english",
+		"rationale": "short explanation of why this theme matches the entry"
+	}}
   }},
   "issue": {{
-    "issue_id": 1,
-    "weight": 0.80,
-    "metadata": {{
-      "language": "english",
-      "rationale": "short explanation of why this issue matches the entry"
-    }}
+	"issue_id": "ISSUE_1",
+	"weight": 0.80,
+	"metadata": {{
+		"language": "english",
+		"rationale": "short explanation of why this issue matches the entry"
+	}}
   }},
   "metadata": {{
-    "word_count": 42,
-    "language": "english"
+	"word_count": 42,
+	"language": "english"
   }}
 }}
 
@@ -123,22 +123,23 @@ Sentiment rules:
 
 Theme rules:
 - You must choose exactly one theme from the Theme catalog.
-- Return theme.theme_id using only the theme_id field from the Theme catalog.
-- Do not use issue_id.
-- Do not use id.
+- Return theme.theme_id exactly as shown in the Theme catalog.
+- Every valid theme identifier begins with "THEME_".
+- Never return an identifier beginning with "ISSUE_" inside theme.
 - Do not use canonical_theme_id.
 - Do not use canonical_issue_id.
-- If you cannot choose confidently, choose the closest theme_id from the Theme catalog. Never invent a theme_id.
+- If you cannot choose confidently, choose the closest THEME_ identifier from the Theme catalog.
+- Never invent a theme identifier.
 
 Issue rules:
 - Return an issue only if the entry clearly describes UX friction, confusion, failure, accessibility problems, errors, inefficiency, dissatisfaction, or another usability problem.
 - If no UX/usability issue is clearly present, return "issue": {{}}
-- If an UX/usability issue is clearly present, return issue.issue_id using only the issue_id field from the Issue catalog.
-- Do not use theme_id.
-- Do not use id.
+- If a UX/usability issue is clearly present, return issue.issue_id exactly as shown in the Issue catalog.
+- Every valid issue identifier begins with "ISSUE_".
+- Never return an identifier beginning with "THEME_" inside issue.
 - Do not use canonical_theme_id.
 - Do not use canonical_issue_id.
-- Never invent an issue_id.
+- Never invent an issue identifier.
 
 Metadata rules:
 - Keep metadata concise.
@@ -162,238 +163,306 @@ Diary entry:
 
 
 def get_theme_by_id(
-    theme_catalog: list[ThemeResult],
-    theme_id: Any,
+	theme_catalog: list[ThemeResult],
+	theme_id: Any,
 ) -> ThemeResult | None:
-    try:
-        theme_id = int(theme_id)
-    except (TypeError, ValueError):
-        return None
+	if isinstance(theme_id, str):
+		if not theme_id.startswith("THEME_"):
+			return None
 
-    for theme in theme_catalog:
-        if theme.theme_id == theme_id:
-            return theme
+		theme_id = theme_id.removeprefix("THEME_")
 
-    return None
+	try:
+		theme_id = int(theme_id)
+	except (TypeError, ValueError):
+		return None
+
+	for theme in theme_catalog:
+		if theme.theme_id == theme_id:
+			return theme
+
+	return None
 
 
 def get_issue_by_id(
-    issue_catalog: list[IssueResult],
-    issue_id: Any,
+	issue_catalog: list[IssueResult],
+	issue_id: Any,
 ) -> IssueResult | None:
-    try:
-        issue_id = int(issue_id)
-    except (TypeError, ValueError):
-        return None
+	if isinstance(issue_id, str):
+		if not issue_id.startswith("ISSUE_"):
+			return None
 
-    for issue in issue_catalog:
-        if issue.issue_id == issue_id:
-            return issue
+		issue_id = issue_id.removeprefix("ISSUE_")
 
-    return None
+	try:
+		issue_id = int(issue_id)
+	except (TypeError, ValueError):
+		return None
+
+	for issue in issue_catalog:
+		if issue.issue_id == issue_id:
+			return issue
+
+	return None
 
 
 def clamp_score(score: Any, default: float = 0.0) -> float:
-    try:
-        score = float(score)
-    except (TypeError, ValueError):
-        score = default
+	try:
+		score = float(score)
+	except (TypeError, ValueError):
+		score = default
 
-    return max(-1.0, min(1.0, score))
+	return max(-1.0, min(1.0, score))
 
 
 def clamp_weight(weight: Any, default: float = 0.0) -> float:
-    try:
-        weight = float(weight)
-    except (TypeError, ValueError):
-        weight = default
+	try:
+		weight = float(weight)
+	except (TypeError, ValueError):
+		weight = default
 
-    return max(0.0, min(1.0, weight))
+	return max(0.0, min(1.0, weight))
 
 
 def parse_sentiment_result(
-    sentiment_data: dict,
-    provider: str,
-    model: str,
+	sentiment_data: dict,
+	provider: str,
+	model: str,
 ) -> SentimentResult:
-    sentiment_score = clamp_score(sentiment_data.get("score", 0.0))
-    sentiment_label = map_sentiment_score_to_label(sentiment_score)
+	sentiment_score = clamp_score(sentiment_data.get("score", 0.0))
+	sentiment_label = map_sentiment_score_to_label(sentiment_score)
 
-    sentiment_metadata = dict(sentiment_data.get("metadata") or {})
-    sentiment_metadata["compound"] = sentiment_score
-    sentiment_metadata["model"] = model
-    sentiment_metadata["provider"] = provider
+	sentiment_metadata = dict(sentiment_data.get("metadata") or {})
+	sentiment_metadata["compound"] = sentiment_score
+	sentiment_metadata["model"] = model
+	sentiment_metadata["provider"] = provider
 
-    return SentimentResult(
-        score=sentiment_score,
-        label=sentiment_label,
-        method="llm",
-        metadata=sentiment_metadata,
-    )
+	return SentimentResult(
+		score=sentiment_score,
+		label=sentiment_label,
+		method="llm",
+		metadata=sentiment_metadata,
+	)
 
 
 def parse_theme_result(
-    theme_data: dict,
-    theme_catalog: list[ThemeResult],
-    provider: str,
-    model: str,
-    entry_id: int,
+	theme_data: dict,
+	theme_catalog: list[ThemeResult],
+	issue_catalog: list[IssueResult],
+	provider: str,
+	model: str,
+	entry_id: int,
 ) -> ThemeResult:
-    selected_theme = get_theme_by_id(
-        theme_catalog=theme_catalog,
-        theme_id=theme_data.get("theme_id"),
-    )
+	selected_theme = get_theme_by_id(
+		theme_catalog=theme_catalog,
+		theme_id=theme_data.get("theme_id"),
+	)
 
-    if not selected_theme:
-        valid_theme_ids = [
-            theme.theme_id
-            for theme in theme_catalog
-        ]
+	if not selected_theme:
+		raw_theme_id = theme_data.get("theme_id")
 
-        raise RuntimeError(
-            f"LLM returned invalid theme_id '{theme_data.get('theme_id')}' "
-            f"for entry {entry_id}. "
-            f"Valid theme_ids: {valid_theme_ids}. "
-            f"Raw theme payload: {theme_data}."
-        )
+		valid_theme_ids = [
+			theme.theme_id
+			for theme in theme_catalog
+		]
 
-    theme_metadata = dict(selected_theme.metadata or {})
-    theme_metadata.update(theme_data.get("metadata") or {})
-    theme_metadata["model"] = model
-    theme_metadata["provider"] = provider
-    theme_metadata["num_keywords"] = len(selected_theme.keywords or [])
+		valid_issue_ids = [
+			issue.issue_id
+			for issue in issue_catalog
+		]
 
-    return ThemeResult(
-        theme_id=selected_theme.theme_id,
-        weight=clamp_weight(theme_data.get("weight", selected_theme.weight)),
-        label=selected_theme.label,
-        keywords=selected_theme.keywords or [],
-        method=selected_theme.method,
-        metadata=theme_metadata,
-    )
+		normalized_theme_id = raw_theme_id
+
+		if isinstance(normalized_theme_id, str):
+			normalized_theme_id = normalized_theme_id.removeprefix("THEME_")
+			normalized_theme_id = normalized_theme_id.removeprefix("ISSUE_")
+
+		try:
+			normalized_theme_id = int(normalized_theme_id)
+		except (TypeError, ValueError):
+			normalized_theme_id = None
+
+		if normalized_theme_id in valid_issue_ids:
+			raise RuntimeError(
+				f"LLM returned issue_id '{raw_theme_id}' as a theme_id "
+				f"for entry {entry_id}. "
+				f"Valid theme_ids: {valid_theme_ids}. "
+				f"Raw theme payload: {theme_data}."
+			)
+
+		raise RuntimeError(
+			f"LLM returned invalid theme_id '{raw_theme_id}' "
+			f"for entry {entry_id}. "
+			f"Valid theme_ids: {valid_theme_ids}. "
+			f"Raw theme payload: {theme_data}."
+		)
+
+	theme_metadata = dict(selected_theme.metadata or {})
+	theme_metadata.update(theme_data.get("metadata") or {})
+	theme_metadata["model"] = model
+	theme_metadata["provider"] = provider
+	theme_metadata["num_keywords"] = len(selected_theme.keywords or [])
+
+	return ThemeResult(
+		theme_id=selected_theme.theme_id,
+		weight=clamp_weight(theme_data.get("weight", selected_theme.weight)),
+		label=selected_theme.label,
+		keywords=selected_theme.keywords or [],
+		method=selected_theme.method,
+		metadata=theme_metadata,
+	)
 
 
 def parse_issue_result(
-    issue_data: dict | None,
-    issue_catalog: list[IssueResult],
-    provider: str,
-    model: str,
-    entry_id: int,
+	issue_data: dict,
+	issue_catalog: list[IssueResult],
+	theme_catalog: list[ThemeResult],
+	provider: str,
+	model: str,
+	entry_id: int,
 ) -> IssueResult | None:
-    if not issue_data:
-        return None
+	if not issue_data:
+		return None
 
-    selected_issue = get_issue_by_id(
-        issue_catalog=issue_catalog,
-        issue_id=issue_data.get("issue_id"),
-    )
+	selected_issue = get_issue_by_id(
+		issue_catalog=issue_catalog,
+		issue_id=issue_data.get("issue_id"),
+	)
 
-    if not selected_issue:
-        valid_issue_ids = [
-            issue.issue_id
-            for issue in issue_catalog
-        ]
+	if not selected_issue:
+		raw_issue_id = issue_data.get("issue_id")
 
-        raise RuntimeError(
-            f"LLM returned invalid issue_id '{issue_data.get('issue_id')}' "
-            f"for entry {entry_id}. "
-            f"Valid issue_ids: {valid_issue_ids}. "
-            f"Raw issue payload: {issue_data}."
-        )
+		valid_issue_ids = [
+			issue.issue_id
+			for issue in issue_catalog
+		]
 
-    issue_metadata = dict(selected_issue.metadata or {})
-    issue_metadata.update(issue_data.get("metadata") or {})
-    issue_metadata["model"] = model
-    issue_metadata["provider"] = provider
-    issue_metadata["num_keywords"] = len(selected_issue.keywords or [])
+		valid_theme_ids = [
+			theme.theme_id
+			for theme in theme_catalog
+		]
 
-    return IssueResult(
-        issue_id=selected_issue.issue_id,
-        weight=clamp_weight(issue_data.get("weight", selected_issue.weight)),
-        label=selected_issue.label,
-        keywords=selected_issue.keywords or [],
-        method=selected_issue.method,
-        metadata=issue_metadata,
-    )
+		normalized_issue_id = raw_issue_id
+
+		if isinstance(normalized_issue_id, str):
+			normalized_issue_id = normalized_issue_id.removeprefix("ISSUE_")
+			normalized_issue_id = normalized_issue_id.removeprefix("THEME_")
+
+		try:
+			normalized_issue_id = int(normalized_issue_id)
+		except (TypeError, ValueError):
+			normalized_issue_id = None
+
+		if normalized_issue_id in valid_theme_ids:
+			raise RuntimeError(
+				f"LLM returned theme_id '{raw_issue_id}' as an issue_id "
+				f"for entry {entry_id}. "
+				f"Valid issue_ids: {valid_issue_ids}. "
+				f"Raw issue payload: {issue_data}."
+			)
+
+		raise RuntimeError(
+			f"LLM returned invalid issue_id '{raw_issue_id}' "
+			f"for entry {entry_id}. "
+			f"Valid issue_ids: {valid_issue_ids}. "
+			f"Raw issue payload: {issue_data}."
+		)
+
+	issue_metadata = dict(selected_issue.metadata or {})
+	issue_metadata.update(issue_data.get("metadata") or {})
+	issue_metadata["model"] = model
+	issue_metadata["provider"] = provider
+	issue_metadata["num_keywords"] = len(selected_issue.keywords or [])
+
+	return IssueResult(
+		issue_id=selected_issue.issue_id,
+		weight=clamp_weight(issue_data.get("weight", selected_issue.weight)),
+		label=selected_issue.label,
+		keywords=selected_issue.keywords or [],
+		method=selected_issue.method,
+		metadata=issue_metadata,
+	)
 
 
 def parse_entry_analyzer_response(
-    raw_content: str,
-    entry,
-    theme_catalog: list[ThemeResult],
-    issue_catalog: list[IssueResult],
-    provider: str,
-    model: str,
+	raw_content: str,
+	entry,
+	theme_catalog: list[ThemeResult],
+	issue_catalog: list[IssueResult],
+	provider: str,
+	model: str,
 ) -> EntryAnalysisResult:
-    data = json.loads(raw_content)
+	data = json.loads(raw_content)
 
-    sentiment_result = parse_sentiment_result(
-        sentiment_data=data.get("sentiment") or {},
-        provider=provider,
-        model=model,
-    )
+	sentiment_result = parse_sentiment_result(
+		sentiment_data=data.get("sentiment") or {},
+		provider=provider,
+		model=model,
+	)
 
-    theme_result = parse_theme_result(
-        theme_data=data.get("theme") or {},
-        theme_catalog=theme_catalog,
-        provider=provider,
-        model=model,
-        entry_id=entry.id,
-    )
+	theme_result = parse_theme_result(
+		theme_data=data.get("theme") or {},
+		theme_catalog=theme_catalog,
+		issue_catalog=issue_catalog,
+		provider=provider,
+		model=model,
+		entry_id=entry.id,
+	)
 
-    issue_result = parse_issue_result(
-        issue_data=data.get("issue"),
-        issue_catalog=issue_catalog,
-        provider=provider,
-        model=model,
-        entry_id=entry.id,
-    )
+	issue_result = parse_issue_result(
+		issue_data=data.get("issue") or {},
+		issue_catalog=issue_catalog,
+		theme_catalog=theme_catalog,
+		provider=provider,
+		model=model,
+		entry_id=entry.id,
+	)
 
-    metadata = dict(data.get("metadata") or {})
-    metadata["model"] = model
-    metadata["provider"] = provider
+	metadata = dict(data.get("metadata") or {})
+	metadata["model"] = model
+	metadata["provider"] = provider
 
-    return EntryAnalysisResult(
-        entry_id=entry.id,
-        sentiment=sentiment_result,
-        themes=[theme_result] if theme_result else [],
-        issues=[issue_result] if issue_result else [],
-        metadata=metadata,
-    )
+	return EntryAnalysisResult(
+		entry_id=entry.id,
+		sentiment=sentiment_result,
+		themes=[theme_result] if theme_result else [],
+		issues=[issue_result] if issue_result else [],
+		metadata=metadata,
+	)
 
 
 def analyze_entry_with_llm(
-    entry,
-    theme_catalog: list[ThemeResult],
-    issue_catalog: list[IssueResult],
-    provider: str,
-    model: str | None = None,
+	entry,
+	theme_catalog: list[ThemeResult],
+	issue_catalog: list[IssueResult],
+	provider: str,
+	model: str | None = None,
 ) -> EntryAnalysisResult:
-    client, selected_model = connect_to_llm(provider=provider, model=model)
+	client, selected_model = connect_to_llm(provider=provider, model=model)
 
-    prompt = build_entry_analyzer_prompt(
-        entry=entry,
-        theme_catalog=theme_catalog,
-        issue_catalog=issue_catalog,
-    )
+	prompt = build_entry_analyzer_prompt(
+		entry=entry,
+		theme_catalog=theme_catalog,
+		issue_catalog=issue_catalog,
+	)
 
-    response = client.chat.completions.create(
-        model=selected_model,
-        temperature=0,
-        response_format={"type": "json_object"},
-        messages=[
-            {"role": "system", "content": ENTRY_ANALYZER_SYSTEM_PROMPT},
-            {"role": "user", "content": prompt},
-        ],
-    )
+	response = client.chat.completions.create(
+		model=selected_model,
+		temperature=0,
+		response_format={"type": "json_object"},
+		messages=[
+			{"role": "system", "content": ENTRY_ANALYZER_SYSTEM_PROMPT},
+			{"role": "user", "content": prompt},
+		],
+	)
 
-    raw_content = response.choices[0].message.content or "{}"
+	raw_content = response.choices[0].message.content or "{}"
 
-    return parse_entry_analyzer_response(
-        raw_content=raw_content,
-        entry=entry,
-        theme_catalog=theme_catalog,
-        issue_catalog=issue_catalog,
-        provider=provider,
-        model=selected_model,
-    )
+	return parse_entry_analyzer_response(
+		raw_content=raw_content,
+		entry=entry,
+		theme_catalog=theme_catalog,
+		issue_catalog=issue_catalog,
+		provider=provider,
+		model=selected_model,
+	)
