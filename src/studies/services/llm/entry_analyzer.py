@@ -479,7 +479,8 @@ def analyze_entry_with_llm(
 	provider: str,
 	model: str | None = None,
 ) -> EntryAnalysisResult:
-	client, selected_model = connect_to_llm(provider=provider, model=model)
+	
+	client, selected_model, response_format = connect_to_llm(provider=provider, model=model)
 
 	prompt = build_entry_analyzer_prompt(
 		entry=entry,
@@ -487,17 +488,32 @@ def analyze_entry_with_llm(
 		issue_catalog=issue_catalog,
 	)
 
-	response = client.chat.completions.create(
-		model=selected_model,
-		temperature=0,
-		response_format={"type": "json_object"},
-		messages=[
+	request = {
+		"model": selected_model,
+		"temperature": 0,
+		"messages": [
 			{"role": "system", "content": ENTRY_ANALYZER_SYSTEM_PROMPT},
 			{"role": "user", "content": prompt},
 		],
-	)
+	}
 
-	raw_content = response.choices[0].message.content or "{}"
+	if response_format is not None:
+		request["response_format"] = response_format
+
+	response = client.chat.completions.create(**request)
+
+	raw_content = response.choices[0].message.content or ""
+
+	raw_content = raw_content.strip()
+
+	# B/c Claude feels "special and starts its json with fucking ```
+	if raw_content.startswith("```json"):
+		raw_content = raw_content.removeprefix("```json")
+	elif raw_content.startswith("```"):
+		raw_content = raw_content.removeprefix("```")
+
+	if raw_content.endswith("```"):
+		raw_content = raw_content.removesuffix("```")
 
 	return parse_entry_analyzer_response(
 		raw_content=raw_content,

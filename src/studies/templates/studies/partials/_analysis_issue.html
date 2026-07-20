@@ -72,16 +72,29 @@
                 </div>
 
                 <div class="p-4">
-                    {% with issues=run.issue_summaries.all %}
+                    {% with issues=run.issue_summaries.all evaluator_issues=study.evaluation_issue_summaries.all %}
                         {% if issues %}
                             <div class="flex flex-wrap gap-2">
                                 {% for item in issues %}
                                     <a
                                         href="{% url 'machine_analysis_details' study.pk run.pk %}?issue={{ item.issue.pk }}#entries"
-                                        class="badge-ISSUE hover:underline"
+                                        class="badge-ISSUE inline-flex items-center gap-1.5 hover:underline"
                                         title="View entries with issue: {{ item.issue.name }}"
                                     >
                                         <span>{{ item.issue.name }}</span>
+
+                                        {% for evaluator_item in evaluator_issues %}
+                                            {% if evaluator_item.issue_id == item.issue_id %}
+                                                <span
+                                                    class="inline-flex"
+                                                    title="Also identified by evaluators"
+                                                    aria-label="Also identified by evaluators"
+                                                >
+                                                    {% heroicon_mini "check-circle" class="size-4" %}
+                                                </span>
+                                            {% endif %}
+                                        {% endfor %}
+
                                         <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
                                             {{ item.entry_count }}
                                         </span>
@@ -106,12 +119,27 @@
                 </div>
 
                 <div class="p-4">
-                    {% with distribution=study.evaluation_issue_summaries.all %}
+                    {% with distribution=study.evaluation_issue_summaries.all machine_issues=run.issue_summaries.all %}
                         {% if distribution %}
                             <div class="flex flex-wrap gap-2">
                                 {% for item in distribution %}
-                                    <span class="badge-ISSUE">
-                                        <span>{% firstof item.issue.name "Unnamed issue" %}</span>
+                                    <span class="badge-ISSUE inline-flex items-center gap-1.5">
+                                        <span>
+                                            {% firstof item.issue.name "Unnamed issue" %}
+                                        </span>
+
+                                        {% for machine_item in machine_issues %}
+                                            {% if machine_item.issue_id == item.issue_id %}
+                                                <span
+                                                    class="inline-flex"
+                                                    title="Also identified by machine analysis"
+                                                    aria-label="Also identified by machine analysis"
+                                                >
+                                                    {% heroicon_mini "check-circle" class="size-4" %}
+                                                </span>
+                                            {% endif %}
+                                        {% endfor %}
+
                                         <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
                                             {{ item.entry_count|default:0 }}
                                         </span>
@@ -119,8 +147,8 @@
                                 {% endfor %}
                             </div>
                         {% else %}
-                            <div class="flex h-20 items-center justify-center rounded-md border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
-                                <span class="text-sm text-gray-500 dark:text-gray-400 text-center">
+                            <div class="flex h-20 items-center justify-center rounded-md border border-dashed border-gray-300 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                                <span class="text-center text-sm text-gray-500 dark:text-gray-400">
                                     Evaluator-assessed issues are not yet available.<br>
                                     Complete human evaluations and refresh metrics to see this data.
                                 </span>
@@ -132,6 +160,10 @@
 
         </div>
     </div>
+    
+    <!-- PARTICIPANT ISSUE COMPARISON -->
+
+    {% include "studies/partials/_issue_participant_comparison.html" with participant_issue_comparison=participant_issue_comparison %}
 
     <!-- ISSUE DISTRIBUTION -->
     <div class="main-card overflow-hidden">

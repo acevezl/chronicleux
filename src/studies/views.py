@@ -61,7 +61,11 @@ from .models import (
 	CanonicalThemeToFrameworkMapping,
 	Entry, 
 	EntryAnalysis, 
+	EntryAnalysisTheme,
+	EntryAnalysisIssue,
 	EntryEvaluation,
+	EntryEvaluationTheme,
+	EntryEvaluationIssue,
 	EntrySource, 
 	UXFrameworkMappingStatus,
 	MembershipRole, 
@@ -908,6 +912,17 @@ def machine_analysis_details(request, study_pk, run_pk):
 		study, run
 	)
 
+	# matching themes
+	machine_theme_ids = set(
+		run.theme_summaries.values_list("theme_id", flat=True)
+	)
+
+	evaluator_theme_ids = set(
+		study.evaluation_theme_summaries.values_list("theme_id", flat=True)
+	)
+
+	matching_theme_ids = machine_theme_ids & evaluator_theme_ids
+
 	owner_name = (study.owner.get_full_name() or study.owner.get_username()).title()
 
 	created_at = date_format(
@@ -929,6 +944,302 @@ def machine_analysis_details(request, study_pk, run_pk):
 
 	pending_human_evaluation_count = run.total_entries - completed_human_evaluation_count
 
+	# Participant-level issue comparison
+	participant_theme_rows = {}
+
+	entries = (
+		study.entries
+		.select_related("participant")
+		.order_by("participant_external_id", "participant_display_name", "participant_id")
+	)
+
+	for entry in entries:
+		participant_key = (
+			entry.participant_external_id
+			or str(entry.participant_id or entry.pk)
+		)
+		participant_label = (
+			entry.participant_external_id
+			or entry.participant_display_name
+			or (
+				entry.participant.get_full_name()
+				if entry.participant
+				else ""
+			)
+			or (
+				entry.participant.get_username()
+				if entry.participant
+				else ""
+			)
+			or f"Participant {participant_key}"
+		)
+		if participant_key not in participant_theme_rows:
+			participant_theme_rows[participant_key] = {
+				"participant": participant_label,
+				"detected_themes": {},
+				"evaluated_themes": {},
+			}
+
+	machine_theme_assignments = (
+		EntryAnalysisTheme.objects
+		.filter(
+			entry_analysis__run=run,
+			entry_analysis__entry__study=study,
+		)
+		.select_related(
+			"theme",
+			"entry_analysis__entry__participant",
+		)
+	)
+
+	for assignment in machine_theme_assignments:
+		entry = assignment.entry_analysis.entry
+
+		participant_key = (
+			entry.participant_external_id
+			or str(entry.participant_id or entry.pk)
+		)
+
+		if participant_key not in participant_theme_rows:
+			continue
+
+		detected_themes = participant_theme_rows[participant_key]["detected_themes"]
+
+		if assignment.theme_id not in detected_themes:
+			detected_themes[assignment.theme_id] = {
+				"theme": assignment.theme,
+				"entry_ids": set(),
+			}
+
+		detected_themes[assignment.theme_id]["entry_ids"].add(entry.pk)
+
+
+	evaluator_theme_assignments = (
+		EntryEvaluationTheme.objects
+		.filter(
+			entry_evaluation__entry__study=study,
+		)
+		.select_related(
+			"theme",
+			"entry_evaluation__entry__participant",
+		)
+	)
+
+	for assignment in evaluator_theme_assignments:
+		entry = assignment.entry_evaluation.entry
+
+		participant_key = (
+			entry.participant_external_id
+			or str(entry.participant_id or entry.pk)
+		)
+
+		if participant_key not in participant_theme_rows:
+			continue
+
+		evaluated_themes = participant_theme_rows[participant_key]["evaluated_themes"]
+
+		if assignment.theme_id not in evaluated_themes:
+			evaluated_themes[assignment.theme_id] = {
+				"theme": assignment.theme,
+				"entry_ids": set(),
+			}
+
+		evaluated_themes[assignment.theme_id]["entry_ids"].add(entry.pk)
+
+	participant_theme_comparison = []
+
+	for row in participant_theme_rows.values():
+		detected_theme_ids = set(row["detected_themes"].keys())
+		evaluated_theme_ids = set(row["evaluated_themes"].keys())
+
+		detected_themes = [
+			{
+				"theme": item["theme"],
+				"entry_count": len(item["entry_ids"]),
+				"is_match": theme_id in evaluated_theme_ids,
+			}
+			for theme_id, item in row["detected_themes"].items()
+		]
+
+		evaluated_themes = [
+			{
+				"theme": item["theme"],
+				"entry_count": len(item["entry_ids"]),
+				"is_match": theme_id in detected_theme_ids,
+			}
+			for theme_id, item in row["evaluated_themes"].items()
+		]
+
+		detected_themes.sort(
+			key=lambda item: item["theme"].name.lower()
+		)
+
+		evaluated_themes.sort(
+			key=lambda item: item["theme"].name.lower()
+		)
+
+		participant_theme_comparison.append({
+			"participant": row["participant"],
+			"detected_themes": detected_themes,
+			"evaluated_themes": evaluated_themes,
+		})
+
+	participant_theme_comparison.sort(
+		key=lambda row: row["participant"].lower()
+	)
+
+	# Participant-level issue comparison
+	participant_issue_rows = {}
+
+	entries = (
+		study.entries
+		.select_related("participant")
+		.order_by(
+			"participant_external_id",
+			"participant_display_name",
+			"participant_id",
+		)
+	)
+
+	for entry in entries:
+		participant_key = (
+			entry.participant_external_id
+			or str(entry.participant_id or entry.pk)
+		)
+
+		participant_label = (
+			entry.participant_external_id
+			or entry.participant_display_name
+			or (
+				entry.participant.get_full_name()
+				if entry.participant
+				else ""
+			)
+			or (
+				entry.participant.get_username()
+				if entry.participant
+				else ""
+			)
+			or f"Participant {participant_key}"
+		)
+
+		if participant_key not in participant_issue_rows:
+			participant_issue_rows[participant_key] = {
+				"participant": participant_label,
+				"detected_issues": {},
+				"evaluated_issues": {},
+			}
+
+
+	machine_issue_assignments = (
+		EntryAnalysisIssue.objects
+		.filter(
+			entry_analysis__run=run,
+			entry_analysis__entry__study=study,
+		)
+		.select_related(
+			"issue",
+			"entry_analysis__entry__participant",
+		)
+	)
+
+	for assignment in machine_issue_assignments:
+		entry = assignment.entry_analysis.entry
+
+		participant_key = (
+			entry.participant_external_id
+			or str(entry.participant_id or entry.pk)
+		)
+
+		if participant_key not in participant_issue_rows:
+			continue
+
+		detected_issues = participant_issue_rows[participant_key]["detected_issues"]
+
+		if assignment.issue_id not in detected_issues:
+			detected_issues[assignment.issue_id] = {
+				"issue": assignment.issue,
+				"entry_ids": set(),
+			}
+
+		detected_issues[assignment.issue_id]["entry_ids"].add(entry.pk)
+
+
+	evaluator_issue_assignments = (
+		EntryEvaluationIssue.objects
+		.filter(
+			entry_evaluation__entry__study=study,
+		)
+		.select_related(
+			"issue",
+			"entry_evaluation__entry__participant",
+		)
+	)
+
+	for assignment in evaluator_issue_assignments:
+		entry = assignment.entry_evaluation.entry
+
+		participant_key = (
+			entry.participant_external_id
+			or str(entry.participant_id or entry.pk)
+		)
+
+		if participant_key not in participant_issue_rows:
+			continue
+
+		evaluated_issues = participant_issue_rows[participant_key]["evaluated_issues"]
+
+		if assignment.issue_id not in evaluated_issues:
+			evaluated_issues[assignment.issue_id] = {
+				"issue": assignment.issue,
+				"entry_ids": set(),
+			}
+
+		evaluated_issues[assignment.issue_id]["entry_ids"].add(entry.pk)
+
+
+	participant_issue_comparison = []
+
+	for row in participant_issue_rows.values():
+		detected_issue_ids = set(row["detected_issues"].keys())
+		evaluated_issue_ids = set(row["evaluated_issues"].keys())
+
+		detected_issues = [
+			{
+				"issue": item["issue"],
+				"entry_count": len(item["entry_ids"]),
+				"is_match": issue_id in evaluated_issue_ids,
+			}
+			for issue_id, item in row["detected_issues"].items()
+		]
+
+		evaluated_issues = [
+			{
+				"issue": item["issue"],
+				"entry_count": len(item["entry_ids"]),
+				"is_match": issue_id in detected_issue_ids,
+			}
+			for issue_id, item in row["evaluated_issues"].items()
+		]
+
+		detected_issues.sort(
+			key=lambda item: item["issue"].name.lower()
+		)
+
+		evaluated_issues.sort(
+			key=lambda item: item["issue"].name.lower()
+		)
+
+		participant_issue_comparison.append({
+			"participant": row["participant"],
+			"detected_issues": detected_issues,
+			"evaluated_issues": evaluated_issues,
+		})
+
+	participant_issue_comparison.sort(
+		key=lambda row: row["participant"].lower()
+	)
+
 	context.update({
 		"page_title_heroicon":"book-open",
 		"page_title":study.title,
@@ -943,10 +1254,14 @@ def machine_analysis_details(request, study_pk, run_pk):
 		"machine_dominant_sentiment_evolution":study_dominant_sentiment_evolution["machine"],
 		"pending_human_evaluation_count":pending_human_evaluation_count,
 		"completed_human_evaluation_count":completed_human_evaluation_count,
+		"participant_theme_comparison": participant_theme_comparison,
+		"participant_issue_comparison": participant_issue_comparison,
 		"machine_analysis_entries_filter_url": reverse(
 			"machine_analysis_entries_partial",
 			args=[study.pk, run.pk],
 		),
+		
+		"matching_theme_ids": matching_theme_ids,
 		
 	})
 

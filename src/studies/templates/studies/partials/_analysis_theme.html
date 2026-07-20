@@ -72,16 +72,29 @@
                 </div>
 
                 <div class="p-4">
-                    {% with themes=run.theme_summaries.all %}
+                    {% with themes=run.theme_summaries.all evaluator_themes=study.evaluation_theme_summaries.all %}
                         {% if themes %}
                             <div class="flex flex-wrap gap-2">
                                 {% for item in themes %}
                                     <a
                                         href="{% url 'machine_analysis_details' study.pk run.pk %}?theme={{ item.theme.pk }}#entries"
-                                        class="badge-THEME hover:underline"
+                                        class="badge-THEME inline-flex items-center gap-1.5 hover:underline"
                                         title="View entries with theme: {{ item.theme.name }}"
                                     >
                                         <span>{{ item.theme.name }}</span>
+
+                                        {% for evaluator_item in evaluator_themes %}
+                                            {% if evaluator_item.theme_id == item.theme_id %}
+                                                <span
+                                                    class="inline-flex"
+                                                    title="Also identified by evaluators"
+                                                    aria-label="Also identified by evaluators"
+                                                >
+                                                    {% heroicon_mini "check-circle" class="size-4" %}
+                                                </span>
+                                            {% endif %}
+                                        {% endfor %}
+
                                         <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
                                             {{ item.entry_count }}
                                         </span>
@@ -106,12 +119,27 @@
                 </div>
 
                 <div class="p-4">
-                    {% with distribution=study.evaluation_theme_summaries.all %}
+                    {% with distribution=study.evaluation_theme_summaries.all machine_themes=run.theme_summaries.all %}
                         {% if distribution %}
                             <div class="flex flex-wrap gap-2">
                                 {% for item in distribution %}
-                                    <span class="badge-THEME">
-                                        <span>{% firstof item.theme.name "Unnamed theme" %}</span>
+                                    <span class="badge-THEME inline-flex items-center gap-1.5">
+                                        <span>
+                                            {% firstof item.theme.name "Unnamed theme" %}
+                                        </span>
+
+                                        {% for machine_item in machine_themes %}
+                                            {% if machine_item.theme_id == item.theme_id %}
+                                                <span
+                                                    class="inline-flex"
+                                                    title="Also identified by machine analysis"
+                                                    aria-label="Also identified by machine analysis"
+                                                >
+                                                    {% heroicon_mini "check-circle" class="size-4" %}
+                                                </span>
+                                            {% endif %}
+                                        {% endfor %}
+
                                         <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
                                             {{ item.entry_count|default:0 }}
                                         </span>
@@ -119,8 +147,8 @@
                                 {% endfor %}
                             </div>
                         {% else %}
-                            <div class="flex h-20 items-center justify-center rounded-md border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">
-                                <span class="text-sm text-gray-500 dark:text-gray-400 text-center">
+                            <div class="flex h-20 items-center justify-center rounded-md border border-dashed border-gray-300 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                                <span class="text-center text-sm text-gray-500 dark:text-gray-400">
                                     Evaluator-assessed themes are not yet available.<br>
                                     Complete human evaluations and refresh metrics to see this data.
                                 </span>
@@ -133,7 +161,10 @@
         </div>
     </div>
 
-    <!-- THEME DISTRIBUTION -->
+	<!-- PARTICIPANT THEME COMPARISON -->
+	{% include "studies/partials/_theme_participant_comparison.html" with participant_theme_comparison=participant_theme_comparison %}
+
+	<!-- THEME DISTRIBUTION -->
     <div class="main-card overflow-hidden">
 
         <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4">

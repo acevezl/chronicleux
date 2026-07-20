@@ -7,7 +7,9 @@ from studies.models import CanonicalIssue, ThemeAndIssueStatus, ThemeAndIssueSou
 
 from studies.services.contracts import IssueResult
 from studies.services.llm.client import connect_to_llm
+from studies.services.llm.llm_rate_limiter import wait_for_token_capacity
 
+ISSUE_EXPLORATION_BATCH_SIZE = 8
 
 ISSUE_EXPLORER_SYSTEM_PROMPT = """
 You are acting as a usability issue extractor for diary study entries in UX research.
@@ -29,6 +31,7 @@ Return only valid JSON.
 
 
 MAX_ISSUE_ENTRY_CHARS = 1200
+MAX_OUTPUT_TOKENS = 1200
 
 
 def compact_text(text: str, max_chars: int = MAX_ISSUE_ENTRY_CHARS) -> str:
@@ -38,6 +41,25 @@ def compact_text(text: str, max_chars: int = MAX_ISSUE_ENTRY_CHARS) -> str:
         return text
 
     return text[:max_chars].rstrip() + "..."
+
+
+def get_issue_exploration_catalog() -> list[dict]:
+    return list(
+        CanonicalIssue.objects
+        .filter(is_active=True)
+        .filter(
+            Q(status=ThemeAndIssueStatus.APPROVED)
+            | Q(status=ThemeAndIssueStatus.SUGGESTED)
+            | Q(status__isnull=True)
+            | Q(status="")
+        )
+        .annotate(canonical_issue_id=F("id"))
+        .order_by("name")
+        .values(
+            "canonical_issue_id",
+            "name",
+        )
+    )
 
 
 def get_canonical_issue_catalog() -> list[dict]:
@@ -226,41 +248,101 @@ def explore_issues_with_llm(
     provider: str,
     model: str | None = None,
     max_issues: int = 8,
+    batch_size: int = ISSUE_EXPLORATION_BATCH_SIZE,
 ) -> list[IssueResult]:
-    client, selected_model = connect_to_llm(provider=provider, model=model)
+    
+    client, selected_model, response_format = connect_to_llm(provider=provider, model=model)
 
-    canonical_issue_catalog = get_canonical_issue_catalog()
+    entry_list = list(entries)
 
-    prompt = build_issue_explorer_prompt(
-        entries=entries,
-        canonical_issue_catalog=canonical_issue_catalog,
-        max_issues=max_issues,
-    )
+    if not entry_list:
+        return []
 
-    response = client.chat.completions.create(
-        model=selected_model,
-        temperature=0,
-        response_format={"type": "json_object"},
-        messages=[
-            {"role": "system", "content": ISSUE_EXPLORER_SYSTEM_PROMPT},
-            {"role": "user", "content": prompt},
-        ],
-    )
+    initial_issue_ids = {
+        issue["canonical_issue_id"]
+        for issue in get_canonical_issue_catalog()
+    }
 
-    raw_content = response.choices[0].message.content or "{}"
+    for start_index in range(0, len(entry_list), batch_size):
+        current_issue_catalog = get_issue_exploration_catalog()
 
-    suggested_issues = parse_issue_explorer_response(
-        raw_content=raw_content,
-    )
+        current_suggested_issue_ids = {
+            issue["canonical_issue_id"]
+            for issue in current_issue_catalog
+            if issue["canonical_issue_id"] not in initial_issue_ids
+        }
 
-    create_suggested_canonical_issues(
-        suggested_issues=suggested_issues,
-    )
+        remaining_issue_count = (
+            max_issues - len(current_suggested_issue_ids)
+        )
 
-    canonical_issue_catalog = get_canonical_issue_catalog()
+        if remaining_issue_count <= 0:
+            break
+
+        entry_batch = entry_list[
+            start_index:start_index + batch_size
+        ]
+
+        prompt = build_issue_explorer_prompt(
+            entries=entry_batch,
+            canonical_issue_catalog=current_issue_catalog,
+            max_issues=remaining_issue_count,
+        )
+
+        messages = [
+            {
+                "role": "system",
+                "content": ISSUE_EXPLORER_SYSTEM_PROMPT,
+            },
+            {
+                "role": "user",
+                "content": prompt,
+            },
+        ]
+
+        wait_for_token_capacity(
+            provider=provider,
+            messages=messages,
+            max_output_tokens=MAX_OUTPUT_TOKENS,
+        )
+
+        request = {
+            "model": selected_model,
+            "temperature": 0,
+            "max_tokens": MAX_OUTPUT_TOKENS,
+            "messages": messages,
+        }
+
+        if response_format is not None:
+            request["response_format"] = response_format
+
+        response = client.chat.completions.create(**request)
+
+        raw_content = response.choices[0].message.content or ""
+
+        raw_content = raw_content.strip()
+
+        # B/c Claude feels "special and starts its json with fucking ```
+        if raw_content.startswith("```json"):
+            raw_content = raw_content.removeprefix("```json")
+        elif raw_content.startswith("```"):
+            raw_content = raw_content.removeprefix("```")
+
+        if raw_content.endswith("```"):
+            raw_content = raw_content.removesuffix("```")
+
+        suggested_issues = parse_issue_explorer_response(
+            raw_content=raw_content,
+        )
+
+        create_suggested_canonical_issues(
+            suggested_issues=suggested_issues,
+        )
+
+    final_issue_catalog = get_canonical_issue_catalog()
 
     return canonical_issue_catalog_to_issue_results(
-        canonical_issue_catalog=canonical_issue_catalog,
+        canonical_issue_catalog=final_issue_catalog,
         provider=provider,
         model=selected_model,
     )

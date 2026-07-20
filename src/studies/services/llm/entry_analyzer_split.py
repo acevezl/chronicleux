@@ -11,7 +11,9 @@ from studies.services.contracts import (
 )
 from studies.services.llm.client import connect_to_llm
 from studies.services.nlp.sentiment._thresholds import map_sentiment_score_to_label
+from studies.services.llm.llm_rate_limiter import wait_for_token_capacity
 
+MAX_OUTPUT_TOKENS = 1200
 
 SENTIMENT_THEME_ANALYZER_SYSTEM_PROMPT = """
 You are acting as an entry-level sentiment and theme analyzer for UX diary studies.
@@ -426,6 +428,20 @@ def parse_issue_analyzer_response(
 		entry_id=entry.id,
 	)
 
+# Because Claude is fucking special with its prefix and suffix
+def clean_json_response(raw_content: str) -> str:
+	raw_content = raw_content.strip()
+
+	if raw_content.startswith("```json"):
+		raw_content = raw_content.removeprefix("```json")
+	elif raw_content.startswith("```"):
+		raw_content = raw_content.removeprefix("```")
+
+	if raw_content.endswith("```"):
+		raw_content = raw_content.removesuffix("```")
+
+	return raw_content.strip()
+
 
 def analyze_entry_with_llm(
 	entry,
@@ -434,7 +450,8 @@ def analyze_entry_with_llm(
 	provider: str,
 	model: str | None = None,
 ) -> EntryAnalysisResult:
-	client, selected_model = connect_to_llm(
+
+	client, selected_model, response_format = connect_to_llm(
 		provider=provider,
 		model=model,
 	)
@@ -444,23 +461,38 @@ def analyze_entry_with_llm(
 		theme_catalog=theme_catalog,
 	)
 
-	sentiment_theme_response = client.chat.completions.create(
-		model=selected_model,
-		temperature=0,
-		response_format={"type": "json_object"},
-		messages=[
-			{
-				"role": "system",
-				"content": SENTIMENT_THEME_ANALYZER_SYSTEM_PROMPT,
-			},
-			{
-				"role": "user",
-				"content": sentiment_theme_prompt,
-			},
-		],
+	sentiment_theme_messages = [
+		{
+			"role": "system",
+			"content": SENTIMENT_THEME_ANALYZER_SYSTEM_PROMPT,
+		},
+		{
+			"role": "user",
+			"content": sentiment_theme_prompt,
+		},
+	]
+
+	wait_for_token_capacity(
+		provider=provider,
+		messages=sentiment_theme_messages,
+		max_output_tokens=MAX_OUTPUT_TOKENS,
 	)
 
-	sentiment_theme_raw_content = (
+	sentiment_theme_request = {
+		"model": selected_model,
+		"temperature": 0,
+		"max_tokens": MAX_OUTPUT_TOKENS,
+		"messages": sentiment_theme_messages,
+	}
+
+	if response_format is not None:
+		sentiment_theme_request["response_format"] = response_format
+
+	sentiment_theme_response = client.chat.completions.create(
+		**sentiment_theme_request
+	)
+
+	sentiment_theme_raw_content = clean_json_response(
 		sentiment_theme_response.choices[0].message.content or "{}"
 	)
 
@@ -477,23 +509,40 @@ def analyze_entry_with_llm(
 		issue_catalog=issue_catalog,
 	)
 
-	issue_response = client.chat.completions.create(
-		model=selected_model,
-		temperature=0,
-		response_format={"type": "json_object"},
-		messages=[
-			{
-				"role": "system",
-				"content": ISSUE_ANALYZER_SYSTEM_PROMPT,
-			},
-			{
-				"role": "user",
-				"content": issue_prompt,
-			},
-		],
+	issue_messages = [
+		{
+			"role": "system",
+			"content": ISSUE_ANALYZER_SYSTEM_PROMPT,
+		},
+		{
+			"role": "user",
+			"content": issue_prompt,
+		},
+	]
+
+	wait_for_token_capacity(
+		provider=provider,
+		messages=issue_messages,
+		max_output_tokens=MAX_OUTPUT_TOKENS,
 	)
 
-	issue_raw_content = issue_response.choices[0].message.content or "{}"
+	issue_request = {
+		"model": selected_model,
+		"temperature": 0,
+		"max_tokens": MAX_OUTPUT_TOKENS,
+		"messages": issue_messages,
+	}
+
+	if response_format is not None:
+		issue_request["response_format"] = response_format
+
+	issue_response = client.chat.completions.create(
+		**issue_request
+	)
+
+	issue_raw_content = clean_json_response(
+		issue_response.choices[0].message.content or "{}"
+	)
 
 	issue_result = parse_issue_analyzer_response(
 		raw_content=issue_raw_content,
@@ -513,3 +562,6 @@ def analyze_entry_with_llm(
 		issues=[issue_result] if issue_result else [],
 		metadata=metadata,
 	)
+
+
+

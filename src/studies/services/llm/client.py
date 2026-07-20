@@ -1,5 +1,6 @@
 import os
 from dataclasses import dataclass
+from typing import Any
 
 from openai import OpenAI
 
@@ -13,6 +14,7 @@ class LLMProvider:
     default_model_env: str
     default_model: str
     base_url: str | None = None
+    response_format: dict[str, Any] | None = None
 
 
 LLM_PROVIDERS = {
@@ -23,16 +25,18 @@ LLM_PROVIDERS = {
         api_key_env="OPENAI_API_KEY",
         default_model_env="OPENAI_MODEL",
         default_model="gpt-4.1-mini",
+        response_format={"type": "json_object"},
     ),
-    "groq": LLMProvider(
-        value="groq",
-        label="Groq",
-        description="Fast LLM provider useful for lower-latency analysis runs, especially during testing and iteration.",
-        api_key_env="GROQ_API_KEY",
-        default_model_env="GROQ_MODEL",
-        default_model="llama-3.3-70b-versatile",
-        base_url="https://api.groq.com/openai/v1",
-    ),
+    # "groq": LLMProvider(
+    #     value="groq",
+    #     label="Groq",
+    #     description="Fast LLM provider useful for lower-latency analysis runs, especially during testing and iteration.",
+    #     api_key_env="GROQ_API_KEY",
+    #     default_model_env="GROQ_MODEL",
+    #     default_model="llama-3.3-70b-versatile",
+    #     base_url="https://api.groq.com/openai/v1",
+    #    response_format={"type": "json_object"},
+    # ),
     "gemini": LLMProvider(
         value="gemini",
         label="Gemini",
@@ -41,15 +45,27 @@ LLM_PROVIDERS = {
         default_model_env="GEMINI_MODEL",
         default_model="gemini-3.1-flash-lite",
         base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+        response_format={"type": "json_object"},
     ),
-    "openrouter": LLMProvider(
-        value="openrouter",
-        label="OpenRouter",
-        description="Provider gateway that allows routing analysis through different supported models using one interface.",
-        api_key_env="OPENROUTER_API_KEY",
-        default_model_env="OPENROUTER_MODEL",
-        default_model="openai/gpt-4o-mini",
-        base_url="https://openrouter.ai/api/v1",
+    # "openrouter": LLMProvider(
+    #     value="openrouter",
+    #     label="OpenRouter",
+    #     description="Provider gateway that allows routing analysis through different supported models using one interface.",
+    #     api_key_env="OPENROUTER_API_KEY",
+    #     default_model_env="OPENROUTER_MODEL",
+    #     default_model="openai/gpt-4o-mini",
+    #     base_url="https://openrouter.ai/api/v1",
+    #     response_format={"type": "json_object"},
+    # ),
+    "anthropic": LLMProvider(
+        value="anthropic",
+        label="Anthropic",
+        description="Advanced LLM provider with strong reasoning, nuanced language understanding, and reliable structured JSON generation.",
+        api_key_env="ANTHROPIC_API_KEY",
+        default_model_env="ANTHROPIC_MODEL",
+        default_model="claude-sonnet-4-20250514",
+        base_url="https://api.anthropic.com/v1",
+        response_format=None,
     ),
 }
 
@@ -111,5 +127,6 @@ def get_llm_client(provider: str) -> OpenAI:
 def connect_to_llm(provider: str, model: str | None = None) -> tuple[OpenAI, str]:
     client = get_llm_client(provider)
     selected_model = get_llm_model(provider, model)
+    response_format = LLM_PROVIDERS[provider].response_format
 
-    return client, selected_model
+    return client, selected_model, response_format

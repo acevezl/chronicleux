@@ -14,6 +14,7 @@
 from datetime import datetime
 from pathlib import Path
 from pprint import pformat
+import random
 
 def _write_first_pass_debug(
     *,
@@ -99,6 +100,9 @@ def analyze_study_entries_with_llm(
 ) -> StudyAnalysisResult:
 
     entry_list = list(entries)
+
+    # shuffle entries
+    random.Random(666).shuffle(entry_list)
 
     if not entry_list:
         raise RuntimeError("No diary entries available for LLM analysis.")

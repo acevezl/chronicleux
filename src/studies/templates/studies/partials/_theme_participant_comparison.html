@@ -1,0 +1,136 @@
+{% load heroicons %}
+
+<div class="main-card overflow-hidden">
+
+	<div class="border-b border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+		<h4 class="card-summary-title">
+			{% heroicon_outline "users" %}
+			Participant Theme Comparison
+		</h4>
+
+		<p class="xs-label">
+			Unique themes detected by machine analysis and assigned during human evaluation across each participant’s diary entries.
+		</p>
+	</div>
+
+	<div class="overflow-x-auto">
+		<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+
+			<thead class="bg-gray-50 dark:bg-gray-800">
+				<tr>
+					<th
+						scope="col"
+						class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+					>
+						Participant
+					</th>
+
+					<th
+						scope="col"
+						class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+					>
+						Detected Themes
+					</th>
+
+					<th
+						scope="col"
+						class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"
+					>
+						Evaluated Themes
+					</th>
+				</tr>
+			</thead>
+
+			<tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
+
+				{% for row in participant_theme_comparison %}
+					<tr class="align-top">
+
+						<th
+							scope="row"
+							class="whitespace-nowrap px-4 py-4 text-left text-sm font-semibold text-gray-900 dark:text-gray-100"
+						>
+							{{ row.participant }}
+						</th>
+
+						<td class="px-4 py-4">
+							{% if row.detected_themes %}
+								<div class="flex flex-wrap gap-2">
+									{% for item in row.detected_themes %}
+                                        <span class="badge-THEME inline-flex items-center gap-1.5">
+                                            <span>
+                                                {{ item.theme.name }}
+                                            </span>
+
+                                            {% if item.is_match %}
+                                                <span
+                                                    class="inline-flex"
+                                                    title="Also identified by evaluators"
+                                                    aria-label="Also identified by evaluators"
+                                                >
+                                                    {% heroicon_mini "check-circle" class="size-4" %}
+                                                </span>
+                                            {% endif %}
+
+                                            <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
+                                                {{ item.entry_count }}
+                                            </span>
+                                        </span>
+                                    {% endfor %}
+								</div>
+							{% else %}
+								<span class="text-sm text-gray-400 dark:text-gray-500">
+									No themes detected
+								</span>
+							{% endif %}
+						</td>
+
+						<td class="px-4 py-4">
+							{% if row.evaluated_themes %}
+								<div class="flex flex-wrap gap-2">
+									{% for item in row.evaluated_themes %}
+                                        <span class="badge-THEME inline-flex items-center gap-1.5">
+                                            <span>
+                                                {{ item.theme.name }}
+                                            </span>
+
+                                            {% if item.is_match %}
+                                                <span
+                                                    class="inline-flex"
+                                                    title="Also identified by machine analysis"
+                                                    aria-label="Also identified by machine analysis"
+                                                >
+                                                    {% heroicon_mini "check-circle" class="size-4" %}
+                                                </span>
+                                            {% endif %}
+
+                                            <span class="rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] dark:bg-black/20">
+                                                {{ item.entry_count }}
+                                            </span>
+                                        </span>
+                                    {% endfor %}
+								</div>
+							{% else %}
+								<span class="text-sm text-gray-400 dark:text-gray-500">
+									No evaluated themes
+								</span>
+							{% endif %}
+						</td>
+
+					</tr>
+				{% empty %}
+					<tr>
+						<td
+							colspan="3"
+							class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
+						>
+							No participant theme data is available.
+						</td>
+					</tr>
+				{% endfor %}
+
+			</tbody>
+		</table>
+	</div>
+
+</div>

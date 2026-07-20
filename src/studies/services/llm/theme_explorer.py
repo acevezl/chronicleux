@@ -7,7 +7,9 @@ from studies.models import CanonicalTheme, ThemeAndIssueStatus, ThemeAndIssueSou
 
 from studies.services.contracts import ThemeResult
 from studies.services.llm.client import connect_to_llm
+from studies.services.llm.llm_rate_limiter import wait_for_token_capacity
 
+THEME_EXPLORATION_BATCH_SIZE = 8
 
 THEME_EXPLORER_SYSTEM_PROMPT = """
 You are acting as a theme extractor for diary study entries in UX research.
@@ -29,6 +31,7 @@ Return only valid JSON.
 
 
 MAX_THEME_ENTRY_CHARS = 1200
+MAX_OUTPUT_TOKENS = 1200
 
 
 def compact_text(text: str, max_chars: int = MAX_THEME_ENTRY_CHARS) -> str:
@@ -38,6 +41,25 @@ def compact_text(text: str, max_chars: int = MAX_THEME_ENTRY_CHARS) -> str:
         return text
 
     return text[:max_chars].rstrip() + "..."
+
+
+def get_theme_exploration_catalog() -> list[dict]:
+    return list(
+        CanonicalTheme.objects
+        .filter(is_active=True)
+        .filter(
+            Q(status=ThemeAndIssueStatus.APPROVED)
+            | Q(status=ThemeAndIssueStatus.SUGGESTED)
+            | Q(status__isnull=True)
+            | Q(status="")
+        )
+        .annotate(canonical_theme_id=F("id"))
+        .order_by("name")
+        .values(
+            "canonical_theme_id",
+            "name",
+        )
+    )
 
 
 def get_canonical_theme_catalog() -> list[dict]:
@@ -223,41 +245,101 @@ def explore_themes_with_llm(
     provider: str,
     model: str | None = None,
     max_themes: int = 8,
+    batch_size: int = THEME_EXPLORATION_BATCH_SIZE,
 ) -> list[ThemeResult]:
-    client, selected_model = connect_to_llm(provider=provider, model=model)
+    
+    client, selected_model, response_format = connect_to_llm(provider=provider, model=model)
 
-    canonical_theme_catalog = get_canonical_theme_catalog()
+    entry_list = list(entries)
 
-    prompt = build_theme_explorer_prompt(
-        entries=entries,
-        canonical_theme_catalog=canonical_theme_catalog,
-        max_themes=max_themes,
-    )
+    if not entry_list:
+        return []
 
-    response = client.chat.completions.create(
-        model=selected_model,
-        temperature=0,
-        response_format={"type": "json_object"},
-        messages=[
-            {"role": "system", "content": THEME_EXPLORER_SYSTEM_PROMPT},
-            {"role": "user", "content": prompt},
-        ],
-    )
+    initial_theme_ids = {
+        theme["canonical_theme_id"]
+        for theme in get_canonical_theme_catalog()
+    }
 
-    raw_content = response.choices[0].message.content or "{}"
+    for start_index in range(0, len(entry_list), batch_size):
+        current_theme_catalog = get_theme_exploration_catalog()
 
-    suggested_themes = parse_theme_explorer_response(
-        raw_content=raw_content,
-    )
+        current_suggested_theme_ids = {
+            theme["canonical_theme_id"]
+            for theme in current_theme_catalog
+            if theme["canonical_theme_id"] not in initial_theme_ids
+        }
 
-    create_suggested_canonical_themes(
-        suggested_themes=suggested_themes,
-    )
+        remaining_theme_count = (
+            max_themes - len(current_suggested_theme_ids)
+        )
 
-    canonical_theme_catalog = get_canonical_theme_catalog()
+        if remaining_theme_count <= 0:
+            break
+
+        entry_batch = entry_list[
+            start_index:start_index + batch_size
+        ]
+
+        prompt = build_theme_explorer_prompt(
+            entries=entry_batch,
+            canonical_theme_catalog=current_theme_catalog,
+            max_themes=remaining_theme_count,
+        )
+
+        messages = [
+            {
+                "role": "system",
+                "content": THEME_EXPLORER_SYSTEM_PROMPT,
+            },
+            {
+                "role": "user",
+                "content": prompt,
+            },
+        ]
+
+        wait_for_token_capacity(
+            provider=provider,
+            messages=messages,
+            max_output_tokens=MAX_OUTPUT_TOKENS,
+        )
+
+        request = {
+            "model": selected_model,
+            "temperature": 0,
+            "max_tokens": MAX_OUTPUT_TOKENS,
+            "messages": messages,
+        }
+
+        if response_format is not None:
+            request["response_format"] = response_format
+
+        response = client.chat.completions.create(**request)
+
+        raw_content = response.choices[0].message.content or ""
+
+        raw_content = raw_content.strip()
+
+        # B/c Claude feels "special and starts its json with fucking ```
+        if raw_content.startswith("```json"):
+            raw_content = raw_content.removeprefix("```json")
+        elif raw_content.startswith("```"):
+            raw_content = raw_content.removeprefix("```")
+
+        if raw_content.endswith("```"):
+            raw_content = raw_content.removesuffix("```")
+
+        suggested_themes = parse_theme_explorer_response(
+            raw_content=raw_content,
+        )
+
+        create_suggested_canonical_themes(
+            suggested_themes=suggested_themes,
+        )
+
+    final_theme_catalog = get_canonical_theme_catalog()
 
     return canonical_theme_catalog_to_theme_results(
-        canonical_theme_catalog=canonical_theme_catalog,
+        canonical_theme_catalog=final_theme_catalog,
         provider=provider,
         model=selected_model,
     )
