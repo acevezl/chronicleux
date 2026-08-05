@@ -142,7 +142,11 @@
 	}
 
 	.main-card {
-		@apply border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden
+		@apply border border-gray-200 dark:border-gray-600 rounded-sm overflow-hidden flex h-full flex-col
+	}
+
+	.main-card-body {
+		@apply flex min-h-0 flex-1 flex-col gap-2 px-3 py-2
 	}
 
 	.hero-card {

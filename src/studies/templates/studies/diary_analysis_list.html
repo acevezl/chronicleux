@@ -12,7 +12,10 @@
 
     <div class="p-4">
         {% include "studies/partials/_messages.html" %}
-        {% include "studies/partials/_analysis_runs_study_level.html" with study=study is_evaluator=is_evaluator evaluator_themes=evaluator_themes evaluator_issues=evaluator_issues %}
+
+        <div id="analysis-runs-container">
+            {% include "studies/partials/_analysis_runs_study_level.html" %}
+        </div>
     </div>
 
 {% endblock %}

@@ -40,7 +40,7 @@
     </header>
 
     <!-- BODY -->
-    <section class="space-y-2 px-3 py-2">
+    <section class="main-card-body">
 
         <!-- SENTIMENT -->
         <div class="flex items-start gap-2">
@@ -62,14 +62,28 @@
                     </span>
                 {% endif %}
 
-                {% include "studies/partials/_badge_sentiment.html" with sentiment=run.dominant_sentiment_label %}
+                {% if run.average_sentiment_label %}
+                    <span class="xs-label">
+                        Average:
+                    </span>
+
+                    {% include "studies/partials/_badge_sentiment.html" with sentiment=run.average_sentiment_label %}
+
+                    <span class="badge">
+                        Score: {{ run.average_sentiment_score|floatformat:3 }}
+                    </span>
+                {% else %}
+                    <span class="badge">
+                        Average sentiment unavailable
+                    </span>
+                {% endif %}
             </div>
         </div>
 
         <!-- THEME -->
         <div class="flex items-start gap-2 border-t border-gray-100 pt-2 dark:border-gray-800">
             <div class="w-20 shrink-0 xs-label uppercase">
-                Theme
+                Themes
             </div>
 
             <div class="min-w-0 flex flex-wrap items-center gap-1.5">
@@ -86,7 +100,21 @@
                     </span>
                 {% endif %}
 
-                {% include "studies/partials/_badge_theme_labels.html" with themes=run.themes.all %}
+                {% with themes=run.themes.all %}
+                    {% if themes %}
+                        {% include "studies/partials/_badge_theme_labels.html" with themes=themes|slice:":10" %}
+
+                        {% if themes|length > 10 %}
+                            <span class="badge">
+                                ({{ themes|length|add:"-10" }}) more
+                            </span>
+                        {% endif %}
+                    {% else %}
+                        <span class="badge">
+                            No themes detected
+                        </span>
+                    {% endif %}
+                {% endwith %}
             </div>
         </div>
 
@@ -97,7 +125,21 @@
             </div>
 
             <div class="min-w-0 flex flex-wrap items-center gap-1.5">
-                {% include "studies/partials/_badge_issue_tags.html" with issues=run.issues.all %}
+                {% with issues=run.issues.all %}
+                    {% if issues %}
+                        {% include "studies/partials/_badge_issue_tags.html" with issues=issues|slice:":10" %}
+
+                        {% if issues|length > 10 %}
+                            <span class="badge">
+                                ({{ issues|length|add:"-10" }}) more
+                            </span>
+                        {% endif %}
+                    {% else %}
+                        <span class="badge">
+                            No issues detected
+                        </span>
+                    {% endif %}
+                {% endwith %}
             </div>
         </div>
 

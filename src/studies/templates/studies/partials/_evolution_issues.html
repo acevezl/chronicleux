@@ -134,12 +134,18 @@
                             return item.date;
                         }
 
+                        function toTitleCase(text) {
+                            return text.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+                        }
+
                         function normalizeIssueLabel(issue) {
                             if (!issue) {
                                 return null;
                             }
 
-                            return issue.label || issue.issue_label || issue.name || issue.tag || null;
+                            const label = issue.label || issue.issue_label || issue.name || issue.tag || null;
+                            
+                            return label? label.charAt(0).toUpperCase() + label.slice(1) : null;
                         }
 
                         function normalizeIssueCount(issue) {

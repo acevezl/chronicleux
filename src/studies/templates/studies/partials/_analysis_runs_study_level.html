@@ -33,11 +33,11 @@
 		{% endif %}
 	</div>
 
-	<!-- STUDY-LEVEL REFERENCE ANALYSIS -->
-	<details class="border-b border-gray-200 dark:border-gray-700" closed>
+	{% comment %} <!-- STUDY-LEVEL REFERENCE ANALYSIS -->
+	<div class="border-b border-gray-200 dark:border-gray-700">
 
-		<summary class="flex cursor-pointer list-none items-center justify-between gap-4 bg-gray-50 dark:bg-gray-800 p-4">
-			<div class="flex flex-col min-w-0 gap-1">
+		<div class="flex items-center justify-between gap-4 bg-gray-50 p-4 dark:bg-gray-800">
+			<div class="flex min-w-0 flex-col gap-1">
 				<h4 class="card-summary-title">
 					{% heroicon_outline "newspaper" %}
 					Study Reference Data
@@ -47,31 +47,27 @@
 					Participant-reported sentiment and consolidated evaluator findings used as reference data for the machine-analysis runs.
 				</p>
 			</div>
+		</div>
 
-			<span class="text-gray-500 dark:text-gray-400 transition-transform group-open:rotate-180">
-				{% heroicon_outline "chevron-down" %}
-			</span>
-		</summary>
-
-		<div class="grid grid-cols-1 gap-4 xl:grid-cols-3 p-4">
+		<div class="grid grid-cols-1 gap-4 p-4 xl:grid-cols-3">
 
 			<!-- SENTIMENT -->
 			<div class="main-card overflow-hidden">
 
-				<div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+				<div class="border-b border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
 					<h5 class="sm-label">
 						Study Sentiment
 					</h5>
 
 					<p class="xs-label">
-						Sentiment sentiment as reported by participants and assessed by evaluators.
+						Sentiment reported by participants and assessed by evaluators.
 					</p>
 				</div>
 
 				<div class="grid grid-cols-1 gap-3 p-3 md:grid-cols-2">
 
 					<!-- PARTICIPANT SENTIMENT -->
-					<div class="rounded-md border border-gray-200 dark:border-gray-700 bg-blue-100 dark:bg-sky-800 p-3">
+					<div class="rounded-md border border-gray-200 bg-blue-100 p-3 dark:border-gray-700 dark:bg-sky-800">
 
 						<div class="xs-label">
 							Self-reported by participants
@@ -126,7 +122,7 @@
 					</div>
 
 					<!-- EVALUATOR SENTIMENT -->
-					<div class="rounded-md border border-gray-200 dark:border-gray-700 bg-green-100 dark:bg-emerald-800 p-3">
+					<div class="rounded-md border border-gray-200 bg-green-100 p-3 dark:border-gray-700 dark:bg-emerald-800">
 
 						<div class="xs-label">
 							Assessed by evaluators
@@ -187,7 +183,7 @@
 			<!-- EVALUATOR THEMES -->
 			<div class="main-card overflow-hidden">
 
-				<div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+				<div class="border-b border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
 					<h5 class="sm-label">
 						Themes Extracted by Evaluators
 					</h5>
@@ -219,7 +215,7 @@
 
 						</div>
 					{% else %}
-						<div class="rounded-sm border border-dashed border-gray-300 dark:border-gray-600 p-3">
+						<div class="rounded-sm border border-dashed border-gray-300 p-3 dark:border-gray-600">
 							<p class="text-sm text-gray-500 dark:text-gray-400">
 								No evaluator themes are available yet.
 							</p>
@@ -233,9 +229,9 @@
 			<!-- EVALUATOR ISSUES -->
 			<div class="main-card overflow-hidden">
 
-				<div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3">
+				<div class="border-b border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
 					<h5 class="sm-label">
-						Issues Detected by Evaluator
+						Issues Detected by Evaluators
 					</h5>
 
 					<p class="xs-label">
@@ -265,7 +261,7 @@
 
 						</div>
 					{% else %}
-						<div class="rounded-sm border border-dashed border-gray-300 dark:border-gray-600 p-3">
+						<div class="rounded-sm border border-dashed border-gray-300 p-3 dark:border-gray-600">
 							<p class="text-sm text-gray-500 dark:text-gray-400">
 								No evaluator issues are available yet.
 							</p>
@@ -278,43 +274,226 @@
 
 		</div>
 
-	</details>
+	</div> {% endcomment %}
 
-	
-	
+	<!-- FILTERING AND SORTING CONTROLS -->
+	<div class="border-b border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+
+		<form
+			method="get"
+			action="{{ analysis_runs_filter_url }}"
+			hx-get="{{ analysis_runs_filter_url }}"
+			hx-trigger="submit, change from:select, keyup changed delay:400ms from:input[name='q']"
+			hx-target="#analysis-runs-container"
+			hx-swap="innerHTML"
+			hx-push-url="true"
+			hx-indicator="#analysis-runs-loading"
+			class="flex flex-col gap-3 xl:flex-row xl:items-end"
+		>
+
+			<!-- SEARCH -->
+			<div class="min-w-0 flex-1">
+				<label for="analysis-runs-q" class="xs-label">
+					Search
+				</label>
+
+				<input
+					id="analysis-runs-q"
+					type="search"
+					name="q"
+					value="{{ q }}"
+					placeholder="Model, version, or error"
+					class="input mt-1 w-full"
+				>
+			</div>
+
+			<!-- STATUS -->
+			<div class="w-full xl:w-40">
+				<label for="analysis-runs-status" class="xs-label">
+					Status
+				</label>
+
+				<select
+					id="analysis-runs-status"
+					name="status"
+					class="select mt-1 w-full"
+				>
+					<option value="">All statuses</option>
+
+					{% for value, label in status_choices %}
+						<option
+							value="{{ value }}"
+							{% if selected_status == value %}selected{% endif %}
+						>
+							{{ label }}
+						</option>
+					{% endfor %}
+				</select>
+			</div>
+
+			<!-- MODEL -->
+			<div class="w-full xl:w-52">
+				<label for="analysis-runs-model" class="xs-label">
+					Model
+				</label>
+
+				<select
+					id="analysis-runs-model"
+					name="model"
+					class="select mt-1 w-full"
+				>
+					<option value="">All models</option>
+
+					{% for value in model_choices %}
+						<option
+							value="{{ value }}"
+							{% if selected_model == value %}selected{% endif %}
+						>
+							{{ value }}
+						</option>
+					{% endfor %}
+				</select>
+			</div>
+
+			<!-- SENTIMENT METHOD -->
+			<div class="w-full xl:w-44">
+				<label for="analysis-runs-sentiment-method" class="xs-label">
+					Sentiment
+				</label>
+
+				<select
+					id="analysis-runs-sentiment-method"
+					name="sentiment_method"
+					class="select mt-1 w-full"
+				>
+					<option value="">All methods</option>
+
+					{% for value in sentiment_method_choices %}
+						<option
+							value="{{ value }}"
+							{% if selected_sentiment_method == value %}selected{% endif %}
+						>
+							{{ value }}
+						</option>
+					{% endfor %}
+				</select>
+			</div>
+
+			<!-- THEME METHOD -->
+			<div class="w-full xl:w-44">
+				<label for="analysis-runs-theme-method" class="xs-label">
+					Theme
+				</label>
+
+				<select
+					id="analysis-runs-theme-method"
+					name="theme_method"
+					class="select mt-1 w-full"
+				>
+					<option value="">All methods</option>
+
+					{% for value in theme_method_choices %}
+						<option
+							value="{{ value }}"
+							{% if selected_theme_method == value %}selected{% endif %}
+						>
+							{{ value }}
+						</option>
+					{% endfor %}
+				</select>
+			</div>
+
+			<!-- SORT -->
+			<div class="w-full xl:w-56">
+				<label for="analysis-runs-sort" class="xs-label">
+					Sort by
+				</label>
+
+				<select
+					id="analysis-runs-sort"
+					name="sort"
+					class="select mt-1 w-full"
+				>
+					{% for value, label in sort_choices %}
+						<option
+							value="{{ value }}"
+							{% if sort == value %}selected{% endif %}
+						>
+							{{ label }}
+						</option>
+					{% endfor %}
+				</select>
+			</div>
+
+			<span
+				id="analysis-runs-loading"
+				class="htmx-indicator xs-label"
+			>
+				Filtering…
+			</span>
+
+			<!-- ACTIONS -->
+			<div class="flex shrink-0 items-end gap-2">
+
+				<button
+					type="submit"
+					class="button-PRIMARY"
+				>
+					{% heroicon_outline "funnel" class="h-4 w-4 shrink-0" %}
+					Apply
+				</button>
+
+				<a
+					href="{{ analysis_runs_filter_url }}"
+					hx-get="{{ analysis_runs_filter_url }}"
+					hx-target="#analysis-runs-container"
+					hx-swap="innerHTML"
+					hx-push-url="true"
+					class="button-SECONDARY"
+				>
+					{% heroicon_outline "x-mark" class="h-4 w-4 shrink-0" %}
+					Clear
+				</a>
+
+			</div>
+
+		</form>
+
+	</div>
+
+	<!-- ANALYSIS RUNS -->
 	<div class="min-h-0 flex-1 overflow-y-auto p-4">
 
-		<!-- ANALYSIS RUNS -->
 		{% if analysis_runs %}
-			<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+			<div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+
 				{% for run in analysis_runs %}
-
-					<!-- ANALYSIS RUN CARD -->
 					{% include "studies/partials/_analysis_run_card.html" with run=run study=study %}
-
 				{% endfor %}
+
 			</div>
 		{% else %}
-			<!-- EMPTY STATE -->
-			<div class="rounded-sm border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 p-4">
+			<div class="rounded-sm border border-dashed border-gray-300 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-800">
 				<div class="flex items-start gap-3">
+
 					<div class="mt-0.5 text-gray-400 dark:text-gray-500">
 						{% heroicon_outline "cpu-chip" class="h-5 w-5" %}
 					</div>
 
 					<div>
 						<div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-							No machine analysis runs yet.
+							No machine analysis runs found.
 						</div>
 
 						<p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-							Once machine analyses are executed, each run will appear here with its methods, dominant sentiment and detected themes.
+							Change or clear the current filters to view additional machine-analysis runs.
 						</p>
 					</div>
+
 				</div>
 			</div>
-
 		{% endif %}
+
 	</div>
 
 </article>

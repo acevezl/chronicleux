@@ -81,7 +81,7 @@
                                         class="badge-ISSUE inline-flex items-center gap-1.5 hover:underline"
                                         title="View entries with issue: {{ item.issue.name }}"
                                     >
-                                        <span>{{ item.issue.name }}</span>
+                                        <span>{{ item.issue.name|capfirst }}</span>
 
                                         {% for evaluator_item in evaluator_issues %}
                                             {% if evaluator_item.issue_id == item.issue_id %}
@@ -125,7 +125,7 @@
                                 {% for item in distribution %}
                                     <span class="badge-ISSUE inline-flex items-center gap-1.5">
                                         <span>
-                                            {% firstof item.issue.name "Unnamed issue" %}
+                                            {% firstof item.issue.name|capfirst "Unnamed issue" %}
                                         </span>
 
                                         {% for machine_item in machine_issues %}

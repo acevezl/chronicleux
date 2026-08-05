@@ -59,7 +59,7 @@
 									{% for item in row.detected_issues %}
                                         <span class="badge-ISSUE inline-flex items-center gap-1.5">
                                             <span>
-                                                {{ item.issue.name }}
+                                                {{ item.issue.name|capfirst }}
                                             </span>
 
                                             {% if item.is_match %}
@@ -91,7 +91,7 @@
 									{% for item in row.evaluated_issues %}
                                         <span class="badge-ISSUE inline-flex items-center gap-1.5">
                                             <span>
-                                                {{ item.issue.name }}
+                                                {{ item.issue.name|capfirst }}
                                             </span>
 
                                             {% if item.is_match %}
