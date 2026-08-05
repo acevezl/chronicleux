@@ -15,6 +15,7 @@ from datetime import datetime
 from pathlib import Path
 from pprint import pformat
 import random
+import traceback
 
 def _write_first_pass_debug(
     *,
@@ -27,9 +28,10 @@ def _write_first_pass_debug(
     debug_directory = Path("debug")
     debug_directory.mkdir(parents=True, exist_ok=True)
 
-    debug_file = debug_directory / f"llm_first_pass_study_{study_id}.log"
-
     timestamp = datetime.now().astimezone().isoformat(timespec="seconds")
+    filename_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    debug_file = debug_directory / f"llm_first_pass_study_{study_id}_{filename_timestamp}.log"
 
     theme_ids = [
         theme.theme_id
@@ -73,6 +75,49 @@ def _write_first_pass_debug(
         file.write("\n\n")
 
     return debug_file
+
+def _write_second_pass_debug(
+    *,
+    debug_file: Path,
+    entry,
+    status: str,
+    result: EntryAnalysisResult | None = None,
+    error: Exception | None = None,
+) -> None:
+    timestamp = datetime.now().astimezone().isoformat(timespec="seconds")
+    entry_id = getattr(entry, "id", None)
+    entry_text = getattr(entry, "content", None)
+
+    with debug_file.open("a", encoding="utf-8") as file:
+        file.write("\n")
+        file.write("=" * 100)
+        file.write("\n")
+        file.write("2ND PASS ENTRY ANALYSIS\n")
+        file.write("-" * 100)
+        file.write("\n")
+        file.write(f"TIMESTAMP: {timestamp}\n")
+        file.write(f"STATUS: {status}\n")
+        file.write(f"ENTRY ID: {entry_id}\n")
+        file.write(f"ENTRY TEXT:\n{entry_text}\n\n")
+
+        if result is not None:
+            file.write("RESULT:\n\n")
+            file.write(pformat(result, width=140, sort_dicts=False))
+            file.write("\n")
+
+        if error is not None:
+            file.write("ERROR TYPE:\n")
+            file.write(f"{type(error).__name__}\n\n")
+
+            file.write("ERROR MESSAGE:\n")
+            file.write(f"{error}\n\n")
+
+            file.write("TRACEBACK:\n")
+            file.write(traceback.format_exc())
+            file.write("\n")
+
+        file.write("=" * 100)
+        file.write("\n")
 
 ### DEBUG STUFF ###
 
@@ -164,15 +209,39 @@ def analyze_study_entries_with_llm(
     entry_analysis_results = []
 
     for entry in entry_list:
-        entry_analysis_result = analyze_entry_with_llm(
-            entry=entry,
-            theme_catalog=themes,
-            issue_catalog=issues,
-            provider=provider,
-            model=model,
-        )
+        try:
+            entry_analysis_result = analyze_entry_with_llm(
+                entry=entry,
+                theme_catalog=themes,
+                issue_catalog=issues,
+                provider=provider,
+                model=model,
+            )
 
-        entry_analysis_results.append(entry_analysis_result)
+            entry_analysis_results.append(entry_analysis_result)
+
+            _write_second_pass_debug(
+                debug_file=debug_file,
+                entry=entry,
+                status="SUCCESS",
+                result=entry_analysis_result,
+            )
+
+        except Exception as error:
+            _write_second_pass_debug(
+                debug_file=debug_file,
+                entry=entry,
+                status="FAILED",
+                error=error,
+            )
+
+            print(
+                f"\nSecond-pass analysis failed for entry "
+                f"{getattr(entry, 'id', 'UNKNOWN')}."
+            )
+            print(f"Debug written to: {debug_file.resolve()}")
+
+            raise
 
 
     return build_study_analysis_result(

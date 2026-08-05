@@ -13,26 +13,24 @@ class TokenUsage:
 
 
 class TokenPerMinuteLimiter:
-    """
-    Thread-safe rolling-window token-per-minute limiter.
-
-    Before making a request, call acquire() with the estimated number
-    of input and output tokens. The method blocks until the request fits
-    inside the configured rolling 60-second budget.
-    """
-
     def __init__(
         self,
         tokens_per_minute: int,
         window_seconds: float = 60.0,
+        minimum_request_interval: float = 0.0,
     ) -> None:
         if tokens_per_minute <= 0:
-            raise ValueError("tokens_per_minute must be greater than zero")
+            raise ValueError(
+                "tokens_per_minute must be greater than zero"
+            )
 
         self.tokens_per_minute = tokens_per_minute
         self.window_seconds = window_seconds
+        self.minimum_request_interval = minimum_request_interval
+
         self._usage: Deque[TokenUsage] = deque()
         self._lock = threading.Lock()
+        self._last_request_timestamp: float | None = None
 
     def acquire(self, estimated_tokens: int) -> None:
         if estimated_tokens <= 0:
@@ -50,33 +48,53 @@ class TokenPerMinuteLimiter:
                 now = time.monotonic()
                 self._discard_expired_usage(now)
 
+                interval_wait = 0.0
+
+                if self._last_request_timestamp is not None:
+                    interval_wait = max(
+                        0.0,
+                        self._last_request_timestamp
+                        + self.minimum_request_interval
+                        - now,
+                    )
+
                 currently_used = sum(
                     usage.tokens
                     for usage in self._usage
                 )
 
+                token_wait = 0.0
+
                 if (
                     currently_used + estimated_tokens
-                    <= self.tokens_per_minute
+                    > self.tokens_per_minute
                 ):
+                    oldest_usage = self._usage[0]
+
+                    token_wait = max(
+                        0.0,
+                        oldest_usage.timestamp
+                        + self.window_seconds
+                        - now,
+                    )
+
+                wait_seconds = max(interval_wait, token_wait)
+
+                if wait_seconds <= 0:
+                    request_timestamp = time.monotonic()
+
                     self._usage.append(
                         TokenUsage(
-                            timestamp=now,
+                            timestamp=request_timestamp,
                             tokens=estimated_tokens,
                         )
                     )
+
+                    self._last_request_timestamp = request_timestamp
                     return
 
-                oldest_usage = self._usage[0]
-
-                wait_seconds = (
-                    oldest_usage.timestamp
-                    + self.window_seconds
-                    - now
-                )
-
             time.sleep(max(wait_seconds, 0.1))
-
+            
     def _discard_expired_usage(self, now: float) -> None:
         cutoff = now - self.window_seconds
 
@@ -84,17 +102,32 @@ class TokenPerMinuteLimiter:
             self._usage.popleft()
 
 
-_PROVIDER_TPM_LIMITS = {
-    "groq": 12_000,
-    "gemini": 30_000,
-    "openrouter": 12_000,
-    "openai": 30_000,
+_PROVIDER_LIMITS = {
+    "gemini": {
+        "tokens_per_minute": 30_000,
+        "minimum_request_interval": 0.0,
+    },
+    "openrouter": {
+        "tokens_per_minute": 30_000,
+        "minimum_request_interval": 0.0,
+    },
+    "openai": {
+        "tokens_per_minute": 30_000,
+        "minimum_request_interval": 0.0,
+    },
+    "meta": {
+        "tokens_per_minute": 30_000,
+        "minimum_request_interval": 0.0,
+    },
 }
 
 
 _PROVIDER_LIMITERS = {
-    provider: TokenPerMinuteLimiter(tokens_per_minute=limit)
-    for provider, limit in _PROVIDER_TPM_LIMITS.items()
+    provider: TokenPerMinuteLimiter(
+        tokens_per_minute=config["tokens_per_minute"],
+        minimum_request_interval=config["minimum_request_interval"],
+    )
+    for provider, config in _PROVIDER_LIMITS.items()
 }
 
 

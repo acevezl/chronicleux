@@ -384,13 +384,26 @@ def parse_issue_result(
 
 
 def parse_sentiment_theme_response(
-	raw_content: str,
-	entry,
-	theme_catalog: list[ThemeResult],
-	provider: str,
-	model: str,
-) -> tuple[SentimentResult, ThemeResult, dict]:
-	data = json.loads(raw_content)
+		*,
+		raw_content: str,
+		entry,
+		theme_catalog: list[ThemeResult],
+		provider: str,
+		model: str,
+	) -> tuple[SentimentResult, ThemeResult, dict]:
+	try:
+		data = json.loads(raw_content)
+
+	except json.JSONDecodeError as error:
+		raise ValueError(
+			"Failed to parse second-pass sentiment/theme response as JSON.\n\n"
+			f"ENTRY ID: {getattr(entry, 'id', 'UNKNOWN')}\n"
+			f"PROVIDER: {provider}\n"
+			f"MODEL: {model}\n"
+			f"JSON ERROR: {error}\n\n"
+			"RAW SENTIMENT/THEME RESPONSE:\n"
+			f"{raw_content}"
+		) from error
 
 	sentiment_result = parse_sentiment_result(
 		sentiment_data=data.get("sentiment") or {},
@@ -412,13 +425,31 @@ def parse_sentiment_theme_response(
 
 
 def parse_issue_analyzer_response(
+	*,
 	raw_content: str,
+	finish_reason: str | None,
+	usage: Any,
 	entry,
 	issue_catalog: list[IssueResult],
 	provider: str,
 	model: str,
 ) -> IssueResult | None:
-	data = json.loads(raw_content)
+	try:
+		data = json.loads(raw_content)
+
+	except json.JSONDecodeError as error:
+		raise ValueError(
+			"Failed to parse second-pass issue response as JSON.\n\n"
+			f"ENTRY ID: {getattr(entry, 'id', 'UNKNOWN')}\n"
+			f"PROVIDER: {provider}\n"
+			f"MODEL: {model}\n"
+			f"FINISH REASON: {finish_reason}\n"
+			f"USAGE: {usage}\n"
+			f"RESPONSE LENGTH: {len(raw_content)}\n"
+			f"JSON ERROR: {error}\n\n"
+			"RAW ISSUE RESPONSE:\n"
+			f"{raw_content}"
+		) from error
 
 	return parse_issue_result(
 		issue_data=data.get("issue") or {},
@@ -544,8 +575,16 @@ def analyze_entry_with_llm(
 		issue_response.choices[0].message.content or "{}"
 	)
 
+	issue_choice = issue_response.choices[0]
+
+	issue_raw_content = clean_json_response(
+		issue_choice.message.content or "{}"
+	)
+
 	issue_result = parse_issue_analyzer_response(
 		raw_content=issue_raw_content,
+		finish_reason=issue_choice.finish_reason,
+		usage=getattr(issue_response, "usage", None),
 		entry=entry,
 		issue_catalog=issue_catalog,
 		provider=provider,

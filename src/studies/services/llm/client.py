@@ -21,51 +21,56 @@ LLM_PROVIDERS = {
     "openai": LLMProvider(
         value="openai",
         label="OpenAI",
-        description="General-purpose LLM provider with strong instruction-following and reliable structured JSON output.",
+        description=(
+            "GPT-4.1 mini is a compact general-purpose model optimized for "
+            "instruction following, classification, and structured data extraction."
+        ),
         api_key_env="OPENAI_API_KEY",
         default_model_env="OPENAI_MODEL",
         default_model="gpt-4.1-mini",
         response_format={"type": "json_object"},
     ),
-    # "groq": LLMProvider(
-    #     value="groq",
-    #     label="Groq",
-    #     description="Fast LLM provider useful for lower-latency analysis runs, especially during testing and iteration.",
-    #     api_key_env="GROQ_API_KEY",
-    #     default_model_env="GROQ_MODEL",
-    #     default_model="llama-3.3-70b-versatile",
-    #     base_url="https://api.groq.com/openai/v1",
-    #    response_format={"type": "json_object"},
-    # ),
     "gemini": LLMProvider(
         value="gemini",
-        label="Gemini",
-        description="Google LLM provider suitable for general language understanding and diary-entry interpretation.",
+        label="Google",
+        description=(
+            "Gemini 3.1 Flash-Lite is a low-latency, cost-efficient multimodal "
+            "model designed for high-volume classification, data extraction, "
+            "and lightweight language-analysis tasks."
+        ),
         api_key_env="GEMINI_API_KEY",
         default_model_env="GEMINI_MODEL",
         default_model="gemini-3.1-flash-lite",
         base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
         response_format={"type": "json_object"},
     ),
-    # "openrouter": LLMProvider(
-    #     value="openrouter",
-    #     label="OpenRouter",
-    #     description="Provider gateway that allows routing analysis through different supported models using one interface.",
-    #     api_key_env="OPENROUTER_API_KEY",
-    #     default_model_env="OPENROUTER_MODEL",
-    #     default_model="openai/gpt-4o-mini",
-    #     base_url="https://openrouter.ai/api/v1",
-    #     response_format={"type": "json_object"},
-    # ),
     "anthropic": LLMProvider(
         value="anthropic",
         label="Anthropic",
-        description="Advanced LLM provider with strong reasoning, nuanced language understanding, and reliable structured JSON generation.",
+        description=(
+            "Claude Sonnet 4 is a general-purpose model designed for complex "
+            "reasoning, nuanced text interpretation, instruction following, "
+            "and structured analytical tasks."
+        ),
         api_key_env="ANTHROPIC_API_KEY",
         default_model_env="ANTHROPIC_MODEL",
-        default_model="claude-sonnet-4-20250514",
+        default_model="claude-haiku-4-5-20251001",
         base_url="https://api.anthropic.com/v1",
         response_format=None,
+    ),
+    "meta": LLMProvider(
+        value="meta",
+        label="Meta",
+        description=(
+            "Llama 3.3 70B Instruct is a multilingual, instruction-tuned "
+            "text model designed for dialogue, reasoning, classification, "
+            "and general natural-language analysis."
+        ),
+        api_key_env="OPENROUTER_API_KEY",
+        default_model_env="OPENROUTER_META_MODEL",
+        default_model="meta-llama/llama-3.3-70b-instruct",
+        base_url="https://openrouter.ai/api/v1",
+        response_format={"type": "json_object"},
     ),
 }
 
@@ -115,13 +120,20 @@ def get_llm_client(provider: str) -> OpenAI:
     llm_provider = get_llm_provider(provider)
     api_key = get_llm_api_key(provider)
 
-    if llm_provider.base_url:
-        return OpenAI(
-            api_key=api_key,
-            base_url=llm_provider.base_url,
-        )
+    kwargs = {
+        "api_key": api_key,
+    }
 
-    return OpenAI(api_key=api_key)
+    if llm_provider.base_url:
+        kwargs["base_url"] = llm_provider.base_url
+
+    if llm_provider.base_url == "https://models.github.ai/inference":
+        kwargs["default_headers"] = {
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
+
+    return OpenAI(**kwargs)
 
 
 def connect_to_llm(provider: str, model: str | None = None) -> tuple[OpenAI, str]:
