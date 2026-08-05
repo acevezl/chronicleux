@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils import timezone
 from unfold.admin import ModelAdmin
 
 from .models import (
@@ -212,6 +213,7 @@ class AnalysisAdmin(ModelAdmin):
         "dominant_sentiment_label",
         "dominant_sentiment_score",
     )
+
     list_filter = (
         "status",
         "analysis_model",
@@ -220,13 +222,43 @@ class AnalysisAdmin(ModelAdmin):
         "dominant_sentiment_label",
         "started_at",
     )
-    search_fields = ("study__title", "analysis_model", "analysis_version", "error_message")
-    autocomplete_fields = ("study", "created_by", "dominant_theme")
+
+    search_fields = (
+        "study__title",
+        "analysis_model",
+        "analysis_version",
+        "error_message",
+    )
+
+    autocomplete_fields = (
+        "study",
+        "created_by",
+        "dominant_theme",
+    )
+
+    readonly_fields = (
+        "started_at_with_seconds",
+        "completed_at_with_seconds",
+    )
+
     inlines = [
         StudyAnalysisThemeInline,
         StudyAnalysisIssueInline,
     ]
 
+    @admin.display(description="Started at", ordering="started_at")
+    def started_at_with_seconds(self, obj):
+        if not obj.started_at:
+            return "—"
+        value = timezone.localtime(obj.started_at)
+        return value.strftime("%Y-%m-%d %H:%M:%S")
+
+    @admin.display(description="Completed at", ordering="completed_at")
+    def completed_at_with_seconds(self, obj):
+        if not obj.completed_at:
+            return "—"
+        value = timezone.localtime(obj.completed_at)
+        return value.strftime("%Y-%m-%d %H:%M:%S")
 
 @admin.register(EntryAnalysis)
 class EntryAnalysisAdmin(ModelAdmin):
