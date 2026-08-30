@@ -1,4 +1,5 @@
 import json
+import time
 from typing import Any
 
 from django.core.serializers.json import DjangoJSONEncoder
@@ -14,6 +15,9 @@ from studies.services.nlp.sentiment._thresholds import map_sentiment_score_to_la
 from studies.services.llm.llm_rate_limiter import wait_for_token_capacity
 
 MAX_OUTPUT_TOKENS = 1200
+
+MAX_LLM_RETRIES = 3
+RETRY_BASE_DELAY_SECONDS = 2
 
 SENTIMENT_THEME_ANALYZER_SYSTEM_PROMPT = """
 You are acting as an entry-level sentiment and theme analyzer for UX diary studies.
@@ -480,12 +484,16 @@ def analyze_entry_with_llm(
 	issue_catalog: list[IssueResult],
 	provider: str,
 	model: str | None = None,
-) -> EntryAnalysisResult:
+) -> EntryAnalysisResult | None:
 
 	client, selected_model, response_format = connect_to_llm(
 		provider=provider,
 		model=model,
 	)
+
+	# ---------------------------------------------------------
+	# FIRST PASS: SENTIMENT + THEMES
+	# ---------------------------------------------------------
 
 	sentiment_theme_prompt = build_sentiment_theme_prompt(
 		entry=entry,
@@ -519,9 +527,22 @@ def analyze_entry_with_llm(
 	if response_format is not None:
 		sentiment_theme_request["response_format"] = response_format
 
-	sentiment_theme_response = client.chat.completions.create(
-		**sentiment_theme_request
+	sentiment_theme_response = create_completion_with_retry(
+		client=client,
+		request=sentiment_theme_request,
+		provider=provider,
+		messages=sentiment_theme_messages,
 	)
+
+	# If all retries failed, abandon this entry.
+	if sentiment_theme_response is None:
+		print(
+			f"LLM sentiment/theme analysis failed for entry {entry.id} "
+			f"after {MAX_LLM_RETRIES} attempts. "
+			f"Provider={provider}, model={selected_model}. "
+			"Skipping entry."
+		)
+		return None
 
 	sentiment_theme_raw_content = clean_json_response(
 		sentiment_theme_response.choices[0].message.content or "{}"
@@ -534,6 +555,10 @@ def analyze_entry_with_llm(
 		provider=provider,
 		model=selected_model,
 	)
+
+	# ---------------------------------------------------------
+	# SECOND PASS: ISSUES
+	# ---------------------------------------------------------
 
 	issue_prompt = build_issue_analyzer_prompt(
 		entry=entry,
@@ -567,13 +592,34 @@ def analyze_entry_with_llm(
 	if response_format is not None:
 		issue_request["response_format"] = response_format
 
-	issue_response = client.chat.completions.create(
-		**issue_request
+	issue_response = create_completion_with_retry(
+		client=client,
+		request=issue_request,
+		provider=provider,
+		messages=issue_messages,
 	)
 
-	issue_raw_content = clean_json_response(
-		issue_response.choices[0].message.content or "{}"
-	)
+	# If issue analysis fails, preserve the successful
+	# sentiment/theme analysis and continue without issues.
+	if issue_response is None:
+		print(
+			f"LLM issue analysis failed for entry {entry.id} "
+			f"after {MAX_LLM_RETRIES} attempts. "
+			f"Provider={provider}, model={selected_model}. "
+			"Keeping sentiment/theme result without issues."
+		)
+
+		metadata["model"] = selected_model
+		metadata["provider"] = provider
+		metadata["issue_analysis_failed"] = True
+
+		return EntryAnalysisResult(
+			entry_id=entry.id,
+			sentiment=sentiment_result,
+			themes=[theme_result],
+			issues=[],
+			metadata=metadata,
+		)
 
 	issue_choice = issue_response.choices[0]
 
@@ -603,4 +649,50 @@ def analyze_entry_with_llm(
 	)
 
 
+def create_completion_with_retry(
+	client,
+	request: dict,
+	provider: str,
+	messages: list[dict],
+):
+	for attempt in range(1, MAX_LLM_RETRIES + 1):
+
+		if attempt > 1:
+			wait_for_token_capacity(
+				provider=provider,
+				messages=messages,
+				max_output_tokens=MAX_OUTPUT_TOKENS,
+			)
+
+		response = client.chat.completions.create(**request)
+
+		choice = response.choices[0]
+		finish_reason = getattr(choice, "finish_reason", None)
+
+		if finish_reason != "error":
+			return response
+
+		if attempt == MAX_LLM_RETRIES:
+			raw_content = choice.message.content or ""
+
+			raise RuntimeError(
+				"LLM inference failed after retries.\n\n"
+				f"PROVIDER: {provider}\n"
+				f"MODEL: {request.get('model')}\n"
+				f"ATTEMPTS: {MAX_LLM_RETRIES}\n"
+				f"FINISH REASON: {finish_reason}\n"
+				f"USAGE: {getattr(response, 'usage', None)}\n\n"
+				"RAW RESPONSE:\n"
+				f"{raw_content}"
+			)
+
+		delay = RETRY_BASE_DELAY_SECONDS * (2 ** (attempt - 1))
+
+		print(
+			f"LLM inference returned finish_reason='error' "
+			f"for provider={provider}, model={request.get('model')}. "
+			f"Retrying attempt {attempt + 1}/{MAX_LLM_RETRIES}..."
+		)
+
+		time.sleep(delay)
 

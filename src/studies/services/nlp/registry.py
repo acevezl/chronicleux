@@ -37,7 +37,7 @@ SENTIMENT_ANALYZERS = {
     "star_rating": {
         "class": StarRatingSentimentAnalyzer,
         "label": "Star Rating",
-        "description": "Five-class transformer model that maps text into 1-to-5 star sentiment ratings (where 1-star = Very Negative, and 5-star = Very Positive).",
+        "description": "Five-class BERT transformer model that maps text into 1-to-5 star sentiment ratings (where 1-star = Very Negative, and 5-star = Very Positive).",
         "long_description": "Use Star Rating when evaluators need a simple five-level sentiment scale. Best for quick comparison across entries, not deep interpretation.",
     },
 }
